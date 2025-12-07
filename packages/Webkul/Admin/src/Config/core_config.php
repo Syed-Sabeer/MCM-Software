@@ -58,7 +58,7 @@ return [
                 'name'       => 'label',
                 'title'      => 'admin::app.configuration.index.general.settings.footer.powered-by',
                 'type'       => 'editor',
-                'default'    => 'Powered by <span style="color: rgb(14, 144, 217);"><a href="http://www.deveoninc.com" target="_blank">Metro Cotton Mill</a></span>, by <span style="color: rgb(14, 144, 217);"><a href="https://deveoninc.com" target="_blank">Deveon</a></span>.',
+                'default'    => 'Powered by <span style="color: rgb(14, 144, 217);"><a href="http://www.deveoninc.com" target="_blank">Deveon</a></span> <span style="color: rgb(14, 144, 217);"></span>.',
                 'tinymce'    => true,
             ],
         ],

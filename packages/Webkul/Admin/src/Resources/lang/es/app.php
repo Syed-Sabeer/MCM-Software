@@ -1947,9 +1947,9 @@ return [
                 ],
                 'settings' => [
                     'title'  => 'Configuraciones',
-                    'info'   => 'Actualiza tus configuraciones aquí.',
+                    'info'   => 'Actualiza tus configuraciones Deveon.',
                     'footer' => [
-                        'info'       => 'Podemos configurar la sección de powered by aquí.',
+                        'info'       => 'Podemos configurar la sección de powered by Deveon.',
                         'powered-by' => 'Editor de texto impulsado por',
                         'title'      => 'Configuraciones de la Sección Powered by',
                     ],

@@ -13,10 +13,16 @@
                     src="{{ asset('/storage/'.$logo) }}"
                     alt="{{ config('app.name') }}"
                 />
+            @elseif ($logo = core()->getConfigData('general.general.admin_logo.logo_image'))
+              <img
+                    class="w-max" style="width: 50%;"
+                    src="{{ asset('/storage/'.$logo) }}"
+                    alt="{{ config('app.name') }}"
+                />
             @else
                 <img
-                    class="w-max"
-                    src="{{ vite()->asset('images/logo.svg') }}"
+                    class="w-max" style="width: 50%;"
+                    src="https://mcm.deveondynamics.com/public/storage/configuration/wlexNhXNWbU6gHxATcdoD2pdOwitDd1BIdeGMt81.webp"
                     alt="{{ config('app.name') }}"
                 />
             @endif
@@ -105,7 +111,7 @@
         <!-- Powered By -->
         <div class="text-sm font-normal">
             @lang('admin::app.components.layouts.powered-by.description', [
-                'krayin' => '<a class="text-brandColor hover:underline " href="https://krayincrm.com/">Krayin</a>',
+                'Deveon' => '<a class="text-brandColor hover:underline " href="https://deveon.com/">Deveon</a>',
                 'webkul' => '<a class="text-brandColor hover:underline " href="https://webkul.com/">Webkul</a>',
             ])
         </div>
