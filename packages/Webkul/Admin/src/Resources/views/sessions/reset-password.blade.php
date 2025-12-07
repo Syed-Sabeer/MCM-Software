@@ -13,14 +13,21 @@
                     src="{{ asset('/storage/'.$logo) }}"
                     alt="{{ config('app.name') }}"
                 />
+            @elseif ($logo = core()->getConfigData('general.general.admin_logo.logo_image'))
+              <img
+                    class="w-max" style="width: 50%;"
+                    src="{{ asset('/storage/'.$logo) }}"
+                    alt="{{ config('app.name') }}"
+                />
             @else
                 <img
-                    class="w-max"
-                    src="{{ vite()->asset('images/logo.svg') }}"
+                    class="w-max" style="width: 50%;"
+                    src="https://mcm.deveondynamics.com/public/storage/configuration/wlexNhXNWbU6gHxATcdoD2pdOwitDd1BIdeGMt81.webp"
                     alt="{{ config('app.name') }}"
                 />
             @endif
 
+            
             <div class="box-shadow flex min-w-[300px] flex-col rounded-md bg-white dark:bg-gray-900">
                 {!! view_render_event('admin.sessions.reset-password.form_controls.before') !!}
 
