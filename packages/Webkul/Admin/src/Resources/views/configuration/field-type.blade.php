@@ -15,7 +15,7 @@
         validations="{{ $field->getValidations() }}"
         is-require="{{ $field->isRequired() }}"
         depend-name="{{ $field->getDependFieldName() }}"
-        src="{{ Storage::url($value) }}"
+        src="{{ $value ? asset('/storage/'.$value) : '' }}"
         field-data="{{ json_encode($field) }}"
         :tinymce="{{ json_encode($field->getTinymce()) }}"
     >
@@ -222,9 +222,9 @@
                 <div class="flex flex-col gap-4">
                     <div class="flex items-center gap-4">
                         <div v-if="value" class="flex flex-col gap-2">
-                            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
+                            {{-- <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
                                 Current Logo:
-                            </label>
+                            </label> --}}
                             <a
                                 :href="src"
                                 target="_blank"
