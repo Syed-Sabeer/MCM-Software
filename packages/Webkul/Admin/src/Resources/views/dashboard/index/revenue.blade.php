@@ -32,7 +32,7 @@
 
                             <div class="flex gap-2">
                                 <p class="text-xl font-bold text-green-600">
-                                    @{{ report.statistics.total_won_revenue.formatted_total }}
+                                    @{{ formatNumber(report.statistics.total_won_revenue.current) }}
                                 </p>
 
                                 <div class="flex items-center gap-0.5">
@@ -59,7 +59,7 @@
 
                             <div class="flex gap-2">
                                 <p class="text-xl font-bold text-red-500">
-                                    @{{ report.statistics.total_lost_revenue.formatted_total }}
+                                    @{{ formatNumber(report.statistics.total_lost_revenue.current) }}
                                 </p>
 
                                 <div class="flex items-center gap-0.5">
@@ -130,6 +130,13 @@
             },
 
             methods: {
+                formatNumber(value) {
+                    if (!value && value !== 0) return '0';
+                    return new Intl.NumberFormat('en-US', {
+                        maximumFractionDigits: 0
+                    }).format(value);
+                },
+
                 getStats(filters) {
                     this.isLoading = true;
 

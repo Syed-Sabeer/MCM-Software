@@ -78,7 +78,7 @@ return [
                 'name'       => 'leads',
                 'title'      => 'admin::app.configuration.index.general.settings.menu.leads',
                 'type'       => 'text',
-                'default'    => 'Leads',
+                'default'    => 'Case',
                 'validation' => 'max:20',
             ], [
                 'name'       => 'quotes',
@@ -179,79 +179,80 @@ return [
                 'default' => '#0E90D9',
             ],
         ],
-    ], [
-        'key'  => 'general.magic_ai',
-        'name' => 'admin::app.configuration.index.magic-ai.title',
-        'info' => 'admin::app.configuration.index.magic-ai.info',
-        'icon' => 'icon-setting',
-        'sort' => 3,
-    ], [
-        'key'    => 'general.magic_ai.settings',
-        'name'   => 'admin::app.configuration.index.magic-ai.settings.title',
-        'info'   => 'admin::app.configuration.index.magic-ai.settings.info',
-        'sort'   => 1,
-        'fields' => [
-            [
-                'name'          => 'enable',
-                'title'         => 'admin::app.configuration.index.magic-ai.settings.enable',
-                'type'          => 'boolean',
-                'channel_based' => true,
-            ], [
-                'name'          => 'api_key',
-                'title'         => 'admin::app.configuration.index.magic-ai.settings.api-key',
-                'type'          => 'password',
-                'depends'       => 'enable:1',
-                'validation'    => 'required_if:enable,1',
-                'info'          => 'admin::app.configuration.index.magic-ai.settings.api-key-info',
-            ], [
-                'name'          => 'model',
-                'title'         => 'admin::app.configuration.index.magic-ai.settings.models.title',
-                'type'          => 'select',
-                'channel_based' => true,
-                'depends'       => 'enable:1',
-                'options'       => [
-                    [
-                        'title' => 'admin::app.configuration.index.magic-ai.settings.models.gpt-4o',
-                        'value' => 'openai/chatgpt-4o-latest',
-                    ], [
-                        'title' => 'admin::app.configuration.index.magic-ai.settings.models.gpt-4o-mini',
-                        'value' => 'openai/gpt-4o-mini',
-                    ], [
-                        'title' => 'admin::app.configuration.index.magic-ai.settings.models.gemini-2-0-flash-001',
-                        'value' => 'google/gemini-2.0-flash-001',
-                    ], [
-                        'title' => 'admin::app.configuration.index.magic-ai.settings.models.deepseek-r1',
-                        'value' => 'deepseek/deepseek-r1-distill-llama-8b',
-                    ], [
-                        'title' => 'admin::app.configuration.index.magic-ai.settings.models.llama-3-2-3b-instruct',
-                        'value' => 'meta-llama/llama-3.2-3b-instruct',
-                    ], [
-                        'title' => 'admin::app.configuration.index.magic-ai.settings.models.grok-2-1212',
-                        'value' => 'x-ai/grok-2-1212',
-                    ],
-                ],
-            ], [
-                'name'          => 'other_model',
-                'title'         => 'admin::app.configuration.index.magic-ai.settings.other',
-                'type'          => 'text',
-                'info'          => 'admin::app.configuration.index.magic-ai.settings.other-model',
-                'default'       => null,
-                'depends'       => 'enable:1',
-            ],
-        ],
-    ], [
-        'key'    => 'general.magic_ai.doc_generation',
-        'name'   => 'admin::app.configuration.index.magic-ai.settings.doc-generation',
-        'info'   => 'admin::app.configuration.index.magic-ai.settings.doc-generation-info',
-        'sort'   => 2,
-        'fields' => [
-            [
-                'name'          => 'enabled',
-                'title'         => 'admin::app.configuration.index.magic-ai.settings.enable',
-                'type'          => 'boolean',
-            ],
-        ],
-    ],
+    ], 
+    // [
+    //     'key'  => 'general.magic_ai',
+    //     'name' => 'admin::app.configuration.index.magic-ai.title',
+    //     'info' => 'admin::app.configuration.index.magic-ai.info',
+    //     'icon' => 'icon-setting',
+    //     'sort' => 3,
+    // ], [
+    //     'key'    => 'general.magic_ai.settings',
+    //     'name'   => 'admin::app.configuration.index.magic-ai.settings.title',
+    //     'info'   => 'admin::app.configuration.index.magic-ai.settings.info',
+    //     'sort'   => 1,
+    //     'fields' => [
+    //         [
+    //             'name'          => 'enable',
+    //             'title'         => 'admin::app.configuration.index.magic-ai.settings.enable',
+    //             'type'          => 'boolean',
+    //             'channel_based' => true,
+    //         ], [
+    //             'name'          => 'api_key',
+    //             'title'         => 'admin::app.configuration.index.magic-ai.settings.api-key',
+    //             'type'          => 'password',
+    //             'depends'       => 'enable:1',
+    //             'validation'    => 'required_if:enable,1',
+    //             'info'          => 'admin::app.configuration.index.magic-ai.settings.api-key-info',
+    //         ], [
+    //             'name'          => 'model',
+    //             'title'         => 'admin::app.configuration.index.magic-ai.settings.models.title',
+    //             'type'          => 'select',
+    //             'channel_based' => true,
+    //             'depends'       => 'enable:1',
+    //             'options'       => [
+    //                 [
+    //                     'title' => 'admin::app.configuration.index.magic-ai.settings.models.gpt-4o',
+    //                     'value' => 'openai/chatgpt-4o-latest',
+    //                 ], [
+    //                     'title' => 'admin::app.configuration.index.magic-ai.settings.models.gpt-4o-mini',
+    //                     'value' => 'openai/gpt-4o-mini',
+    //                 ], [
+    //                     'title' => 'admin::app.configuration.index.magic-ai.settings.models.gemini-2-0-flash-001',
+    //                     'value' => 'google/gemini-2.0-flash-001',
+    //                 ], [
+    //                     'title' => 'admin::app.configuration.index.magic-ai.settings.models.deepseek-r1',
+    //                     'value' => 'deepseek/deepseek-r1-distill-llama-8b',
+    //                 ], [
+    //                     'title' => 'admin::app.configuration.index.magic-ai.settings.models.llama-3-2-3b-instruct',
+    //                     'value' => 'meta-llama/llama-3.2-3b-instruct',
+    //                 ], [
+    //                     'title' => 'admin::app.configuration.index.magic-ai.settings.models.grok-2-1212',
+    //                     'value' => 'x-ai/grok-2-1212',
+    //                 ],
+    //             ],
+    //         ], [
+    //             'name'          => 'other_model',
+    //             'title'         => 'admin::app.configuration.index.magic-ai.settings.other',
+    //             'type'          => 'text',
+    //             'info'          => 'admin::app.configuration.index.magic-ai.settings.other-model',
+    //             'default'       => null,
+    //             'depends'       => 'enable:1',
+    //         ],
+    //     ],
+    // ], [
+    //     'key'    => 'general.magic_ai.doc_generation',
+    //     'name'   => 'admin::app.configuration.index.magic-ai.settings.doc-generation',
+    //     'info'   => 'admin::app.configuration.index.magic-ai.settings.doc-generation-info',
+    //     'sort'   => 2,
+    //     'fields' => [
+    //         [
+    //             'name'          => 'enabled',
+    //             'title'         => 'admin::app.configuration.index.magic-ai.settings.enable',
+    //             'type'          => 'boolean',
+    //         ],
+    //     ],
+    // ],
 
     /**
      * Email.
