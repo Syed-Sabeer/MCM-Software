@@ -15,7 +15,7 @@
         validations="{{ $field->getValidations() }}"
         is-require="{{ $field->isRequired() }}"
         depend-name="{{ $field->getDependFieldName() }}"
-        src="{{ Storage::url($value) }}"
+        src="{{ $value ? asset('/storage/'.$value) : '' }}"
         field-data="{{ json_encode($field) }}"
         :tinymce="{{ json_encode($field->getTinymce()) }}"
     >
@@ -219,26 +219,35 @@
             </template>
         
             <template v-if="field.type == 'image' && field.is_visible">
-                <div class="flex items-center justify-center">
-                    <a
-                        :href="src"
-                        target="_blank"
-                        v-if="value"
-                    >
-                        <img
-                            :src="src"
-                            :alt="name"
-                            class="top-15 rounded-3 border-3 relative h-[33px] w-[33px] border-gray-500 ltr:mr-5 rtl:ml-5"
-                        />
-                    </a>
-                    
-                    <x-admin::form.control-group.control
-                        type="file"
-                        ::name="name"
-                        ::id="name"
-                        ::rules="validations"
-                        ::label="label"
-                    />
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-4">
+                        <div v-if="value" class="flex flex-col gap-2">
+                            {{-- <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                Current Logo:
+                            </label> --}}
+                            <a
+                                :href="src"
+                                target="_blank"
+                                class="inline-block"
+                            >
+                                <img
+                                    :src="src"
+                                    :alt="name"
+                                    class="h-10 max-w-[200px] rounded border border-gray-200 object-contain dark:border-gray-700"
+                                />
+                            </a>
+                        </div>
+                        
+                        <div class="flex-1">
+                            <x-admin::form.control-group.control
+                                type="file"
+                                ::name="name"
+                                ::id="name"
+                                ::rules="validations"
+                                ::label="label"
+                            />
+                        </div>
+                    </div>
                 </div>
         
                 <template v-if="value">
