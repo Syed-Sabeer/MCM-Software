@@ -639,8 +639,9 @@ return [
             ],
 
             'create' => [
-                'title'    => 'Create Person',
-                'save-btn' => 'Save Person',
+                'title'        => 'Create Person',
+                'save-btn'     => 'Save Person',
+                'organization' => 'Organization',
             ],
 
             'edit' => [
@@ -659,6 +660,7 @@ return [
                 'delete-failed'  => 'Organization can not be deleted.',
 
                 'datagrid' => [
+                    'view'          => 'View',
                     'delete'        => 'Delete',
                     'edit'          => 'Edit',
                     'id'            => 'ID',
@@ -675,6 +677,15 @@ return [
             'edit' => [
                 'title'    => 'Edit Organization',
                 'save-btn' => 'Save Organization',
+            ],
+
+            'view' => [
+                'title'           => 'Organization: :name',
+                'new-contact-btn' => 'New Contact',
+                'edit-btn'        => 'Edit',
+                'delete-btn'      => 'Delete',
+                'delete-confirm'  => 'Are you sure you want to delete this organization?',
+                'files-uploaded'  => 'Files uploaded successfully.',
             ],
         ],
     ],

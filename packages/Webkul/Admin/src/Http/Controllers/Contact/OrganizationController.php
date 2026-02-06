@@ -45,6 +45,16 @@ class OrganizationController extends Controller
     }
 
     /**
+     * Display the specified organization (detail page).
+     */
+    public function show(int $id): View
+    {
+        $organization = $this->organizationRepository->findOrFail($id);
+
+        return view('admin::contacts.organizations.view', compact('organization'));
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(AttributeForm $request): RedirectResponse

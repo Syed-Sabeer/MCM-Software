@@ -90,6 +90,13 @@ class OrganizationDataGrid extends DataGrid
      */
     public function prepareActions(): void
     {
+        $this->addAction([
+            'icon'   => 'icon-view',
+            'title'  => trans('admin::app.contacts.organizations.index.datagrid.view'),
+            'method' => 'GET',
+            'url'    => fn ($row) => route('admin.contacts.organizations.view', $row->id),
+        ]);
+
         if (bouncer()->hasPermission('contacts.organizations.edit')) {
             $this->addAction([
                 'icon'   => 'icon-edit',

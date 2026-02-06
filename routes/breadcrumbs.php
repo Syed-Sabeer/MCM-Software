@@ -128,6 +128,12 @@ Breadcrumbs::for('contacts.organizations.edit', function (BreadcrumbTrail $trail
     $trail->push(trans('admin::app.contacts.organizations.edit.title'), route('admin.contacts.organizations.edit', $organization->id));
 });
 
+// Dashboard > Contacts > Organizations > View
+Breadcrumbs::for('contacts.organizations.view', function (BreadcrumbTrail $trail, $organization) {
+    $trail->parent('contacts.organizations');
+    $trail->push('#'.$organization->id, route('admin.contacts.organizations.view', $organization->id));
+});
+
 // Products
 Breadcrumbs::for('products', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');

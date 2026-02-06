@@ -33,34 +33,41 @@
 
                 {!! view_render_event('admin.contacts.persons.view.organization.address.before', ['person' => $person]) !!}
 
-                @if ($person->organization->address)
-                    <div class="flex flex-col gap-0.5 dark:text-white">
-                        @isset($person->organization->address['address'])
-                            <span>
-                                {{ $person->organization->address['address'] }}
-                            </span>
-                        @endisset
+                @php
+                    $organization = $person->organization;
+                @endphp
 
-                        @if(
-                            isset($person->organization->address['postcode'])
-                            && isset($person->organization->address['city'])
-                        )
+                @if (
+                    $organization->billing_street
+                    || $organization->billing_city
+                    || $organization->billing_state
+                    || $organization->billing_postcode
+                    || $organization->billing_country
+                )
+                    <div class="flex flex-col gap-0.5 dark:text-white">
+                        @if ($organization->billing_street)
                             <span>
-                                {{ $person->organization->address['postcode'] . '  ' . $person->organization->address['city'] }}
+                                {{ $organization->billing_street }}
                             </span>
                         @endif
 
-                        @isset($person->organization->address['state'])
+                        @if ($organization->billing_postcode || $organization->billing_city)
                             <span>
-                                {{ core()->state_name($person->organization->address['state']) }}
+                                {{ trim(($organization->billing_postcode ?? '') . ' ' . ($organization->billing_city ?? '')) }}
                             </span>
-                        @endisset
+                        @endif
 
-                        @isset($person->organization->address['country'])
+                        @if ($organization->billing_state)
                             <span>
-                                {{ core()->country_name($person->organization->address['country']) }}
+                                {{ $organization->billing_state }}
                             </span>
-                        @endisset
+                        @endif
+
+                        @if ($organization->billing_country)
+                            <span>
+                                {{ $organization->billing_country }}
+                            </span>
+                        @endif
                     </div>
                 @endif
 

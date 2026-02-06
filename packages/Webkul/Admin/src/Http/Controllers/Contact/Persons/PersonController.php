@@ -45,7 +45,13 @@ class PersonController extends Controller
      */
     public function create(): View
     {
-        return view('admin::contacts.persons.create');
+        $organization = null;
+
+        if ($organizationId = request()->integer('organization_id')) {
+            $organization = app(\Webkul\Contact\Repositories\OrganizationRepository::class)->find($organizationId);
+        }
+
+        return view('admin::contacts.persons.create', compact('organization'));
     }
 
     /**

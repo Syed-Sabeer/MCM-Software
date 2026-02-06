@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Contact\OrganizationController;
+use Webkul\Admin\Http\Controllers\Contact\OrganizationFileController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\ActivityController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\TagController;
@@ -56,6 +57,8 @@ Route::prefix('contacts')->group(function () {
 
         Route::post('create', 'store')->name('admin.contacts.organizations.store');
 
+        Route::get('view/{id}', 'show')->name('admin.contacts.organizations.view');
+
         Route::get('edit/{id?}', 'edit')->name('admin.contacts.organizations.edit');
 
         Route::put('edit/{id}', 'update')->name('admin.contacts.organizations.update');
@@ -63,5 +66,12 @@ Route::prefix('contacts')->group(function () {
         Route::delete('{id}', 'destroy')->name('admin.contacts.organizations.delete');
 
         Route::put('mass-destroy', 'massDestroy')->name('admin.contacts.organizations.mass_delete');
+    });
+
+    /**
+     * Organization files routes.
+     */
+    Route::controller(OrganizationFileController::class)->prefix('organizations')->group(function () {
+        Route::post('{id}/files', 'store')->name('admin.contacts.organizations.files.store');
     });
 });
