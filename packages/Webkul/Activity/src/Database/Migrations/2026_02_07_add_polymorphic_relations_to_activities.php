@@ -15,7 +15,7 @@ return new class extends Migration
             // Add polymorphic relationship columns
             $table->string('entity_type')->nullable()->after('user_id');
             $table->unsignedBigInteger('entity_id')->nullable()->after('entity_type');
-            
+
             // Create index for polymorphic queries
             $table->index(['entity_type', 'entity_id']);
         });

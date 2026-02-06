@@ -66,7 +66,7 @@
             @endif
 
             <!-- Lead Create Component -->
-            <v-lead-create 
+            <v-lead-create
                 :prefill-organization-id="{{ request('organization_id') ?? 'null' }}"
             >
                 <x-admin::shimmer.leads.datagrid />
