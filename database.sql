@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 05, 2026 at 09:51 AM
+-- Generation Time: Feb 06, 2026 at 08:30 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -37,6 +37,8 @@ CREATE TABLE `activities` (
   `schedule_to` datetime DEFAULT NULL,
   `is_done` tinyint(1) NOT NULL DEFAULT 0,
   `user_id` int(10) UNSIGNED DEFAULT NULL,
+  `entity_type` varchar(255) DEFAULT NULL,
+  `entity_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `location` varchar(255) DEFAULT NULL
@@ -46,28 +48,43 @@ CREATE TABLE `activities` (
 -- Dumping data for table `activities`
 --
 
-INSERT INTO `activities` (`id`, `title`, `type`, `comment`, `additional`, `schedule_from`, `schedule_to`, `is_done`, `user_id`, `created_at`, `updated_at`, `location`) VALUES
-(1, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
-(2, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Test\",\"label\":\"Test\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
-(3, 'Updated Description', 'system', NULL, '{\"attribute\":\"Description\",\"new\":{\"value\":\"This is test description\",\"label\":\"This is test description\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
-(4, 'Updated SKU', 'system', NULL, '{\"attribute\":\"SKU\",\"new\":{\"value\":\"test\",\"label\":\"test\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
-(5, 'Updated Quantity', 'system', NULL, '{\"attribute\":\"Quantity\",\"new\":{\"value\":1,\"label\":1},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
-(6, 'Updated Price', 'system', NULL, '{\"attribute\":\"Price\",\"new\":{\"value\":18,\"label\":\"$18.00\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
-(7, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, '2025-11-15 14:31:02', '2025-11-15 14:31:02', NULL),
-(8, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Syed Sabeer\",\"label\":\"Syed Sabeer\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:31:02', '2025-11-15 14:31:02', NULL),
-(9, 'Updated Emails', 'system', NULL, '{\"attribute\":\"Emails\",\"new\":{\"value\":[{\"label\":\"work\",\"value\":\"syedsabeer6198@gmail.com\"}],\"label\":\"syedsabeer6198@gmail.com (work)\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:31:02', '2025-11-15 14:31:02', NULL),
-(10, 'Updated Contact Numbers', 'system', NULL, '{\"attribute\":\"Contact Numbers\",\"new\":{\"value\":[{\"label\":\"work\",\"value\":\"20094008480\"}],\"label\":\"20094008480 (work)\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:31:02', '2025-11-15 14:31:02', NULL),
-(11, 'Updated Job Title', 'system', NULL, '{\"attribute\":\"Job Title\",\"new\":{\"value\":\"Employee\",\"label\":\"Employee\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:31:02', '2025-11-15 14:31:02', NULL),
-(12, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
-(13, 'Updated Title', 'system', NULL, '{\"attribute\":\"Title\",\"new\":{\"value\":\"Accusamus atque earu\",\"label\":\"Accusamus atque earu\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
-(14, 'Updated Description', 'system', NULL, '{\"attribute\":\"Description\",\"new\":{\"value\":\"Necessitatibus reici\",\"label\":\"Necessitatibus reici\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
-(15, 'Updated Lead Value', 'system', NULL, '{\"attribute\":\"Lead Value\",\"new\":{\"value\":23,\"label\":\"$23.00\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
-(16, 'Updated Source', 'system', NULL, '{\"attribute\":\"Source\",\"new\":{\"value\":2,\"label\":\"Web\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
-(17, 'Updated Type', 'system', NULL, '{\"attribute\":\"Type\",\"new\":{\"value\":2,\"label\":\"Existing Business\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
-(18, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
-(19, 'Updated Expected Close Date', 'system', NULL, '{\"attribute\":\"Expected Close Date\",\"new\":{\"value\":\"2025-11-20\",\"label\":\"Thu Nov 20, 2025\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
-(20, 'Updated Pipeline', 'system', NULL, '{\"attribute\":\"Pipeline\",\"new\":{\"value\":1,\"label\":\"Default Pipeline\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
-(21, 'Updated Stage', 'system', NULL, '{\"attribute\":\"Stage\",\"new\":{\"value\":1,\"label\":\"New\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL);
+INSERT INTO `activities` (`id`, `title`, `type`, `comment`, `additional`, `schedule_from`, `schedule_to`, `is_done`, `user_id`, `entity_type`, `entity_id`, `created_at`, `updated_at`, `location`) VALUES
+(1, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
+(2, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Test\",\"label\":\"Test\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
+(3, 'Updated Description', 'system', NULL, '{\"attribute\":\"Description\",\"new\":{\"value\":\"This is test description\",\"label\":\"This is test description\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
+(4, 'Updated SKU', 'system', NULL, '{\"attribute\":\"SKU\",\"new\":{\"value\":\"test\",\"label\":\"test\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
+(5, 'Updated Quantity', 'system', NULL, '{\"attribute\":\"Quantity\",\"new\":{\"value\":1,\"label\":1},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
+(6, 'Updated Price', 'system', NULL, '{\"attribute\":\"Price\",\"new\":{\"value\":18,\"label\":\"$18.00\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:29:20', '2025-11-15 14:29:20', NULL),
+(7, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:31:02', '2025-11-15 14:31:02', NULL),
+(8, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Syed Sabeer\",\"label\":\"Syed Sabeer\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:31:02', '2025-11-15 14:31:02', NULL),
+(9, 'Updated Emails', 'system', NULL, '{\"attribute\":\"Emails\",\"new\":{\"value\":[{\"label\":\"work\",\"value\":\"syedsabeer6198@gmail.com\"}],\"label\":\"syedsabeer6198@gmail.com (work)\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:31:02', '2025-11-15 14:31:02', NULL),
+(10, 'Updated Contact Numbers', 'system', NULL, '{\"attribute\":\"Contact Numbers\",\"new\":{\"value\":[{\"label\":\"work\",\"value\":\"20094008480\"}],\"label\":\"20094008480 (work)\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:31:02', '2025-11-15 14:31:02', NULL),
+(11, 'Updated Job Title', 'system', NULL, '{\"attribute\":\"Job Title\",\"new\":{\"value\":\"Employee\",\"label\":\"Employee\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:31:02', '2025-11-15 14:31:02', NULL),
+(12, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
+(13, 'Updated Title', 'system', NULL, '{\"attribute\":\"Title\",\"new\":{\"value\":\"Accusamus atque earu\",\"label\":\"Accusamus atque earu\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
+(14, 'Updated Description', 'system', NULL, '{\"attribute\":\"Description\",\"new\":{\"value\":\"Necessitatibus reici\",\"label\":\"Necessitatibus reici\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
+(15, 'Updated Lead Value', 'system', NULL, '{\"attribute\":\"Lead Value\",\"new\":{\"value\":23,\"label\":\"$23.00\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
+(16, 'Updated Source', 'system', NULL, '{\"attribute\":\"Source\",\"new\":{\"value\":2,\"label\":\"Web\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
+(17, 'Updated Type', 'system', NULL, '{\"attribute\":\"Type\",\"new\":{\"value\":2,\"label\":\"Existing Business\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
+(18, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
+(19, 'Updated Expected Close Date', 'system', NULL, '{\"attribute\":\"Expected Close Date\",\"new\":{\"value\":\"2025-11-20\",\"label\":\"Thu Nov 20, 2025\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
+(20, 'Updated Pipeline', 'system', NULL, '{\"attribute\":\"Pipeline\",\"new\":{\"value\":1,\"label\":\"Default Pipeline\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
+(21, 'Updated Stage', 'system', NULL, '{\"attribute\":\"Stage\",\"new\":{\"value\":1,\"label\":\"New\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2025-11-15 14:36:48', '2025-11-15 14:36:48', NULL),
+(22, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 10:07:01', '2026-02-06 10:07:01', NULL),
+(23, NULL, 'note', 'dsf', NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-02-06 18:55:40', '2026-02-06 18:55:40', NULL),
+(24, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 18:59:21', '2026-02-06 18:59:21', NULL),
+(25, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-02-06 19:44:22', '2026-02-06 19:44:22', NULL),
+(26, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-06 19:44:23', '2026-02-06 19:44:23', NULL),
+(27, 'Updated Organization', 'system', NULL, '{\"attribute\":\"Organization\",\"new\":{\"value\":2,\"label\":\"Abdul Haynes\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-06 19:44:23', '2026-02-06 19:44:23', NULL),
+(28, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:45:48', '2026-02-06 19:45:48', NULL),
+(29, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:47:13', '2026-02-06 19:47:13', NULL),
+(30, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:48:38', '2026-02-06 19:48:38', NULL),
+(31, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:48:47', '2026-02-06 19:48:47', NULL),
+(32, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:49:29', '2026-02-06 19:49:29', NULL),
+(33, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:52:37', '2026-02-06 19:52:37', NULL),
+(34, 'fg', 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:53:23', '2026-02-06 19:53:23', NULL),
+(35, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:54:28', '2026-02-06 19:54:28', NULL),
+(36, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:55:48', '2026-02-06 19:55:48', NULL);
 
 -- --------------------------------------------------------
 
@@ -83,6 +100,23 @@ CREATE TABLE `activity_files` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `activity_files`
+--
+
+INSERT INTO `activity_files` (`id`, `name`, `path`, `activity_id`, `created_at`, `updated_at`) VALUES
+(1, 'test image.jpeg', 'activities/22/LaMLVczohByWQi5YlSCd70Mzmq7RMDoP77VWZ5Kd.jpg', 22, '2026-02-06 10:07:03', '2026-02-06 10:07:03'),
+(2, 'test image.jpeg', 'activities/24/7cWjcmCJ5xUvOlHPT61OWr7uiieBh2sDud0twi2C.jpg', 24, '2026-02-06 18:59:21', '2026-02-06 18:59:21'),
+(3, 'test image.jpeg', 'activities/28/25N5s0ulu9TgkYVonu6KqhiRE4Uq9hGgqkcnjf4F.jpg', 28, '2026-02-06 19:45:49', '2026-02-06 19:45:49'),
+(4, 'test image.jpeg', 'activities/29/9WnEaJdJkdpKWUlMSqeXT6cLKUfynr4BvU3RD08W.jpg', 29, '2026-02-06 19:47:13', '2026-02-06 19:47:13'),
+(5, 'test image.jpeg', 'activities/30/bAbdfaxjp0Kd7Opp8orIPpAiSzgpBK9UFC92Xl2n.jpg', 30, '2026-02-06 19:48:38', '2026-02-06 19:48:38'),
+(6, 'images.jpg', 'activities/31/09oOgGr6fDNycEvIWUNDfiHrAnvAlsSUQZJB6fq3.jpg', 31, '2026-02-06 19:48:48', '2026-02-06 19:48:48'),
+(7, 'test image.jpeg', 'activities/32/7vlMWGitkADp0abTUSfF555cO2TaU1qy5MWrpplQ.jpg', 32, '2026-02-06 19:49:29', '2026-02-06 19:49:29'),
+(8, 'test image.jpeg', 'activities/33/6QOSnfXc8wYeD3jCee9jHcLT04KuxTkzCQcDwmDa.jpg', 33, '2026-02-06 19:52:37', '2026-02-06 19:52:37'),
+(9, '2023-bentley-continental-gt-s-coupe.jpg', 'activities/34/Hi51KJcFTDu0t3pJOHQvgSKnS9XVRE9mye6r1qRX.jpg', 34, '2026-02-06 19:53:23', '2026-02-06 19:53:23'),
+(10, '2023-bentley-continental-gt-s-coupe.jpg', 'activities/35/VFS6hzZPD0zisguuwd4QIfHQor1p3Wta8rYs81OI.jpg', 35, '2026-02-06 19:54:28', '2026-02-06 19:54:28'),
+(11, 'images.jpg', 'activities/36/nr0SgJfP1xY0QgPhVWiR1qPao5S9NpwVGKdCKtfG.jpg', 36, '2026-02-06 19:55:48', '2026-02-06 19:55:48');
 
 -- --------------------------------------------------------
 
@@ -192,7 +226,7 @@ CREATE TABLE `attribute_options` (
   `attribute_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 
+--
 -- Dumping data for table `attribute_options`
 --
 
@@ -252,7 +286,13 @@ INSERT INTO `attribute_values` (`id`, `entity_type`, `text_value`, `boolean_valu
 (17, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 1, 24, NULL),
 (18, 'leads', NULL, NULL, NULL, NULL, NULL, '2025-11-20', NULL, 1, 25, NULL),
 (19, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 1, 26, NULL),
-(20, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 1, 27, NULL);
+(20, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 1, 27, NULL),
+(21, 'organizations', 'Abdul Haynes', NULL, NULL, NULL, NULL, NULL, NULL, 2, 34, NULL),
+(22, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 2, 68, NULL),
+(23, 'organizations', '80', NULL, NULL, NULL, NULL, NULL, NULL, 2, 69, NULL),
+(24, 'organizations', NULL, NULL, NULL, 72, NULL, NULL, NULL, 2, 70, NULL),
+(25, 'persons', NULL, NULL, 1, NULL, NULL, NULL, NULL, 2, 32, NULL),
+(26, 'persons', NULL, NULL, 2, NULL, NULL, NULL, NULL, 2, 33, NULL);
 
 -- --------------------------------------------------------
 
@@ -1740,6 +1780,13 @@ CREATE TABLE `organizations` (
   `user_id` int(10) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `organizations`
+--
+
+INSERT INTO `organizations` (`id`, `parent_organization_id`, `name`, `address`, `phone`, `fax`, `website`, `type`, `industry`, `employees`, `annual_revenue`, `description`, `billing_street`, `billing_city`, `billing_state`, `billing_postcode`, `billing_country`, `shipping_street`, `shipping_city`, `shipping_state`, `shipping_postcode`, `shipping_country`, `created_at`, `updated_at`, `user_id`) VALUES
+(2, NULL, 'Abdul Haynes', NULL, '+1 (475) 445-8871', '+1 (112) 105-5157', NULL, 'other', 'home_apparel', 80, 72.00, 'Sapiente vitae delec', 'Odit est sed perspi', 'Ducimus ea dicta au', 'Quia dolor exercitat', 'Nostrum ut aliquip s', 'Minima similique eve', 'Blanditiis omnis ut', 'Ea debitis quisquam', 'Id quo quis minim si', 'Fugit non ipsam quo', 'Maiores doloremque e', '2026-02-06 07:07:40', '2026-02-06 07:07:40', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -1759,6 +1806,13 @@ CREATE TABLE `organization_files` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `organization_files`
+--
+
+INSERT INTO `organization_files` (`id`, `organization_id`, `user_id`, `title`, `description`, `path`, `original_name`, `mime_type`, `size`, `created_at`, `updated_at`) VALUES
+(0, 2, 1, '', '', 'organization-files/hQyBbDjG1Mcly8WQgY16MMviT12duFBWMfIHDYIW.jpg', 'test image.jpeg', 'image/jpeg', 7443, '2026-02-06 18:53:59', '2026-02-06 18:53:59');
 
 -- --------------------------------------------------------
 
@@ -1788,22 +1842,39 @@ CREATE TABLE `personal_access_tokens` (
 CREATE TABLE `persons` (
   `id` int(10) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
-  `emails` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`emails`)),
+  `emails` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`emails`)),
   `contact_numbers` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`contact_numbers`)),
   `organization_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `job_title` varchar(255) DEFAULT NULL,
   `user_id` int(10) UNSIGNED DEFAULT NULL,
-  `unique_id` varchar(255) DEFAULT NULL
+  `unique_id` varchar(255) DEFAULT NULL,
+  `salutation` varchar(255) DEFAULT NULL,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `cell_phone` varchar(255) DEFAULT NULL,
+  `direct_phone` varchar(255) DEFAULT NULL,
+  `email_secondary` varchar(255) DEFAULT NULL,
+  `birth_date` date DEFAULT NULL,
+  `phone` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `mailing_street` varchar(255) DEFAULT NULL,
+  `mailing_city` varchar(255) DEFAULT NULL,
+  `mailing_state` varchar(255) DEFAULT NULL,
+  `mailing_postcode` varchar(255) DEFAULT NULL,
+  `mailing_country` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `persons`
 --
 
-INSERT INTO `persons` (`id`, `name`, `emails`, `contact_numbers`, `organization_id`, `created_at`, `updated_at`, `job_title`, `user_id`, `unique_id`) VALUES
-(1, 'Syed Sabeer', '[{\"value\":\"syedsabeer6198@gmail.com\",\"label\":\"work\"}]', '[{\"value\":\"20094008480\",\"label\":\"work\"}]', NULL, '2025-11-15 14:31:02', '2025-11-15 14:31:02', 'Employee', NULL, 'syedsabeer6198@gmail.com|20094008480');
+INSERT INTO `persons` (`id`, `name`, `emails`, `contact_numbers`, `organization_id`, `created_at`, `updated_at`, `job_title`, `user_id`, `unique_id`, `salutation`, `first_name`, `last_name`, `title`, `description`, `cell_phone`, `direct_phone`, `email_secondary`, `birth_date`, `phone`, `email`, `mailing_street`, `mailing_city`, `mailing_state`, `mailing_postcode`, `mailing_country`) VALUES
+(1, 'Syed Sabeer', '[{\"value\":\"syedsabeer6198@gmail.com\",\"label\":\"work\"}]', '[{\"value\":\"20094008480\",\"label\":\"work\"}]', NULL, '2025-11-15 14:31:02', '2025-11-15 14:31:02', 'Employee', NULL, 'syedsabeer6198@gmail.com|20094008480', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, '', NULL, NULL, 2, '2026-02-06 19:44:22', '2026-02-06 19:44:22', NULL, 1, '1|2', '', 'Kuame', 'Trevino', 'Tempor ullamco magna', 'Assumenda proident', '+1 (855) 618-2783', '+1 (297) 115-4107', '+1 (297) 115-4107', '1972-01-01', '+1 (753) 794-9162', 'sihava@mailinator.com', 'Ut voluptatibus libe', 'Impedit consequuntu', 'Voluptates hic nulla', 'Consequatur recusan', 'Esse est quis maior');
 
 -- --------------------------------------------------------
 
@@ -1825,7 +1896,11 @@ INSERT INTO `person_activities` (`activity_id`, `person_id`) VALUES
 (8, 1),
 (9, 1),
 (10, 1),
-(11, 1);
+(11, 1),
+(25, 2),
+(26, 2),
+(27, 2),
+(28, 2);
 
 -- --------------------------------------------------------
 
@@ -2203,7 +2278,8 @@ INSERT INTO `workflows` (`id`, `name`, `description`, `entity_type`, `event`, `c
 --
 ALTER TABLE `activities`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `activities_user_id_foreign` (`user_id`);
+  ADD KEY `activities_user_id_foreign` (`user_id`),
+  ADD KEY `activities_entity_type_entity_id_index` (`entity_type`,`entity_id`);
 
 --
 -- Indexes for table `activity_files`
@@ -2447,14 +2523,6 @@ ALTER TABLE `organizations`
   ADD KEY `organizations_parent_organization_id_foreign` (`parent_organization_id`);
 
 --
--- Indexes for table `organization_files`
---
-ALTER TABLE `organization_files`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `organization_files_organization_id_foreign` (`organization_id`),
-  ADD KEY `organization_files_user_id_foreign` (`user_id`);
-
---
 -- Indexes for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
@@ -2626,13 +2694,13 @@ ALTER TABLE `workflows`
 -- AUTO_INCREMENT for table `activities`
 --
 ALTER TABLE `activities`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `activity_files`
 --
 ALTER TABLE `activity_files`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `activity_participants`
@@ -2644,19 +2712,19 @@ ALTER TABLE `activity_participants`
 -- AUTO_INCREMENT for table `attributes`
 --
 ALTER TABLE `attributes`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT for table `attribute_options`
 --
 ALTER TABLE `attribute_options`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `attribute_values`
 --
 ALTER TABLE `attribute_values`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `core_config`
@@ -2794,13 +2862,7 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `organizations`
 --
 ALTER TABLE `organizations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `organization_files`
---
-ALTER TABLE `organization_files`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
@@ -2812,7 +2874,7 @@ ALTER TABLE `personal_access_tokens`
 -- AUTO_INCREMENT for table `persons`
 --
 ALTER TABLE `persons`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `products`
@@ -3017,15 +3079,8 @@ ALTER TABLE `marketing_campaigns`
 -- Constraints for table `organizations`
 --
 ALTER TABLE `organizations`
-  ADD CONSTRAINT `organizations_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `organizations_parent_organization_id_foreign` FOREIGN KEY (`parent_organization_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `organization_files`
---
-ALTER TABLE `organization_files`
-  ADD CONSTRAINT `organization_files_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `organization_files_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `organizations_parent_organization_id_foreign` FOREIGN KEY (`parent_organization_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `organizations_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `persons`

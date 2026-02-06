@@ -56,8 +56,19 @@
                 />
             @endif
 
+            @if (request('organization_id'))
+                <input
+                    type="hidden"
+                    id="lead_organization_id"
+                    name="organization_id"
+                    value="{{ request('organization_id') }}"
+                />
+            @endif
+
             <!-- Lead Create Component -->
-            <v-lead-create>
+            <v-lead-create 
+                :prefill-organization-id="{{ request('organization_id') ?? 'null' }}"
+            >
                 <x-admin::shimmer.leads.datagrid />
             </v-lead-create>
         </div>
@@ -200,8 +211,8 @@
 
                     {!! view_render_event('admin.leads.create.contact_person.after') !!}
 
-                    <!-- Product Section -->
-                    <div
+                    {{-- <!-- Product Section --> --}}
+                    {{-- <div
                         class="flex flex-col gap-4"
                         id="products"
                     >
@@ -219,7 +230,7 @@
                             <!-- Product Component -->
                             @include('admin::leads.common.products')
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
 
                 {!! view_render_event('admin.leads.form_controls.after') !!}
@@ -230,6 +241,8 @@
             app.component('v-lead-create', {
                 template: '#v-lead-create-template',
 
+                props: ['prefillOrganizationId'],
+
                 data() {
                     return {
                         activeTab: 'lead-details',
@@ -237,7 +250,7 @@
                         tabs: [
                             { id: 'lead-details', label: '@lang('admin::app.leads.create.details')' },
                             { id: 'contact-person', label: '@lang('admin::app.leads.create.contact-person')' },
-                            { id: 'products', label: '@lang('admin::app.leads.create.products')' }
+                            {{-- { id: 'products', label: '@lang('admin::app.leads.create.products')' } --}}
                         ],
                     };
                 },

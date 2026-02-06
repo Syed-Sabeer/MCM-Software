@@ -9,7 +9,7 @@
 
     <button
         class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-green-200 font-medium text-green-900 transition-all hover:border-green-400"
-        @click="$refs.mailActionComponent.openModal('mail')"
+        onclick="window.dispatchEvent(new Event('open-mail-activity'))"
     >
         <span class="icon-mail text-2xl dark:!text-green-900"></span>
 
@@ -69,14 +69,14 @@
                                 name="type"
                                 value="email"
                             />
-                            
+
                             <!-- Id -->
                             <x-admin::form.control-group.control
                                 type="hidden"
                                 ::name="entityControlName"
                                 ::value="entity.id"
                             />
-                            
+
                             <!-- To -->
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label class="required">
@@ -89,6 +89,7 @@
                                         name="reply_to"
                                         rules="required"
                                         input-rules="email"
+                                        v-model="replyTo"
                                         :label="trans('admin::app.components.activities.actions.mail.to')"
                                         :placeholder="trans('admin::app.components.activities.actions.mail.enter-emails')"
                                     />
@@ -248,12 +249,35 @@
                     showBCC: false,
 
                     isStoring: false,
+
+                    replyTo: [],
+                }
+            },
+
+            mounted() {
+                this.prefillOrgEmail();
+
+                this._openMailListener = () => this.openModal('mail');
+                window.addEventListener('open-mail-activity', this._openMailListener);
+            },
+
+            beforeUnmount() {
+                if (this._openMailListener) {
+                    window.removeEventListener('open-mail-activity', this._openMailListener);
                 }
             },
 
             methods: {
                 openModal(type) {
+                    this.prefillOrgEmail();
                     this.$refs.mailActivityModal.open();
+                },
+
+                prefillOrgEmail() {
+                    // Try to get email from organization's user (owner)
+                    if (this.entity?.user?.email) {
+                        this.replyTo = [this.entity.user.email];
+                    }
                 },
 
                 save(params, { resetForm, setErrors  }) {
@@ -286,6 +310,12 @@
                                 this.$refs.mailActivityModal.close();
                             }
                         });
+                },
+            },
+
+            watch: {
+                entity(newVal) {
+                    this.prefillOrgEmail();
                 },
             },
         });

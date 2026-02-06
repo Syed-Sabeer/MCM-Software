@@ -9,7 +9,7 @@
 
     <button
         class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-orange-200 font-medium text-orange-800 transition-all hover:border-orange-400"
-        @click="$refs.noteActionComponent.openModal('mail')"
+        onclick="window.dispatchEvent(new Event('open-note-activity'))"
     >
         <span class="icon-note text-2xl dark:!text-orange-800"></span>
 
@@ -43,7 +43,7 @@
                 <form @submit="handleSubmit($event, save)">
                     {!! view_render_event('admin.components.activities.actions.note.form_controls.modal.before') !!}
 
-                    <x-admin::modal 
+                    <x-admin::modal
                         ref="noteActivityModal"
                         position="bottom-right"
                     >
@@ -66,7 +66,7 @@
                                 name="type"
                                 value="note"
                             />
-                            
+
                             <!-- Id -->
                             <x-admin::form.control-group.control
                                 type="hidden"
@@ -141,7 +141,15 @@
 
             methods: {
                 openModal(type) {
-                    this.$refs.noteActivityModal.open();
+                    if (this.$refs.noteActivityModal && typeof this.$refs.noteActivityModal.open === 'function') {
+                        this.$refs.noteActivityModal.open();
+                    } else {
+                        this.$nextTick(() => {
+                            if (this.$refs.noteActivityModal && typeof this.$refs.noteActivityModal.open === 'function') {
+                                this.$refs.noteActivityModal.open();
+                            }
+                        });
+                    }
                 },
 
                 save(params) {
@@ -169,6 +177,15 @@
                             }
                         });
                 },
+            },
+
+            mounted() {
+                this._openNoteListener = () => this.openModal();
+                window.addEventListener('open-note-activity', this._openNoteListener);
+            },
+
+            beforeUnmount() {
+                window.removeEventListener('open-note-activity', this._openNoteListener);
             },
         });
     </script>

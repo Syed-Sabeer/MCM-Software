@@ -9,7 +9,7 @@
 
     <button
         class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-cyan-200 font-medium text-cyan-900 transition-all hover:border-cyan-400"
-        @click="$refs.fileActionComponent.openModal('mail')"
+        onclick="window.dispatchEvent(new Event('open-file-activity'))"
     >
         <span class="icon-file text-2xl dark:!text-cyan-900"></span>
 
@@ -66,7 +66,7 @@
                                 name="type"
                                 value="file"
                             />
-                            
+
                             <!-- Id -->
                             <x-admin::form.control-group.control
                                 type="hidden"
@@ -74,12 +74,26 @@
                                 ::value="entity.id"
                             />
 
+                            <!-- Entity Type -->
+                            <x-admin::form.control-group.control
+                                type="hidden"
+                                name="entity_type"
+                                ::value="entityType"
+                            />
+
+                            <!-- Entity ID -->
+                            <x-admin::form.control-group.control
+                                type="hidden"
+                                name="entity_id"
+                                ::value="entityId"
+                            />
+
                             <!-- Title -->
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.components.activities.actions.file.title-control')
                                 </x-admin::form.control-group.label>
-                                
+
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="title"
@@ -91,13 +105,13 @@
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.components.activities.actions.file.description')
                                 </x-admin::form.control-group.label>
-                                
+
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     name="comment"
                                 />
                             </x-admin::form.control-group>
-                            
+
                             <!-- File Name -->
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label>
@@ -115,7 +129,7 @@
                                 <x-admin::form.control-group.label class="required">
                                     @lang('admin::app.components.activities.actions.file.file')
                                 </x-admin::form.control-group.label>
-                                
+
                                 <x-admin::form.control-group.control
                                     type="file"
                                     id="file"
@@ -176,15 +190,44 @@
                 }
             },
 
+            computed: {
+                entityType() {
+                    // Determine entity type based on the entity object
+                    if (this.entity && this.entity.billing_street !== undefined) {
+                        return 'organizations';
+                    }
+                    return 'persons';
+                },
+
+                entityId() {
+                    return this.entity?.id || null;
+                },
+            },
+
             methods: {
                 openModal(type) {
-                    this.$refs.fileActivityModal.open();
+                    if (this.$refs.fileActivityModal && typeof this.$refs.fileActivityModal.open === 'function') {
+                        this.$refs.fileActivityModal.open();
+                    } else {
+                        this.$nextTick(() => {
+                            if (this.$refs.fileActivityModal && typeof this.$refs.fileActivityModal.open === 'function') {
+                                this.$refs.fileActivityModal.open();
+                            }
+                        });
+                    }
                 },
 
                 save(params, { setErrors }) {
                     this.isStoring = true;
 
-                    this.$axios.post("{{ route('admin.activities.store') }}", params, {
+                    // Explicitly add entity type and id to the params
+                    const payload = {
+                        ...params,
+                        entity_type: this.entityType,
+                        entity_id: this.entityId,
+                    };
+
+                    this.$axios.post("{{ route('admin.activities.store') }}", payload, {
                             headers: {
                                 'Content-Type': 'multipart/form-data',
                             }
@@ -210,6 +253,14 @@
                             }
                         });
                 },
+            },
+            mounted() {
+                this._openFileListener = () => this.openModal();
+                window.addEventListener('open-file-activity', this._openFileListener);
+            },
+
+            beforeUnmount() {
+                window.removeEventListener('open-file-activity', this._openFileListener);
             },
         });
     </script>

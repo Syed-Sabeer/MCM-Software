@@ -1,6 +1,6 @@
 {!! view_render_event('admin.leads.create.contact_person.form_controls.before') !!}
 
-<v-contact-component :data="person"></v-contact-component>
+<v-contact-component :data="person" :prefill-organization-id="prefillOrganizationId || null"></v-contact-component>
 
 {!! view_render_event('admin.leads.create.contact_person.form_controls.after') !!}
 
@@ -37,8 +37,8 @@
             <x-admin::form.control-group.error control-name="person[id]" />
         </x-admin::form.control-group>
 
-        <!-- Person Email -->
-        <x-admin::form.control-group>
+        {{-- <!-- Person Email --> --}}
+        {{-- <x-admin::form.control-group>
             <x-admin::form.control-group.label class="required">
                 @lang('admin::app.leads.common.contact.email')
             </x-admin::form.control-group.label>
@@ -51,10 +51,10 @@
                 :value="person.emails"
                 :is-disabled="person?.id ? true : false"
             ></v-email-component>
-        </x-admin::form.control-group>
+        </x-admin::form.control-group> --}}
 
-        <!-- Person Contact Numbers -->
-        <x-admin::form.control-group>
+        {{-- <!-- Person Contact Numbers --> --}}
+        {{-- <x-admin::form.control-group>
             <x-admin::form.control-group.label>
                 @lang('admin::app.leads.common.contact.contact-number')
             </x-admin::form.control-group.label>
@@ -66,7 +66,7 @@
                 :value="person.contact_numbers"
                 :is-disabled="person?.id ? true : false"
             ></v-phone-component>
-        </x-admin::form.control-group>
+        </x-admin::form.control-group> --}}
 
         <!-- Person Organization -->
         <x-admin::form.control-group>
@@ -89,7 +89,7 @@
                 :key="person.organization?.id"
                 :attribute='@json($organizationAttribute)'
                 :value="person.organization"
-                :is-disabled="person?.id ? true : false"
+                :is-disabled="person?.id || isPrefilled ? true : false"
                 can-add-new="true"
             ></v-lookup-component>
         </x-admin::form.control-group>
@@ -99,7 +99,7 @@
         app.component('v-contact-component', {
             template: '#v-contact-component-template',
 
-            props: ['data'],
+            props: ['data', 'prefillOrganizationId'],
 
             data () {
                 return {
@@ -110,6 +110,16 @@
                     },
 
                     persons: [],
+
+                    isPrefilled: false,
+                }
+            },
+
+            mounted() {
+                // If organization is passed, fetch it and prefill
+                if (this.prefillOrganizationId) {
+                    this.fetchOrganization(this.prefillOrganizationId);
+                    this.isPrefilled = true;
                 }
             },
 
@@ -119,11 +129,16 @@
                 },
 
                 params() {
-                    return {
-                        params: {
-                            query: this.person['name']
-                        }
+                    // If organization is prefilled, filter persons by that organization
+                    const params = {
+                        query: this.person['name']
+                    };
+
+                    if (this.prefillOrganizationId) {
+                        params.organization_id = this.prefillOrganizationId;
                     }
+
+                    return { params };
                 },
 
                 nameValidationRule() {
@@ -134,6 +149,17 @@
             methods: {
                 addPerson (person) {
                     this.person = person;
+                },
+
+                fetchOrganization(organizationId) {
+                    // Fetch organization data
+                    this.$axios.get(`/api/organizations/${organizationId}`)
+                        .then(response => {
+                            this.person.organization = response.data.data;
+                        })
+                        .catch(error => {
+                            console.error('Failed to fetch organization:', error);
+                        });
                 },
             }
         });

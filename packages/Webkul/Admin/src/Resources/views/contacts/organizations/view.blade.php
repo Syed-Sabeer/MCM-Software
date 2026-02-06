@@ -205,6 +205,17 @@
                             :entity="$organization"
                             entity-control-name="organization_id"
                         />
+
+
+                        <x-admin::activities.actions.file
+                            :entity="$organization"
+                            entity-control-name="organization_id"
+                        />
+
+                        <x-admin::activities.actions.task
+                            :entity="$organization"
+                            entity-control-name="organization_id"
+                        />
                     </div>
 
                     <!-- Simple filter / toggle -->
@@ -303,9 +314,43 @@
                     </a>
                 </div>
 
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                    Contacts list for this organization can be added and managed here.
-                </p>
+                @php
+                    $recentContacts = $organization->persons()->latest()->limit(3)->get();
+                @endphp
+
+                @if ($recentContacts->count() > 0)
+                    <div class="flex flex-col gap-2">
+                        @foreach ($recentContacts as $contact)
+                            <a
+                                href="{{ route('admin.contacts.persons.view', $contact->id) }}"
+                                class="flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            >
+                                <x-admin::avatar :name="$contact->first_name . ' ' . $contact->last_name" class="h-6 w-6" />
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-medium truncate dark:text-white">
+                                        {{ $contact->first_name }} {{ $contact->last_name }}
+                                    </p>
+                                    @if ($contact->email)
+                                        <p class="text-xs text-gray-500 truncate dark:text-gray-400">
+                                            {{ $contact->email }}
+                                        </p>
+                                    @endif
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+
+                    <a
+                        href="{{ route('admin.contacts.persons.index', ['organization_id' => $organization->id]) }}"
+                        class="text-xs font-semibold text-brandColor hover:underline"
+                    >
+                        View All
+                    </a>
+                @else
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Contacts list for this organization can be added and managed here.
+                    </p>
+                @endif
             </div>
 
             <!-- Opportunities card (placeholder) -->
@@ -332,9 +377,12 @@
                         Cases
                     </p>
 
-                    <button type="button" class="text-xs font-semibold text-brandColor hover:underline">
+                    <a
+                        href="{{ route('admin.leads.create', ['organization_id' => $organization->id]) }}"
+                        class="text-xs font-semibold text-brandColor hover:underline"
+                    >
                         + New Case
-                    </button>
+                    </a>
                 </div>
 
                 <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -355,14 +403,6 @@
                     <p class="text-base font-semibold dark:text-white">
                         Files @if($filesCount) ({{ $filesCount }}) @endif
                     </p>
-
-                    <button
-                        type="button"
-                        class="text-xs font-semibold text-brandColor hover:underline"
-                        onclick="document.getElementById('organization-files-modal').classList.remove('hidden')"
-                    >
-                        Upload Files
-                    </button>
                 </div>
 
                 <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -532,7 +572,7 @@
             <button
                 type="button"
                 class="text-xs font-semibold text-brandColor hover:underline"
-                @click="openModal"
+                @click="emitOpen"
             >
                 Upload Files
             </button>
@@ -638,8 +678,21 @@
             },
 
             methods: {
+                emitOpen() {
+                    window.dispatchEvent(new Event('open-organization-files'));
+                },
+
                 openModal() {
-                    this.$refs.filesModal.open();
+                    if (this.$refs.filesModal && typeof this.$refs.filesModal.open === 'function') {
+                        this.$refs.filesModal.open();
+                        return;
+                    }
+
+                    this.$nextTick(() => {
+                        if (this.$refs.filesModal && typeof this.$refs.filesModal.open === 'function') {
+                            this.$refs.filesModal.open();
+                        }
+                    });
                 },
 
                 handleFilesChange(event) {
@@ -696,6 +749,14 @@
                         this.$refs.filesModal.close();
                     }
                 },
+            },
+            mounted() {
+                this._openFilesListener = () => this.openModal();
+                window.addEventListener('open-organization-files', this._openFilesListener);
+            },
+
+            beforeUnmount() {
+                window.removeEventListener('open-organization-files', this._openFilesListener);
             },
         });
     </script>

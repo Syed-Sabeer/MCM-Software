@@ -153,6 +153,12 @@ return [
                         'no-results'  => 'No result found...',
                     ],
                 ],
+
+                'task' => [
+                    'btn'      => 'Task',
+                    'title'    => 'Create Task',
+                    'save-btn' => 'Save Task',
+                ],
             ],
 
             'index' => [
