@@ -102,7 +102,14 @@ class ActivityController extends Controller
 
         Event::dispatch('activity.create.before');
 
-        $activity = $this->activityRepository->create(array_merge(request()->all(), [
+        $payload = request()->all();
+
+        if (empty($payload['entity_type']) && empty($payload['entity_id']) && ! empty($payload['organization_id'])) {
+            $payload['entity_type'] = 'organizations';
+            $payload['entity_id'] = $payload['organization_id'];
+        }
+
+        $activity = $this->activityRepository->create(array_merge($payload, [
             'is_done' => request('type') == 'note' ? 1 : 0,
             'user_id' => auth()->guard('user')->user()->id,
         ]));

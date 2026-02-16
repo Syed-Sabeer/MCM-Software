@@ -166,7 +166,7 @@
                                 <div class="w-full">
                                     <x-admin::attributes
                                         :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                            ['code', 'IN', ['expected_close_date', 'user_id']],
+                                            ['code', 'IN', ['expected_close_date']],
                                             'entity_type' => 'leads',
                                             'quick_add'   => 1
                                         ])"
@@ -181,6 +181,38 @@
                             </div>
 
                             {!! view_render_event('admin.leads.create.details.attributes.after') !!}
+
+                            <div class="mt-4 grid gap-4">
+                                @if (! empty($organization))
+                                    <x-admin::form.control-group>
+                                        <x-admin::form.control-group.label>
+                                            Organization Name
+                                        </x-admin::form.control-group.label>
+
+                                        <input
+                                            type="text"
+                                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                            value="{{ $organization->name }}"
+                                            disabled
+                                        />
+                                    </x-admin::form.control-group>
+                                @endif
+
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        Sales Owner
+                                    </x-admin::form.control-group.label>
+
+                                    <input
+                                        type="text"
+                                        class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                        value="{{ optional(auth()->user())->name }}"
+                                        disabled
+                                    />
+
+                                    <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+                                </x-admin::form.control-group>
+                            </div>
                         </div>
                     </div>
 

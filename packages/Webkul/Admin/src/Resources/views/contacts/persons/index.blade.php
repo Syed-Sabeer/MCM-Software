@@ -154,7 +154,7 @@
                                         </span>
                                     </label>
                                 </div>
-                                
+
                                 <!-- Mobile Sort Dropdown -->
                                 <div v-if="available.columns.some(column => column.sortable)">
                                     <x-admin::dropdown position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
@@ -167,12 +167,12 @@
                                                     <span>
                                                         Sort
                                                     </span>
-                    
+
                                                     <span class="icon-down-arrow text-2xl"></span>
                                                 </button>
                                             </div>
                                         </x-slot>
-                
+
                                         <x-slot:menu>
                                             <x-admin::dropdown.menu.item
                                                 v-for="column in available.columns.filter(column => column.sortable && column.visibility)"
@@ -234,11 +234,14 @@
                             </div>
 
                             <!-- Name -->
-                            <div class="flex items-center gap-1.5 dark:text-gray-300">
+                            <a
+                                class="flex items-center gap-1.5 text-brandColor hover:underline"
+                                :href="`/crm/admin/contacts/persons/view/${record.id}`"
+                            >
                                 <x-admin::avatar ::name="record.person_name" />
 
                                 @{{ record.person_name }}
-                            </div>
+                            </a>
 
                             <!-- Emails -->
                             <p class="flex items-center dark:text-gray-300">
@@ -251,9 +254,13 @@
                             </p>
 
                             <!-- Organization -->
-                            <p class="flex items-center dark:text-gray-300">
+                            <a
+                                class="flex items-center text-brandColor hover:underline"
+                                :href="record.organization_id ? `/crm/admin/contacts/organizations/view/${record.organization_id}` : '#'
+                                "
+                            >
                                 @{{ record.organization }}
-                            </p>
+                            </a>
 
                             <!-- Actions -->
                             <div class="flex items-center justify-end gap-x-4">
@@ -292,7 +299,7 @@
                                                 class="peer hidden"
                                                 v-model="applied.massActions.indices"
                                             >
-    
+
                                             <span class="icon-checkbox-outline peer-checked:icon-checkbox-select cursor-pointer rounded-md text-2xl text-gray-500 peer-checked:text-brandColor">
                                             </span>
                                         </label>

@@ -51,7 +51,7 @@
 
                 <x-admin::attributes
                     :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                        ['code', 'NOTIN', ['organization_id']],
+                        ['code', 'NOTIN', ['organization_id', 'name', 'emails', 'contact_numbers', 'job_title', 'user_id']],
                         'entity_type' => 'persons',
                     ])"
                     :custom-validations="[
@@ -66,7 +66,229 @@
                     :entity="$person"
                 />
 
-                <v-organization></v-organization>
+                <!-- ABOUT -->
+                <div class="mt-4">
+                    <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">ABOUT</p>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                Salutation
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="select"
+                                id="salutation"
+                                name="salutation"
+                                :value="old('salutation', $person->salutation)"
+                            >
+                                <option value="">Select</option>
+                                <option>Mr.</option>
+                                <option>Ms.</option>
+                                <option>Mrs.</option>
+                                <option>Dr.</option>
+                                <option>Prof.</option>
+                                <option>Mx.</option>
+                            </x-admin::form.control-group.control>
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label class="required">First Name</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="first_name"
+                                name="first_name"
+                                value="{{ old('first_name', $person->first_name) }}"
+                                rules="required|max:100"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label class="required">Last Name</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="last_name"
+                                name="last_name"
+                                value="{{ old('last_name', $person->last_name) }}"
+                                rules="required|max:100"
+                            />
+                        </x-admin::form.control-group>
+
+                        <v-organization></v-organization>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Title</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="title"
+                                name="title"
+                                value="{{ old('title', $person->title) }}"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group class="md:col-span-2">
+                            <x-admin::form.control-group.label>Description</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="textarea"
+                                id="description"
+                                name="description"
+                                :value="old('description', $person->description)"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Contact Owner</x-admin::form.control-group.label>
+
+                            <input
+                                type="text"
+                                class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                value="{{ optional($person->user)->name }}"
+                                disabled
+                            />
+
+                            <input type="hidden" name="user_id" value="{{ $person->user_id }}">
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Cell Phone</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="cell_phone"
+                                name="cell_phone"
+                                value="{{ old('cell_phone', $person->cell_phone) }}"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Direct</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="direct_phone"
+                                name="direct_phone"
+                                value="{{ old('direct_phone', $person->direct_phone) }}"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Email 2</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="email"
+                                id="email_secondary"
+                                name="email_secondary"
+                                value="{{ old('email_secondary', $person->email_secondary) }}"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Birth Date</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="date"
+                                id="birth_date"
+                                name="birth_date"
+                                value="{{ old('birth_date', optional($person->birth_date)->format('Y-m-d')) }}"
+                            />
+                        </x-admin::form.control-group>
+                    </div>
+                </div>
+
+                <!-- GET IN TOUCH -->
+                <div class="mt-4">
+                    <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">GET IN TOUCH</p>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Phone</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="phone"
+                                name="phone"
+                                value="{{ old('phone', $person->phone) }}"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Email</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="email"
+                                id="email"
+                                name="email"
+                                value="{{ old('email', $person->email) }}"
+                            />
+                        </x-admin::form.control-group>
+                    </div>
+                </div>
+
+                <!-- MAILING ADDRESS -->
+                <div class="mt-4">
+                    <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">MAILING ADDRESS</p>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <x-admin::form.control-group class="md:col-span-2">
+                            <x-admin::form.control-group.label>Mailing Street</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="mailing_street"
+                                name="mailing_street"
+                                value="{{ old('mailing_street', $person->mailing_street) }}"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Mailing City</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="mailing_city"
+                                name="mailing_city"
+                                value="{{ old('mailing_city', $person->mailing_city) }}"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Mailing State/Province</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="mailing_state"
+                                name="mailing_state"
+                                value="{{ old('mailing_state', $person->mailing_state) }}"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Mailing Zip/Postal Code</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="mailing_postcode"
+                                name="mailing_postcode"
+                                value="{{ old('mailing_postcode', $person->mailing_postcode) }}"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Mailing Country</x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="mailing_country"
+                                name="mailing_country"
+                                value="{{ old('mailing_country', $person->mailing_country) }}"
+                            />
+                        </x-admin::form.control-group>
+                    </div>
+                </div>
 
                 {!! view_render_event('admin.contacts.persons.edit.form_controls.after') !!}
             </div>

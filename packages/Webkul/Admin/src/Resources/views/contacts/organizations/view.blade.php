@@ -371,10 +371,21 @@
             </div>
 
             <!-- Cases card (placeholder) -->
+            @php
+                $casesQuery = \Webkul\Lead\Models\Lead::query()
+                    ->whereHas('person', function ($query) use ($organization) {
+                        $query->where('organization_id', $organization->id);
+                    })
+                    ->latest();
+
+                $casesCount = $casesQuery->count();
+                $recentCases = $casesQuery->take(3)->get();
+            @endphp
+
             <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex items-center justify-between">
                     <p class="text-base font-semibold dark:text-white">
-                        Cases
+                        Cases @if($casesCount) ({{ $casesCount }}) @endif
                     </p>
 
                     <a
@@ -388,14 +399,62 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400">
                     Track support cases and issues related to this company here.
                 </p>
+
+                @if ($casesCount)
+                    <div class="mt-2 text-xs text-gray-600 dark:text-gray-300">
+                        <p class="mb-1 font-semibold">
+                            Recently added cases
+                        </p>
+
+                        <ul class="flex flex-col gap-1">
+                            @foreach ($recentCases as $case)
+                                <li class="flex items-center justify-between gap-2">
+                                    <div class="flex flex-col">
+                                        <a
+                                            href="{{ route('admin.leads.view', $case->id) }}"
+                                            class="text-brandColor hover:underline"
+                                        >
+                                            {{ $case->title }}
+                                        </a>
+
+                                        @if ($case->person)
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400">
+                                                {{ $case->person->name ?? trim(($case->person->first_name ?? '') . ' ' . ($case->person->last_name ?? '')) }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+
+                    <div class="mt-2 text-center">
+                        <a
+                            href="{{ route('admin.leads.index', ['organization_id' => $organization->id]) }}"
+                            class="text-xs font-semibold text-brandColor hover:underline"
+                        >
+                            View All
+                        </a>
+                    </div>
+                @endif
             </div>
 
             <!-- Files card -->
             @php
-                $filesQuery  = $organization->files()->latest();
-                $filesCount  = $filesQuery->count();
-                $recentFiles = $filesQuery->take(3)->get();
-                $allFiles    = $filesCount > 3 ? $organization->files()->latest()->get() : $recentFiles;
+                $filesQuery = \Webkul\Activity\Models\Activity::query()
+                    ->where('type', 'file')
+                    ->where('entity_type', 'organizations')
+                    ->where('entity_id', $organization->id)
+                    ->with('files')
+                    ->latest();
+
+                $filesCount = $filesQuery->count();
+
+                $recentFiles = $filesQuery
+                    ->take(3)
+                    ->get()
+                    ->flatMap(fn ($activity) => $activity->files)
+                    ->take(3);
             @endphp
 
             <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
@@ -492,21 +551,15 @@
                                 <li class="flex items-center justify-between gap-2">
                                     <div class="flex flex-col">
                                         <a
-                                            href="{{ asset('storage/' . $file->path) }}"
+                                            href="{{ $file->url ?? asset('storage/' . $file->path) }}"
                                             target="_blank"
                                             class="text-brandColor hover:underline"
                                         >
-                                            {{ $file->title ?: $file->original_name }}
+                                            {{ $file->name ?? $file->original_name }}
                                         </a>
 
                                         <span class="text-[11px] text-gray-500 dark:text-gray-400">
                                             {{ core()->formatDate($file->created_at) }}
-                                            @if ($file->size)
-                                                • {{ number_format($file->size / 1024, 0) }}KB
-                                            @endif
-                                            @if ($file->mime_type)
-                                                • {{ $file->mime_type }}
-                                            @endif
                                         </span>
                                     </div>
                                 </li>
@@ -514,48 +567,14 @@
                         </ul>
                     </div>
 
-                    @if ($filesCount > 3)
-                        <div class="mt-2 text-center">
-                            <button
-                                type="button"
-                                class="text-xs font-semibold text-brandColor hover:underline"
-                                onclick="document.getElementById('organization-files-all').classList.remove('hidden'); this.classList.add('hidden');"
-                            >
-                                View All
-                            </button>
-                        </div>
-
-                        <div
-                            id="organization-files-all"
-                            class="mt-2 hidden text-xs text-gray-600 dark:text-gray-300"
+                    <div class="mt-2 text-center">
+                        <a
+                            href="{{ route('admin.activities.index', ['entity_type' => 'organizations', 'entity_id' => $organization->id]) }}"
+                            class="text-xs font-semibold text-brandColor hover:underline"
                         >
-                            <ul class="flex flex-col gap-1">
-                                @foreach ($allFiles as $file)
-                                    <li class="flex items-center justify-between gap-2">
-                                        <div class="flex flex-col">
-                                            <a
-                                                href="{{ asset('storage/' . $file->path) }}"
-                                                target="_blank"
-                                                class="text-brandColor hover:underline"
-                                            >
-                                                {{ $file->title ?: $file->original_name }}
-                                            </a>
-
-                                            <span class="text-[11px] text-gray-500 dark:text-gray-400">
-                                                {{ core()->formatDate($file->created_at) }}
-                                                @if ($file->size)
-                                                    • {{ number_format($file->size / 1024, 0) }}KB
-                                                @endif
-                                                @if ($file->mime_type)
-                                                    • {{ $file->mime_type }}
-                                                @endif
-                                            </span>
-                                        </div>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
+                            View All
+                        </a>
+                    </div>
                 @else
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         No files uploaded yet.

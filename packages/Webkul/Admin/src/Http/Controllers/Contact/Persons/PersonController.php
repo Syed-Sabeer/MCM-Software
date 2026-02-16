@@ -72,7 +72,24 @@ class PersonController extends Controller
             ]);
         }
 
-        session()->flash('success', trans('admin::app.contacts.persons.index.create-success'));
+        $successMessage = trans('admin::app.contacts.persons.index.create-success');
+        $organizationId = $request->input('organization_id');
+
+        if ($request->input('save_action') === 'new') {
+            return redirect()
+                ->route('admin.contacts.persons.create', array_filter([
+                    'organization_id' => $organizationId,
+                ]))
+                ->with('success', $successMessage);
+        }
+
+        if ($organizationId) {
+            return redirect()
+                ->route('admin.contacts.organizations.view', $organizationId)
+                ->with('success', $successMessage);
+        }
+
+        session()->flash('success', $successMessage);
 
         return redirect()->route('admin.contacts.persons.index');
     }

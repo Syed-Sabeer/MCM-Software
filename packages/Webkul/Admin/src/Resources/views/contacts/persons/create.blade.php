@@ -31,12 +31,23 @@
                     <div class="flex items-center gap-x-2.5">
                         {!! view_render_event('admin.persons.create.create_button.before') !!}
 
+                        <input type="hidden" name="save_action" id="save_action" value="">
+
                         <!-- Create button for Person -->
                         <button
                             type="submit"
                             class="primary-button"
+                            onclick="document.getElementById('save_action').value = 'save'"
                         >
                             @lang('admin::app.contacts.persons.create.save-btn')
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="secondary-button"
+                            onclick="document.getElementById('save_action').value = 'new'"
+                        >
+                            Save &amp; Create New
                         </button>
 
                         {!! view_render_event('admin.persons.create.create_button.after') !!}
@@ -144,9 +155,10 @@
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>Contact Owner</x-admin::form.control-group.label>
 
-                            <x-admin::form.control-group.control
+                            <input
                                 type="text"
-                                :value="'{{ optional(auth()->user())->name }}'"
+                                class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                value="{{ optional(auth()->user())->name }}"
                                 disabled
                             />
 
@@ -310,9 +322,10 @@
                             @lang('admin::app.contacts.persons.create.organization')
                         </x-admin::form.control-group.label>
 
-                        <x-admin::form.control-group.control
+                        <input
                             type="text"
-                            :value="'{{ $organization->name }}'"
+                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                            value="{{ $organization->name }}"
                             disabled
                         />
                     </x-admin::form.control-group>
@@ -328,17 +341,23 @@
                         ])"
                     />
 
-                    <template v-if="organizationName">
+                    <template v-if="organizationNameLabel">
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>
                                 @lang('admin::app.contacts.persons.create.organization')
                             </x-admin::form.control-group.label>
 
-                            <x-admin::form.control-group.control
+                            <input
                                 type="text"
-                                name="organization_name"
-                                v-model="organizationName"
+                                class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                :value="organizationNameLabel"
                                 disabled
+                            />
+
+                            <input
+                                type="hidden"
+                                name="organization_name"
+                                :value="organizationNameLabel"
                             />
                         </x-admin::form.control-group>
                     </template>
@@ -356,9 +375,28 @@
                     };
                 },
 
+                computed: {
+                    organizationNameLabel() {
+                        if (typeof this.organizationName === 'string') {
+                            return this.organizationName;
+                        }
+
+                        if (this.organizationName && typeof this.organizationName.name === 'string') {
+                            return this.organizationName.name;
+                        }
+
+                        return '';
+                    },
+                },
+
                 methods: {
                     handleLookupAdded(event) {
-                        this.organizationName = event?.name || null;
+                        if (typeof event === 'string') {
+                            this.organizationName = event;
+                            return;
+                        }
+
+                        this.organizationName = event?.name || event?.label || null;
                     },
                 },
             });

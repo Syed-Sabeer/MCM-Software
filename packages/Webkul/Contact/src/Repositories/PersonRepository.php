@@ -165,10 +165,13 @@ class PersonRepository extends Repository
             $data['organization_id'] = null;
         }
 
+        $emailValue = $data['emails'][0]['value'] ?? null;
+        $contactValue = $data['contact_numbers'][0]['value'] ?? null;
+
         $uniqueIdParts = array_filter([
             $data['user_id'] ?? null,
             $data['organization_id'] ?? null,
-            $data['emails'][0]['value'] ?? null,
+            $emailValue,
         ]);
 
         $data['unique_id'] = implode('|', $uniqueIdParts);
@@ -176,7 +179,14 @@ class PersonRepository extends Repository
         if (isset($data['contact_numbers'])) {
             $data['contact_numbers'] = collect($data['contact_numbers'])->filter(fn ($number) => ! is_null($number['value']))->toArray();
 
-            $data['unique_id'] .= '|'.$data['contact_numbers'][0]['value'];
+            if (! empty($contactValue)) {
+                $data['unique_id'] .= '|'.$contactValue;
+            }
+        }
+
+        // Avoid collisions when we only have user/org without email/phone.
+        if (empty($emailValue) && empty($contactValue)) {
+            $data['unique_id'] = null;
         }
 
         return $data;

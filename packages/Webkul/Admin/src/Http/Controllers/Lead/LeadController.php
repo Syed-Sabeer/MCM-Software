@@ -147,7 +147,13 @@ class LeadController extends Controller
      */
     public function create(): View
     {
-        return view('admin::leads.create');
+        $organization = null;
+
+        if ($organizationId = request()->integer('organization_id')) {
+            $organization = app(\Webkul\Contact\Repositories\OrganizationRepository::class)->find($organizationId);
+        }
+
+        return view('admin::leads.create', compact('organization'));
     }
 
     /**

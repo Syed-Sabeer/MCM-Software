@@ -24,9 +24,15 @@ class PersonDataGrid extends DataGrid
         $queryBuilder = DB::table('persons')
             ->addSelect(
                 'persons.id',
-                'persons.name as person_name',
+                DB::raw("NULLIF(TRIM(CONCAT_WS(' ', persons.first_name, persons.last_name)), '') as person_name"),
+                'persons.name as legacy_name',
                 'persons.emails',
                 'persons.contact_numbers',
+                'persons.email',
+                'persons.email_secondary',
+                'persons.phone',
+                'persons.cell_phone',
+                'persons.direct_phone',
                 'organizations.name as organization',
                 'organizations.id as organization_id'
             )
@@ -64,6 +70,13 @@ class PersonDataGrid extends DataGrid
             'sortable'   => true,
             'filterable' => true,
             'searchable' => true,
+            'closure'    => function ($row) {
+                if (! empty($row->person_name)) {
+                    return $row->person_name;
+                }
+
+                return $row->legacy_name ?? '';
+            },
         ]);
 
         $this->addColumn([
@@ -73,7 +86,17 @@ class PersonDataGrid extends DataGrid
             'sortable'   => false,
             'filterable' => true,
             'searchable' => true,
-            'closure'    => fn ($row) => collect(json_decode($row->emails, true) ?? [])->pluck('value')->join(', '),
+            'closure'    => function ($row) {
+                if (! empty($row->email_secondary)) {
+                    return $row->email_secondary;
+                }
+
+                if (! empty($row->email)) {
+                    return $row->email;
+                }
+
+                return collect(json_decode($row->emails, true) ?? [])->pluck('value')->first() ?? '';
+            },
         ]);
 
         $this->addColumn([
@@ -83,7 +106,13 @@ class PersonDataGrid extends DataGrid
             'sortable'   => true,
             'filterable' => true,
             'searchable' => true,
-            'closure'    => fn ($row) => collect(json_decode($row->contact_numbers, true) ?? [])->pluck('value')->join(', '),
+            'closure'    => function ($row) {
+                if (! empty($row->cell_phone)) {
+                    return $row->cell_phone;
+                }
+
+                return collect(json_decode($row->contact_numbers, true) ?? [])->pluck('value')->first() ?? '';
+            },
         ]);
 
         $this->addColumn([
