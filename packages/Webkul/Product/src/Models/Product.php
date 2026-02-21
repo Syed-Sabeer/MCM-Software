@@ -3,6 +3,7 @@
 namespace Webkul\Product\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Activity\Models\ActivityProxy;
@@ -28,7 +29,53 @@ class Product extends Model implements ProductContract
         'description',
         'quantity',
         'price',
+        'category_id',
+        'style',
+        'size',
+        'cover_image',
+        'additional_info',
+        'shipping_info',
     ];
+
+    /**
+     * Get the category that owns the product.
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ProductCategory::class, 'category_id');
+    }
+
+    /**
+     * Get the product other images.
+     */
+    public function otherImages(): HasMany
+    {
+        return $this->hasMany(ProductOtherImage::class, 'product_id')->orderBy('sort_order');
+    }
+
+    /**
+     * Get the product colors.
+     */
+    public function colors(): HasMany
+    {
+        return $this->hasMany(ProductColor::class, 'product_id')->orderBy('sort_order');
+    }
+
+    /**
+     * Get the product key points (key_heading + key_point pairs).
+     */
+    public function keyPoints(): HasMany
+    {
+        return $this->hasMany(ProductKeyPoint::class, 'product_id')->orderBy('sort_order');
+    }
+
+    /**
+     * Get the product pricing charts (each with heading, type, and tiers).
+     */
+    public function pricingCharts(): HasMany
+    {
+        return $this->hasMany(ProductPricingChart::class, 'product_id')->orderBy('sort_order');
+    }
 
     /**
      * Get the product warehouses that owns the product.

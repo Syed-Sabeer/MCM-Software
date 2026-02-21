@@ -55,6 +55,7 @@ class LeadDataGrid extends DataGrid
                 'leads.status',
                 'leads.lead_value',
                 'leads.expected_close_date',
+                'leads.organization_id',
                 'lead_sources.name as lead_source_name',
                 'lead_types.name as lead_type_name',
                 'leads.created_at',
@@ -88,6 +89,15 @@ class LeadDataGrid extends DataGrid
             $queryBuilder->havingRaw($tablePrefix.'rotten_lead = '.request()->input('rotten_lead.in'));
         }
 
+        if (request('organization_id')) {
+            $queryBuilder->where(function ($query) {
+                $query->where('leads.organization_id', request('organization_id'))
+                    ->orWhereHas('persons', function ($personQuery) {
+                        $personQuery->where('organization_id', request('organization_id'));
+                    });
+            });
+        }
+
         $this->addFilter('id', 'leads.id');
         $this->addFilter('user', 'leads.user_id');
         $this->addFilter('sales_person', 'users.name');
@@ -99,6 +109,7 @@ class LeadDataGrid extends DataGrid
         $this->addFilter('tag_name', 'tags.name');
         $this->addFilter('expected_close_date', 'leads.expected_close_date');
         $this->addFilter('created_at', 'leads.created_at');
+        $this->addFilter('organization_id', 'leads.organization_id');
         $this->addFilter('rotten_lead', DB::raw('DATEDIFF(NOW(), '.$tablePrefix.'leads.created_at) >= '.$tablePrefix.'lead_pipelines.rotten_days'));
 
         return $queryBuilder;

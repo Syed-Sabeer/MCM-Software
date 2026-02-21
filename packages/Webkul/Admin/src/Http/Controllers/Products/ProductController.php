@@ -3,8 +3,10 @@
 namespace Webkul\Admin\Http\Controllers\Products;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Product\ProductDataGrid;
@@ -12,6 +14,7 @@ use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\ProductResource;
+use Webkul\Product\Models\ProductCategory;
 use Webkul\Product\Repositories\ProductRepository;
 
 class ProductController extends Controller
@@ -43,19 +46,25 @@ class ProductController extends Controller
      */
     public function create(): View
     {
-        return view('admin::products.create');
+        $categories = ProductCategory::orderBy('name')->get();
+
+        return view('admin::products.create', compact('categories'));
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(AttributeForm $request)
+    public function store(AttributeForm $request): RedirectResponse
     {
+        $this->validateProductFields($request, false);
+
         Event::dispatch('product.create.before');
 
-        $product = $this->productRepository->create($request->all());
+        $data = $this->prepareProductData($request->all(), null);
+
+        $product = $this->productRepository->create($data);
 
         Event::dispatch('product.create.after', $product);
 
@@ -69,7 +78,7 @@ class ProductController extends Controller
      */
     public function view(int $id): View
     {
-        $product = $this->productRepository->findOrFail($id);
+        $product = $this->productRepository->with(['category', 'otherImages', 'colors', 'keyPoints', 'pricingCharts.tiers'])->findOrFail($id);
 
         return view('admin::products.view', compact('product'));
     }
@@ -79,7 +88,7 @@ class ProductController extends Controller
      */
     public function edit(int $id): View|JsonResponse
     {
-        $product = $this->productRepository->findOrFail($id);
+        $product = $this->productRepository->with(['category', 'otherImages', 'colors', 'keyPoints', 'pricingCharts.tiers'])->findOrFail($id);
 
         $inventories = $product->inventories()
             ->with('location')
@@ -95,17 +104,25 @@ class ProductController extends Controller
                 ];
             });
 
-        return view('admin::products.edit', compact('product', 'inventories'));
+        $categories = ProductCategory::orderBy('name')->get();
+
+        return view('admin::products.edit', compact('product', 'inventories', 'categories'));
     }
 
     /**
      * Update the specified resource in storage.
+     *
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
-    public function update(AttributeForm $request, int $id)
+    public function update(AttributeForm $request, int $id): JsonResponse|RedirectResponse
     {
+        $this->validateProductFields($request, true);
+
         Event::dispatch('product.update.before', $id);
 
-        $product = $this->productRepository->update($request->all(), $id);
+        $data = $this->prepareProductData($request->all(), $id);
+
+        $product = $this->productRepository->update($data, $id);
 
         Event::dispatch('product.update.after', $product);
 
@@ -212,5 +229,113 @@ class ProductController extends Controller
         return new JsonResponse([
             'message' => trans('admin::app.products.index.delete-success'),
         ]);
+    }
+
+    /**
+     * Validate product-specific fields (name, category, style, size, images, colors).
+     */
+    protected function validateProductFields($request, bool $isUpdate): void
+    {
+        $rules = [
+            'name'           => ['required', 'string', 'max:255'],
+            'category_id'    => ['nullable', 'exists:product_categories,id'],
+            'style'          => ['nullable', 'string', 'max:255'],
+            'size'           => ['nullable', 'string', 'max:100'],
+            'cover_image'    => [$isUpdate ? 'nullable' : 'nullable', 'image', 'max:5120'],
+            'other_images'   => ['nullable', 'array'],
+            'other_images.*' => ['nullable', 'image', 'max:5120'],
+            'additional_info' => ['nullable', 'string'],
+            'shipping_info'  => ['nullable', 'string'],
+            'colors'         => ['nullable', 'array'],
+            'colors.*.name'  => ['nullable', 'string', 'max:100'],
+            'colors.*.color_code' => ['nullable', 'string', 'max:20'],
+            'key_points'     => ['nullable', 'array'],
+            'key_points.*.key_heading' => ['nullable', 'string', 'max:255'],
+            'key_points.*.key_point'   => ['nullable', 'string'],
+            'pricing_charts' => ['nullable', 'array'],
+            'pricing_charts.*.heading' => ['nullable', 'string', 'max:255'],
+            'pricing_charts.*.type'    => ['nullable', 'string', 'max:100'],
+            'pricing_charts.*.tiers'   => ['nullable', 'array'],
+            'pricing_charts.*.tiers.*.quantity' => ['nullable', 'numeric', 'min:0'],
+            'pricing_charts.*.tiers.*.price'    => ['nullable', 'numeric', 'min:0'],
+        ];
+
+        $request->validate($rules);
+    }
+
+    /**
+     * Prepare product data: upload files and build other_images/colors arrays.
+     *
+     * @param  array  $data
+     * @param  int|null  $productId
+     * @return array
+     */
+    protected function prepareProductData(array $data, ?int $productId): array
+    {
+        if ($data['name'] ?? null) {
+            $data['name'] = $data['name'];
+        }
+
+        if (request()->hasFile('cover_image')) {
+            $path = request()->file('cover_image')->store('product-images', 'public');
+            $data['cover_image'] = $path;
+        }
+
+        $otherImages = [];
+        if (request()->hasFile('other_images')) {
+            foreach (request()->file('other_images') as $file) {
+                if ($file->isValid()) {
+                    $path = $file->store('product-other-images', 'public');
+                    $otherImages[] = ['path' => $path, 'original_name' => $file->getClientOriginalName()];
+                }
+            }
+        }
+        $data['other_images'] = $otherImages;
+
+        $colors = [];
+        foreach ($data['colors'] ?? [] as $c) {
+            if (is_array($c) && (isset($c['name']) || isset($c['color_code']))) {
+                $colors[] = [
+                    'name'       => $c['name'] ?? '',
+                    'color_code' => $c['color_code'] ?? '#000000',
+                ];
+            }
+        }
+        $data['colors'] = $colors;
+
+        $keyPoints = [];
+        foreach ($data['key_points'] ?? [] as $kp) {
+            if (is_array($kp) && (isset($kp['key_heading']) || isset($kp['key_point']))) {
+                $keyPoints[] = [
+                    'key_heading' => $kp['key_heading'] ?? '',
+                    'key_point'   => $kp['key_point'] ?? '',
+                ];
+            }
+        }
+        $data['key_points'] = $keyPoints;
+
+        $pricingCharts = [];
+        foreach ($data['pricing_charts'] ?? [] as $chart) {
+            if (! is_array($chart)) {
+                continue;
+            }
+            $tiers = [];
+            foreach ($chart['tiers'] ?? [] as $tier) {
+                if (is_array($tier) && (isset($tier['quantity']) || isset($tier['price']))) {
+                    $tiers[] = [
+                        'quantity' => $tier['quantity'] ?? 0,
+                        'price'    => $tier['price'] ?? 0,
+                    ];
+                }
+            }
+            $pricingCharts[] = [
+                'heading' => $chart['heading'] ?? '',
+                'type'    => $chart['type'] ?? '',
+                'tiers'   => $tiers,
+            ];
+        }
+        $data['pricing_charts'] = $pricingCharts;
+
+        return $data;
     }
 }

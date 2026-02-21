@@ -2,10 +2,20 @@
 
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Products\ActivityController;
+use Webkul\Admin\Http\Controllers\Products\ProductCategoryController;
 use Webkul\Admin\Http\Controllers\Products\ProductController;
 use Webkul\Admin\Http\Controllers\Products\TagController;
 
 Route::group(['middleware' => ['user']], function () {
+    Route::controller(ProductCategoryController::class)->prefix('product-categories')->name('admin.product_categories.')->group(function () {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::post('create', 'store')->name('store');
+        Route::get('edit/{id}', 'edit')->name('edit');
+        Route::put('edit/{id}', 'update')->name('update');
+        Route::delete('{id}', 'destroy')->name('destroy');
+    });
+
     Route::controller(ProductController::class)->prefix('products')->group(function () {
         Route::get('', 'index')->name('admin.products.index');
 

@@ -1,6 +1,6 @@
 {!! view_render_event('admin.leads.create.contact_person.form_controls.before') !!}
 
-<v-contact-component :data="person" :prefill-organization-id="prefillOrganizationId || null"></v-contact-component>
+<v-contact-component :prefill-organization-id="prefillOrganizationId || null"></v-contact-component>
 
 {!! view_render_event('admin.leads.create.contact_person.form_controls.after') !!}
 
@@ -9,153 +9,182 @@
         type="text/x-template"
         id="v-contact-component-template"
     >
-        <!-- Person Search Lookup -->
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.label class="required">
-                @lang('admin::app.leads.common.contact.name')
-            </x-admin::form.control-group.label>
+        <div class="flex flex-col gap-3">
+            <div id="contacts-container" class="flex flex-col gap-3">
+                <div v-for="(contact, index) in contacts" :key="index" class="contact-row flex gap-2 items-start">
+                    <!-- Contact Name -->
+                    <div class="flex-1">
+                        <input
+                            type="text"
+                            v-model="contact.searchQuery"
+                            @input="searchPersons(index)"
+                            @focus="showSearchResults(index)"
+                            placeholder="Search Contact Name"
+                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                        />
 
-            <x-admin::lookup
-                ::src="src"
-                name="person[id]"
-                ::params="params"
-                ::rules="nameValidationRule"
-                :label="trans('admin::app.leads.common.contact.name')"
-                ::value="{id: person.id, name: person.name}"
-                :placeholder="trans('admin::app.leads.common.contact.name')"
-                @on-selected="addPerson"
-                :can-add-new="true"
-            />
+                        <div v-if="contact.showResults && contact.searchResults.length > 0" class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                            <div
+                                v-for="person in contact.searchResults"
+                                :key="person.id"
+                                @click="selectContact(index, person)"
+                                class="cursor-pointer px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            >
+                                <div class="text-sm font-medium dark:text-white">@{{ person.name }}</div>
+                                <div v-if="person.organization" class="text-xs text-gray-500">@{{ person.organization.name }}</div>
+                            </div>
+                        </div>
 
-            <x-admin::form.control-group.control
-                type="hidden"
-                name="person[name]"
-                v-model="person.name"
-                v-if="person.name"
-            />
+                        <input type="hidden" :name="`person[${index}][id]`" :value="contact.id" />
+                        <input type="hidden" :name="`person[${index}][name]`" :value="contact.name" />
+                    </div>
 
-            <x-admin::form.control-group.error control-name="person[id]" />
-        </x-admin::form.control-group>
+                    <!-- Organization (auto-filled) -->
+                    <div class="flex-1">
+                        <input
+                            type="text"
+                            :value="contact.organization_name"
+                            placeholder="Organization"
+                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                            disabled
+                        />
+                    </div>
 
-        {{-- <!-- Person Email --> --}}
-        {{-- <x-admin::form.control-group>
-            <x-admin::form.control-group.label class="required">
-                @lang('admin::app.leads.common.contact.email')
-            </x-admin::form.control-group.label>
+                    <!-- Remove Button -->
+                    <button
+                        v-if="contacts.length > 1"
+                        type="button"
+                        @click="removeContact(index)"
+                        class="secondary-button mt-1"
+                    >
+                        &times;
+                    </button>
+                </div>
+            </div>
 
-            <x-admin::attributes.edit.email />
-
-            <v-email-component
-                :attribute="{'id': person?.id, 'code': 'person[emails]', 'name': 'Email'}"
-                validations="required"
-                :value="person.emails"
-                :is-disabled="person?.id ? true : false"
-            ></v-email-component>
-        </x-admin::form.control-group> --}}
-
-        {{-- <!-- Person Contact Numbers --> --}}
-        {{-- <x-admin::form.control-group>
-            <x-admin::form.control-group.label>
-                @lang('admin::app.leads.common.contact.contact-number')
-            </x-admin::form.control-group.label>
-
-            <x-admin::attributes.edit.phone />
-
-            <v-phone-component
-                :attribute="{'id': person?.id, 'code': 'person[contact_numbers]', 'name': 'Contact Numbers'}"
-                :value="person.contact_numbers"
-                :is-disabled="person?.id ? true : false"
-            ></v-phone-component>
-        </x-admin::form.control-group> --}}
-
-        <!-- Person Organization -->
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.label>
-                @lang('admin::app.leads.common.contact.organization')
-            </x-admin::form.control-group.label>
-
-            @php
-                $organizationAttribute = app('Webkul\Attribute\Repositories\AttributeRepository')->findOneWhere([
-                    'entity_type' => 'persons',
-                    'code'        => 'organization_id'
-                ]);
-
-                $organizationAttribute->code = 'person[' . $organizationAttribute->code . ']';
-            @endphp
-
-            <x-admin::attributes.edit.lookup />
-
-            <v-lookup-component
-                :key="person.organization?.id"
-                :attribute='@json($organizationAttribute)'
-                :value="person.organization"
-                :is-disabled="person?.id || isPrefilled ? true : false"
-                can-add-new="true"
-            ></v-lookup-component>
-        </x-admin::form.control-group>
+            <!-- Add New Contact Button -->
+            <button
+                type="button"
+                @click="addContact"
+                class="text-xs font-semibold text-brandColor hover:underline w-fit"
+            >
+                + Add Another Contact
+            </button>
+        </div>
     </script>
 
     <script type="module">
         app.component('v-contact-component', {
             template: '#v-contact-component-template',
 
-            props: ['data', 'prefillOrganizationId'],
+            props: ['prefillOrganizationId'],
 
-            data () {
+            data() {
                 return {
-                    is_searching: false,
-
-                    person: this.data ? this.data : {
-                        'name': ''
-                    },
-
-                    persons: [],
-
-                    isPrefilled: false,
+                    contacts: [
+                        {
+                            id: null,
+                            name: '',
+                            searchQuery: '',
+                            organization_name: '',
+                            organization_id: null,
+                            searchResults: [],
+                            showResults: false
+                        }
+                    ],
                 }
             },
 
             mounted() {
-                // If organization is passed, fetch it and prefill
                 if (this.prefillOrganizationId) {
                     this.fetchOrganization(this.prefillOrganizationId);
-                    this.isPrefilled = true;
                 }
+
+                // Close search results when clicking outside
+                document.addEventListener('click', this.handleClickOutside);
             },
 
-            computed: {
-                src() {
-                    return "{{ route('admin.contacts.persons.search') }}";
+            beforeUnmount() {
+                document.removeEventListener('click', this.handleClickOutside);
+            },
+
+            methods: {
+                addContact() {
+                    this.contacts.push({
+                        id: null,
+                        name: '',
+                        searchQuery: '',
+                        organization_name: '',
+                        organization_id: null,
+                        searchResults: [],
+                        showResults: false
+                    });
                 },
 
-                params() {
-                    // If organization is prefilled, filter persons by that organization
+                removeContact(index) {
+                    this.contacts.splice(index, 1);
+                },
+
+                showSearchResults(index) {
+                    this.contacts[index].showResults = true;
+                },
+
+                handleClickOutside(event) {
+                    if (!event.target.closest('.contact-row')) {
+                        this.contacts.forEach(contact => {
+                            contact.showResults = false;
+                        });
+                    }
+                },
+
+                searchPersons(index) {
+                    const query = this.contacts[index].searchQuery;
+
+                    if (query.length < 2) {
+                        this.contacts[index].searchResults = [];
+                        return;
+                    }
+
                     const params = {
-                        query: this.person['name']
+                        query: query
                     };
 
                     if (this.prefillOrganizationId) {
                         params.organization_id = this.prefillOrganizationId;
                     }
 
-                    return { params };
+                    this.$axios.get("{{ route('admin.contacts.persons.search') }}", { params })
+                        .then(response => {
+                            this.contacts[index].searchResults = response.data.data || response.data;
+                            this.contacts[index].showResults = true;
+                        })
+                        .catch(error => {
+                            console.error('Failed to search persons:', error);
+                        });
                 },
 
-                nameValidationRule() {
-                    return this.person.name ? '' : 'required';
-                }
-            },
+                selectContact(index, person) {
+                    this.contacts[index].id = person.id;
+                    this.contacts[index].name = person.name;
+                    this.contacts[index].searchQuery = person.name;
+                    this.contacts[index].showResults = false;
 
-            methods: {
-                addPerson (person) {
-                    this.person = person;
+                    // Auto-populate organization from person if they have one
+                    if (person.organization) {
+                        this.contacts[index].organization_name = person.organization.name;
+                        this.contacts[index].organization_id = person.organization.id;
+                    } else if (this.prefillOrganizationId && index === 0) {
+                        this.fetchOrganization(this.prefillOrganizationId);
+                    }
                 },
 
                 fetchOrganization(organizationId) {
-                    // Fetch organization data
                     this.$axios.get(`/api/organizations/${organizationId}`)
                         .then(response => {
-                            this.person.organization = response.data.data;
+                            if (this.contacts[0] && !this.contacts[0].organization_name) {
+                                this.contacts[0].organization_name = response.data.data.name;
+                                this.contacts[0].organization_id = response.data.data.id;
+                            }
                         })
                         .catch(error => {
                             console.error('Failed to fetch organization:', error);

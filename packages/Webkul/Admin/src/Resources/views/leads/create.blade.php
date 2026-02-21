@@ -110,128 +110,118 @@
                 </div>
 
                 <div class="flex flex-col gap-4 px-4 py-2">
-                    {!! view_render_event('admin.leads.create.details.before') !!}
+                    {!! view_render_event('admin.leads.create.case-information.before') !!}
 
-                    <!-- Details section -->
+                    <!-- Case Information Section -->
                     <div
                         class="flex flex-col gap-4"
-                        id="lead-details"
+                        id="case-information"
                     >
-                        <div class="flex flex-col gap-1">
+                        <div class="flex flex-col gap-1 mb-2">
                             <p class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.leads.create.details')
-                            </p>
-
-                            <p class="text-gray-600 dark:text-white">
-                                @lang('admin::app.leads.create.details-info')
+                                Case Information
                             </p>
                         </div>
 
-                        <div class="w-1/2 max-md:w-full">
-                            {!! view_render_event('admin.leads.create.details.attributes.before') !!}
+                        <div class="w-1/2 max-md:w-full grid gap-4">
+                            {!! view_render_event('admin.leads.create.case-information.attributes.before') !!}
 
-                            <!-- Lead Details Title and Description -->
+                            <!-- Status (Pipeline Stage) -->
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label class="required">
+                                    Status
+                                </x-admin::form.control-group.label>
+
+                                <select
+                                    name="lead_pipeline_stage_id"
+                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                    required
+                                >
+                                    <option value="">Select Status</option>
+                                    @foreach ($pipeline->stages as $stage)
+                                        <option value="{{ $stage->id }}" @if(request('stage_id') == $stage->id) selected @endif>
+                                            {{ $stage->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <x-admin::form.control-group.error control-name="lead_pipeline_stage_id" />
+                            </x-admin::form.control-group>
+
+                            <!-- Case Origin (Source) -->
                             <x-admin::attributes
                                 :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                    ['code', 'NOTIN', ['lead_value', 'lead_type_id', 'lead_source_id', 'expected_close_date', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id']],
+                                    ['code', 'IN', ['lead_source_id']],
                                     'entity_type' => 'leads',
                                     'quick_add'   => 1
                                 ])"
-                                :custom-validations="[
-                                    'expected_close_date' => [
-                                        'date_format:yyyy-MM-dd',
-                                        'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
-                                    ],
-                                ]"
                             />
 
-                            <!-- Lead Details Other input fields -->
-                            <div class="flex gap-4 max-sm:flex-wrap">
-                                <div class="w-full">
-                                    <x-admin::attributes
-                                        :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                            ['code', 'IN', ['lead_value', 'lead_type_id', 'lead_source_id']],
-                                            'entity_type' => 'leads',
-                                            'quick_add'   => 1
-                                        ])"
-                                        :custom-validations="[
-                                            'expected_close_date' => [
-                                                'date_format:yyyy-MM-dd',
-                                                'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
-                                            ],
-                                        ]"
-                                    />
-                                </div>
+                            <!-- Priority -->
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Priority
+                                </x-admin::form.control-group.label>
 
-                                <div class="w-full">
-                                    <x-admin::attributes
-                                        :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                            ['code', 'IN', ['expected_close_date']],
-                                            'entity_type' => 'leads',
-                                            'quick_add'   => 1
-                                        ])"
-                                        :custom-validations="[
-                                            'expected_close_date' => [
-                                                'date_format:yyyy-MM-dd',
-                                                'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
-                                            ],
-                                        ]"
-                                    />
-                                </div>
-                            </div>
+                                <select
+                                    name="priority"
+                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                >
+                                    <option value="">Select Priority</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </x-admin::form.control-group>
 
-                            {!! view_render_event('admin.leads.create.details.attributes.after') !!}
+                            <!-- Case Owner -->
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Case Owner
+                                </x-admin::form.control-group.label>
 
-                            <div class="mt-4 grid gap-4">
-                                @if (! empty($organization))
-                                    <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label>
-                                            Organization Name
-                                        </x-admin::form.control-group.label>
+                                <input
+                                    type="text"
+                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                    value="{{ optional(auth()->user())->name }}"
+                                    disabled
+                                />
 
-                                        <input
-                                            type="text"
-                                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                            value="{{ $organization->name }}"
-                                            disabled
-                                        />
-                                    </x-admin::form.control-group>
-                                @endif
+                                <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+                            </x-admin::form.control-group>
 
+                            @if (! empty($organization))
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label>
-                                        Sales Owner
+                                        Organization
                                     </x-admin::form.control-group.label>
 
                                     <input
                                         type="text"
                                         class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                        value="{{ optional(auth()->user())->name }}"
+                                        value="{{ $organization->name }}"
                                         disabled
                                     />
-
-                                    <input type="hidden" name="user_id" value="{{ auth()->id() }}">
                                 </x-admin::form.control-group>
-                            </div>
+                            @endif
+
+                            {!! view_render_event('admin.leads.create.case-information.attributes.after') !!}
                         </div>
                     </div>
 
-                    {!! view_render_event('admin.leads.create.details.after') !!}
+                    {!! view_render_event('admin.leads.create.case-information.after') !!}
 
-                    {!! view_render_event('admin.leads.create.contact_person.before') !!}
+                    {!! view_render_event('admin.leads.create.contact-information.before') !!}
 
-                    <!-- Contact Person -->
+                    <!-- Contact Information Section -->
                     <div
                         class="flex flex-col gap-4"
-                        id="contact-person"
+                        id="contact-information"
                     >
-                        <div class="flex flex-col gap-1">
+                        <div class="flex flex-col gap-1 mb-2">
                             <p class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.leads.create.contact-person')
-                            </p>
-
-                            <p class="text-gray-600 dark:text-white">
-                                @lang('admin::app.leads.create.contact-info')
+                                Contact Information
                             </p>
                         </div>
 
@@ -241,7 +231,64 @@
                         </div>
                     </div>
 
-                    {!! view_render_event('admin.leads.create.contact_person.after') !!}
+                    {!! view_render_event('admin.leads.create.contact-information.after') !!}
+
+                    {!! view_render_event('admin.leads.create.description-information.before') !!}
+
+                    <!-- Description Information Section -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="description-information"
+                    >
+                        <div class="flex flex-col gap-1 mb-2">
+                            <p class="text-base font-semibold dark:text-white">
+                                Description Information
+                            </p>
+                        </div>
+
+                        <div class="w-1/2 max-md:w-full grid gap-4">
+                            {!! view_render_event('admin.leads.create.description-information.attributes.before') !!}
+
+                            <!-- Subject (Title) -->
+                            <x-admin::attributes
+                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
+                                    ['code', 'IN', ['title']],
+                                    'entity_type' => 'leads',
+                                    'quick_add'   => 1
+                                ])"
+                            />
+
+                            <!-- Description -->
+                            <x-admin::attributes
+                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
+                                    ['code', 'IN', ['description']],
+                                    'entity_type' => 'leads',
+                                    'quick_add'   => 1
+                                ])"
+                            />
+
+                            <!-- Send Notification Email Checkbox -->
+                            <x-admin::form.control-group>
+                                <div class="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="send_notification_email"
+                                        name="send_notification_email"
+                                        value="1"
+                                        class="h-4 w-4 rounded border-gray-200 text-brandColor dark:border-gray-800"
+                                    />
+
+                                    <x-admin::form.control-group.label class="mb-0">
+                                        Send notification email to contact
+                                    </x-admin::form.control-group.label>
+                                </div>
+                            </x-admin::form.control-group>
+
+                            {!! view_render_event('admin.leads.create.description-information.attributes.after') !!}
+                        </div>
+                    </div>
+
+                    {!! view_render_event('admin.leads.create.description-information.after') !!}
 
                     {{-- <!-- Product Section --> --}}
                     {{-- <div
@@ -277,12 +324,12 @@
 
                 data() {
                     return {
-                        activeTab: 'lead-details',
+                        activeTab: 'case-information',
 
                         tabs: [
-                            { id: 'lead-details', label: '@lang('admin::app.leads.create.details')' },
-                            { id: 'contact-person', label: '@lang('admin::app.leads.create.contact-person')' },
-                            {{-- { id: 'products', label: '@lang('admin::app.leads.create.products')' } --}}
+                            { id: 'case-information', label: 'Case Information' },
+                            { id: 'contact-information', label: 'Contact Information' },
+                            { id: 'description-information', label: 'Description Information' },
                         ],
                     };
                 },

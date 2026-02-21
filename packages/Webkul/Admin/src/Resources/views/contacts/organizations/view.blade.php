@@ -373,8 +373,12 @@
             <!-- Cases card (placeholder) -->
             @php
                 $casesQuery = \Webkul\Lead\Models\Lead::query()
-                    ->whereHas('person', function ($query) use ($organization) {
-                        $query->where('organization_id', $organization->id);
+                    ->with(['organization', 'person'])
+                    ->where(function ($query) use ($organization) {
+                        $query->where('organization_id', $organization->id)
+                            ->orWhereHas('person', function ($personQuery) use ($organization) {
+                                $personQuery->where('organization_id', $organization->id);
+                            });
                     })
                     ->latest();
 
@@ -409,13 +413,22 @@
                         <ul class="flex flex-col gap-1">
                             @foreach ($recentCases as $case)
                                 <li class="flex items-center justify-between gap-2">
-                                    <div class="flex flex-col">
+                                    <div class="flex flex-col gap-0.5">
                                         <a
                                             href="{{ route('admin.leads.view', $case->id) }}"
                                             class="text-brandColor hover:underline"
                                         >
                                             {{ $case->title }}
                                         </a>
+
+                                        @if ($case->organization)
+                                            <a
+                                                href="{{ route('admin.contacts.organizations.view', $case->organization->id) }}"
+                                                class="text-[11px] text-gray-500 dark:text-gray-400 hover:text-brandColor hover:underline"
+                                            >
+                                                {{ $case->organization->name }}
+                                            </a>
+                                        @endif
 
                                         @if ($case->person)
                                             <span class="text-[11px] text-gray-500 dark:text-gray-400">

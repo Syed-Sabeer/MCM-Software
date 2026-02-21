@@ -44,6 +44,23 @@
                     </p>
 
                     {!! view_render_event('admin.products.view.left.sku.after', ['product' => $product]) !!}
+
+                    @if ($product->category || $product->style || $product->size || $product->cover_image)
+                        <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
+                            @if ($product->category)
+                                <span>@lang('admin::app.products.create.category'): {{ $product->category->name }}</span>
+                            @endif
+                            @if ($product->style)
+                                <span>@lang('admin::app.products.create.style'): {{ $product->style }}</span>
+                            @endif
+                            @if ($product->size)
+                                <span>@lang('admin::app.products.create.size'): {{ $product->size }}</span>
+                            @endif
+                            @if ($product->cover_image)
+                                <span><a href="{{ asset('storage/' . $product->cover_image) }}" target="_blank" class="text-brandColor hover:underline">@lang('admin::app.products.create.cover-image')</a></span>
+                            @endif
+                        </div>
+                    @endif
                 </div>
 
                 {!! view_render_event('admin.products.view.left.activity_actions.before', ['product' => $product]) !!}

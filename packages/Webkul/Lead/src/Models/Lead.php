@@ -14,6 +14,7 @@ use Webkul\Contact\Models\PersonProxy;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Contracts\Lead as LeadContract;
 use Webkul\Quote\Models\QuoteProxy;
+use Webkul\Contact\Models\OrganizationProxy;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
 
@@ -36,6 +37,8 @@ class Lead extends Model implements LeadContract
         'closed_at',
         'user_id',
         'person_id',
+        'organization_id',
+        'priority',
         'lead_source_id',
         'lead_type_id',
         'lead_pipeline_id',
@@ -75,6 +78,14 @@ class Lead extends Model implements LeadContract
     public function person(): BelongsTo
     {
         return $this->belongsTo(PersonProxy::modelClass());
+    }
+
+    /**
+     * Get the organization that owns the lead.
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationProxy::modelClass());
     }
 
     /**

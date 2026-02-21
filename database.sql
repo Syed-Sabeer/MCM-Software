@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 16, 2026 at 06:52 PM
+-- Generation Time: Feb 21, 2026 at 03:33 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -84,7 +84,31 @@ INSERT INTO `activities` (`id`, `title`, `type`, `comment`, `additional`, `sched
 (33, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:52:37', '2026-02-06 19:52:37', NULL),
 (34, 'fg', 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:53:23', '2026-02-06 19:53:23', NULL),
 (35, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:54:28', '2026-02-06 19:54:28', NULL),
-(36, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:55:48', '2026-02-06 19:55:48', NULL);
+(36, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-06 19:55:48', '2026-02-06 19:55:48', NULL),
+(37, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:36:10', '2026-02-16 18:36:10', NULL),
+(38, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:36:10', '2026-02-16 18:36:10', NULL),
+(39, 'Updated Organization', 'system', NULL, '{\"attribute\":\"Organization\",\"new\":{\"value\":2,\"label\":\"Abdul Haynes\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:36:10', '2026-02-16 18:36:10', NULL),
+(52, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:43:13', '2026-02-16 18:43:13', NULL),
+(53, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:43:14', '2026-02-16 18:43:14', NULL),
+(54, 'Updated Organization', 'system', NULL, '{\"attribute\":\"Organization\",\"new\":{\"value\":2,\"label\":\"Abdul Haynes\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:43:14', '2026-02-16 18:43:14', NULL),
+(55, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:43:53', '2026-02-16 18:43:53', NULL),
+(56, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:43:53', '2026-02-16 18:43:53', NULL),
+(57, 'Updated Organization', 'system', NULL, '{\"attribute\":\"Organization\",\"new\":{\"value\":2,\"label\":\"Abdul Haynes\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:43:53', '2026-02-16 18:43:53', NULL),
+(58, 'Updated cell_phone', 'system', NULL, '{\"attribute\":\"cell_phone\",\"new\":{\"value\":\"0000000\",\"label\":\"0000000\"},\"old\":{\"value\":\"\",\"label\":\"\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:58:07', '2026-02-16 18:58:07', NULL),
+(59, 'Updated email_secondary', 'system', NULL, '{\"attribute\":\"email_secondary\",\"new\":{\"value\":\"test@gmail.com\",\"label\":\"test@gmail.com\"},\"old\":{\"value\":\"\",\"label\":\"\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:58:07', '2026-02-16 18:58:07', NULL),
+(60, 'Updated birth_date', 'system', NULL, '{\"attribute\":\"birth_date\",\"new\":{\"value\":\"1901-11-15 00:00:00\",\"label\":\"1901-11-15 00:00:00\"},\"old\":{\"value\":\"-000001-11-29T18:06:32.000000Z\",\"label\":\"Tue Nov 30, -0001 00:00 AM\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 18:58:07', '2026-02-16 18:58:07', NULL),
+(61, 'f', 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-16 18:59:31', '2026-02-16 18:59:31', NULL),
+(62, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, NULL, NULL, '2026-02-16 19:01:25', '2026-02-16 19:01:25', NULL),
+(63, NULL, 'file', NULL, NULL, NULL, NULL, 0, 1, 'organizations', 2, '2026-02-16 19:07:04', '2026-02-16 19:07:04', NULL),
+(64, 'nhgjfj', 'file', NULL, NULL, NULL, NULL, 0, 1, 'organizations', 2, '2026-02-16 19:10:01', '2026-02-16 19:10:01', NULL),
+(65, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 19:17:55', '2026-02-16 19:17:55', NULL),
+(66, 'Updated Title', 'system', NULL, '{\"attribute\":\"Title\",\"new\":{\"value\":\"dsf\",\"label\":\"dsf\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 19:17:55', '2026-02-16 19:17:55', NULL),
+(67, 'Updated Lead Value', 'system', NULL, '{\"attribute\":\"Lead Value\",\"new\":{\"value\":45,\"label\":\"$45.00\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 19:17:55', '2026-02-16 19:17:55', NULL),
+(68, 'Updated Source', 'system', NULL, '{\"attribute\":\"Source\",\"new\":{\"value\":1,\"label\":\"Email\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 19:17:55', '2026-02-16 19:17:55', NULL),
+(69, 'Updated Type', 'system', NULL, '{\"attribute\":\"Type\",\"new\":{\"value\":1,\"label\":\"New Business\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 19:17:55', '2026-02-16 19:17:55', NULL),
+(70, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 19:17:55', '2026-02-16 19:17:55', NULL),
+(71, 'Updated Pipeline', 'system', NULL, '{\"attribute\":\"Pipeline\",\"new\":{\"value\":1,\"label\":\"Default Pipeline\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 19:17:55', '2026-02-16 19:17:55', NULL),
+(72, 'Updated Stage', 'system', NULL, '{\"attribute\":\"Stage\",\"new\":{\"value\":1,\"label\":\"New\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-02-16 19:17:55', '2026-02-16 19:17:55', NULL);
 
 -- --------------------------------------------------------
 
@@ -116,7 +140,11 @@ INSERT INTO `activity_files` (`id`, `name`, `path`, `activity_id`, `created_at`,
 (8, 'test image.jpeg', 'activities/33/6QOSnfXc8wYeD3jCee9jHcLT04KuxTkzCQcDwmDa.jpg', 33, '2026-02-06 19:52:37', '2026-02-06 19:52:37'),
 (9, '2023-bentley-continental-gt-s-coupe.jpg', 'activities/34/Hi51KJcFTDu0t3pJOHQvgSKnS9XVRE9mye6r1qRX.jpg', 34, '2026-02-06 19:53:23', '2026-02-06 19:53:23'),
 (10, '2023-bentley-continental-gt-s-coupe.jpg', 'activities/35/VFS6hzZPD0zisguuwd4QIfHQor1p3Wta8rYs81OI.jpg', 35, '2026-02-06 19:54:28', '2026-02-06 19:54:28'),
-(11, 'images.jpg', 'activities/36/nr0SgJfP1xY0QgPhVWiR1qPao5S9NpwVGKdCKtfG.jpg', 36, '2026-02-06 19:55:48', '2026-02-06 19:55:48');
+(11, 'images.jpg', 'activities/36/nr0SgJfP1xY0QgPhVWiR1qPao5S9NpwVGKdCKtfG.jpg', 36, '2026-02-06 19:55:48', '2026-02-06 19:55:48'),
+(12, '2023-bentley-continental-gt-s-coupe.jpg', 'activities/61/m8VZJ4T5ApQRf0ZiSa4VDKNwFQ8r2Mf1PjDoUKFf.jpg', 61, '2026-02-16 18:59:32', '2026-02-16 18:59:32'),
+(13, 'test image.jpeg', 'activities/62/MxLiYLlXIpDLpQO6POsJW7Y7pHFobslHIxbhuyN5.jpg', 62, '2026-02-16 19:01:25', '2026-02-16 19:01:25'),
+(14, 'test image.jpeg', 'activities/63/DUJuk43uqRiUbj88md7YdvcaPbRthVOPaFFxvICD.jpg', 63, '2026-02-16 19:07:04', '2026-02-16 19:07:04'),
+(15, 'test image.jpeg', 'activities/64/beSMTCGBGxfGBrRcc3YI7rn1oLCfeIkHoX98s1g4.jpg', 64, '2026-02-16 19:10:01', '2026-02-16 19:10:01');
 
 -- --------------------------------------------------------
 
@@ -292,7 +320,22 @@ INSERT INTO `attribute_values` (`id`, `entity_type`, `text_value`, `boolean_valu
 (23, 'organizations', '80', NULL, NULL, NULL, NULL, NULL, NULL, 2, 69, NULL),
 (24, 'organizations', NULL, NULL, NULL, 72, NULL, NULL, NULL, 2, 70, NULL),
 (25, 'persons', NULL, NULL, 1, NULL, NULL, NULL, NULL, 2, 32, NULL),
-(26, 'persons', NULL, NULL, 2, NULL, NULL, NULL, NULL, 2, 33, NULL);
+(26, 'persons', NULL, NULL, 2, NULL, NULL, NULL, NULL, 2, 33, NULL),
+(27, 'persons', NULL, NULL, 1, NULL, NULL, NULL, NULL, 4, 32, NULL),
+(28, 'persons', NULL, NULL, 2, NULL, NULL, NULL, NULL, 4, 33, NULL),
+(37, 'persons', NULL, NULL, 1, NULL, NULL, NULL, NULL, 9, 32, NULL),
+(38, 'persons', NULL, NULL, 2, NULL, NULL, NULL, NULL, 9, 33, NULL),
+(39, 'persons', NULL, NULL, 1, NULL, NULL, NULL, NULL, 10, 32, NULL),
+(40, 'persons', NULL, NULL, 2, NULL, NULL, NULL, NULL, 10, 33, NULL),
+(41, 'leads', 'dsf', NULL, NULL, NULL, NULL, NULL, NULL, 2, 19, NULL),
+(42, 'leads', '', NULL, NULL, NULL, NULL, NULL, NULL, 2, 20, NULL),
+(43, 'leads', NULL, NULL, NULL, 45, NULL, NULL, NULL, 2, 21, NULL),
+(44, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 2, 22, NULL),
+(45, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 2, 23, NULL),
+(46, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 2, 24, NULL),
+(47, 'leads', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, 25, NULL),
+(48, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 2, 26, NULL),
+(49, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 2, 27, NULL);
 
 -- --------------------------------------------------------
 
@@ -1241,6 +1284,13 @@ CREATE TABLE `emails` (
   `parent_id` int(10) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `emails`
+--
+
+INSERT INTO `emails` (`id`, `subject`, `source`, `user_type`, `name`, `reply`, `is_read`, `folders`, `from`, `sender`, `reply_to`, `cc`, `bcc`, `unique_id`, `message_id`, `reference_ids`, `person_id`, `lead_id`, `created_at`, `updated_at`, `parent_id`) VALUES
+(1, 'fuck off', 'web', 'admin', NULL, '<p>fuck off</p>', 0, '[\"draft\"]', '\"laravel@krayincrm.com\"', NULL, '[\"syedmuaz6198@gmail.com\"]', NULL, NULL, '1771527247@deveoninc.com', '1771527247@deveoninc.com', '[\"1771527247@deveoninc.com\"]', NULL, NULL, '2026-02-19 19:24:07', '2026-02-19 19:24:07', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -1431,7 +1481,8 @@ CREATE TABLE `leads` (
 --
 
 INSERT INTO `leads` (`id`, `title`, `description`, `lead_value`, `status`, `lost_reason`, `closed_at`, `user_id`, `person_id`, `lead_source_id`, `lead_type_id`, `lead_pipeline_id`, `lead_pipeline_stage_id`, `created_at`, `updated_at`, `expected_close_date`) VALUES
-(1, 'Accusamus atque earu', 'Necessitatibus reici', 23.0000, 1, NULL, NULL, 1, 1, 2, 2, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', '2025-11-20');
+(1, 'Accusamus atque earu', 'Necessitatibus reici', 23.0000, 1, NULL, NULL, 1, 1, 2, 2, 1, 1, '2025-11-15 14:36:48', '2025-11-15 14:36:48', '2025-11-20'),
+(2, 'dsf', '', 45.0000, 1, NULL, NULL, 1, 1, 1, 1, 1, 1, '2026-02-16 19:17:55', '2026-02-16 19:17:55', NULL);
 
 -- --------------------------------------------------------
 
@@ -1458,7 +1509,15 @@ INSERT INTO `lead_activities` (`activity_id`, `lead_id`) VALUES
 (18, 1),
 (19, 1),
 (20, 1),
-(21, 1);
+(21, 1),
+(65, 2),
+(66, 2),
+(67, 2),
+(68, 2),
+(69, 2),
+(70, 2),
+(71, 2),
+(72, 2);
 
 -- --------------------------------------------------------
 
@@ -1874,7 +1933,10 @@ CREATE TABLE `persons` (
 
 INSERT INTO `persons` (`id`, `name`, `emails`, `contact_numbers`, `organization_id`, `created_at`, `updated_at`, `job_title`, `user_id`, `unique_id`, `salutation`, `first_name`, `last_name`, `title`, `description`, `cell_phone`, `direct_phone`, `email_secondary`, `birth_date`, `phone`, `email`, `mailing_street`, `mailing_city`, `mailing_state`, `mailing_postcode`, `mailing_country`) VALUES
 (1, 'Syed Sabeer', '[{\"value\":\"syedsabeer6198@gmail.com\",\"label\":\"work\"}]', '[{\"value\":\"20094008480\",\"label\":\"work\"}]', NULL, '2025-11-15 14:31:02', '2025-11-15 14:31:02', 'Employee', NULL, 'syedsabeer6198@gmail.com|20094008480', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(2, '', NULL, NULL, 2, '2026-02-06 19:44:22', '2026-02-06 19:44:22', NULL, 1, '1|2', '', 'Kuame', 'Trevino', 'Tempor ullamco magna', 'Assumenda proident', '+1 (855) 618-2783', '+1 (297) 115-4107', '+1 (297) 115-4107', '1972-01-01', '+1 (753) 794-9162', 'sihava@mailinator.com', 'Ut voluptatibus libe', 'Impedit consequuntu', 'Voluptates hic nulla', 'Consequatur recusan', 'Esse est quis maior');
+(2, '', NULL, NULL, 2, '2026-02-06 19:44:22', '2026-02-06 19:44:22', NULL, 1, '1|2', '', 'Kuame', 'Trevino', 'Tempor ullamco magna', 'Assumenda proident', '+1 (855) 618-2783', '+1 (297) 115-4107', '+1 (297) 115-4107', '1972-01-01', '+1 (753) 794-9162', 'sihava@mailinator.com', 'Ut voluptatibus libe', 'Impedit consequuntu', 'Voluptates hic nulla', 'Consequatur recusan', 'Esse est quis maior'),
+(4, '', NULL, NULL, 2, '2026-02-16 18:36:10', '2026-02-16 18:36:10', NULL, 1, NULL, '', 'dfg', 'dfg', '', '', '', '', '', '0000-00-00', '+1 (475) 445-8871', '', 'Odit est sed perspi', 'Ducimus ea dicta au', 'Quia dolor exercitat', 'Nostrum ut aliquip s', 'Minima similique eve'),
+(9, '', NULL, NULL, 2, '2026-02-16 18:43:13', '2026-02-16 18:43:13', NULL, 1, NULL, '', 'fdg', 'dfsgfg', '', '', '', '', '', '0000-00-00', '+1 (475) 445-8871', '', 'Odit est sed perspi', 'Ducimus ea dicta au', 'Quia dolor exercitat', 'Nostrum ut aliquip s', 'Minima similique eve'),
+(10, '', NULL, NULL, 2, '2026-02-16 18:43:53', '2026-02-16 18:58:07', NULL, 1, NULL, '', 'dfds', 'dsfdf', '', '', '0000000', '', 'test@gmail.com', '1901-11-15', '+1 (475) 445-8871', '', 'Odit est sed perspi', 'Ducimus ea dicta au', 'Quia dolor exercitat', 'Nostrum ut aliquip s', 'Minima similique eve');
 
 -- --------------------------------------------------------
 
@@ -1900,7 +1962,19 @@ INSERT INTO `person_activities` (`activity_id`, `person_id`) VALUES
 (25, 2),
 (26, 2),
 (27, 2),
-(28, 2);
+(28, 2),
+(37, 4),
+(38, 4),
+(39, 4),
+(52, 9),
+(53, 9),
+(54, 9),
+(55, 10),
+(56, 10),
+(57, 10),
+(58, 10),
+(59, 10),
+(60, 10);
 
 -- --------------------------------------------------------
 
@@ -1916,6 +1990,24 @@ CREATE TABLE `person_tags` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `product_categories`
+--
+
+CREATE TABLE `product_categories` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `product_categories`
+--
+
+INSERT INTO `product_categories` (`id`, `name`, `created_at`, `updated_at`) VALUES
+(1, 'Uncategorized', NOW(), NOW());
+
+--
 -- Table structure for table `products`
 --
 
@@ -1926,6 +2018,12 @@ CREATE TABLE `products` (
   `description` varchar(255) DEFAULT NULL,
   `quantity` int(11) NOT NULL DEFAULT 0,
   `price` decimal(12,4) DEFAULT NULL,
+  `category_id` int(10) UNSIGNED DEFAULT NULL,
+  `style` varchar(255) DEFAULT NULL,
+  `size` varchar(100) DEFAULT NULL,
+  `cover_image` varchar(500) DEFAULT NULL,
+  `additional_info` longtext DEFAULT NULL,
+  `shipping_info` longtext DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1934,8 +2032,8 @@ CREATE TABLE `products` (
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`id`, `sku`, `name`, `description`, `quantity`, `price`, `created_at`, `updated_at`) VALUES
-(1, 'test', 'Test', 'This is test description', 1, 18.0000, '2025-11-15 14:29:20', '2025-11-15 14:29:20');
+INSERT INTO `products` (`id`, `sku`, `name`, `description`, `quantity`, `price`, `category_id`, `style`, `size`, `cover_image`, `additional_info`, `shipping_info`, `created_at`, `updated_at`) VALUES
+(1, 'test', 'Test', 'This is test description', 1, 18.0000, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-15 14:29:20', '2025-11-15 14:29:20');
 
 -- --------------------------------------------------------
 
@@ -1986,6 +2084,38 @@ CREATE TABLE `product_inventories` (
 CREATE TABLE `product_tags` (
   `tag_id` int(10) UNSIGNED NOT NULL,
   `product_id` int(10) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `product_other_images`
+--
+
+CREATE TABLE `product_other_images` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL,
+  `path` varchar(500) NOT NULL,
+  `original_name` varchar(255) DEFAULT NULL,
+  `sort_order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `product_colors`
+--
+
+CREATE TABLE `product_colors` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `color_code` varchar(20) NOT NULL,
+  `sort_order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2554,11 +2684,18 @@ ALTER TABLE `person_tags`
   ADD KEY `person_tags_person_id_foreign` (`person_id`);
 
 --
+-- Indexes for table `product_categories`
+--
+ALTER TABLE `product_categories`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `products`
 --
 ALTER TABLE `products`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `products_sku_unique` (`sku`);
+  ADD UNIQUE KEY `products_sku_unique` (`sku`),
+  ADD KEY `products_category_id_foreign` (`category_id`);
 
 --
 -- Indexes for table `product_activities`
@@ -2582,6 +2719,20 @@ ALTER TABLE `product_inventories`
 ALTER TABLE `product_tags`
   ADD KEY `product_tags_tag_id_foreign` (`tag_id`),
   ADD KEY `product_tags_product_id_foreign` (`product_id`);
+
+--
+-- Indexes for table `product_other_images`
+--
+ALTER TABLE `product_other_images`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `product_other_images_product_id_foreign` (`product_id`);
+
+--
+-- Indexes for table `product_colors`
+--
+ALTER TABLE `product_colors`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `product_colors_product_id_foreign` (`product_id`);
 
 --
 -- Indexes for table `quotes`
@@ -2694,13 +2845,13 @@ ALTER TABLE `workflows`
 -- AUTO_INCREMENT for table `activities`
 --
 ALTER TABLE `activities`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT for table `activity_files`
 --
 ALTER TABLE `activity_files`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `activity_participants`
@@ -2724,7 +2875,7 @@ ALTER TABLE `attribute_options`
 -- AUTO_INCREMENT for table `attribute_values`
 --
 ALTER TABLE `attribute_values`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `core_config`
@@ -2754,7 +2905,7 @@ ALTER TABLE `datagrid_saved_filters`
 -- AUTO_INCREMENT for table `emails`
 --
 ALTER TABLE `emails`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `email_attachments`
@@ -2802,7 +2953,7 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `leads`
 --
 ALTER TABLE `leads`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `lead_pipelines`
@@ -2874,7 +3025,13 @@ ALTER TABLE `personal_access_tokens`
 -- AUTO_INCREMENT for table `persons`
 --
 ALTER TABLE `persons`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `product_categories`
+--
+ALTER TABLE `product_categories`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `products`
@@ -2886,6 +3043,18 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT for table `product_inventories`
 --
 ALTER TABLE `product_inventories`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `product_other_images`
+--
+ALTER TABLE `product_other_images`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `product_colors`
+--
+ALTER TABLE `product_colors`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -3124,6 +3293,24 @@ ALTER TABLE `product_inventories`
 ALTER TABLE `product_tags`
   ADD CONSTRAINT `product_tags_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `product_tags_tag_id_foreign` FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `product_other_images`
+--
+ALTER TABLE `product_other_images`
+  ADD CONSTRAINT `product_other_images_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `product_colors`
+--
+ALTER TABLE `product_colors`
+  ADD CONSTRAINT `product_colors_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `products`
+--
+ALTER TABLE `products`
+  ADD CONSTRAINT `products_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `quotes`

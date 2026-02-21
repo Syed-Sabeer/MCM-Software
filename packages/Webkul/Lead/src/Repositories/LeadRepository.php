@@ -127,6 +127,11 @@ class LeadRepository extends Repository
             $data['person_id'] = $person->id;
         }
 
+        if (empty($data['organization_id'])) {
+            $data['organization_id'] = $data['person']['organization_id']
+                ?? (isset($person) ? $person->organization_id : null);
+        }
+
         if (empty($data['expected_close_date'])) {
             $data['expected_close_date'] = null;
         }
@@ -176,6 +181,10 @@ class LeadRepository extends Repository
             }
 
             $data['person_id'] = $person->id;
+        }
+
+        if (empty($data['organization_id']) && isset($person)) {
+            $data['organization_id'] = $person->organization_id;
         }
 
         if (isset($data['lead_pipeline_stage_id'])) {

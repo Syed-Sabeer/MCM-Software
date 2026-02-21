@@ -153,7 +153,13 @@ class LeadController extends Controller
             $organization = app(\Webkul\Contact\Repositories\OrganizationRepository::class)->find($organizationId);
         }
 
-        return view('admin::leads.create', compact('organization'));
+        if (request('pipeline_id')) {
+            $pipeline = $this->pipelineRepository->find(request('pipeline_id'));
+        } else {
+            $pipeline = $this->pipelineRepository->getDefaultPipeline();
+        }
+
+        return view('admin::leads.create', compact('organization', 'pipeline'));
     }
 
     /**
