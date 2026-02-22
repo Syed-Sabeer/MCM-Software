@@ -13,6 +13,7 @@ use Webkul\Product\Models\ProductKeyPoint;
 use Webkul\Product\Models\ProductOtherImage;
 use Webkul\Product\Models\ProductPricingChart;
 use Webkul\Product\Models\ProductPricingChartTier;
+use Webkul\Product\Models\ProductPricingChartType;
 
 class ProductRepository extends Repository
 {
@@ -57,10 +58,11 @@ class ProductRepository extends Repository
     public function create(array $data)
     {
         $otherImages = $data['other_images'] ?? [];
+        $otherImageColors = $data['other_image_colors'] ?? [];
         $colors = $data['colors'] ?? [];
         $keyPoints = $data['key_points'] ?? [];
         $pricingCharts = $data['pricing_charts'] ?? [];
-        $productData = collect($data)->except(['other_images', 'colors', 'key_points', 'pricing_charts'])->only($this->model->getFillable())->toArray();
+        $productData = collect($data)->except(['other_images', 'other_image_colors', 'colors', 'key_points', 'pricing_charts'])->only($this->model->getFillable())->toArray();
 
         $product = parent::create($productData);
 
@@ -68,24 +70,33 @@ class ProductRepository extends Repository
             'entity_id' => $product->id,
         ]));
 
+        $colorIndexToId = [];
+        foreach ($colors as $sortOrder => $color) {
+            if (! empty($color['name']) || ! empty($color['color_code'])) {
+                $pc = ProductColor::create([
+                    'product_id'  => $product->id,
+                    'name'        => $color['name'] ?? '',
+                    'color_code' => $color['color_code'] ?? '#000000',
+                    'sort_order'  => $sortOrder,
+                ]);
+                $colorIndexToId[$sortOrder] = $pc->id;
+            }
+        }
+
         foreach ($otherImages as $sortOrder => $img) {
             if (! empty($img['path'])) {
+                $colorId = null;
+                $colorRef = $otherImageColors[$sortOrder] ?? null;
+                if ($colorRef && strpos($colorRef, 'new_') === 0) {
+                    $colorIndex = (int) str_replace('new_', '', $colorRef);
+                    $colorId = $colorIndexToId[$colorIndex] ?? null;
+                }
                 ProductOtherImage::create([
                     'product_id'     => $product->id,
                     'path'           => $img['path'],
                     'original_name'  => $img['original_name'] ?? null,
                     'sort_order'     => $sortOrder,
-                ]);
-            }
-        }
-
-        foreach ($colors as $sortOrder => $color) {
-            if (! empty($color['name']) || ! empty($color['color_code'])) {
-                ProductColor::create([
-                    'product_id'  => $product->id,
-                    'name'        => $color['name'] ?? '',
-                    'color_code' => $color['color_code'] ?? '#000000',
-                    'sort_order'  => $sortOrder,
+                    'color_id'       => $colorId,
                 ]);
             }
         }
@@ -103,23 +114,55 @@ class ProductRepository extends Repository
 
         foreach ($pricingCharts as $chartOrder => $chart) {
             $heading = $chart['heading'] ?? '';
-            $type = $chart['type'] ?? '';
-            $tiers = $chart['tiers'] ?? [];
-            if ($heading !== '' || $type !== '' || ! empty($tiers)) {
+            $types = $chart['types'] ?? [];
+            
+            // Support legacy structure (type + tiers directly on chart)
+            $legacyType = $chart['type'] ?? '';
+            $legacyTiers = $chart['tiers'] ?? [];
+            
+            if ($heading !== '' || ! empty($types) || $legacyType !== '' || ! empty($legacyTiers)) {
                 $pc = ProductPricingChart::create([
                     'product_id' => $product->id,
                     'heading'    => $heading,
-                    'type'      => $type,
-                    'sort_order'=> $chartOrder,
+                    'type'       => $legacyType,
+                    'sort_order' => $chartOrder,
                 ]);
-                foreach ($tiers as $tierOrder => $tier) {
+                
+                // New structure: types with tiers
+                foreach ($types as $typeOrder => $typeData) {
+                    $typeName = $typeData['type'] ?? '';
+                    $tiers = $typeData['tiers'] ?? [];
+                    if ($typeName !== '' || ! empty($tiers)) {
+                        $pct = ProductPricingChartType::create([
+                            'product_pricing_chart_id' => $pc->id,
+                            'type'       => $typeName,
+                            'sort_order' => $typeOrder,
+                        ]);
+                        foreach ($tiers as $tierOrder => $tier) {
+                            $qty = $tier['quantity'] ?? 0;
+                            $price = $tier['price'] ?? 0;
+                            if ($qty !== '' || $price !== '' || $qty !== null || $price !== null) {
+                                ProductPricingChartTier::create([
+                                    'product_pricing_chart_id'      => $pc->id,
+                                    'product_pricing_chart_type_id' => $pct->id,
+                                    'quantity'   => $qty,
+                                    'price'      => $price,
+                                    'sort_order' => $tierOrder,
+                                ]);
+                            }
+                        }
+                    }
+                }
+                
+                // Legacy structure: tiers directly on chart
+                foreach ($legacyTiers as $tierOrder => $tier) {
                     $qty = $tier['quantity'] ?? 0;
                     $price = $tier['price'] ?? 0;
                     if ($qty !== '' || $price !== '' || $qty !== null || $price !== null) {
                         ProductPricingChartTier::create([
                             'product_pricing_chart_id' => $pc->id,
-                            'quantity' => $qty,
-                            'price'    => $price,
+                            'quantity'   => $qty,
+                            'price'      => $price,
                             'sort_order' => $tierOrder,
                         ]);
                     }
@@ -140,10 +183,15 @@ class ProductRepository extends Repository
     public function update(array $data, $id, $attributes = [])
     {
         $otherImages = $data['other_images'] ?? [];
+        $otherImageColors = $data['other_image_colors'] ?? [];
+        $existingImageIds = $data['existing_image_ids'] ?? [];
+        $existingImageColors = $data['existing_image_colors'] ?? [];
+        $deleteImageIds = $data['delete_image_ids'] ?? '';
+        $replaceImages = $data['replace_images'] ?? [];
         $colors = $data['colors'] ?? [];
         $keyPoints = $data['key_points'] ?? [];
         $pricingCharts = $data['pricing_charts'] ?? [];
-        $productData = collect($data)->except(['other_images', 'colors', 'key_points', 'pricing_charts'])->only($this->model->getFillable())->toArray();
+        $productData = collect($data)->except(['other_images', 'other_image_colors', 'existing_image_ids', 'existing_image_colors', 'delete_image_ids', 'replace_images', 'colors', 'key_points', 'pricing_charts'])->only($this->model->getFillable())->toArray();
 
         $product = parent::update($productData, $id);
 
@@ -172,28 +220,76 @@ class ProductRepository extends Repository
             'entity_id' => $product->id,
         ]));
 
-        // Sync colors: replace all
+        // Delete removed images
+        if (! empty($deleteImageIds)) {
+            $idsToDelete = array_filter(explode(',', $deleteImageIds));
+            foreach ($idsToDelete as $imageIdToDelete) {
+                $imageToDelete = ProductOtherImage::where('id', $imageIdToDelete)->where('product_id', $id)->first();
+                if ($imageToDelete) {
+                    if ($imageToDelete->path && \Illuminate\Support\Facades\Storage::disk('public')->exists($imageToDelete->path)) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($imageToDelete->path);
+                    }
+                    $imageToDelete->delete();
+                }
+            }
+        }
+
+        // Sync colors: replace all and build index-to-id map
         ProductColor::where('product_id', $id)->delete();
+        $colorIndexToId = [];
         foreach ($colors as $sortOrder => $color) {
             if (! empty($color['name']) || ! empty($color['color_code'])) {
-                ProductColor::create([
+                $pc = ProductColor::create([
                     'product_id'  => $id,
                     'name'        => $color['name'] ?? '',
                     'color_code' => $color['color_code'] ?? '#000000',
                     'sort_order'  => $sortOrder,
                 ]);
+                $colorIndexToId[$sortOrder] = $pc->id;
             }
+        }
+
+        // Replace images
+        foreach ($replaceImages as $imageId => $imgData) {
+            $existingImage = ProductOtherImage::where('id', $imageId)->where('product_id', $id)->first();
+            if ($existingImage && ! empty($imgData['path'])) {
+                if ($existingImage->path && \Illuminate\Support\Facades\Storage::disk('public')->exists($existingImage->path)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($existingImage->path);
+                }
+                $existingImage->update([
+                    'path' => $imgData['path'],
+                    'original_name' => $imgData['original_name'] ?? null,
+                ]);
+            }
+        }
+
+        // Update existing image color associations
+        foreach ($existingImageIds as $idx => $imageId) {
+            $colorRef = $existingImageColors[$idx] ?? null;
+            $colorId = null;
+            if ($colorRef && strpos($colorRef, 'new_') === 0) {
+                $colorIndex = (int) str_replace('new_', '', $colorRef);
+                $colorId = $colorIndexToId[$colorIndex] ?? null;
+            }
+            ProductOtherImage::where('id', $imageId)->update(['color_id' => $colorId]);
         }
 
         // Append new other images
         foreach ($otherImages as $sortOrder => $img) {
             if (! empty($img['path'])) {
+                $colorId = null;
+                $colorRef = $otherImageColors[$sortOrder] ?? null;
+                if ($colorRef && strpos($colorRef, 'new_') === 0) {
+                    $colorIndex = (int) str_replace('new_', '', $colorRef);
+                    $colorId = $colorIndexToId[$colorIndex] ?? null;
+                }
                 $maxOrder = (int) ProductOtherImage::where('product_id', $id)->max('sort_order');
                 ProductOtherImage::create([
                     'product_id'     => $id,
                     'path'           => $img['path'],
                     'original_name'  => $img['original_name'] ?? null,
                     'sort_order'     => $maxOrder + 1 + $sortOrder,
+                    'color_id'       => $colorId,
                 ]);
             }
         }
@@ -211,31 +307,65 @@ class ProductRepository extends Repository
             }
         }
 
-        // Sync pricing charts: replace all (charts + tiers)
+        // Sync pricing charts: replace all (charts + types + tiers)
         $existingCharts = ProductPricingChart::where('product_id', $id)->get();
         foreach ($existingCharts as $ec) {
             ProductPricingChartTier::where('product_pricing_chart_id', $ec->id)->delete();
+            ProductPricingChartType::where('product_pricing_chart_id', $ec->id)->delete();
         }
         ProductPricingChart::where('product_id', $id)->delete();
+        
         foreach ($pricingCharts as $chartOrder => $chart) {
             $heading = $chart['heading'] ?? '';
-            $type = $chart['type'] ?? '';
-            $tiers = $chart['tiers'] ?? [];
-            if ($heading !== '' || $type !== '' || ! empty($tiers)) {
+            $types = $chart['types'] ?? [];
+            
+            // Support legacy structure
+            $legacyType = $chart['type'] ?? '';
+            $legacyTiers = $chart['tiers'] ?? [];
+            
+            if ($heading !== '' || ! empty($types) || $legacyType !== '' || ! empty($legacyTiers)) {
                 $pc = ProductPricingChart::create([
                     'product_id' => $id,
                     'heading'    => $heading,
-                    'type'      => $type,
-                    'sort_order'=> $chartOrder,
+                    'type'       => $legacyType,
+                    'sort_order' => $chartOrder,
                 ]);
-                foreach ($tiers as $tierOrder => $tier) {
+                
+                // New structure: types with tiers
+                foreach ($types as $typeOrder => $typeData) {
+                    $typeName = $typeData['type'] ?? '';
+                    $tiers = $typeData['tiers'] ?? [];
+                    if ($typeName !== '' || ! empty($tiers)) {
+                        $pct = ProductPricingChartType::create([
+                            'product_pricing_chart_id' => $pc->id,
+                            'type'       => $typeName,
+                            'sort_order' => $typeOrder,
+                        ]);
+                        foreach ($tiers as $tierOrder => $tier) {
+                            $qty = $tier['quantity'] ?? 0;
+                            $price = $tier['price'] ?? 0;
+                            if ($qty !== '' || $price !== '' || $qty !== null || $price !== null) {
+                                ProductPricingChartTier::create([
+                                    'product_pricing_chart_id'      => $pc->id,
+                                    'product_pricing_chart_type_id' => $pct->id,
+                                    'quantity'   => $qty,
+                                    'price'      => $price,
+                                    'sort_order' => $tierOrder,
+                                ]);
+                            }
+                        }
+                    }
+                }
+                
+                // Legacy structure: tiers directly on chart
+                foreach ($legacyTiers as $tierOrder => $tier) {
                     $qty = $tier['quantity'] ?? 0;
                     $price = $tier['price'] ?? 0;
                     if ($qty !== '' || $price !== '' || $qty !== null || $price !== null) {
                         ProductPricingChartTier::create([
                             'product_pricing_chart_id' => $pc->id,
-                            'quantity' => $qty,
-                            'price'    => $price,
+                            'quantity'   => $qty,
+                            'price'      => $price,
                             'sort_order' => $tierOrder,
                         ]);
                     }

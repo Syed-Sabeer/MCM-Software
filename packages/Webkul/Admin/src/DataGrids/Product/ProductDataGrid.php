@@ -4,33 +4,56 @@ namespace Webkul\Admin\DataGrids\Product;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Tag\Repositories\TagRepository;
 
 class ProductDataGrid extends DataGrid
 {
     /**
+     * Whether the products table has publish_on_website column.
+     */
+    protected bool $hasPublishColumn = false;
+
+    /**
      * Prepare query builder.
      */
     public function prepareQueryBuilder(): Builder
     {
         $tablePrefix = DB::getTablePrefix();
+        $this->hasPublishColumn = Schema::hasColumn('products', 'publish_on_website');
+
+        $selects = [
+            'products.id',
+            'products.sku',
+            'products.name',
+            'products.price',
+            'products.cover_image',
+            'products.style',
+            'products.size',
+        ];
+        if ($this->hasPublishColumn) {
+            $selects[] = 'products.publish_on_website';
+        }
+
+        $groupBy = ['products.id', 'products.sku', 'products.name', 'products.price', 'products.cover_image', 'products.style', 'products.size'];
+        if ($this->hasPublishColumn) {
+            $groupBy[] = 'products.publish_on_website';
+        }
 
         $queryBuilder = DB::table('products')
+            ->leftJoin('product_categories', 'products.category_id', '=', 'product_categories.id')
             ->leftJoin('product_inventories', 'products.id', '=', 'product_inventories.product_id')
             ->leftJoin('product_tags', 'products.id', '=', 'product_tags.product_id')
             ->leftJoin('tags', 'tags.id', '=', 'product_tags.tag_id')
-            ->select(
-                'products.id',
-                'products.sku',
-                'products.name',
-                'products.price',
-                'tags.name as tag_name',
-            )
+            ->select($selects)
+            ->addSelect(DB::raw('MAX('.$tablePrefix.'product_categories.name) as category_name'))
+            ->addSelect(DB::raw('MAX('.$tablePrefix.'tags.name) as tag_name'))
             ->addSelect(DB::raw('SUM('.$tablePrefix.'product_inventories.in_stock) as total_in_stock'))
             ->addSelect(DB::raw('SUM('.$tablePrefix.'product_inventories.allocated) as total_allocated'))
             ->addSelect(DB::raw('SUM('.$tablePrefix.'product_inventories.in_stock - '.$tablePrefix.'product_inventories.allocated) as total_on_hand'))
-            ->groupBy('products.id');
+            ->groupBy($groupBy);
 
         if (request()->route('id')) {
             $queryBuilder->where('product_inventories.warehouse_id', request()->route('id'));
@@ -41,6 +64,7 @@ class ProductDataGrid extends DataGrid
         $this->addFilter('total_allocated', DB::raw('SUM('.$tablePrefix.'product_inventories.allocated'));
         $this->addFilter('total_on_hand', DB::raw('SUM('.$tablePrefix.'product_inventories.in_stock - '.$tablePrefix.'product_inventories.allocated'));
         $this->addFilter('tag_name', 'tags.name');
+        $this->addFilter('category_name', 'product_categories.name');
 
         return $queryBuilder;
     }
@@ -51,12 +75,19 @@ class ProductDataGrid extends DataGrid
     public function prepareColumns(): void
     {
         $this->addColumn([
-            'index'      => 'sku',
-            'label'      => trans('admin::app.products.index.datagrid.sku'),
-            'type'       => 'string',
-            'sortable'   => true,
-            'searchable' => true,
-            'filterable' => true,
+            'index'   => 'cover_image',
+            'label'   => trans('admin::app.products.index.datagrid.cover-image'),
+            'type'    => 'string',
+            'sortable' => false,
+            'searchable' => false,
+            'closure' => function ($row) {
+                if (empty($row->cover_image)) {
+                    return '<span class="text-gray-400">—</span>';
+                }
+                $url = Storage::url($row->cover_image);
+
+                return '<img src="'.e($url).'" alt="" class="h-10 w-10 rounded border border-gray-200 object-cover dark:border-gray-700" loading="lazy" />';
+            },
         ]);
 
         $this->addColumn([
@@ -69,53 +100,54 @@ class ProductDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'price',
-            'label'      => trans('admin::app.products.index.datagrid.price'),
-            'type'       => 'string',
-            'sortable'   => true,
+            'index'   => 'category_name',
+            'label'   => trans('admin::app.products.index.datagrid.category'),
+            'type'    => 'string',
+            'sortable' => true,
+            'searchable' => false,
+            'filterable' => true,
+            'closure' => fn ($row) => $row->category_name ?? '—',
+        ]);
+
+        $this->addColumn([
+            'index'   => 'style',
+            'label'   => trans('admin::app.products.index.datagrid.style'),
+            'type'    => 'string',
+            'sortable' => true,
             'searchable' => true,
             'filterable' => true,
-            'closure'    => fn ($row) => round($row->price, 2),
+            'closure' => fn ($row) => $row->style ?? '—',
         ]);
 
         $this->addColumn([
-            'index'    => 'total_in_stock',
-            'label'    => trans('admin::app.products.index.datagrid.in-stock'),
-            'type'     => 'string',
+            'index'   => 'size',
+            'label'   => trans('admin::app.products.index.datagrid.size'),
+            'type'    => 'string',
             'sortable' => true,
+            'searchable' => true,
+            'filterable' => true,
+            'closure' => fn ($row) => $row->size ?? '—',
         ]);
 
-        $this->addColumn([
-            'index'    => 'total_allocated',
-            'label'    => trans('admin::app.products.index.datagrid.allocated'),
-            'type'     => 'string',
-            'sortable' => true,
-        ]);
+        if ($this->hasPublishColumn) {
+            $this->addColumn([
+                'index'   => 'publish_on_website',
+                'label'   => trans('admin::app.products.index.datagrid.publish-on-website'),
+                'type'    => 'string',
+                'sortable' => true,
+                'searchable' => false,
+                'closure' => function ($row) {
+                    $url = route('admin.products.toggle_publish', ['id' => $row->id]);
+                    $checked = ! empty($row->publish_on_website) ? ' checked' : '';
+                    $csrf = csrf_token();
 
-        $this->addColumn([
-            'index'    => 'total_on_hand',
-            'label'    => trans('admin::app.products.index.datagrid.on-hand'),
-            'type'     => 'string',
-            'sortable' => true,
-        ]);
-
-        $this->addColumn([
-            'index'              => 'tag_name',
-            'label'              => trans('admin::app.products.index.datagrid.tag-name'),
-            'type'               => 'string',
-            'searchable'         => false,
-            'sortable'           => true,
-            'filterable'         => true,
-            'filterable_type'    => 'searchable_dropdown',
-            'closure'            => fn ($row) => $row->tag_name ?? '--',
-            'filterable_options' => [
-                'repository' => TagRepository::class,
-                'column'     => [
-                    'label' => 'name',
-                    'value' => 'name',
-                ],
-            ],
-        ]);
+                    return '<label class="relative inline-flex cursor-pointer items-center">
+                        <input type="checkbox" class="product-publish-toggle peer sr-only" data-url="'.e($url).'" data-csrf="'.e($csrf).'"'.$checked.'>
+                        <div class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[\'\'] peer-checked:bg-brandColor peer-checked:after:translate-x-full peer-focus:outline-none dark:bg-gray-700 dark:peer-checked:bg-brandColor"></div>
+                    </label>';
+                },
+            ]);
+        }
     }
 
     /**

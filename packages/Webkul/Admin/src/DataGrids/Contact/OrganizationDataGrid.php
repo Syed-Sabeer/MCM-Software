@@ -90,15 +90,19 @@ class OrganizationDataGrid extends DataGrid
      */
     public function prepareActions(): void
     {
-        $this->addAction([
-            'icon'   => 'icon-view',
-            'title'  => trans('admin::app.contacts.organizations.index.datagrid.view'),
-            'method' => 'GET',
-            'url'    => fn ($row) => route('admin.contacts.organizations.view', $row->id),
-        ]);
+        if (bouncer()->hasPermission('contacts.organizations.view')) {
+            $this->addAction([
+                'index'  => 'view',
+                'icon'   => 'icon-eye',
+                'title'  => trans('admin::app.contacts.organizations.index.datagrid.view'),
+                'method' => 'GET',
+                'url'    => fn ($row) => route('admin.contacts.organizations.view', $row->id),
+            ]);
+        }
 
         if (bouncer()->hasPermission('contacts.organizations.edit')) {
             $this->addAction([
+                'index'  => 'edit',
                 'icon'   => 'icon-edit',
                 'title'  => trans('admin::app.contacts.organizations.index.datagrid.edit'),
                 'method' => 'GET',
@@ -108,6 +112,7 @@ class OrganizationDataGrid extends DataGrid
 
         if (bouncer()->hasPermission('contacts.organizations.delete')) {
             $this->addAction([
+                'index'  => 'delete',
                 'icon'   => 'icon-delete',
                 'title'  => trans('admin::app.contacts.organizations.index.datagrid.delete'),
                 'method' => 'DELETE',

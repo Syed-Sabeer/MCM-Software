@@ -44,5 +44,21 @@ class OrganizationFileController extends Controller
 
         return back()->with('success', trans('admin::app.contacts.organizations.view.files-uploaded'));
     }
+
+    /**
+     * Delete an organization file.
+     */
+    public function destroy(int $id): RedirectResponse
+    {
+        $file = OrganizationFile::findOrFail($id);
+
+        if (Storage::disk('public')->exists($file->path)) {
+            Storage::disk('public')->delete($file->path);
+        }
+
+        $file->delete();
+
+        return back()->with('success', trans('admin::app.contacts.organizations.view.file-deleted'));
+    }
 }
 

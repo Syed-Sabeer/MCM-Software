@@ -29,7 +29,11 @@ Route::group(['middleware' => ['user']], function () {
 
         Route::put('edit/{id}', 'update')->name('admin.products.update');
 
+        Route::patch('{id}/toggle-publish', 'togglePublish')->name('admin.products.toggle_publish');
+
         Route::get('search', 'search')->name('admin.products.search');
+
+        Route::get('check-slug', 'checkSlug')->name('admin.products.check_slug');
 
         Route::get('{id}/warehouses', 'warehouses')->name('admin.products.warehouses');
 

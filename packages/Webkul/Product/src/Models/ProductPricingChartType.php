@@ -4,20 +4,14 @@ namespace Webkul\Product\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ProductPricingChartTier extends Model
+class ProductPricingChartType extends Model
 {
     protected $fillable = [
         'product_pricing_chart_id',
-        'product_pricing_chart_type_id',
-        'quantity',
-        'price',
+        'type',
         'sort_order',
-    ];
-
-    protected $casts = [
-        'quantity' => 'decimal:4',
-        'price'    => 'decimal:4',
     ];
 
     public function pricingChart(): BelongsTo
@@ -25,8 +19,8 @@ class ProductPricingChartTier extends Model
         return $this->belongsTo(ProductPricingChart::class, 'product_pricing_chart_id');
     }
 
-    public function pricingChartType(): BelongsTo
+    public function tiers(): HasMany
     {
-        return $this->belongsTo(ProductPricingChartType::class, 'product_pricing_chart_type_id');
+        return $this->hasMany(ProductPricingChartTier::class, 'product_pricing_chart_type_id')->orderBy('sort_order');
     }
 }

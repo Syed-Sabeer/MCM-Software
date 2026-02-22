@@ -20,6 +20,14 @@ class ProductPricingChart extends Model
         return $this->belongsTo(ProductProxy::modelClass());
     }
 
+    public function types(): HasMany
+    {
+        return $this->hasMany(ProductPricingChartType::class, 'product_pricing_chart_id')->orderBy('sort_order');
+    }
+
+    /**
+     * @deprecated Use types() relationship instead. Kept for backward compatibility.
+     */
     public function tiers(): HasMany
     {
         return $this->hasMany(ProductPricingChartTier::class, 'product_pricing_chart_id')->orderBy('sort_order');

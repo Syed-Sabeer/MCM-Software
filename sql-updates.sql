@@ -64,6 +64,20 @@ SET @sql = (SELECT IF(
 ));
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'products' AND COLUMN_NAME = 'slug') = 0,
+  'ALTER TABLE `products` ADD COLUMN `slug` varchar(255) DEFAULT NULL AFTER `name`, ADD UNIQUE KEY `products_slug_unique` (`slug`)',
+  'SELECT 1'
+));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'products' AND COLUMN_NAME = 'publish_on_website') = 0,
+  'ALTER TABLE `products` ADD COLUMN `publish_on_website` tinyint(1) NOT NULL DEFAULT 0 AFTER `shipping_info`',
+  'SELECT 1'
+));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- Ensure InnoDB (required for foreign keys)
 ALTER TABLE `products` ENGINE=InnoDB;
 ALTER TABLE `product_categories` ENGINE=InnoDB;
@@ -170,3 +184,54 @@ CREATE TABLE IF NOT EXISTS `product_pricing_chart_tiers` (
   KEY `product_pricing_chart_tiers_chart_id_foreign` (`product_pricing_chart_id`),
   CONSTRAINT `product_pricing_chart_tiers_chart_id_foreign` FOREIGN KEY (`product_pricing_chart_id`) REFERENCES `product_pricing_charts` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- -----------------------------------------------------------------------------
+-- 8) Add color_id to product_other_images table (links images to colors)
+-- -----------------------------------------------------------------------------
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'product_other_images' AND COLUMN_NAME = 'color_id') = 0,
+  'ALTER TABLE `product_other_images` ADD COLUMN `color_id` int(10) UNSIGNED DEFAULT NULL AFTER `sort_order`',
+  'SELECT 1'
+));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+
+-- -----------------------------------------------------------------------------
+-- 9) Restructure pricing charts: Chart -> Types -> Tiers
+-- -----------------------------------------------------------------------------
+
+-- 9a) Create product_pricing_chart_types table (NEW - sits between charts and tiers)
+CREATE TABLE IF NOT EXISTS `product_pricing_chart_types` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_pricing_chart_id` int(10) UNSIGNED NOT NULL,
+  `type` varchar(100) NOT NULL,
+  `sort_order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `product_pricing_chart_types_chart_id_foreign` (`product_pricing_chart_id`),
+  CONSTRAINT `product_pricing_chart_types_chart_id_foreign` FOREIGN KEY (`product_pricing_chart_id`) REFERENCES `product_pricing_charts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9b) Add product_pricing_chart_type_id column to tiers table (for new structure)
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'product_pricing_chart_tiers' AND COLUMN_NAME = 'product_pricing_chart_type_id') = 0,
+  'ALTER TABLE `product_pricing_chart_tiers` ADD COLUMN `product_pricing_chart_type_id` int(10) UNSIGNED DEFAULT NULL AFTER `product_pricing_chart_id`',
+  'SELECT 1'
+));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 9c) Migrate existing data: Create types from existing charts and link tiers to them
+-- This creates one type per existing chart using the chart's 'type' field
+INSERT INTO `product_pricing_chart_types` (`product_pricing_chart_id`, `type`, `sort_order`, `created_at`, `updated_at`)
+SELECT `id`, COALESCE(`type`, 'Default'), 0, NOW(), NOW()
+FROM `product_pricing_charts`
+WHERE `id` NOT IN (SELECT DISTINCT `product_pricing_chart_id` FROM `product_pricing_chart_types`);
+
+-- 9d) Update tiers to reference the new type records
+UPDATE `product_pricing_chart_tiers` t
+JOIN `product_pricing_chart_types` pt ON pt.`product_pricing_chart_id` = t.`product_pricing_chart_id`
+SET t.`product_pricing_chart_type_id` = pt.`id`
+WHERE t.`product_pricing_chart_type_id` IS NULL;
+ 

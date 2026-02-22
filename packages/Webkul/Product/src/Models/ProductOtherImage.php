@@ -17,6 +17,7 @@ class ProductOtherImage extends Model
         'path',
         'original_name',
         'sort_order',
+        'color_id',
     ];
 
     /**
@@ -25,5 +26,13 @@ class ProductOtherImage extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(ProductProxy::modelClass());
+    }
+
+    /**
+     * Get the color associated with this image.
+     */
+    public function color(): BelongsTo
+    {
+        return $this->belongsTo(ProductColor::class, 'color_id');
     }
 }

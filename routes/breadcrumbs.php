@@ -457,6 +457,24 @@ Breadcrumbs::for('configuration.slug', function (BreadcrumbTrail $trail, $slug) 
     $trail->push('', route('admin.configuration.index', ['slug' => $slug]));
 });
 
+// Dashboard > Website Submissions
+Breadcrumbs::for('website-submissions', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push(trans('admin::app.layouts.website'), route('admin.website_submissions.index'));
+});
+
+// Website Submissions > Contacts
+Breadcrumbs::for('website-submissions.contacts', function (BreadcrumbTrail $trail) {
+    $trail->parent('website-submissions');
+    $trail->push(trans('admin::app.website-submissions.contacts'), route('admin.website_submissions.contacts'));
+});
+
+// Website Submissions > Careers
+Breadcrumbs::for('website-submissions.careers', function (BreadcrumbTrail $trail) {
+    $trail->parent('website-submissions');
+    $trail->push(trans('admin::app.website-submissions.careers'), route('admin.website_submissions.careers'));
+});
+
 // Dashboard > Account > Edit
 Breadcrumbs::for('dashboard.account.edit', function (BreadcrumbTrail $trail, $user) {
     $trail->parent('dashboard');

@@ -41,11 +41,22 @@
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                 <td class="px-4 py-3 text-gray-800 dark:text-gray-300">{{ $category->name }}</td>
                                 <td class="px-4 py-3 text-right">
-                                    <a href="{{ route('admin.product_categories.edit', $category->id) }}" class="text-brandColor hover:underline">@lang('admin::app.products.categories.edit')</a>
-                                    <form action="{{ route('admin.product_categories.destroy', $category->id) }}" method="POST" class="inline-block ml-2" onsubmit="return confirm('Delete this category?');">
+                                    <a
+                                        href="{{ route('admin.product_categories.edit', $category->id) }}"
+                                        class="icon-edit inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
+                                        title="@lang('admin::app.products.categories.edit')"
+                                        aria-label="@lang('admin::app.products.categories.edit')"
+                                    ></a>
+
+                                    <form action="{{ route('admin.product_categories.destroy', $category->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Delete this category?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:underline dark:text-red-400">Delete</button>
+                                        <button
+                                            type="submit"
+                                            class="icon-delete inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
+                                            title="@lang('admin::app.products.categories.delete')"
+                                            aria-label="@lang('admin::app.products.categories.delete')"
+                                        ></button>
                                     </form>
                                 </td>
                             </tr>

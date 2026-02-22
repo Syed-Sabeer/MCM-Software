@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Product\ProductDataGrid;
@@ -58,7 +59,7 @@ class ProductController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse
     {
-        $this->validateProductFields($request, false);
+        $this->validateProductFields($request, false, null);
 
         Event::dispatch('product.create.before');
 
@@ -116,7 +117,7 @@ class ProductController extends Controller
      */
     public function update(AttributeForm $request, int $id): JsonResponse|RedirectResponse
     {
-        $this->validateProductFields($request, true);
+        $this->validateProductFields($request, true, $id);
 
         Event::dispatch('product.update.before', $id);
 
@@ -178,6 +179,34 @@ class ProductController extends Controller
     }
 
     /**
+     * Toggle product publish on website.
+     */
+    public function togglePublish(int $id): JsonResponse
+    {
+        try {
+            $product = $this->productRepository->findOrFail($id);
+
+            if (! \Illuminate\Support\Facades\Schema::hasColumn('products', 'publish_on_website')) {
+                return new JsonResponse([
+                    'message' => 'Database column "publish_on_website" is missing. Run sql-updates.sql in phpMyAdmin to add it.',
+                ], 500);
+            }
+
+            $product->publish_on_website = ! $product->publish_on_website;
+            $product->save();
+
+            return new JsonResponse([
+                'message' => trans('admin::app.products.index.update-success'),
+                'publish_on_website' => (bool) $product->publish_on_website,
+            ], 200);
+        } catch (\Throwable $e) {
+            return new JsonResponse([
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Returns product inventories grouped by warehouse.
      */
     public function warehouses(int $id): JsonResponse
@@ -232,12 +261,17 @@ class ProductController extends Controller
     }
 
     /**
-     * Validate product-specific fields (name, category, style, size, images, colors).
+     * Validate product-specific fields (name, slug, category, style, size, images, colors).
      */
-    protected function validateProductFields($request, bool $isUpdate): void
+    protected function validateProductFields($request, bool $isUpdate, ?int $productId): void
     {
+        $slugRule = $isUpdate && $productId
+            ? ['nullable', 'string', 'max:255']
+            : ['nullable', 'string', 'max:255'];
+
         $rules = [
             'name'           => ['required', 'string', 'max:255'],
+            'slug'           => $slugRule,
             'category_id'    => ['nullable', 'exists:product_categories,id'],
             'style'          => ['nullable', 'string', 'max:255'],
             'size'           => ['nullable', 'string', 'max:100'],
@@ -254,13 +288,103 @@ class ProductController extends Controller
             'key_points.*.key_point'   => ['nullable', 'string'],
             'pricing_charts' => ['nullable', 'array'],
             'pricing_charts.*.heading' => ['nullable', 'string', 'max:255'],
-            'pricing_charts.*.type'    => ['nullable', 'string', 'max:100'],
-            'pricing_charts.*.tiers'   => ['nullable', 'array'],
-            'pricing_charts.*.tiers.*.quantity' => ['nullable', 'numeric', 'min:0'],
-            'pricing_charts.*.tiers.*.price'    => ['nullable', 'numeric', 'min:0'],
+            'pricing_charts.*.types'   => ['nullable', 'array'],
+            'pricing_charts.*.types.*.type' => ['nullable', 'string', 'max:100'],
+            'pricing_charts.*.types.*.tiers' => ['nullable', 'array'],
+            'pricing_charts.*.types.*.tiers.*.quantity' => ['nullable', 'numeric', 'min:0'],
+            'pricing_charts.*.types.*.tiers.*.price'    => ['nullable', 'numeric', 'min:0'],
         ];
 
         $request->validate($rules);
+    }
+
+    /**
+     * Check if a slug is available (AJAX endpoint).
+     */
+    public function checkSlug(): JsonResponse
+    {
+        $slug = trim(request()->input('slug', ''));
+        $productId = request()->input('product_id');
+
+        if ($slug === '') {
+            return new JsonResponse(['available' => false, 'message' => 'Slug is empty']);
+        }
+
+        $query = $this->productRepository->where('slug', $slug);
+
+        if ($productId) {
+            $query->where('id', '!=', $productId);
+        }
+
+        $exists = $query->exists();
+
+        return new JsonResponse([
+            'available' => ! $exists,
+            'slug'      => $slug,
+            'message'   => $exists ? 'Slug already exists' : 'Slug is available',
+        ]);
+    }
+
+    /**
+     * Generate a unique slug based on base slug.
+     */
+    protected function generateUniqueSlug(string $baseSlug, ?int $productId): string
+    {
+        if ($baseSlug === '') {
+            $baseSlug = 'product';
+        }
+
+        $slug = $baseSlug;
+        $counter = 1;
+
+        $query = $this->productRepository->where('slug', $slug);
+        if ($productId) {
+            $query->where('id', '!=', $productId);
+        }
+
+        while ($query->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+
+            $query = $this->productRepository->where('slug', $slug);
+            if ($productId) {
+                $query->where('id', '!=', $productId);
+            }
+        }
+
+        return $slug;
+    }
+
+    /**
+     * Generate a unique SKU based on product name.
+     */
+    protected function generateUniqueSku(string $name, ?int $productId): string
+    {
+        $baseSku = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', substr($name, 0, 20)));
+        if ($baseSku === '') {
+            $baseSku = 'PROD';
+        }
+        $baseSku .= '-' . strtoupper(substr(uniqid(), -6));
+
+        $sku = $baseSku;
+        $counter = 1;
+
+        $query = $this->productRepository->where('sku', $sku);
+        if ($productId) {
+            $query->where('id', '!=', $productId);
+        }
+
+        while ($query->exists()) {
+            $sku = $baseSku . '-' . $counter;
+            $counter++;
+
+            $query = $this->productRepository->where('sku', $sku);
+            if ($productId) {
+                $query->where('id', '!=', $productId);
+            }
+        }
+
+        return $sku;
     }
 
     /**
@@ -272,8 +396,14 @@ class ProductController extends Controller
      */
     protected function prepareProductData(array $data, ?int $productId): array
     {
-        if ($data['name'] ?? null) {
-            $data['name'] = $data['name'];
+        $baseSlug = isset($data['slug']) && trim((string) $data['slug']) !== ''
+            ? \Illuminate\Support\Str::slug(trim($data['slug']))
+            : \Illuminate\Support\Str::slug($data['name'] ?? '');
+
+        $data['slug'] = $this->generateUniqueSlug($baseSlug, $productId);
+
+        if (empty($data['sku'])) {
+            $data['sku'] = $this->generateUniqueSku($data['name'] ?? 'product', $productId);
         }
 
         if (request()->hasFile('cover_image')) {
@@ -282,15 +412,30 @@ class ProductController extends Controller
         }
 
         $otherImages = [];
+        $otherImageColors = [];
+        $inputColors = $data['other_image_colors'] ?? [];
         if (request()->hasFile('other_images')) {
-            foreach (request()->file('other_images') as $file) {
-                if ($file->isValid()) {
+            foreach (request()->file('other_images') as $idx => $file) {
+                if ($file && $file->isValid()) {
                     $path = $file->store('product-other-images', 'public');
                     $otherImages[] = ['path' => $path, 'original_name' => $file->getClientOriginalName()];
+                    $otherImageColors[] = $inputColors[$idx] ?? null;
                 }
             }
         }
         $data['other_images'] = $otherImages;
+        $data['other_image_colors'] = $otherImageColors;
+
+        $replaceImages = [];
+        if (request()->hasFile('replace_images')) {
+            foreach (request()->file('replace_images') as $imageId => $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store('product-other-images', 'public');
+                    $replaceImages[$imageId] = ['path' => $path, 'original_name' => $file->getClientOriginalName()];
+                }
+            }
+        }
+        $data['replace_images'] = $replaceImages;
 
         $colors = [];
         foreach ($data['colors'] ?? [] as $c) {
@@ -319,19 +464,28 @@ class ProductController extends Controller
             if (! is_array($chart)) {
                 continue;
             }
-            $tiers = [];
-            foreach ($chart['tiers'] ?? [] as $tier) {
-                if (is_array($tier) && (isset($tier['quantity']) || isset($tier['price']))) {
-                    $tiers[] = [
-                        'quantity' => $tier['quantity'] ?? 0,
-                        'price'    => $tier['price'] ?? 0,
-                    ];
+            $types = [];
+            foreach ($chart['types'] ?? [] as $typeData) {
+                if (! is_array($typeData)) {
+                    continue;
                 }
+                $tiers = [];
+                foreach ($typeData['tiers'] ?? [] as $tier) {
+                    if (is_array($tier) && (isset($tier['quantity']) || isset($tier['price']))) {
+                        $tiers[] = [
+                            'quantity' => $tier['quantity'] ?? 0,
+                            'price'    => $tier['price'] ?? 0,
+                        ];
+                    }
+                }
+                $types[] = [
+                    'type'  => $typeData['type'] ?? '',
+                    'tiers' => $tiers,
+                ];
             }
             $pricingCharts[] = [
                 'heading' => $chart['heading'] ?? '',
-                'type'    => $chart['type'] ?? '',
-                'tiers'   => $tiers,
+                'types'   => $types,
             ];
         }
         $data['pricing_charts'] = $pricingCharts;

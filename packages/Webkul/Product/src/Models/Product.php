@@ -25,6 +25,7 @@ class Product extends Model implements ProductContract
      */
     protected $fillable = [
         'name',
+        'slug',
         'sku',
         'description',
         'quantity',
@@ -35,6 +36,14 @@ class Product extends Model implements ProductContract
         'cover_image',
         'additional_info',
         'shipping_info',
+        'publish_on_website',
+    ];
+
+    /**
+     * Cast publish_on_website to boolean.
+     */
+    protected $casts = [
+        'publish_on_website' => 'boolean',
     ];
 
     /**

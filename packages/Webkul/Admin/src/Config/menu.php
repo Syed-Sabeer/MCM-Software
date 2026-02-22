@@ -201,7 +201,7 @@ return [
         'route'      => 'admin.settings.types.index',
         'sort'       => 3,
         'icon-class' => 'icon-settings-type',
-    ], 
+    ],
     // [
     //     'key'        => 'settings.warehouse',
     //     'name'       => 'admin::app.layouts.warehouse',
@@ -238,7 +238,7 @@ return [
         'route'      => 'admin.settings.email_templates.index',
         'sort'       => 2,
         'icon-class' => 'icon-settings-mail',
-    ], 
+    ],
     // [
     //     'key'        => 'settings.automation.events',
     //     'name'       => 'admin::app.layouts.events',
@@ -301,6 +301,17 @@ return [
         'route'      => 'admin.configuration.index',
         'sort'       => 9,
         'icon-class' => 'icon-configuration',
+    ],
+
+    /**
+     * Website Submissions.
+     */
+    [
+        'key'        => 'website-submissions',
+        'name'       => 'admin::app.layouts.website',
+        'route'      => 'admin.website_submissions.index',
+        'sort'       => 10,
+        'icon-class' => 'icon-globe',
     ],
 
 ];

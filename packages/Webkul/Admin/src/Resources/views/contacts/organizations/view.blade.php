@@ -300,17 +300,17 @@
             </div>
 
             <!-- Contacts card -->
-            <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                <div class="flex items-center justify-between">
-                    <p class="text-base font-semibold dark:text-white">
+            <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex items-center justify-between gap-2">
+                    <p class="text-base font-bold text-gray-900 dark:text-white">
                         Contacts
                     </p>
 
                     <a
                         href="{{ route('admin.contacts.persons.create', ['organization_id' => $organization->id]) }}"
-                        class="text-xs font-semibold text-brandColor hover:underline"
+                        class="inline-flex items-center gap-1 rounded bg-brandColor px-2.5 py-1 text-xs font-semibold text-white hover:bg-brandColor/90"
                     >
-                        + New Contact
+                        + New
                     </a>
                 </div>
 
@@ -319,19 +319,19 @@
                 @endphp
 
                 @if ($recentContacts->count() > 0)
-                    <div class="flex flex-col gap-2">
+                    <div class="flex flex-col gap-2.5 border-t border-gray-200 pt-3 dark:border-gray-700">
                         @foreach ($recentContacts as $contact)
                             <a
                                 href="{{ route('admin.contacts.persons.view', $contact->id) }}"
-                                class="flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                class="flex items-center gap-3 rounded-md p-2 transition hover:bg-gray-50 dark:hover:bg-gray-800"
                             >
-                                <x-admin::avatar :name="$contact->first_name . ' ' . $contact->last_name" class="h-6 w-6" />
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-xs font-medium truncate dark:text-white">
+                                <x-admin::avatar :name="$contact->first_name . ' ' . $contact->last_name" class="h-8 w-8 flex-shrink-0" />
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
                                         {{ $contact->first_name }} {{ $contact->last_name }}
                                     </p>
                                     @if ($contact->email)
-                                        <p class="text-xs text-gray-500 truncate dark:text-gray-400">
+                                        <p class="truncate text-xs text-gray-500 dark:text-gray-400">
                                             {{ $contact->email }}
                                         </p>
                                     @endif
@@ -340,37 +340,41 @@
                         @endforeach
                     </div>
 
-                    <a
-                        href="{{ route('admin.contacts.persons.index', ['organization_id' => $organization->id]) }}"
-                        class="text-xs font-semibold text-brandColor hover:underline"
-                    >
-                        View All
-                    </a>
+                    @if ($recentContacts->count() >= 3)
+                        <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
+                            <a
+                                href="{{ route('admin.contacts.persons.index', ['organization_id' => $organization->id]) }}"
+                                class="text-xs font-semibold text-brandColor hover:underline"
+                            >
+                                View All Contacts
+                            </a>
+                        </div>
+                    @endif
                 @else
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Contacts list for this organization can be added and managed here.
+                    <p class="rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                        No contacts yet. Add one to manage people from this organization.
                     </p>
                 @endif
             </div>
 
-            <!-- Opportunities card (placeholder) -->
-            <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                <div class="flex items-center justify-between">
-                    <p class="text-base font-semibold dark:text-white">
+            <!-- Opportunities card -->
+            <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex items-center justify-between gap-2">
+                    <p class="text-base font-bold text-gray-900 dark:text-white">
                         Opportunities
                     </p>
 
-                    <button type="button" class="text-xs font-semibold text-brandColor hover:underline">
-                        + New Opportunity
+                    <button type="button" class="inline-flex items-center gap-1 rounded bg-brandColor px-2.5 py-1 text-xs font-semibold text-white hover:bg-brandColor/90">
+                        + New
                     </button>
                 </div>
 
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                    No opportunities yet. Create one to track potential deals for this company.
+                <p class="rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                    No opportunities yet. Create one to track potential deals.
                 </p>
             </div>
 
-            <!-- Cases card (placeholder) -->
+            <!-- Cases card -->
             @php
                 $casesQuery = \Webkul\Lead\Models\Lead::query()
                     ->with(['organization', 'person'])
@@ -386,69 +390,68 @@
                 $recentCases = $casesQuery->take(3)->get();
             @endphp
 
-            <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                <div class="flex items-center justify-between">
-                    <p class="text-base font-semibold dark:text-white">
-                        Cases @if($casesCount) ({{ $casesCount }}) @endif
+            <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex items-center justify-between gap-2">
+                    <p class="text-base font-bold text-gray-900 dark:text-white">
+                        Cases
+                        @if($casesCount)
+                            <span class="text-xs font-normal text-gray-500 dark:text-gray-400">({{ $casesCount }})</span>
+                        @endif
                     </p>
 
                     <a
                         href="{{ route('admin.leads.create', ['organization_id' => $organization->id]) }}"
-                        class="text-xs font-semibold text-brandColor hover:underline"
+                        class="inline-flex items-center gap-1 rounded bg-brandColor px-2.5 py-1 text-xs font-semibold text-white hover:bg-brandColor/90"
                     >
-                        + New Case
+                        + New
                     </a>
                 </div>
 
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                    Track support cases and issues related to this company here.
-                </p>
-
                 @if ($casesCount)
-                    <div class="mt-2 text-xs text-gray-600 dark:text-gray-300">
-                        <p class="mb-1 font-semibold">
-                            Recently added cases
-                        </p>
+                    <div class="flex flex-col gap-2.5 border-t border-gray-200 pt-3 dark:border-gray-700">
+                        @foreach ($recentCases as $case)
+                            <div class="flex items-start justify-between gap-3 rounded-md p-2 transition hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <div class="min-w-0 flex-1">
+                                    <a
+                                        href="{{ route('admin.leads.view', $case->id) }}"
+                                        class="block text-sm font-medium text-brandColor hover:underline"
+                                    >
+                                        {{ $case->title }}
+                                    </a>
 
-                        <ul class="flex flex-col gap-1">
-                            @foreach ($recentCases as $case)
-                                <li class="flex items-center justify-between gap-2">
-                                    <div class="flex flex-col gap-0.5">
-                                        <a
-                                            href="{{ route('admin.leads.view', $case->id) }}"
-                                            class="text-brandColor hover:underline"
-                                        >
-                                            {{ $case->title }}
-                                        </a>
+                                    @if ($case->person)
+                                        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                            {{ $case->person->name ?? trim(($case->person->first_name ?? '') . ' ' . ($case->person->last_name ?? '')) }}
+                                        </p>
+                                    @endif
+                                </div>
 
-                                        @if ($case->organization)
-                                            <a
-                                                href="{{ route('admin.contacts.organizations.view', $case->organization->id) }}"
-                                                class="text-[11px] text-gray-500 dark:text-gray-400 hover:text-brandColor hover:underline"
-                                            >
-                                                {{ $case->organization->name }}
-                                            </a>
-                                        @endif
-
-                                        @if ($case->person)
-                                            <span class="text-[11px] text-gray-500 dark:text-gray-400">
-                                                {{ $case->person->name ?? trim(($case->person->first_name ?? '') . ' ' . ($case->person->last_name ?? '')) }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
+                                <a
+                                    href="{{ route('admin.contacts.organizations.delete', $case->id) }}"
+                                    onclick="return confirm('Are you sure?')"
+                                    class="flex-shrink-0 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                                    title="Delete case"
+                                >
+                                    <i class="icon-delete text-lg"></i>
+                                </a>
+                            </div>
+                        @endforeach
                     </div>
 
-                    <div class="mt-2 text-center">
-                        <a
-                            href="{{ route('admin.leads.index', ['organization_id' => $organization->id]) }}"
-                            class="text-xs font-semibold text-brandColor hover:underline"
-                        >
-                            View All
-                        </a>
-                    </div>
+                    @if ($casesCount >= 3)
+                        <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
+                            <a
+                                href="{{ route('admin.leads.index', ['organization_id' => $organization->id]) }}"
+                                class="text-xs font-semibold text-brandColor hover:underline"
+                            >
+                                View All Cases
+                            </a>
+                        </div>
+                    @endif
+                @else
+                    <p class="rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                        Track support cases and issues here. Start by creating your first case.
+                    </p>
                 @endif
             </div>
 
@@ -470,127 +473,91 @@
                     ->take(3);
             @endphp
 
-            <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                <div class="flex items-center justify-between">
-                    <p class="text-base font-semibold dark:text-white">
-                        Files @if($filesCount) ({{ $filesCount }}) @endif
+            <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex items-center justify-between gap-2">
+                    <p class="text-base font-bold text-gray-900 dark:text-white">
+                        Files
+                        @if($filesCount)
+                            <span class="text-xs font-normal text-gray-500 dark:text-gray-400">({{ $filesCount }})</span>
+                        @endif
                     </p>
                 </div>
 
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                    Attach proposals, contracts, and other documents related to this company.
-                </p>
-
-                <!-- Upload modal (plain HTML so it always works) -->
-                <div
-                    id="organization-files-modal"
-                    class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/50"
-                    role="dialog"
-                    aria-modal="true"
-                >
-                    <div class="max-h-[90vh] w-full max-w-md overflow-auto rounded-lg border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-800 dark:bg-gray-900">
-                        <div class="mb-4 flex items-center justify-between">
-                            <h3 class="text-base font-semibold dark:text-white">Upload File</h3>
-                            <button
-                                type="button"
-                                class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                onclick="document.getElementById('organization-files-modal').classList.add('hidden')"
-                            >
-                                &times;
-                            </button>
-                        </div>
-
-                        <form
-                            action="{{ route('admin.contacts.organizations.files.store', $organization->id) }}"
-                            method="POST"
-                            enctype="multipart/form-data"
-                            class="flex flex-col gap-4"
-                        >
-                            @csrf
-
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Title</x-admin::form.control-group.label>
-                                <input
-                                    type="text"
-                                    name="title"
-                                    value="{{ old('title') }}"
-                                    class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                                />
-                            </x-admin::form.control-group>
-
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Description</x-admin::form.control-group.label>
-                                <textarea
-                                    name="description"
-                                    class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                                    rows="3"
-                                >{{ old('description') }}</textarea>
-                            </x-admin::form.control-group>
-
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">File</x-admin::form.control-group.label>
-                                <input
-                                    type="file"
-                                    name="files[]"
-                                    multiple
-                                    required
-                                    class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                                />
-                                <x-admin::form.control-group.error control-name="files.0" />
-                            </x-admin::form.control-group>
-
-                            <div class="flex gap-2">
-                                <button type="submit" class="primary-button">Upload</button>
-                                <button
-                                    type="button"
-                                    class="secondary-button"
-                                    onclick="document.getElementById('organization-files-modal').classList.add('hidden')"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
                 @if ($filesCount)
-                    <div class="mt-2 text-xs text-gray-600 dark:text-gray-300">
-                        <p class="mb-1 font-semibold">
-                            Recently added files
-                        </p>
+                    <div class="grid gap-3 border-t border-gray-200 pt-3 dark:border-gray-700 sm:grid-cols-2 lg:grid-cols-1">
+                        @foreach ($recentFiles as $file)
+                            @php
+                                $filePath = $file->url ?? asset('storage/' . $file->path);
+                                $fileName = $file->name ?? $file->original_name;
+                                $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                                $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                            @endphp
 
-                        <ul class="flex flex-col gap-1">
-                            @foreach ($recentFiles as $file)
-                                <li class="flex items-center justify-between gap-2">
-                                    <div class="flex flex-col">
-                                        <a
-                                            href="{{ $file->url ?? asset('storage/' . $file->path) }}"
-                                            target="_blank"
-                                            class="text-brandColor hover:underline"
-                                        >
-                                            {{ $file->name ?? $file->original_name }}
-                                        </a>
-
-                                        <span class="text-[11px] text-gray-500 dark:text-gray-400">
-                                            {{ core()->formatDate($file->created_at) }}
-                                        </span>
+                            <div class="flex flex-col gap-2 rounded-md border border-gray-200 p-2 dark:border-gray-700">
+                                @if ($isImage)
+                                    <a href="{{ $filePath }}" target="_blank" class="relative overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800">
+                                        <img
+                                            src="{{ $filePath }}"
+                                            alt="{{ $fileName }}"
+                                            class="h-24 w-full object-cover transition hover:opacity-75"
+                                        />
+                                    </a>
+                                @else
+                                    <div class="flex items-center justify-center rounded-md bg-gray-100 py-6 dark:bg-gray-800">
+                                        <i class="icon-document text-3xl text-gray-400"></i>
                                     </div>
-                                </li>
-                            @endforeach
-                        </ul>
+                                @endif
+
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="min-w-0 flex-1">
+                                        <a
+                                            href="{{ $filePath }}"
+                                            target="_blank"
+                                            class="block truncate text-xs font-medium text-brandColor hover:underline"
+                                            title="{{ $fileName }}"
+                                        >
+                                            {{ $fileName }}
+                                        </a>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ core()->formatDate($file->created_at) }}
+                                        </p>
+                                    </div>
+
+                                    <form
+                                        action="{{ route('admin.contacts.organizations.files.delete', $file->id) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Delete this file?');"
+                                        class="inline"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button
+                                            type="submit"
+                                            class="flex-shrink-0 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                                            title="Delete file"
+                                        >
+                                            <i class="icon-delete text-lg"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
 
-                    <div class="mt-2 text-center">
-                        <a
-                            href="{{ route('admin.activities.index', ['entity_type' => 'organizations', 'entity_id' => $organization->id]) }}"
-                            class="text-xs font-semibold text-brandColor hover:underline"
-                        >
-                            View All
-                        </a>
-                    </div>
+                    @if ($filesCount >= 3)
+                        <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
+                            <a
+                                href="{{ route('admin.activities.index', ['entity_type' => 'organizations', 'entity_id' => $organization->id]) }}"
+                                class="text-xs font-semibold text-brandColor hover:underline"
+                            >
+                                View All Files
+                            </a>
+                        </div>
+                    @endif
                 @else
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        No files uploaded yet.
+                    <p class="rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                        No files yet. Upload proposals, contracts, and documents here.
                     </p>
                 @endif
             </div>

@@ -73,5 +73,6 @@ Route::prefix('contacts')->group(function () {
      */
     Route::controller(OrganizationFileController::class)->prefix('organizations')->group(function () {
         Route::post('{id}/files', 'store')->name('admin.contacts.organizations.files.store');
+        Route::delete('files/{id}', 'destroy')->name('admin.contacts.organizations.files.delete');
     });
 });

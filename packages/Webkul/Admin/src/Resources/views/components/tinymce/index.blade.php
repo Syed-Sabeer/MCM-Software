@@ -52,11 +52,11 @@
 
             methods: {
                 destroyTinymceInstance() {
-                    if (! tinymce.activeEditor) {
-                        return;
+                    // Only destroy the editor matching our selector, not all active editors
+                    const existingEditor = tinymce.get(this.selector.replace('textarea#', ''));
+                    if (existingEditor) {
+                        existingEditor.destroy();
                     }
-
-                    tinymce.activeEditor.destroy();
                 },
 
                 init() {
