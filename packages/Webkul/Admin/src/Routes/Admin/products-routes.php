@@ -41,6 +41,8 @@ Route::group(['middleware' => ['user']], function () {
 
         Route::delete('{id}', 'destroy')->name('admin.products.delete');
 
+        Route::post('{id}/duplicate', 'duplicate')->name('admin.products.duplicate');
+
         Route::post('mass-destroy', 'massDestroy')->name('admin.products.mass_delete');
 
         Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {

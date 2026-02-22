@@ -531,13 +531,13 @@
                     }
                     return;
                 }
-                if (t.classList && t.classList.contains('remove-other-image')) {
+                if (t.closest('.remove-other-image')) {
                     e.preventDefault();
                     var rows = document.querySelectorAll('#other-images-container .other-image-row');
                     if (rows.length > 1 && t.closest('.other-image-row')) t.closest('.other-image-row').remove();
                     return;
                 }
-                if (t.classList && t.classList.contains('remove-color')) {
+                if (t.closest('.remove-color')) {
                     e.preventDefault();
                     var rows = document.querySelectorAll('#colors-container .color-row');
                     if (rows.length > 1 && t.closest('.color-row')) {
@@ -649,7 +649,7 @@
                     return;
                 }
                 // Duplicate last type (with values)
-                if (t.classList && t.classList.contains('duplicate-type-btn')) {
+                if (t.closest('.duplicate-type-btn')) {
                     e.preventDefault();
                     var chartBlock = t.closest('.pricing-chart-block');
                     var chartIndex = chartBlock.getAttribute('data-chart-index');
@@ -679,7 +679,7 @@
                     return;
                 }
                 // Add type to chart
-                if (t.classList && t.classList.contains('add-type-btn')) {
+                if (t.closest('.add-type-btn')) {
                     e.preventDefault();
                     var chartBlock = t.closest('.pricing-chart-block');
                     var chartIndex = chartBlock.getAttribute('data-chart-index');
@@ -713,7 +713,7 @@
                     return;
                 }
                 // Remove type from chart
-                if (t.classList && t.classList.contains('remove-chart-type')) {
+                if (t.closest('.remove-chart-type')) {
                     e.preventDefault();
                     var typesContainer = t.closest('.chart-types-container');
                     var typeBlocks = typesContainer.querySelectorAll('.chart-type-block');
@@ -721,7 +721,7 @@
                     return;
                 }
                 // Add tier to type
-                if (t.classList && t.classList.contains('add-tier-btn')) {
+                if (t.closest('.add-tier-btn')) {
                     e.preventDefault();
                     var typeBlock = t.closest('.chart-type-block');
                     var chartBlock = t.closest('.pricing-chart-block');

@@ -184,7 +184,7 @@ return [
     ], [
         'key'   => 'products.create',
         'name'  => 'admin::app.acl.create',
-        'route' => ['admin.products.create', 'admin.products.store'],
+        'route' => ['admin.products.create', 'admin.products.store', 'admin.products.duplicate'],
         'sort'  => 1,
     ], [
         'key'   => 'products.edit',

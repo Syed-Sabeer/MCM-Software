@@ -261,6 +261,147 @@ class ProductController extends Controller
     }
 
     /**
+     * Duplicate the specified product with all its relationships.
+     */
+    public function duplicate(int $id): JsonResponse
+    {
+        try {
+            $original = $this->productRepository->with([
+                'category',
+                'otherImages',
+                'colors',
+                'keyPoints',
+                'pricingCharts.types.tiers'
+            ])->findOrFail($id);
+
+            Event::dispatch('product.create.before');
+
+            // Prepare base product data with "(Copy)" added to name
+            $newData = [
+                'name'            => $original->name . ' (Copy)',
+                'slug'            => '',  // Will be auto-generated from name
+                'sku'             => '',  // Will be auto-generated
+                'description'     => $original->description,
+                'quantity'        => $original->quantity ?? 0,
+                'price'           => $original->price ?? 0,
+                'category_id'     => $original->category_id,
+                'style'           => $original->style,
+                'size'            => $original->size,
+                'additional_info' => $original->additional_info,
+                'shipping_info'   => $original->shipping_info,
+                'publish_on_website' => false, // Set to unpublished by default
+                'entity_type'     => 'products', // Required for attribute value repository
+            ];
+
+            // Copy cover image if exists
+            if ($original->cover_image) {
+                $newData['cover_image'] = $this->duplicateFile($original->cover_image, 'product-images');
+            }
+
+            // Prepare colors data
+            $colors = [];
+            $colorMapping = []; // Map old color IDs to new array indices
+            foreach ($original->colors as $idx => $color) {
+                $colors[] = [
+                    'name'       => $color->name,
+                    'color_code' => $color->color_code,
+                ];
+                $colorMapping[$color->id] = $idx;
+            }
+            $newData['colors'] = $colors;
+
+            // Prepare other images data (will be created after colors are saved)
+            $otherImagesData = [];
+            $otherImageColors = [];
+            foreach ($original->otherImages as $idx => $image) {
+                if ($image->path) {
+                    $newPath = $this->duplicateFile($image->path, 'product-other-images');
+                    $otherImagesData[] = [
+                        'path'          => $newPath,
+                        'original_name' => $image->original_name,
+                    ];
+                    // If image had a color reference, map it to new color array index
+                    if ($image->color_id && isset($colorMapping[$image->color_id])) {
+                        $otherImageColors[] = 'new_' . $colorMapping[$image->color_id];
+                    } else {
+                        $otherImageColors[] = null;
+                    }
+                }
+            }
+            $newData['other_images'] = $otherImagesData;
+            $newData['other_image_colors'] = $otherImageColors;
+
+            // Prepare key points data
+            $keyPoints = [];
+            foreach ($original->keyPoints as $kp) {
+                $keyPoints[] = [
+                    'key_heading' => $kp->key_heading,
+                    'key_point'   => $kp->key_point,
+                ];
+            }
+            $newData['key_points'] = $keyPoints;
+
+            // Prepare pricing charts data
+            $pricingCharts = [];
+            foreach ($original->pricingCharts as $chart) {
+                $types = [];
+                foreach ($chart->types as $type) {
+                    $tiers = [];
+                    foreach ($type->tiers as $tier) {
+                        $tiers[] = [
+                            'quantity' => $tier->quantity,
+                            'price'    => $tier->price,
+                        ];
+                    }
+                    $types[] = [
+                        'type'  => $type->type,
+                        'tiers' => $tiers,
+                    ];
+                }
+                $pricingCharts[] = [
+                    'heading' => $chart->heading,
+                    'types'   => $types,
+                ];
+            }
+            $newData['pricing_charts'] = $pricingCharts;
+
+            // Generate unique slug and SKU
+            $data = $this->prepareProductData($newData, null);
+
+            // Create the duplicate product
+            $product = $this->productRepository->create($data);
+
+            Event::dispatch('product.create.after', $product);
+
+            return response()->json([
+                'message' => trans('admin::app.products.index.duplicate-success'),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to duplicate product: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Duplicate a file in storage.
+     */
+    protected function duplicateFile(string $originalPath, string $directory): string
+    {
+        if (! Storage::disk('public')->exists($originalPath)) {
+            return $originalPath;
+        }
+
+        $extension = pathinfo($originalPath, PATHINFO_EXTENSION);
+        $filename = uniqid() . '.' . $extension;
+        $newPath = $directory . '/' . $filename;
+
+        Storage::disk('public')->copy($originalPath, $newPath);
+
+        return $newPath;
+    }
+
+    /**
      * Validate product-specific fields (name, slug, category, style, size, images, colors).
      */
     protected function validateProductFields($request, bool $isUpdate, ?int $productId): void
@@ -411,10 +552,10 @@ class ProductController extends Controller
             $data['cover_image'] = $path;
         }
 
-        $otherImages = [];
-        $otherImageColors = [];
         $inputColors = $data['other_image_colors'] ?? [];
         if (request()->hasFile('other_images')) {
+            $otherImages = [];
+            $otherImageColors = [];
             foreach (request()->file('other_images') as $idx => $file) {
                 if ($file && $file->isValid()) {
                     $path = $file->store('product-other-images', 'public');
@@ -422,9 +563,9 @@ class ProductController extends Controller
                     $otherImageColors[] = $inputColors[$idx] ?? null;
                 }
             }
+            $data['other_images'] = $otherImages;
+            $data['other_image_colors'] = $otherImageColors;
         }
-        $data['other_images'] = $otherImages;
-        $data['other_image_colors'] = $otherImageColors;
 
         $replaceImages = [];
         if (request()->hasFile('replace_images')) {

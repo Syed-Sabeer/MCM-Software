@@ -705,12 +705,14 @@ return [
             'update-success' => 'Product updated successfully.',
             'delete-success' => 'Product deleted successfully.',
             'delete-failed'  => 'Product can not be deleted.',
+            'duplicate-success' => 'Product duplicated successfully.',
 
             'datagrid'   => [
                 'allocated'          => 'Allocated',
                 'category'           => 'Category',
                 'cover-image'        => 'Cover Image',
                 'delete'             => 'Delete',
+                'duplicate'          => 'Duplicate',
                 'edit'               => 'Edit',
                 'id'                 => 'ID',
                 'in-stock'           => 'In Stock',

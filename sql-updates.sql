@@ -234,4 +234,14 @@ UPDATE `product_pricing_chart_tiers` t
 JOIN `product_pricing_chart_types` pt ON pt.`product_pricing_chart_id` = t.`product_pricing_chart_id`
 SET t.`product_pricing_chart_type_id` = pt.`id`
 WHERE t.`product_pricing_chart_type_id` IS NULL;
- 
+
+
+-- -----------------------------------------------------------------------------
+-- 10) Add publish_on_website column to products table
+-- -----------------------------------------------------------------------------
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'products' AND COLUMN_NAME = 'publish_on_website') = 0,
+  'ALTER TABLE `products` ADD COLUMN `publish_on_website` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 AFTER `quantity`',
+  'SELECT 1'
+));
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

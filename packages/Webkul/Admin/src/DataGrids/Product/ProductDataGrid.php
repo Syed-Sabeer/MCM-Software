@@ -5,7 +5,6 @@ namespace Webkul\Admin\DataGrids\Product;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Tag\Repositories\TagRepository;
 
@@ -84,7 +83,7 @@ class ProductDataGrid extends DataGrid
                 if (empty($row->cover_image)) {
                     return '<span class="text-gray-400">—</span>';
                 }
-                $url = Storage::url($row->cover_image);
+                $url = asset('storage/' . $row->cover_image);
 
                 return '<img src="'.e($url).'" alt="" class="h-10 w-10 rounded border border-gray-200 object-cover dark:border-gray-700" loading="lazy" />';
             },
@@ -172,6 +171,16 @@ class ProductDataGrid extends DataGrid
                 'title'  => trans('admin::app.products.index.datagrid.edit'),
                 'method' => 'GET',
                 'url'    => fn ($row) => route('admin.products.edit', $row->id),
+            ]);
+        }
+
+        if (bouncer()->hasPermission('products.create')) {
+            $this->addAction([
+                'index'  => 'duplicate',
+                'icon'   => 'icon-add',
+                'title'  => trans('admin::app.products.index.datagrid.duplicate'),
+                'method' => 'POST',
+                'url'    => fn ($row) => route('admin.products.duplicate', $row->id),
             ]);
         }
 

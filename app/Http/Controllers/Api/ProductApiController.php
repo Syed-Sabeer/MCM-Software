@@ -10,8 +10,9 @@ use Webkul\Product\Models\Product;
 class ProductApiController extends Controller
 {
     /**
-     * Get all products with pagination.
+     * Get all published products with pagination.
      * Shows: cover image, category name, title (name), style, size
+     * Only returns products where publish_on_website = 1
      */
     public function index(Request $request): JsonResponse
     {
@@ -19,6 +20,7 @@ class ProductApiController extends Controller
         
         $products = Product::with('category')
             ->select('id', 'name', 'slug', 'cover_image', 'category_id', 'style', 'size')
+            ->where('publish_on_website', 1)
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
@@ -49,6 +51,7 @@ class ProductApiController extends Controller
     /**
      * Get product details by ID.
      * Returns all details organized by sections.
+     * Only returns product if publish_on_website = 1
      */
     public function show($id): JsonResponse
     {
@@ -58,12 +61,14 @@ class ProductApiController extends Controller
             'colors',
             'keyPoints',
             'pricingCharts.types.tiers',
-        ])->find($id);
+        ])
+        ->where('publish_on_website', 1)
+        ->find($id);
 
         if (!$product) {
             return response()->json([
                 'success' => false,
-                'message' => 'Product not found',
+                'message' => 'Product not found or not published',
             ], 404);
         }
 
