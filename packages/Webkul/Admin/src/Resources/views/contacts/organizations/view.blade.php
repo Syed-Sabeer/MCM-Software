@@ -396,7 +396,7 @@
                 @if ($casesCount)
                     <div class="flex flex-col gap-2.5 border-t border-gray-200 pt-3 dark:border-gray-700">
                         @foreach ($recentCases as $case)
-                            <div class="flex items-start justify-between gap-3 rounded-md p-2 transition hover:bg-gray-50 dark:hover:bg-gray-800">
+                            <div class="flex items-start justify-between gap-3 rounded-md p-2 transition hover:bg-gray-50 dark:hover:bg-gray-800" data-case-row="{{ $case->id }}">
                                 <div class="min-w-0 flex-1">
                                     <a
                                         href="{{ route('admin.leads.view', $case->id) }}"
@@ -412,14 +412,15 @@
                                     @endif
                                 </div>
 
-                                <a
-                                    href="{{ route('admin.contacts.organizations.delete', $case->id) }}"
-                                    onclick="return confirm('Are you sure?')"
-                                    class="flex-shrink-0 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                                <button
+                                    type="button"
+                                    class="case-delete-btn flex-shrink-0 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
                                     title="Delete case"
+                                    data-delete-url="{{ route('admin.leads.delete', $case->id) }}"
+                                    data-case-id="{{ $case->id }}"
                                 >
                                     <i class="icon-delete text-lg"></i>
-                                </a>
+                                </button>
                             </div>
                         @endforeach
                     </div>
@@ -552,6 +553,42 @@
 </x-admin::layouts>
 
 @pushOnce('scripts')
+    <script type="module">
+        (function initCaseDelete() {
+            var btns = document.querySelectorAll('.case-delete-btn');
+            if (!btns.length) return;
+            btns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var url = this.getAttribute('data-delete-url');
+                    var caseId = this.getAttribute('data-case-id');
+                    var row = document.querySelector('[data-case-row="' + caseId + '"]');
+                    if (typeof window.emitter !== 'undefined') {
+                        window.emitter.emit('open-confirm-modal', {
+                            agree: function () {
+                                window.axios.delete(url)
+                                    .then(function (response) {
+                                        if (row) row.remove();
+                                        if (typeof window.emitter !== 'undefined') {
+                                            window.emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                        }
+                                    })
+                                    .catch(function (error) {
+                                        if (typeof window.emitter !== 'undefined') {
+                                            window.emitter.emit('add-flash', { type: 'error', message: error.response && error.response.data ? error.response.data.message : 'Failed to delete.' });
+                                        }
+                                    });
+                            }
+                        });
+                    } else {
+                        if (confirm('Are you sure you want to perform this action?')) {
+                            window.axios.delete(url).then(function () { if (row) row.remove(); }).catch(function () { location.reload(); });
+                        }
+                    }
+                });
+            });
+        })();
+    </script>
+
     <script type="text/x-template" id="v-organization-files-template">
         <div>
             <button

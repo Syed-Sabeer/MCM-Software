@@ -66,6 +66,10 @@ Route::prefix('contacts')->group(function () {
 
         Route::put('edit/{id}', 'update')->name('admin.contacts.organizations.update');
 
+        Route::get('{id}', function ($id) {
+            return redirect()->route('admin.contacts.organizations.view', $id);
+        })->name('admin.contacts.organizations.show')->where('id', '[0-9]+');
+
         Route::delete('{id}', 'destroy')->name('admin.contacts.organizations.delete');
 
         Route::put('mass-destroy', 'massDestroy')->name('admin.contacts.organizations.mass_delete');
