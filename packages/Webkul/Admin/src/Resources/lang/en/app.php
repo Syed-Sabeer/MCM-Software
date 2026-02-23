@@ -126,10 +126,10 @@ return [
                 ],
 
                 'note' => [
-                    'btn'      => 'Note',
-                    'title'    => 'Add Note',
+                    'btn'      => 'Comment',
+                    'title'    => 'Add Comment',
                     'comment'  => 'Comment',
-                    'save-btn' => 'Save Note',
+                    'save-btn' => 'Save Comment',
                 ],
 
                 'activity' => [
@@ -178,7 +178,7 @@ return [
                 'lunches'      => 'Lunches',
                 'mark-as-done' => 'Mark as Done',
                 'meetings'     => 'Meetings',
-                'notes'        => 'Notes',
+                'notes'        => 'Comments',
                 'participants' => 'Participants',
                 'planned'      => 'Planned',
                 'quotes'       => 'Quotes',
@@ -200,8 +200,8 @@ return [
                     ],
 
                     'notes' => [
-                        'title'       => 'No Notes Found',
-                        'description' => 'No notes found for this. You can add notes by clicking on the Note button on the left panel.',
+                        'title'       => 'No Comments Found',
+                        'description' => 'No comments found for this. You can add comments by clicking on the Comment button on the left panel.',
                     ],
 
                     'calls' => [
@@ -582,7 +582,7 @@ return [
                         'lunches'      => 'Lunches',
                         'files'        => 'Files',
                         'quotes'       => 'Quotes',
-                        'notes'        => 'Notes',
+                        'notes'        => 'Comments',
                         'emails'       => 'Emails',
                         'by-user'      => 'By :user',
                         'scheduled-on' => 'Scheduled on',
@@ -616,10 +616,10 @@ return [
                         ],
 
                         'note' => [
-                            'btn'      => 'Note',
-                            'title'    => 'Add Note',
+                            'btn'      => 'Comment',
+                            'title'    => 'Add Comment',
                             'comment'  => 'Comment',
-                            'save-btn' => 'Save Note',
+                            'save-btn' => 'Save Comment',
                         ],
 
                         'activity' => [
@@ -798,7 +798,7 @@ return [
         'view' => [
             'sku'         => 'SKU',
             'all'         => 'All',
-            'notes'       => 'Notes',
+            'notes'       => 'Comments',
             'files'       => 'Files',
             'inventories' => 'Inventory',
             'change-logs' => 'Changelogs',
@@ -993,7 +993,7 @@ return [
                 'update-person'              => 'Update Person',
                 'send-email-to-person'       => 'Send email to person',
                 'add-tag'                    => 'Add Tag',
-                'add-note-as-activity'       => 'Add Note as Activity',
+                'add-note-as-activity'       => 'Add Comment as Activity',
                 'update-quote'               => 'Update Quote',
             ],
 
@@ -1531,7 +1531,7 @@ return [
 
             'view' => [
                 'all'         => 'All',
-                'notes'       => 'Notes',
+                'notes'       => 'Comments',
                 'files'       => 'Files',
                 'location'    => 'Location',
                 'change-logs' => 'Changelogs',

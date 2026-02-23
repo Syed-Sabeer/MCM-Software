@@ -290,7 +290,6 @@ class ProductController extends Controller
                 'additional_info' => $original->additional_info,
                 'shipping_info'   => $original->shipping_info,
                 'publish_on_website' => false, // Set to unpublished by default
-                'entity_type'     => 'products', // Required for attribute value repository
             ];
 
             // Copy cover image if exists
@@ -552,10 +551,10 @@ class ProductController extends Controller
             $data['cover_image'] = $path;
         }
 
+        $otherImages = [];
+        $otherImageColors = [];
         $inputColors = $data['other_image_colors'] ?? [];
         if (request()->hasFile('other_images')) {
-            $otherImages = [];
-            $otherImageColors = [];
             foreach (request()->file('other_images') as $idx => $file) {
                 if ($file && $file->isValid()) {
                     $path = $file->store('product-other-images', 'public');
@@ -563,9 +562,9 @@ class ProductController extends Controller
                     $otherImageColors[] = $inputColors[$idx] ?? null;
                 }
             }
-            $data['other_images'] = $otherImages;
-            $data['other_image_colors'] = $otherImageColors;
         }
+        $data['other_images'] = $otherImages;
+        $data['other_image_colors'] = $otherImageColors;
 
         $replaceImages = [];
         if (request()->hasFile('replace_images')) {

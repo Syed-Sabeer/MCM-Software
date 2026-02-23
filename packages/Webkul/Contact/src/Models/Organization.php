@@ -3,6 +3,7 @@
 namespace Webkul\Contact\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Organization as OrganizationContract;
 use Webkul\User\Models\UserProxy;
@@ -75,5 +76,13 @@ class Organization extends Model implements OrganizationContract
     public function files()
     {
         return $this->hasMany(OrganizationFile::class);
+    }
+
+    /**
+     * Get the activities.
+     */
+    public function activities()
+    {
+        return $this->belongsToMany(ActivityProxy::modelClass(), 'organization_activities');
     }
 }

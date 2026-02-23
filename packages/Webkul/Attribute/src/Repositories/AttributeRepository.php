@@ -118,6 +118,10 @@ class AttributeRepository extends Repository
     {
         $lookup = config('attribute_lookups.'.$lookup);
 
+        if (! $lookup) {
+            return [];
+        }
+
         if (! count($columns)) {
             $columns = [($lookup['value_column'] ?? 'id').' as id', ($lookup['label_column'] ?? 'name').' as name'];
         }
@@ -161,6 +165,10 @@ class AttributeRepository extends Repository
         }
 
         $lookup = config('attribute_lookups.'.$lookup);
+
+        if (! $lookup) {
+            return;
+        }
 
         if (! count($columns)) {
             $columns = [($lookup['value_column'] ?? 'id').' as id', ($lookup['label_column'] ?? 'name').' as name'];

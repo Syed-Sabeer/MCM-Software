@@ -186,70 +186,56 @@
 
         <!-- Center Panel: Activities -->
         <div class="flex min-w-[420px] flex-1 flex-col gap-4">
-            <!-- Activity toolbar similar to Salesforce -->
-            <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <!-- Activity action buttons -->
-                    <div class="flex flex-wrap gap-2">
-                        <x-admin::activities.actions.mail
-                            :entity="$organization"
-                            entity-control-name="organization_id"
-                        />
+            {!! view_render_event('admin.contacts.organizations.view.activities.before', ['organization' => $organization]) !!}
 
-                        <x-admin::activities.actions.activity
-                            :entity="$organization"
-                            entity-control-name="organization_id"
-                        />
+            <!-- Activity action buttons toolbar -->
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <x-admin::activities.actions.mail
+                        :entity="$organization"
+                        entity-control-name="organization_id"
+                    />
 
-                        <x-admin::activities.actions.note
-                            :entity="$organization"
-                            entity-control-name="organization_id"
-                        />
+                    <x-admin::activities.actions.activity
+                        :entity="$organization"
+                        entity-control-name="organization_id"
+                    />
 
+                    <x-admin::activities.actions.note
+                        :entity="$organization"
+                        entity-control-name="organization_id"
+                    />
 
-                        <x-admin::activities.actions.file
-                            :entity="$organization"
-                            entity-control-name="organization_id"
-                        />
+                    <x-admin::activities.actions.file
+                        :entity="$organization"
+                        entity-control-name="organization_id"
+                    />
 
-                        <x-admin::activities.actions.task
-                            :entity="$organization"
-                            entity-control-name="organization_id"
-                        />
-                    </div>
-
-                    <!-- Simple filter / toggle -->
-                    <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                        <span>Only show activities with insights</span>
-
-                        <button
-                            type="button"
-                            class="relative inline-flex h-5 w-9 items-center rounded-full bg-gray-300 transition dark:bg-gray-700"
-                        >
-                            <span class="inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white shadow"></span>
-                        </button>
-                    </div>
+                    <x-admin::activities.actions.task
+                        :entity="$organization"
+                        entity-control-name="organization_id"
+                    />
                 </div>
 
-                <!-- Upcoming & Overdue placeholder -->
-                <div class="rounded-md border border-dashed border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    <p class="mb-1 font-semibold text-gray-700 dark:text-gray-100">
-                        Upcoming &amp; Overdue
-                    </p>
+                <!-- Only show activities with insights toggle -->
+                <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <span>Only show activities with insights</span>
 
-                    <p>No activities to show.</p>
-                    <p>Get started by sending an email, scheduling a task, and more.</p>
-                </div>
-
-                <div class="mt-4 flex justify-center">
-                    <a
-                        href="{{ route('admin.activities.index', ['entity_type' => 'organizations', 'entity_id' => $organization->id]) }}"
-                        class="primary-button"
+                    <button
+                        type="button"
+                        class="relative inline-flex h-5 w-9 items-center rounded-full bg-gray-300 transition dark:bg-gray-700"
                     >
-                        Show All Activities
-                    </a>
+                        <span class="inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white shadow"></span>
+                    </button>
                 </div>
             </div>
+
+            <!-- Activities Tabs Component -->
+            <x-admin::activities
+                :endpoint="route('admin.contacts.organizations.activities.index', $organization->id)"
+            />
+
+            {!! view_render_event('admin.contacts.organizations.view.activities.after', ['organization' => $organization]) !!}
         </div>
 
         <!-- Right Panel: Actions & Related Lists -->
@@ -315,7 +301,7 @@
                 </div>
 
                 @php
-                    $recentContacts = $organization->persons()->latest()->limit(3)->get();
+                    $recentContacts = $organization->persons()->latest()->limit(7)->get();
                 @endphp
 
                 @if ($recentContacts->count() > 0)
@@ -340,7 +326,7 @@
                         @endforeach
                     </div>
 
-                    @if ($recentContacts->count() >= 3)
+                    @if ($recentContacts->count() >= 7)
                         <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
                             <a
                                 href="{{ route('admin.contacts.persons.index', ['organization_id' => $organization->id]) }}"
@@ -387,7 +373,7 @@
                     ->latest();
 
                 $casesCount = $casesQuery->count();
-                $recentCases = $casesQuery->take(3)->get();
+                $recentCases = $casesQuery->take(7)->get();
             @endphp
 
             <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -438,7 +424,7 @@
                         @endforeach
                     </div>
 
-                    @if ($casesCount >= 3)
+                    @if ($casesCount >= 7)
                         <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
                             <a
                                 href="{{ route('admin.leads.index', ['organization_id' => $organization->id]) }}"
@@ -467,10 +453,10 @@
                 $filesCount = $filesQuery->count();
 
                 $recentFiles = $filesQuery
-                    ->take(3)
+                    ->take(7)
                     ->get()
                     ->flatMap(fn ($activity) => $activity->files)
-                    ->take(3);
+                    ->take(7);
             @endphp
 
             <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -545,7 +531,7 @@
                         @endforeach
                     </div>
 
-                    @if ($filesCount >= 3)
+                    @if ($filesCount >= 7)
                         <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
                             <a
                                 href="{{ route('admin.activities.index', ['entity_type' => 'organizations', 'entity_id' => $organization->id]) }}"
