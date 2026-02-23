@@ -290,6 +290,7 @@ class ProductController extends Controller
                 'additional_info' => $original->additional_info,
                 'shipping_info'   => $original->shipping_info,
                 'publish_on_website' => false, // Set to unpublished by default
+                'entity_type'     => 'products', // Required for attribute value repository
             ];
 
             // Copy cover image if exists

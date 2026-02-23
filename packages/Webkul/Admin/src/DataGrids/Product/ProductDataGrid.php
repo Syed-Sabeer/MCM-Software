@@ -5,7 +5,6 @@ namespace Webkul\Admin\DataGrids\Product;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Tag\Repositories\TagRepository;
 
@@ -84,9 +83,11 @@ class ProductDataGrid extends DataGrid
                 if (empty($row->cover_image)) {
                     return '<span class="text-gray-400">—</span>';
                 }
-                $url = Storage::url($row->cover_image);
+                $url = asset('storage/' . $row->cover_image);
 
-                return '<img src="'.e($url).'" alt="" class="h-10 w-10 rounded border border-gray-200 object-cover dark:border-gray-700" loading="lazy" />';
+                return '<a href="'.e($url).'" target="_blank" title="'.e($row->name ?? 'View full size').'" class="inline-block">'.
+                    '<img src="'.e($url).'" alt="'.e($row->name ?? '').'" class="h-10 w-10 rounded border border-gray-200 object-cover hover:opacity-80 cursor-pointer dark:border-gray-700" loading="lazy" />'.
+                    '</a>';
             },
         ]);
 
