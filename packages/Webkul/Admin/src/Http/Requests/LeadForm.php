@@ -129,6 +129,7 @@ class LeadForm extends FormRequest
         }
 
         $this->rules['expected_close_date'] = [
+            'nullable',
             'date_format:Y-m-d',
             'after:'.Carbon::yesterday()->format('Y-m-d'),
         ];

@@ -71,8 +71,8 @@ class ActivityController extends Controller
         $this->validate(request(), [
             'type'          => 'required',
             'comment'       => 'required_if:type,note',
-            'schedule_from' => 'required_unless:type,note,file',
-            'schedule_to'   => 'required_unless:type,note,file',
+            'schedule_from' => 'required_unless:type,note,file,task',
+            'schedule_to'   => 'required_unless:type,note,file,task',
             'file'          => 'required_if:type,file',
         ]);
 

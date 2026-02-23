@@ -207,10 +207,6 @@
                                     <option value="meeting">
                                         @lang('admin::app.activities.edit.meeting')
                                     </option>
-
-                                    <option value="lunch">
-                                        @lang('admin::app.activities.edit.lunch')
-                                    </option>
                                 </x-admin::form.control-group.control>
 
                                 <x-admin::form.control-group.error control-name="type" />

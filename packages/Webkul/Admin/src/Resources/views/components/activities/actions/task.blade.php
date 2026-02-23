@@ -8,10 +8,13 @@
     {!! view_render_event('admin.components.activities.actions.task.create_btn.before') !!}
 
     <button
-        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-purple-200 font-medium text-purple-900 transition-all hover:border-purple-400"
+        style="background-color: #e9d5ff; color: #581c87;"
+        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent font-medium transition-all hover:border-fuchsia-400"
+        onmouseover="this.style.borderColor = '#d8b4fe'"
+        onmouseout="this.style.borderColor = 'transparent'"
         onclick="window.dispatchEvent(new Event('open-task-activity'))"
     >
-        <span class="icon-task text-2xl dark:!text-purple-900"></span>
+        <span class="icon-tick text-2xl" style="color: #581c87;"></span>
 
         @lang('admin::app.components.activities.actions.task.btn')
     </button>
@@ -117,9 +120,10 @@
                                     Related To
                                 </x-admin::form.control-group.label>
 
-                                <x-admin::form.control-group.control
+                                <input
                                     type="text"
-                                    v-model="relatedToName"
+                                    class="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition-all focus:border-brandColor focus:ring-1 focus:ring-brandColor dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
+                                    :value="entityName"
                                     disabled
                                 />
 
@@ -132,9 +136,10 @@
                                     Assigned To
                                 </x-admin::form.control-group.label>
 
-                                <x-admin::form.control-group.control
+                                <input
                                     type="text"
-                                    v-model="currentUserName"
+                                    class="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition-all focus:border-brandColor focus:ring-1 focus:ring-brandColor dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500"
+                                    :value="currentUserName"
                                     disabled
                                 />
 
@@ -150,8 +155,9 @@
                             <button
                                 type="submit"
                                 class="primary-button"
+                                :disabled="isStoring"
                             >
-                                Save Task
+                                @lang('admin::app.components.activities.actions.task.save-btn')
                             </button>
 
                             {!! view_render_event('admin.components.activities.actions.task.form_controls.modal.footer.after') !!}
@@ -176,8 +182,18 @@
                 return {
                     currentUserName: '{{ optional(auth()->user())->name }}',
                     currentUserId: {{ auth()->id() }},
-                    relatedToName: this.entity?.name || '',
+                    relatedToName: '',
+                    isStoring: false,
                 };
+            },
+
+            computed: {
+                entityName() {
+                    if (typeof this.entity === 'object' && this.entity !== null) {
+                        return this.entity.name || this.entity.title || '';
+                    }
+                    return '';
+                },
             },
 
             methods: {
@@ -187,29 +203,43 @@
                     }
                 },
 
-                save(data) {
-                    // Save task via API
-                    this.$axios.post('{{ route("admin.activities.store") }}', data)
+                save(params) {
+                    this.isStoring = true;
+
+                    this.$axios.post('{{ route("admin.activities.store") }}', params)
                         .then(response => {
-                            this.$notify({
-                                message: 'Task created successfully',
-                                type: 'success',
-                            });
+                            this.isStoring = false;
 
-                            this.$refs.taskModal?.close();
-                            this.$refs.modalForm?.reset();
+                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
 
-                            // Optionally refresh the page
-                            window.location.reload();
+                            this.$emitter.emit('on-activity-added', response.data.data);
+
+                            this.$refs.taskModal.close();
                         })
                         .catch(error => {
-                            this.$notify({
-                                message: error.response?.data?.message || 'Failed to create task',
-                                type: 'error',
-                            });
+                            this.isStoring = false;
+
+                            console.error('Task creation error:', error.response?.data);
+
+                            if (error.response?.status === 422) {
+                                const errors = error.response?.data?.errors;
+                                const errorMessages = Object.values(errors || {}).flat();
+                                const message = errorMessages.length > 0 ? errorMessages[0] : 'Validation failed';
+
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: message
+                                });
+                            } else {
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: error.response?.data?.message || 'Failed to create task'
+                                });
+                            }
                         });
                 },
             },
+
             mounted() {
                 this._openTaskListener = () => this.openModal();
                 window.addEventListener('open-task-activity', this._openTaskListener);
@@ -217,12 +247,6 @@
 
             beforeUnmount() {
                 window.removeEventListener('open-task-activity', this._openTaskListener);
-            },
-
-            watch: {
-                entity(newVal) {
-                    this.relatedToName = newVal?.name || '';
-                },
             },
         });
     </script>

@@ -28,3 +28,23 @@ Route::prefix('products')->group(function () {
     Route::get('/', [ProductApiController::class, 'index']);
     Route::get('/{id}', [ProductApiController::class, 'show']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Organization API Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('organizations')->group(function () {
+    Route::get('/{id}', function ($id) {
+        $organization = app(\Webkul\Contact\Repositories\OrganizationRepository::class)->find($id);
+        
+        if (!$organization) {
+            return response()->json(['message' => 'Organization not found'], 404);
+        }
+        
+        return response()->json([
+            'id'   => $organization->id,
+            'name' => $organization->name,
+        ]);
+    });
+});

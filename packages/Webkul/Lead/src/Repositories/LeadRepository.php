@@ -112,18 +112,29 @@ class LeadRepository extends Repository
      */
     public function create(array $data)
     {
+        // Normalize person[0] structure to person (when form submits person[0][id], person[0][name])
+        if (isset($data['person']) && is_array($data['person']) && array_key_exists(0, $data['person'])) {
+            $data['person'] = $data['person'][0];
+        }
+
         /**
-         * If a person is provided, create or update the person and set the `person_id`.
+         * If a person is provided (with id or name), create or update the person and set the `person_id`.
+         * Contact is optional - leads can be created without a person.
          */
-        if (isset($data['person'])) {
+        if (isset($data['person']) && (! empty($data['person']['id']) || ! empty(trim($data['person']['name'] ?? '')))) {
             if (! empty($data['person']['id'])) {
                 $person = $this->personRepository->findOrFail($data['person']['id']);
             } else {
-                $person = $this->personRepository->create(array_merge($data['person'], [
-                    'entity_type' => 'persons',
-                ]));
+                $personData = array_merge($data['person'], ['entity_type' => 'persons']);
+                if (empty($personData['name'])) {
+                    $orgId = $personData['organization_id'] ?? $data['organization_id'] ?? null;
+                    $orgName = $orgId
+                        ? optional(app(\Webkul\Contact\Repositories\OrganizationRepository::class)->find($orgId))->name
+                        : null;
+                    $personData['name'] = $orgName ? "Contact from {$orgName}" : 'New Contact';
+                }
+                $person = $this->personRepository->create($personData);
             }
-
             $data['person_id'] = $person->id;
         }
 

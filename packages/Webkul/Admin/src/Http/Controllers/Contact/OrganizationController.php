@@ -45,6 +45,23 @@ class OrganizationController extends Controller
     }
 
     /**
+     * Fetch organization as JSON (for AJAX/API use in lead create, etc.).
+     */
+    public function fetch(int $id): JsonResponse
+    {
+        $organization = $this->organizationRepository->find($id);
+
+        if (!$organization) {
+            return response()->json(['message' => 'Organization not found'], 404);
+        }
+
+        return response()->json([
+            'id'   => $organization->id,
+            'name' => $organization->name,
+        ]);
+    }
+
+    /**
      * Display the specified organization (detail page).
      */
     public function show(int $id): View

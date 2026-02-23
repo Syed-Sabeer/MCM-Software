@@ -1,6 +1,9 @@
 {!! view_render_event('admin.leads.create.contact_person.form_controls.before') !!}
 
-<v-contact-component :prefill-organization-id="prefillOrganizationId || null"></v-contact-component>
+<v-contact-component
+    :prefill-organization-id="prefillOrganizationId || null"
+    organization-fetch-url="{{ route('admin.contacts.organizations.fetch', ['id' => '__ID__']) }}"
+></v-contact-component>
 
 {!! view_render_event('admin.leads.create.contact_person.form_controls.after') !!}
 
@@ -35,8 +38,9 @@
                             </div>
                         </div>
 
-                        <input type="hidden" :name="`person[${index}][id]`" :value="contact.id" />
-                        <input type="hidden" :name="`person[${index}][name]`" :value="contact.name" />
+                        <input type="hidden" :name="index === 0 ? 'person[id]' : `person[${index}][id]`" :value="contact.id" />
+                        <input type="hidden" :name="index === 0 ? 'person[name]' : `person[${index}][name]`" :value="contact.name" />
+                        <input v-if="index === 0 && contact.organization_id" type="hidden" name="person[organization_id]" :value="contact.organization_id" />
                     </div>
 
                     <!-- Organization (auto-filled) -->
@@ -77,7 +81,10 @@
         app.component('v-contact-component', {
             template: '#v-contact-component-template',
 
-            props: ['prefillOrganizationId'],
+            props: {
+                prefillOrganizationId: { type: [String, Number], default: null },
+                organizationFetchUrl: { type: String, default: '' }
+            },
 
             data() {
                 return {
@@ -179,11 +186,15 @@
                 },
 
                 fetchOrganization(organizationId) {
-                    this.$axios.get(`/api/organizations/${organizationId}`)
+                    const url = this.organizationFetchUrl
+                        ? this.organizationFetchUrl.replace('__ID__', organizationId)
+                        : `/api/organizations/${organizationId}`;
+                    this.$axios.get(url)
                         .then(response => {
-                            if (this.contacts[0] && !this.contacts[0].organization_name) {
-                                this.contacts[0].organization_name = response.data.data.name;
-                                this.contacts[0].organization_id = response.data.data.id;
+                            const data = response.data.data || response.data;
+                            if (this.contacts[0] && (data.name || data.id)) {
+                                this.contacts[0].organization_name = data.name || '';
+                                this.contacts[0].organization_id = data.id || null;
                             }
                         })
                         .catch(error => {

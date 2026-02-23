@@ -179,14 +179,20 @@ return [
                 'mark-as-done' => 'Mark as Done',
                 'meetings'     => 'Meetings',
                 'notes'        => 'Comments',
+                'page'         => 'Page :current of :total',
                 'participants' => 'Participants',
                 'planned'      => 'Planned',
+                'previous'     => 'Previous',
+                'next'         => 'Next',
                 'quotes'       => 'Quotes',
                 'scheduled-on' => 'Scheduled on',
+                'search-placeholder' => 'Search activities...',
                 'system'       => 'System',
+                'tasks'        => 'Tasks',
                 'to'           => 'To',
                 'unlink'       => 'Unlink',
                 'view'         => 'View',
+                'view-all'     => 'View All',
 
                 'empty-placeholders' => [
                     'all' => [
@@ -227,6 +233,11 @@ return [
                     'emails' => [
                         'title'       => 'No Emails Found',
                         'description' => 'No emails found for this. You can add emails by clicking on the Mail button on the left panel.',
+                    ],
+
+                    'tasks' => [
+                        'title'       => 'No Tasks Found',
+                        'description' => 'No tasks found for this. You can add tasks by clicking on the Task button on the left panel.',
                     ],
 
                     'system' => [

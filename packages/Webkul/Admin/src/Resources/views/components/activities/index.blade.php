@@ -58,6 +58,23 @@
                 <!-- Show Default Activities if selectedType not in extraTypes -->
                 <template v-if="! extraTypes.find(type => type.name == selectedType)">
                     <div class="animate-[on-fade_0.5s_ease-in-out] p-4">
+                        {!! view_render_event('admin.components.activities.content.activity.search.before') !!}
+
+                        <!-- Search Bar -->
+                        <div class="mb-5">
+                            <div class="relative">
+                                <i class="icon-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"></i>
+                                <input
+                                    v-model="searchQuery"
+                                    type="text"
+                                    placeholder="@lang('admin::app.components.activities.index.search-placeholder')"
+                                    class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm placeholder-gray-500 transition-all focus:border-brandColor focus:bg-white focus:outline-none focus:ring-2 focus:ring-brandColor/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 dark:focus:border-brandColor dark:focus:bg-gray-800"
+                                    @input="currentPage = 1"
+                                />
+                            </div>
+                        </div>
+
+                        {!! view_render_event('admin.components.activities.content.activity.search.after') !!}
                         {!! view_render_event('admin.components.activities.content.activity.list.before') !!}
 
                         <!-- Activity List -->
@@ -74,7 +91,8 @@
                                 <!-- Activity Icon -->
                                 <div
                                     class="mt-2 flex h-9 min-h-9 w-9 min-w-9 items-center justify-center rounded-full text-xl"
-                                    :class="typeClasses[activity.type] ?? typeClasses['default']"
+                                    :class="getTypeClass(activity.type)"
+                                    :style="getTypeStyle(activity.type)"
                                 >
                                 </div>
 
@@ -263,7 +281,7 @@
                                                 <template v-if="activity.type != 'email'">
                                                     @if (bouncer()->hasPermission('activities.edit'))
                                                         <x-admin::dropdown.menu.item
-                                                            v-if="! activity.is_done && ['call', 'meeting', 'lunch'].includes(activity.type)"
+                                                            v-if="! activity.is_done && ['call', 'meeting'].includes(activity.type)"
                                                             @click="markAsDone(activity)"
                                                         >
                                                             <div class="flex items-center gap-2">
@@ -273,7 +291,7 @@
                                                             </div>
                                                         </x-admin::dropdown.menu.item>
 
-                                                        <x-admin::dropdown.menu.item v-if="['call', 'meeting', 'lunch'].includes(activity.type)">
+                                                        <x-admin::dropdown.menu.item v-if="['call', 'meeting'].includes(activity.type)">
                                                             <a
                                                                 class="flex items-center gap-2"
                                                                 :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)"
@@ -335,6 +353,37 @@
                             </div>
 
                             {!! view_render_event('admin.components.activities.content.activity.item.after') !!}
+
+                            <!-- Pagination and View All Button -->
+                            <div class="pt-4" v-if="hasMoreActivities || totalPages > 1">
+                                <div class="flex flex-col gap-4">
+                                    <!-- Pagination Controls -->
+                                    <div v-if="totalPages > 1" class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">
+                                            @{{ "@lang('admin::app.components.activities.index.page', ['current' => 'replaceCurrentPage', 'total' => 'replaceTotalPages'])".replace('replaceCurrentPage', currentPage).replace('replaceTotalPages', totalPages) }}
+                                        </span>
+
+                                        <div class="flex gap-2">
+                                            <button
+                                                @click="currentPage = Math.max(1, currentPage - 1)"
+                                                :disabled="currentPage === 1"
+                                                class="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:bg-gray-700"
+                                            >
+                                                @lang('admin::app.components.activities.index.previous')
+                                            </button>
+
+                                            <button
+                                                @click="currentPage = Math.min(totalPages, currentPage + 1)"
+                                                :disabled="currentPage === totalPages"
+                                                class="rounded-lg bg-brandColor px-4 py-2 text-sm font-medium text-white transition-all hover:bg-brandColor/90 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-brandColor/80"
+                                            >
+                                                @lang('admin::app.components.activities.index.next')
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
 
                             <!-- Empty Placeholder -->
                             <div
@@ -406,9 +455,6 @@
                             name: 'all',
                             label: "{{ trans('admin::app.components.activities.index.all') }}",
                         }, {
-                            name: 'planned',
-                            label: "{{ trans('admin::app.components.activities.index.planned') }}",
-                        }, {
                             name: 'note',
                             label: "{{ trans('admin::app.components.activities.index.notes') }}",
                         }, {
@@ -418,14 +464,14 @@
                             name: 'meeting',
                             label: "{{ trans('admin::app.components.activities.index.meetings') }}",
                         }, {
-                            name: 'lunch',
-                            label: "{{ trans('admin::app.components.activities.index.lunches') }}",
-                        }, {
                             name: 'file',
                             label: "{{ trans('admin::app.components.activities.index.files') }}",
                         }, {
                             name: 'email',
                             label: "{{ trans('admin::app.components.activities.index.emails') }}",
+                        }, {
+                            name: 'task',
+                            label: "{{ trans('admin::app.components.activities.index.tasks') }}",
                         }, {
                             name: 'system',
                             label: "{{ trans('admin::app.components.activities.index.change-log') }}",
@@ -449,15 +495,32 @@
 
                     selectedType: this.activeType,
 
+                    searchQuery: '',
+
+                    currentPage: 1,
+
+                    itemsPerPage: 7,
+
                     typeClasses: {
-                        email: 'icon-mail bg-green-200 text-green-900 dark:!text-green-900',
-                        note: 'icon-note bg-orange-200 text-orange-800 dark:!text-orange-800',
-                        call: 'icon-call bg-cyan-200 text-cyan-800 dark:!text-cyan-800',
-                        meeting: 'icon-activity bg-blue-200 text-blue-800 dark:!text-blue-800',
-                        lunch: 'icon-activity bg-blue-200 text-blue-800 dark:!text-blue-800',
-                        file: 'icon-file bg-green-200 text-green-900 dark:!text-green-900',
-                        system: 'icon-system-generate bg-yellow-200 text-yellow-900 dark:!text-yellow-900',
-                        default: 'icon-activity bg-blue-200 text-blue-800 dark:!text-blue-800',
+                        email: 'icon-mail',
+                        note: 'icon-note',
+                        call: 'icon-call',
+                        meeting: 'icon-activity',
+                        file: 'icon-file',
+                        task: 'icon-tick',
+                        system: 'icon-system-generate',
+                        default: 'icon-activity',
+                    },
+
+                    typeStyles: {
+                        email: { backgroundColor: '#dcfce7', color: '#15803d' },
+                        note: { backgroundColor: '#fed7aa', color: '#92400e' },
+                        call: { backgroundColor: '#cffafe', color: '#164e63' },
+                        meeting: { backgroundColor: '#dbeafe', color: '#1e3a8a' },
+                        file: { backgroundColor: '#dcfce7', color: '#15803d' },
+                        task: { backgroundColor: '#f3e8ff', color: '#6b21a8' },
+                        system: { backgroundColor: '#fef3c7', color: '#78350f' },
+                        default: { backgroundColor: '#dbeafe', color: '#1e3a8a' },
                     },
 
                     typeIllustrations: {
@@ -491,12 +554,6 @@
                             description: "{{ trans('admin::app.components.activities.index.empty-placeholders.meetings.description') }}",
                         },
 
-                        lunch: {
-                            image: "{{ vite()->asset('images/empty-placeholders/lunches.svg') }}",
-                            title: "{{ trans('admin::app.components.activities.index.empty-placeholders.lunches.title') }}",
-                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.lunches.description') }}",
-                        },
-
                         file: {
                             image: "{{ vite()->asset('images/empty-placeholders/files.svg') }}",
                             title: "{{ trans('admin::app.components.activities.index.empty-placeholders.files.title') }}",
@@ -507,6 +564,12 @@
                             image: "{{ vite()->asset('images/empty-placeholders/emails.svg') }}",
                             title: "{{ trans('admin::app.components.activities.index.empty-placeholders.emails.title') }}",
                             description: "{{ trans('admin::app.components.activities.index.empty-placeholders.emails.description') }}",
+                        },
+
+                        task: {
+                            image: "{{ vite()->asset('images/empty-placeholders/activities.svg') }}",
+                            title: "{{ trans('admin::app.components.activities.index.empty-placeholders.tasks.title') }}",
+                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.tasks.description') }}",
                         },
 
                         system: {
@@ -522,13 +585,82 @@
 
             computed: {
                 filteredActivities() {
-                    if (this.selectedType == 'all') {
-                        return this.activities;
-                    } else if (this.selectedType == 'planned') {
-                        return this.activities.filter(activity => ! activity.is_done);
+                    if (!this.activities || !Array.isArray(this.activities)) {
+                        return [];
                     }
 
-                    return this.activities.filter(activity => activity.type == this.selectedType);
+                    let filtered;
+
+                    if (this.selectedType == 'all') {
+                        filtered = this.activities;
+                    } else {
+                        filtered = this.activities.filter(activity => activity.type == this.selectedType);
+                    }
+
+                    // Apply search filter
+                    if (this.searchQuery.trim()) {
+                        const query = this.searchQuery.toLowerCase();
+                        filtered = filtered.filter(activity =>
+                            (activity.title && activity.title.toLowerCase().includes(query)) ||
+                            (activity.comment && activity.comment.toLowerCase().includes(query))
+                        );
+                    }
+
+                    // Calculate pagination
+                    const start = (this.currentPage - 1) * this.itemsPerPage;
+                    const end = start + this.itemsPerPage;
+
+                    return filtered.slice(start, end);
+                },
+
+                hasMoreActivities() {
+                    if (!this.activities || !Array.isArray(this.activities)) {
+                        return false;
+                    }
+
+                    let allFiltered;
+
+                    if (this.selectedType == 'all') {
+                        allFiltered = this.activities;
+                    } else {
+                        allFiltered = this.activities.filter(activity => activity.type == this.selectedType);
+                    }
+
+                    // Apply search filter
+                    if (this.searchQuery.trim()) {
+                        const query = this.searchQuery.toLowerCase();
+                        allFiltered = allFiltered.filter(activity =>
+                            (activity.title && activity.title.toLowerCase().includes(query)) ||
+                            (activity.comment && activity.comment.toLowerCase().includes(query))
+                        );
+                    }
+
+                    return allFiltered.length > this.itemsPerPage;
+                },
+
+                totalPages() {
+                    if (!this.activities || !Array.isArray(this.activities)) {
+                        return 0;
+                    }
+
+                    let allFiltered;
+
+                    if (this.selectedType == 'all') {
+                        allFiltered = this.activities;
+                    } else {
+                        allFiltered = this.activities.filter(activity => activity.type == this.selectedType);
+                    }
+
+                    // Apply search filter
+                    if (this.searchQuery.trim()) {
+                        const query = this.searchQuery.toLowerCase();
+                        allFiltered = allFiltered.filter(activity =>
+                            (activity.title && activity.title.toLowerCase().includes(query)) ||
+                            (activity.comment && activity.comment.toLowerCase().includes(query))
+                        );
+                    }
+
+                    return Math.ceil(allFiltered.length / this.itemsPerPage);
                 }
             },
 
@@ -544,7 +676,20 @@
                 this.$emitter.on('on-activity-added', (activity) => this.activities.unshift(activity));
             },
 
+            watch: {
+                selectedType() {
+                    this.currentPage = 1;
+                }
+            },
+
             methods: {
+                getTypeClass(type) {
+                    return this.typeClasses[type] ?? this.typeClasses['default'];
+                },
+
+                getTypeStyle(type) {
+                    return this.typeStyles[type] ?? this.typeStyles['default'];
+                },
                 get() {
                     this.isLoading = true;
 

@@ -132,15 +132,15 @@
                                     <!-- Header -->
                                     <div class="flex items-start justify-between">
                                         <div class="flex items-center gap-1">
-                                            <x-admin::avatar ::name="element.person.name" />
+                                            <x-admin::avatar ::name="(element.person && element.person.name) || '—'" />
 
                                             <div class="flex flex-col gap-0.5">
                                                 <span class="text-xs font-medium">
-                                                    @{{ element.person.name }}
+                                                    @{{ (element.person && element.person.name) || '—' }}
                                                 </span>
 
                                                 <span class="text-[10px] leading-normal">
-                                                    @{{ element.person.organization?.name }}
+                                                    @{{ element.person && element.person.organization ? element.person.organization.name : '' }}
                                                 </span>
                                             </div>
                                         </div>
@@ -186,16 +186,16 @@
                                             @{{ element.formatted_lead_value }}
                                         </div>
 
-                                        <div class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white">
+                                        <div class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white" v-if="element.source">
                                             @{{ element.source.name }}
                                         </div>
 
-                                        <div class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white">
+                                        <div class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white" v-if="element.type">
                                             @{{ element.type.name }}
                                         </div>
 
                                         <!-- Tags -->
-                                        <template v-for="tag in element.tags">
+                                        <template v-for="tag in (element.tags || [])">
                                             {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.tag.before') !!}
 
                                             <div

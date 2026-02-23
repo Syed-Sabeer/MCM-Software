@@ -218,7 +218,7 @@
                 </div>
 
                 <!-- Only show activities with insights toggle -->
-                <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 pt-3 border-t border-gray-200 dark:border-gray-700">
+                {{-- <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <span>Only show activities with insights</span>
 
                     <button
@@ -227,7 +227,7 @@
                     >
                         <span class="inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white shadow"></span>
                     </button>
-                </div>
+                </div> --}}
             </div>
 
             <!-- Activities Tabs Component -->
@@ -442,7 +442,7 @@
             </div>
 
             <!-- Files card -->
-            @php
+            {{-- @php
                 $filesQuery = \Webkul\Activity\Models\Activity::query()
                     ->where('type', 'file')
                     ->where('entity_type', 'organizations')
@@ -546,7 +546,7 @@
                         No files yet. Upload proposals, contracts, and documents here.
                     </p>
                 @endif
-            </div>
+            </div> --}}
         </div>
     </div>
 </x-admin::layouts>
