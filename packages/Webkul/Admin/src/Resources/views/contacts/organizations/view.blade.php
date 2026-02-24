@@ -3,6 +3,8 @@
         @lang('admin::app.contacts.organizations.view.title', ['name' => $organization->name])
     </x-slot>
 
+
+
     <div class="flex gap-4 max-xl:flex-wrap">
         <!-- Left Panel: About / Details -->
         <div class="max-xl:min-w-full max-xl:max-w-full xl:sticky xl:top-[73px] flex min-w-[320px] max-w-[340px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -135,7 +137,7 @@
                     Billing Address
                 </p>
 
-                <div class="flex flex-col gap-0.5 text-sm dark:text-white">
+                <div class="flex flex-col gap-0.5 text-sm dark:text-white" style="max-width: 280px; word-wrap: break-word; word-break: break-word;">
                     @if ($organization->billing_street)
                         <span>{{ $organization->billing_street }}</span>
                     @endif
@@ -162,7 +164,7 @@
                     Shipping Address
                 </p>
 
-                <div class="flex flex-col gap-0.5 text-sm dark:text-white">
+                <div class="flex flex-col gap-0.5 text-sm dark:text-white" style="max-width: 280px; word-wrap: break-word; word-break: break-word;">
                     @if ($organization->shipping_street)
                         <span>{{ $organization->shipping_street }}</span>
                     @endif
@@ -373,7 +375,7 @@
                     ->latest();
 
                 $casesCount = $casesQuery->count();
-                $recentCases = $casesQuery->take(7)->get();
+                $recentCases = $casesQuery->take(3)->get();
             @endphp
 
             <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -412,20 +414,28 @@
                                     @endif
                                 </div>
 
-                                <button
-                                    type="button"
-                                    class="case-delete-btn flex-shrink-0 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-                                    title="Delete case"
-                                    data-delete-url="{{ route('admin.leads.delete', $case->id) }}"
-                                    data-case-id="{{ $case->id }}"
-                                >
-                                    <i class="icon-delete text-lg"></i>
-                                </button>
+                                <x-admin::dropdown position="bottom-right">
+                                    <x-slot:toggle>
+                                        <button class="icon-more flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800" type="button"></button>
+                                    </x-slot>
+
+                                    <x-slot:menu class="!min-w-40">
+                                        <button
+                                            type="button"
+                                            class="case-menu-delete w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-700 flex items-center gap-2"
+                                            data-delete-url="{{ route('admin.leads.delete', $case->id) }}"
+                                            data-case-id="{{ $case->id }}"
+                                        >
+                                            <span class="icon-delete text-lg"></span>
+                                            Delete
+                                        </button>
+                                    </x-slot>
+                                </x-admin::dropdown>
                             </div>
                         @endforeach
                     </div>
 
-                    @if ($casesCount >= 7)
+                    @if ($casesCount > 3)
                         <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
                             <a
                                 href="{{ route('admin.leads.index', ['organization_id' => $organization->id]) }}"
@@ -554,25 +564,44 @@
 
 @pushOnce('scripts')
     <script type="module">
-        (function initCaseDelete() {
-            var btns = document.querySelectorAll('.case-delete-btn');
-            if (!btns.length) return;
-            btns.forEach(function (btn) {
-                btn.addEventListener('click', function () {
+        // Ensure this runs after the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setupCaseDeleteHandlers();
+        });
+
+        // Also run immediately in case DOM is already loaded
+        setupCaseDeleteHandlers();
+
+        function setupCaseDeleteHandlers() {
+            var deleteButtons = document.querySelectorAll('.case-menu-delete');
+            console.log('Found ' + deleteButtons.length + ' delete buttons');
+
+            deleteButtons.forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    console.log('Delete button clicked');
+
                     var url = this.getAttribute('data-delete-url');
                     var caseId = this.getAttribute('data-case-id');
                     var row = document.querySelector('[data-case-row="' + caseId + '"]');
+
+                    console.log('URL:', url, 'CaseID:', caseId);
+
                     if (typeof window.emitter !== 'undefined') {
                         window.emitter.emit('open-confirm-modal', {
                             agree: function () {
                                 window.axios.delete(url)
                                     .then(function (response) {
+                                        console.log('Delete successful', response);
                                         if (row) row.remove();
                                         if (typeof window.emitter !== 'undefined') {
                                             window.emitter.emit('add-flash', { type: 'success', message: response.data.message });
                                         }
                                     })
                                     .catch(function (error) {
+                                        console.error('Delete failed', error);
                                         if (typeof window.emitter !== 'undefined') {
                                             window.emitter.emit('add-flash', { type: 'error', message: error.response && error.response.data ? error.response.data.message : 'Failed to delete.' });
                                         }
@@ -581,12 +610,19 @@
                         });
                     } else {
                         if (confirm('Are you sure you want to perform this action?')) {
-                            window.axios.delete(url).then(function () { if (row) row.remove(); }).catch(function () { location.reload(); });
+                            window.axios.delete(url)
+                                .then(function () {
+                                    if (row) row.remove();
+                                    window.location.reload();
+                                })
+                                .catch(function () {
+                                    location.reload();
+                                });
                         }
                     }
                 });
             });
-        })();
+        }
     </script>
 
     <script type="text/x-template" id="v-organization-files-template">

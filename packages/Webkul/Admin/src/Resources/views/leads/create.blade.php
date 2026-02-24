@@ -68,6 +68,7 @@
             <!-- Lead Create Component -->
             <v-lead-create
                 :prefill-organization-id="{{ request('organization_id') ?? 'null' }}"
+                prefill-organization-name="{{ $organization->name ?? '' }}"
             >
                 <x-admin::shimmer.leads.datagrid />
             </v-lead-create>
@@ -149,13 +150,23 @@
                             </x-admin::form.control-group>
 
                             <!-- Case Origin (Source) -->
-                            <x-admin::attributes
-                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                    ['code', 'IN', ['lead_source_id']],
-                                    'entity_type' => 'leads',
-                                    'quick_add'   => 1
-                                ])"
-                            />
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Case Origin
+                                </x-admin::form.control-group.label>
+
+                                <select
+                                    name="lead_source_id"
+                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                >
+                                    <option value="">Select Origin</option>
+                                    @foreach (app('Webkul\Lead\Repositories\SourceRepository')->all() as $source)
+                                        <option value="{{ $source->id }}">
+                                            {{ $source->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </x-admin::form.control-group>
 
                             <!-- Priority -->
                             <x-admin::form.control-group>
@@ -191,20 +202,18 @@
                                 <input type="hidden" name="user_id" value="{{ auth()->id() }}">
                             </x-admin::form.control-group>
 
-                            @if (! empty($organization))
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        Organization
-                                    </x-admin::form.control-group.label>
+                            <x-admin::form.control-group v-if="selectedOrganizationName">
+                                <x-admin::form.control-group.label>
+                                    Organization
+                                </x-admin::form.control-group.label>
 
-                                    <input
-                                        type="text"
-                                        class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                        value="{{ $organization->name }}"
-                                        disabled
-                                    />
-                                </x-admin::form.control-group>
-                            @endif
+                                <input
+                                    type="text"
+                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                    :value="selectedOrganizationName"
+                                    disabled
+                                />
+                            </x-admin::form.control-group>
 
                             {!! view_render_event('admin.leads.create.case-information.attributes.after') !!}
                         </div>
@@ -320,7 +329,7 @@
             app.component('v-lead-create', {
                 template: '#v-lead-create-template',
 
-                props: ['prefillOrganizationId'],
+                props: ['prefillOrganizationId', 'prefillOrganizationName'],
 
                 data() {
                     return {
@@ -331,10 +340,25 @@
                             { id: 'contact-information', label: 'Contact Information' },
                             { id: 'description-information', label: 'Description Information' },
                         ],
+
+                        selectedOrganizationName: this.prefillOrganizationName || '',
                     };
                 },
 
                 methods: {
+                    /**
+                     * Handle organization selection from contact component.
+                     *
+                     * @param {Object} organization
+                     *
+                     * @returns {void}
+                     */
+                    handleOrganizationSelected(organization) {
+                        if (organization && organization.name) {
+                            this.selectedOrganizationName = organization.name;
+                        }
+                    },
+
                     /**
                      * Scroll to the section.
                      *

@@ -76,9 +76,19 @@ class OrganizationController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse
     {
+        $data = $request->all();
+
+        if ($request->boolean('same_as_billing')) {
+            $data['shipping_street']   = $data['billing_street']   ?? null;
+            $data['shipping_city']     = $data['billing_city']     ?? null;
+            $data['shipping_state']    = $data['billing_state']    ?? null;
+            $data['shipping_postcode'] = $data['billing_postcode'] ?? null;
+            $data['shipping_country']  = $data['billing_country']  ?? null;
+        }
+
         Event::dispatch('contacts.organization.create.before');
 
-        $organization = $this->organizationRepository->create(request()->all());
+        $organization = $this->organizationRepository->create($data);
 
         Event::dispatch('contacts.organization.create.after', $organization);
 
@@ -102,9 +112,19 @@ class OrganizationController extends Controller
      */
     public function update(AttributeForm $request, int $id): RedirectResponse
     {
+        $data = $request->all();
+
+        if ($request->boolean('same_as_billing')) {
+            $data['shipping_street']   = $data['billing_street']   ?? null;
+            $data['shipping_city']     = $data['billing_city']     ?? null;
+            $data['shipping_state']    = $data['billing_state']    ?? null;
+            $data['shipping_postcode'] = $data['billing_postcode'] ?? null;
+            $data['shipping_country']  = $data['billing_country']  ?? null;
+        }
+
         Event::dispatch('contacts.organization.update.before', $id);
 
-        $organization = $this->organizationRepository->update(request()->all(), $id);
+        $organization = $this->organizationRepository->update($data, $id);
 
         Event::dispatch('contacts.organization.update.after', $organization);
 

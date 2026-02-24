@@ -3,6 +3,7 @@
 <v-contact-component
     :prefill-organization-id="prefillOrganizationId || null"
     organization-fetch-url="{{ route('admin.contacts.organizations.fetch', ['id' => '__ID__']) }}"
+    @organization-selected="handleOrganizationSelected"
 ></v-contact-component>
 
 {!! view_render_event('admin.leads.create.contact_person.form_controls.after') !!}
@@ -16,7 +17,7 @@
             <div id="contacts-container" class="flex flex-col gap-3">
                 <div v-for="(contact, index) in contacts" :key="index" class="contact-row flex gap-2 items-start">
                     <!-- Contact Name -->
-                    <div class="flex-1">
+                    <div class="flex-1 relative max-w-md">
                         <input
                             type="text"
                             v-model="contact.searchQuery"
@@ -26,7 +27,10 @@
                             class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
                         />
 
-                        <div v-if="contact.showResults && contact.searchResults.length > 0" class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                        <div
+                            v-if="contact.showResults && contact.searchResults.length > 0"
+                            class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900"
+                        >
                             <div
                                 v-for="person in contact.searchResults"
                                 :key="person.id"
@@ -38,9 +42,26 @@
                             </div>
                         </div>
 
-                        <input type="hidden" :name="index === 0 ? 'person[id]' : `person[${index}][id]`" :value="contact.id" />
-                        <input type="hidden" :name="index === 0 ? 'person[name]' : `person[${index}][name]`" :value="contact.name" />
-                        <input v-if="index === 0 && contact.organization_id" type="hidden" name="person[organization_id]" :value="contact.organization_id" />
+                        <input
+                            v-if="contact.id || contact.name"
+                            type="hidden"
+                            :name="index === 0 ? 'person[id]' : `person[${index}][id]`"
+                            :value="contact.id"
+                        />
+
+                        <input
+                            v-if="contact.id || contact.name"
+                            type="hidden"
+                            :name="index === 0 ? 'person[name]' : `person[${index}][name]`"
+                            :value="contact.name"
+                        />
+
+                        <input
+                            v-if="index === 0 && contact.organization_id && (contact.id || contact.name)"
+                            type="hidden"
+                            name="person[organization_id]"
+                            :value="contact.organization_id"
+                        />
                     </div>
 
                     <!-- Organization (auto-filled) -->
@@ -103,10 +124,6 @@
             },
 
             mounted() {
-                if (this.prefillOrganizationId) {
-                    this.fetchOrganization(this.prefillOrganizationId);
-                }
-
                 // Close search results when clicking outside
                 document.addEventListener('click', this.handleClickOutside);
             },
@@ -152,17 +169,20 @@
                         return;
                     }
 
-                    const params = {
-                        query: query
-                    };
-
-                    if (this.prefillOrganizationId) {
-                        params.organization_id = this.prefillOrganizationId;
-                    }
-
-                    this.$axios.get("{{ route('admin.contacts.persons.search') }}", { params })
+                    this.$axios.get("{{ route('admin.contacts.persons.search') }}", {
+                            params: { query }
+                        })
                         .then(response => {
-                            this.contacts[index].searchResults = response.data.data || response.data;
+                            const allPersons = response.data.data || response.data || [];
+
+                            const lowerQuery = query.toLowerCase();
+
+                            this.contacts[index].searchResults = allPersons
+                                .filter(person =>
+                                    person.name && person.name.toLowerCase().includes(lowerQuery)
+                                )
+                                .slice(0, 10);
+
                             this.contacts[index].showResults = true;
                         })
                         .catch(error => {
@@ -182,7 +202,13 @@
                         this.contacts[index].organization_id = person.organization.id;
                     } else if (this.prefillOrganizationId && index === 0) {
                         this.fetchOrganization(this.prefillOrganizationId);
+                        return;
                     }
+
+                    this.$emit('organization-selected', {
+                        name: this.contacts[index].organization_name,
+                        id: this.contacts[index].organization_id,
+                    });
                 },
 
                 fetchOrganization(organizationId) {
@@ -195,6 +221,11 @@
                             if (this.contacts[0] && (data.name || data.id)) {
                                 this.contacts[0].organization_name = data.name || '';
                                 this.contacts[0].organization_id = data.id || null;
+
+                                this.$emit('organization-selected', {
+                                    name: this.contacts[0].organization_name,
+                                    id: this.contacts[0].organization_id,
+                                });
                             }
                         })
                         .catch(error => {

@@ -14,9 +14,11 @@ class PersonResource extends JsonResource
      */
     public function toArray($request)
     {
+        $fullName = trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+
         return [
             'id'              => $this->id,
-            'name'            => $this->name,
+            'name'            => $fullName !== '' ? $fullName : ($this->name ?? ''),
             'emails'          => $this->emails,
             'contact_numbers' => $this->contact_numbers,
             'organization'    => new OrganizationResource($this->organization),

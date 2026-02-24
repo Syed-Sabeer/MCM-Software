@@ -142,15 +142,22 @@ class PersonController extends Controller
      */
     public function search(): JsonResource
     {
+        $query = trim(request()->string('query')->toString());
+
+        $personsQuery = $this->personRepository->pushCriteria(app(RequestCriteria::class));
+
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
-            $persons = $this->personRepository
-                ->pushCriteria(app(RequestCriteria::class))
-                ->findWhereIn('user_id', $userIds);
-        } else {
-            $persons = $this->personRepository
-                ->pushCriteria(app(RequestCriteria::class))
-                ->all();
+            $personsQuery = $personsQuery->whereIn('user_id', $userIds);
         }
+
+        if ($query !== '') {
+            $personsQuery = $personsQuery->where(function ($q) use ($query) {
+                $q->whereRaw("LOWER(TRIM(CONCAT_WS(' ', first_name, last_name))) LIKE ?", ['%' . mb_strtolower($query) . '%'])
+                  ->orWhereRaw("LOWER(name) LIKE ?", ['%' . mb_strtolower($query) . '%']);
+            });
+        }
+
+        $persons = $personsQuery->get();
 
         return PersonResource::collection($persons);
     }

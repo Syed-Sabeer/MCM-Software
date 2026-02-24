@@ -11,7 +11,7 @@
         :action="route('admin.contacts.organizations.store')"
         method="POST"
     >
-    
+
         <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
@@ -52,9 +52,9 @@
 
                 {!! view_render_event('admin.contacts.organizations.create.account_information.before') !!}
 
-                <div class="grid gap-4 md:grid-cols-2">
+                <div style="display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 1rem !important;">
                     <!-- Account Name -->
-                    <x-admin::form.control-group>
+                    <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label class="required">
                             Account Name
                         </x-admin::form.control-group.label>
@@ -71,25 +71,26 @@
                         <x-admin::form.control-group.error control-name="name" />
                     </x-admin::form.control-group>
 
-                    <!-- Parent Account (ID) -->
-                    {{-- <x-admin::form.control-group>
+                    <!-- Website -->
+                    <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label>
-                            Parent Account ID
+                            Website
                         </x-admin::form.control-group.label>
 
-                        <x-admin::form.control-group.control
-                            type="number"
-                            id="parent_organization_id"
-                            name="parent_organization_id"
-                            :value="old('parent_organization_id')"
-                            label="Parent Account ID"
+                        <input
+                            type="url"
+                            id="website"
+                            name="website"
+                            value="{{ old('website') }}"
+                            class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:ring-1 focus:ring-brandColor dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                            placeholder="https://example.com"
                         />
 
-                        <x-admin::form.control-group.error control-name="parent_organization_id" />
-                    </x-admin::form.control-group> --}}
+                        <x-admin::form.control-group.error control-name="website" />
+                    </x-admin::form.control-group>
 
                     <!-- Phone -->
-                    <x-admin::form.control-group>
+                    <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label>
                             Phone
                         </x-admin::form.control-group.label>
@@ -106,7 +107,7 @@
                     </x-admin::form.control-group>
 
                     <!-- Fax -->
-                    <x-admin::form.control-group>
+                    <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label>
                             Fax
                         </x-admin::form.control-group.label>
@@ -121,23 +122,6 @@
 
                         <x-admin::form.control-group.error control-name="fax" />
                     </x-admin::form.control-group>
-
-                    <!-- Website -->
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            Website
-                        </x-admin::form.control-group.label>
-
-                        <x-admin::form.control-group.control
-                            type="url"
-                            id="website"
-                            name="website"
-                            :value="old('website')"
-                            label="Website"
-                        />
-
-                        <x-admin::form.control-group.error control-name="website" />
-                    </x-admin::form.control-group>
                 </div>
 
                 {!! view_render_event('admin.contacts.organizations.create.account_information.after') !!}
@@ -151,9 +135,9 @@
 
                 {!! view_render_event('admin.contacts.organizations.create.additional_information.before') !!}
 
-                <div class="grid gap-4 md:grid-cols-2">
+                <div style="display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 1rem !important;">
                     <!-- Type -->
-                    <x-admin::form.control-group>
+                    <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label>
                             Type
                         </x-admin::form.control-group.label>
@@ -178,7 +162,7 @@
                     </x-admin::form.control-group>
 
                     <!-- Industry -->
-                    <x-admin::form.control-group>
+                    <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label>
                             Industry
                         </x-admin::form.control-group.label>
@@ -198,7 +182,7 @@
                     </x-admin::form.control-group>
 
                     <!-- Employees -->
-                    <x-admin::form.control-group>
+                    <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label>
                             Employees
                         </x-admin::form.control-group.label>
@@ -215,7 +199,7 @@
                     </x-admin::form.control-group>
 
                     <!-- Annual Revenue -->
-                    <x-admin::form.control-group>
+                    <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label>
                             Annual Revenue
                         </x-admin::form.control-group.label>
@@ -257,42 +241,43 @@
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 {!! view_render_event('admin.contacts.organizations.create.address_information.before') !!}
 
-                <div class="grid gap-6 md:grid-cols-2">
-                    <!-- Billing Address -->
-                    <div>
-                        <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
-                            Billing Address Details
-                        </p>
+                <!-- Billing Address -->
+                <div class="mb-8">
+                    <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
+                        Billing Address Details
+                    </p>
 
-                        <x-admin::form.control-group>
+                    <x-admin::form.control-group class="mb-4">
+                        <x-admin::form.control-group.label>
+                            Billing Street
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="text"
+                            id="billing_street"
+                            name="billing_street"
+                            :value="old('billing_street')"
+                            label="Billing Street"
+                        />
+                    </x-admin::form.control-group>
+
+                    <!-- 4-Column Layout for Country, State, City, Postal Code -->
+                    <div style="display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 1rem !important;">
+                        <x-admin::form.control-group style="margin: 0 !important;">
                             <x-admin::form.control-group.label>
-                                Billing Street
+                                Country
                             </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.control
                                 type="text"
-                                id="billing_street"
-                                name="billing_street"
-                                :value="old('billing_street')"
-                                label="Billing Street"
+                                id="billing_country"
+                                name="billing_country"
+                                :value="old('billing_country')"
+                                label="Country"
                             />
                         </x-admin::form.control-group>
 
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                Billing City
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.control
-                                type="text"
-                                id="billing_city"
-                                name="billing_city"
-                                :value="old('billing_city')"
-                                label="Billing City"
-                            />
-                        </x-admin::form.control-group>
-
-                        <x-admin::form.control-group>
+                        <x-admin::form.control-group style="margin: 0 !important;">
                             <x-admin::form.control-group.label>
                                 State / Province
                             </x-admin::form.control-group.label>
@@ -306,9 +291,23 @@
                             />
                         </x-admin::form.control-group>
 
-                        <x-admin::form.control-group>
+                        <x-admin::form.control-group style="margin: 0 !important;">
                             <x-admin::form.control-group.label>
-                                Billing Zip / Postal Code
+                                City
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="billing_city"
+                                name="billing_city"
+                                :value="old('billing_city')"
+                                label="City"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group style="margin: 0 !important;">
+                            <x-admin::form.control-group.label>
+                                Zip / Postal Code
                             </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.control
@@ -316,72 +315,68 @@
                                 id="billing_postcode"
                                 name="billing_postcode"
                                 :value="old('billing_postcode')"
-                                label="Billing Zip / Postal Code"
-                            />
-                        </x-admin::form.control-group>
-
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                Billing Country
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.control
-                                type="text"
-                                id="billing_country"
-                                name="billing_country"
-                                :value="old('billing_country')"
-                                label="Billing Country"
+                                label="Zip / Postal Code"
                             />
                         </x-admin::form.control-group>
                     </div>
+                </div>
 
-                    <!-- Shipping Address -->
-                    <div id="shipping-address-container">
-                        <div class="mb-4 flex items-center justify-between">
-                            <p class="text-base font-semibold text-gray-800 dark:text-white">
-                                Shipping Address Details
-                            </p>
+                <!-- Shipping Address -->
+                <div class="mb-4" style="margin-top: 1rem;">
+                    <div class="mt-2 flex justify-end">
+                        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                            <input
+                                type="checkbox"
+                                name="same_as_billing"
+                                id="same-as-billing"
+                                class="h-4 w-4 rounded border-gray-300 text-brandColor focus:ring-brandColor"
+                                onchange="window.toggleShippingAddress && window.toggleShippingAddress(this)"
+                            >
 
-                            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                <input
-                                    type="checkbox"
-                                    id="same-as-billing"
-                                    class="h-4 w-4 rounded border-gray-300 text-brandColor focus:ring-brandColor"
-                                >
+                            <span>Same as billing address</span>
+                        </label>
+                    </div>
+                </div>
 
-                                <span>Same as billing address</span>
-                            </label>
-                        </div>
+                <div id="shipping-address-container">
+                    <p
+                        id="shipping-address-heading"
+                        class="mb-4 text-base font-semibold text-gray-800 dark:text-white"
+                    >
+                        Shipping Address Details
+                    </p>
 
-                        <x-admin::form.control-group>
+                    <x-admin::form.control-group class="mb-4">
+                        <x-admin::form.control-group.label>
+                            Shipping Street
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="text"
+                            id="shipping_street"
+                            name="shipping_street"
+                            :value="old('shipping_street')"
+                            label="Shipping Street"
+                        />
+                    </x-admin::form.control-group>
+
+                    <!-- 4-Column Layout for Country, State, City, Postal Code -->
+                    <div style="display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 1rem !important;">
+                        <x-admin::form.control-group style="margin: 0 !important;">
                             <x-admin::form.control-group.label>
-                                Shipping Street
+                                Country
                             </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.control
                                 type="text"
-                                id="shipping_street"
-                                name="shipping_street"
-                                :value="old('shipping_street')"
-                                label="Shipping Street"
+                                id="shipping_country"
+                                name="shipping_country"
+                                :value="old('shipping_country')"
+                                label="Country"
                             />
                         </x-admin::form.control-group>
 
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                Shipping City
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.control
-                                type="text"
-                                id="shipping_city"
-                                name="shipping_city"
-                                :value="old('shipping_city')"
-                                label="Shipping City"
-                            />
-                        </x-admin::form.control-group>
-
-                        <x-admin::form.control-group>
+                        <x-admin::form.control-group style="margin: 0 !important;">
                             <x-admin::form.control-group.label>
                                 State / Province
                             </x-admin::form.control-group.label>
@@ -395,9 +390,23 @@
                             />
                         </x-admin::form.control-group>
 
-                        <x-admin::form.control-group>
+                        <x-admin::form.control-group style="margin: 0 !important;">
                             <x-admin::form.control-group.label>
-                                Shipping Zip / Postal Code
+                                City
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="shipping_city"
+                                name="shipping_city"
+                                :value="old('shipping_city')"
+                                label="City"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group style="margin: 0 !important;">
+                            <x-admin::form.control-group.label>
+                                Zip / Postal Code
                             </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.control
@@ -405,21 +414,7 @@
                                 id="shipping_postcode"
                                 name="shipping_postcode"
                                 :value="old('shipping_postcode')"
-                                label="Shipping Zip / Postal Code"
-                            />
-                        </x-admin::form.control-group>
-
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                Shipping Country
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.control
-                                type="text"
-                                id="shipping_country"
-                                name="shipping_country"
-                                :value="old('shipping_country')"
-                                label="Shipping Country"
+                                label="Zip / Postal Code"
                             />
                         </x-admin::form.control-group>
                     </div>
@@ -432,36 +427,22 @@
 
     {!! view_render_event('admin.organizations.create.form.after') !!}
 
-    <script type="module">
-        document.addEventListener('DOMContentLoaded', () => {
-            const checkbox = document.getElementById('same-as-billing');
-            const form = document.querySelector('form');
+    <script>
+        window.toggleShippingAddress = (checkbox) => {
             const shippingContainer = document.getElementById('shipping-address-container');
-
-            if (! checkbox || ! form || ! shippingContainer) {
-                return;
-            }
-
-            const billingFields = [
-                'billing_street',
-                'billing_city',
-                'billing_state',
-                'billing_postcode',
-                'billing_country',
-            ];
-
-            const shippingFields = [
-                'shipping_street',
-                'shipping_city',
-                'shipping_state',
-                'shipping_postcode',
-                'shipping_country',
-            ];
+            const shippingHeading = document.getElementById('shipping-address-heading');
+            const fieldMappings = {
+                'billing_street': 'shipping_street',
+                'billing_city': 'shipping_city',
+                'billing_state': 'shipping_state',
+                'billing_postcode': 'shipping_postcode',
+                'billing_country': 'shipping_country',
+            };
 
             const copyBillingToShipping = () => {
-                billingFields.forEach((field, index) => {
-                    const billingInput = document.getElementById(field);
-                    const shippingInput = document.getElementById(shippingFields[index]);
+                Object.entries(fieldMappings).forEach(([billingFieldId, shippingFieldId]) => {
+                    const billingInput = document.getElementById(billingFieldId);
+                    const shippingInput = document.getElementById(shippingFieldId);
 
                     if (billingInput && shippingInput) {
                         shippingInput.value = billingInput.value;
@@ -470,9 +451,23 @@
                 });
             };
 
+            const syncOnBillingChange = () => {
+                Object.keys(fieldMappings).forEach((billingFieldId) => {
+                    const billingInput = document.getElementById(billingFieldId);
+
+                    if (billingInput) {
+                        billingInput.addEventListener('input', () => {
+                            if (checkbox.checked) {
+                                copyBillingToShipping();
+                            }
+                        });
+                    }
+                });
+            };
+
             const resetShippingReadonly = () => {
-                shippingFields.forEach((field) => {
-                    const shippingInput = document.getElementById(field);
+                Object.values(fieldMappings).forEach((shippingFieldId) => {
+                    const shippingInput = document.getElementById(shippingFieldId);
 
                     if (shippingInput) {
                         shippingInput.removeAttribute('readonly');
@@ -480,22 +475,34 @@
                 });
             };
 
-            checkbox.addEventListener('change', () => {
-                if (checkbox.checked) {
-                    copyBillingToShipping();
-                    shippingContainer.style.display = 'none';
-                } else {
-                    resetShippingReadonly();
-                    shippingContainer.style.display = '';
-                }
-            });
+            if (!checkbox || !shippingContainer) {
+                return;
+            }
 
-            // Ensure data is synced just before submit when checkbox is checked.
+            if (checkbox.checked) {
+                copyBillingToShipping();
+                shippingContainer.style.display = 'none';
+            } else {
+                resetShippingReadonly();
+                shippingContainer.style.display = 'block';
+            }
+
+            syncOnBillingChange();
+        };
+
+        const checkbox = document.getElementById('same-as-billing');
+        const form = document.querySelector('form');
+
+        if (checkbox) {
+            window.toggleShippingAddress(checkbox);
+        }
+
+        if (checkbox && form) {
             form.addEventListener('submit', () => {
                 if (checkbox.checked) {
-                    copyBillingToShipping();
+                    window.toggleShippingAddress(checkbox);
                 }
             });
-        });
+        }
     </script>
 </x-admin::layouts>
