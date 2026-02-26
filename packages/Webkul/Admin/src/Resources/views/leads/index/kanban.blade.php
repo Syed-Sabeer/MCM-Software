@@ -416,6 +416,7 @@
                         search: '',
                         searchFields: '',
                         pipeline_id: "{{ request('pipeline_id') }}",
+                        organization_id: "{{ request('organization_id') }}",
                         limit: 10,
                     };
 

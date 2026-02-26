@@ -61,6 +61,25 @@ class LeadRepository extends Repository
     }
 
     /**
+     * Get the next case number. Finds max numeric value of existing case_no and increments by 1.
+     * Format: 5 digits with leading zeros (e.g. 00001, 50014).
+     */
+    public function getNextCaseNo(): string
+    {
+        $max = $this->model
+            ->whereNotNull('case_no')
+            ->pluck('case_no')
+            ->map(fn ($v) => (int) $v)
+            ->filter()
+            ->push(0)
+            ->max();
+
+        $next = $max + 1;
+
+        return str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
      * Get leads query.
      *
      * @param  int  $pipelineId

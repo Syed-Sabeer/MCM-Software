@@ -104,6 +104,23 @@
                         <div class="w-1/2 max-md:w-full">
                             {!! view_render_event('admin.leads.edit.lead_details.attributes.before', ['lead' => $lead]) !!}
 
+                            <!-- Case No -->
+                            <x-admin::form.control-group class="mb-4">
+                                <x-admin::form.control-group.label>
+                                    Case No
+                                </x-admin::form.control-group.label>
+
+                                <input
+                                    type="text"
+                                    name="case_no"
+                                    value="{{ $lead->case_no ?? '' }}"
+                                    placeholder="00001"
+                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                />
+
+                                <x-admin::form.control-group.error control-name="case_no" />
+                            </x-admin::form.control-group>
+
                             <!-- Lead Details Title and Description -->
                             <x-admin::attributes
                                 :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([

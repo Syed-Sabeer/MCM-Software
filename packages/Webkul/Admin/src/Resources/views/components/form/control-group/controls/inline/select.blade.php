@@ -38,17 +38,21 @@
                     class="group relative !w-full pl-2.5"
                     :style="{ 'text-align': position }"
                 >
-                    <span class="cursor-pointer truncate rounded">
-                        @{{ valueLabel ? valueLabel : selectedValue?.name.length > 20 ? selectedValue?.name.substring(0, 20) + '...' : selectedValue?.name }}
+                    <span class="cursor-pointer truncate rounded text-gray-400" v-if="!selectedValue">
+                        -- Select --
                     </span>
-                    
+
+                    <span class="cursor-pointer truncate rounded" v-else>
+                        @{{ valueLabel ? valueLabel : (selectedValue?.name?.length > 20 ? selectedValue.name.substring(0, 20) + '...' : selectedValue?.name) }}
+                    </span>
+
                     <!-- Tooltip -->
                     <div
                         class="absolute bottom-0 mb-5 hidden flex-col group-hover:flex"
-                        v-if="selectedValue?.name.length > 20"
+                        v-if="selectedValue && selectedValue.name && selectedValue.name.length > 20"
                     >
                         <span class="whitespace-no-wrap relative z-10 rounded-md bg-black px-4 py-2 text-xs leading-none text-white shadow-lg dark:bg-white dark:text-gray-900">
-                            @{{ selectedValue?.name }}
+                            @{{ selectedValue.name }}
                         </span>
 
                         <div class="-mt-2 ml-4 h-3 w-3 rotate-45 bg-black dark:bg-white"></div>
@@ -62,7 +66,7 @@
                     ></i>
                 </template>
             </div>
-        
+
             <!-- Editing view -->
             <div
                 class="relative w-full"
@@ -78,6 +82,8 @@
                     ::placeholder="placeholder"
                     v-model="inputValue"
                 >
+                    <option value="">-- Select --</option>
+
                     <option
                         v-for="(option, index) in options"
                         :key="option.id"
@@ -86,7 +92,7 @@
                         @{{ option.name }}
                     </option>
                 </x-admin::form.control-group.control>
-                    
+
                 <!-- Action Buttons -->
                 <div class="absolute top-1/2 flex -translate-y-1/2 transform items-center gap-0.5 ltr:right-2 rtl:left-2">
                     <i class="icon-down-arrow text-2xl" />
@@ -98,7 +104,7 @@
                     >
                         <i class="icon-tick text-md cursor-pointer font-bold text-green-600 dark:!text-green-600" />
                     </button>
-                
+
                     <button
                         type="button"
                         class="flex items-center justify-center bg-red-100 p-1 hover:bg-red-200 ltr:rounded-r-md rtl:rounded-l-md"
@@ -188,8 +194,8 @@
             watch: {
                 /**
                  * Watch the value prop.
-                 * 
-                 * @param {String} newValue 
+                 *
+                 * @param {String} newValue
                  */
                 value(newValue) {
                     this.inputValue = newValue;
@@ -199,7 +205,7 @@
             computed: {
                 /**
                  * Get the selected value.
-                 * 
+                 *
                  * @return {Object}
                  */
                 selectedValue() {
@@ -210,7 +216,7 @@
             methods: {
                 /**
                  * Toggle the input.
-                 * 
+                 *
                  * @return {void}
                  */
                 toggle() {
@@ -219,7 +225,7 @@
 
                 /**
                  * Save the input value.
-                 * 
+                 *
                  * @return {void}
                  */
                 save() {
@@ -240,7 +246,7 @@
                                 this.inputValue = this.value;
 
                                 this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
-                            });                        
+                            });
                     }
 
                     this.$emit('on-change', {
@@ -251,7 +257,7 @@
 
                 /**
                  * Cancel the input value.
-                 * 
+                 *
                  * @return {void}
                  */
                 cancel() {

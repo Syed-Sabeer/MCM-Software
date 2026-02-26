@@ -3,7 +3,23 @@
         @lang('admin::app.contacts.organizations.view.title', ['name' => $organization->name])
     </x-slot>
 
-
+    <script>
+        window.handleCaseDelete = function(e, btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            var form = btn.closest('.case-delete-form');
+            if (!form) return;
+            if (typeof window.emitter !== 'undefined') {
+                window.emitter.emit('open-confirm-modal', {
+                    agree: function () {
+                        form.submit();
+                    }
+                });
+            } else {
+                if (confirm('Are you sure you want to perform this action?')) form.submit();
+            }
+        };
+    </script>
 
     <div class="flex gap-4 max-xl:flex-wrap">
         <!-- Left Panel: About / Details -->
@@ -288,10 +304,19 @@
             </div>
 
             <!-- Contacts card -->
+            @php
+                $contactsQuery = $organization->persons()->latest();
+                $contactsCount = $contactsQuery->count();
+                $recentContacts = $contactsQuery->take(3)->get();
+            @endphp
+
             <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex items-center justify-between gap-2">
                     <p class="text-base font-bold text-gray-900 dark:text-white">
                         Contacts
+                        @if ($contactsCount)
+                            <span class="text-xs font-normal text-gray-500 dark:text-gray-400">({{ $contactsCount }})</span>
+                        @endif
                     </p>
 
                     <a
@@ -302,21 +327,20 @@
                     </a>
                 </div>
 
-                @php
-                    $recentContacts = $organization->persons()->latest()->limit(7)->get();
-                @endphp
-
-                @if ($recentContacts->count() > 0)
+                @if ($contactsCount)
                     <div class="flex flex-col gap-2.5 border-t border-gray-200 pt-3 dark:border-gray-700">
                         @foreach ($recentContacts as $contact)
+                            @php
+                                $contactName = trim(($contact->first_name ?? '') . ' ' . ($contact->last_name ?? '')) ?: $contact->name;
+                            @endphp
                             <a
                                 href="{{ route('admin.contacts.persons.view', $contact->id) }}"
                                 class="flex items-center gap-3 rounded-md p-2 transition hover:bg-gray-50 dark:hover:bg-gray-800"
                             >
-                                <x-admin::avatar :name="$contact->first_name . ' ' . $contact->last_name" class="h-8 w-8 flex-shrink-0" />
+                                <x-admin::avatar :name="$contactName" class="h-8 w-8 flex-shrink-0" />
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                        {{ $contact->first_name }} {{ $contact->last_name }}
+                                        {{ $contactName }}
                                     </p>
                                     @if ($contact->email)
                                         <p class="truncate text-xs text-gray-500 dark:text-gray-400">
@@ -328,10 +352,10 @@
                         @endforeach
                     </div>
 
-                    @if ($recentContacts->count() >= 7)
+                    @if ($contactsCount > 3)
                         <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
                             <a
-                                href="{{ route('admin.contacts.persons.index', ['organization_id' => $organization->id]) }}"
+                                href="{{ route('admin.contacts.persons.index') }}?organization_id={{ $organization->id }}"
                                 class="text-xs font-semibold text-brandColor hover:underline"
                             >
                                 View All Contacts
@@ -420,15 +444,23 @@
                                     </x-slot>
 
                                     <x-slot:menu class="!min-w-40">
-                                        <button
-                                            type="button"
-                                            class="case-menu-delete w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-700 flex items-center gap-2"
-                                            data-delete-url="{{ route('admin.leads.delete', $case->id) }}"
+                                        <form
+                                            method="POST"
+                                            action="{{ route('admin.leads.delete', $case->id) }}"
+                                            class="block w-full case-delete-form"
                                             data-case-id="{{ $case->id }}"
                                         >
-                                            <span class="icon-delete text-lg"></span>
-                                            Delete
-                                        </button>
+                                            @csrf
+                                            @method('DELETE')
+                                            <button
+                                                type="button"
+                                                class="case-delete-btn flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-700"
+                                                onclick="window.handleCaseDelete(event, this)"
+                                            >
+                                                <span class="icon-delete text-lg"></span>
+                                                Delete
+                                            </button>
+                                        </form>
                                     </x-slot>
                                 </x-admin::dropdown>
                             </div>
@@ -563,68 +595,6 @@
 </x-admin::layouts>
 
 @pushOnce('scripts')
-    <script type="module">
-        // Ensure this runs after the DOM is fully loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            setupCaseDeleteHandlers();
-        });
-
-        // Also run immediately in case DOM is already loaded
-        setupCaseDeleteHandlers();
-
-        function setupCaseDeleteHandlers() {
-            var deleteButtons = document.querySelectorAll('.case-menu-delete');
-            console.log('Found ' + deleteButtons.length + ' delete buttons');
-
-            deleteButtons.forEach(function(btn) {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    console.log('Delete button clicked');
-
-                    var url = this.getAttribute('data-delete-url');
-                    var caseId = this.getAttribute('data-case-id');
-                    var row = document.querySelector('[data-case-row="' + caseId + '"]');
-
-                    console.log('URL:', url, 'CaseID:', caseId);
-
-                    if (typeof window.emitter !== 'undefined') {
-                        window.emitter.emit('open-confirm-modal', {
-                            agree: function () {
-                                window.axios.delete(url)
-                                    .then(function (response) {
-                                        console.log('Delete successful', response);
-                                        if (row) row.remove();
-                                        if (typeof window.emitter !== 'undefined') {
-                                            window.emitter.emit('add-flash', { type: 'success', message: response.data.message });
-                                        }
-                                    })
-                                    .catch(function (error) {
-                                        console.error('Delete failed', error);
-                                        if (typeof window.emitter !== 'undefined') {
-                                            window.emitter.emit('add-flash', { type: 'error', message: error.response && error.response.data ? error.response.data.message : 'Failed to delete.' });
-                                        }
-                                    });
-                            }
-                        });
-                    } else {
-                        if (confirm('Are you sure you want to perform this action?')) {
-                            window.axios.delete(url)
-                                .then(function () {
-                                    if (row) row.remove();
-                                    window.location.reload();
-                                })
-                                .catch(function () {
-                                    location.reload();
-                                });
-                        }
-                    }
-                });
-            });
-        }
-    </script>
-
     <script type="text/x-template" id="v-organization-files-template">
         <div>
             <button

@@ -110,6 +110,15 @@ class LeadController extends Controller
                 $query->whereIn('leads.user_id', $userIds);
             }
 
+            if ($organizationId = request()->query('organization_id')) {
+                $query->where(function ($q) use ($organizationId) {
+                    $q->where('leads.organization_id', $organizationId)
+                        ->orWhereHas('person', function ($personQuery) use ($organizationId) {
+                            $personQuery->where('organization_id', $organizationId);
+                        });
+                });
+            }
+
             $stage->lead_value = (clone $query)->sum('lead_value');
 
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
@@ -159,7 +168,9 @@ class LeadController extends Controller
             $pipeline = $this->pipelineRepository->getDefaultPipeline();
         }
 
-        return view('admin::leads.create', compact('organization', 'pipeline'));
+        $nextCaseNo = $this->leadRepository->getNextCaseNo();
+
+        return view('admin::leads.create', compact('organization', 'pipeline', 'nextCaseNo'));
     }
 
     /**
@@ -172,6 +183,10 @@ class LeadController extends Controller
         $data = request()->all();
 
         $data['status'] = 1;
+
+        if (empty(trim($data['case_no'] ?? ''))) {
+            $data['case_no'] = $this->leadRepository->getNextCaseNo();
+        }
 
         if (! empty($data['lead_pipeline_stage_id'])) {
             $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
@@ -230,7 +245,7 @@ class LeadController extends Controller
      */
     public function view(int $id)
     {
-        $lead = $this->leadRepository->findOrFail($id);
+        $lead = $this->leadRepository->with('attribute_values')->findOrFail($id);
 
         $userIds = bouncer()->getAuthorizedUserIds();
 
@@ -292,6 +307,17 @@ class LeadController extends Controller
     public function updateAttributes(int $id)
     {
         $data = request()->all();
+
+        if (array_key_exists('case_no', $data)) {
+            $this->validate(request(), [
+                'case_no' => [
+                    'required',
+                    'string',
+                    'max:20',
+                    \Illuminate\Validation\Rule::unique('leads', 'case_no')->ignore($id),
+                ],
+            ]);
+        }
 
         $attributes = $this->attributeRepository->findWhere([
             'entity_type' => 'leads',
@@ -366,7 +392,7 @@ class LeadController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id): JsonResponse|RedirectResponse
     {
         $this->leadRepository->findOrFail($id);
 
@@ -377,13 +403,25 @@ class LeadController extends Controller
 
             Event::dispatch('lead.delete.after', $id);
 
-            return response()->json([
-                'message' => trans('admin::app.leads.destroy-success'),
-            ]);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'message' => trans('admin::app.leads.destroy-success'),
+                ]);
+            }
+
+            session()->flash('success', trans('admin::app.leads.destroy-success'));
+
+            return redirect()->back();
         } catch (\Exception $exception) {
-            return response()->json([
-                'message' => trans('admin::app.leads.destroy-failed'),
-            ], 400);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'message' => trans('admin::app.leads.destroy-failed'),
+                ], 400);
+            }
+
+            session()->flash('error', trans('admin::app.leads.destroy-failed'));
+
+            return redirect()->back();
         }
     }
 

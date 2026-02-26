@@ -22,8 +22,11 @@
             <!-- Non-editing view -->
             <div
                 v-if="! isEditing"
-                class="flex h-[34px] items-center rounded border border-transparent transition-all"
-                :class="allowEdit ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : ''"
+                class="flex rounded border border-transparent transition-all"
+                :class="[
+                    allowEdit ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : '',
+                    multiline ? 'min-h-[34px] items-start py-2' : 'h-[34px] items-center'
+                ]"
             >
                 <x-admin::form.control-group.control
                     type="hidden"
@@ -33,18 +36,24 @@
                 />
 
                 <div
-                    class="group relative h-[18px] !w-full pl-2.5"
+                    class="group relative !w-full pl-2.5"
+                    :class="multiline ? '' : 'h-[18px]'"
                     :style="{ 'text-align': position }"
                 >
-                    <span class="cursor-pointer truncate rounded">
-                        <template v-if="isDirty">
+                    <span
+                        class="cursor-pointer rounded"
+                        :class="multiline ? 'block break-words whitespace-pre-wrap' : 'truncate'"
+                    >
+                        <template v-if="multiline">
+                            @{{ (inputValue || valueLabel || '').trim() || '--' }}
+                        </template>
+                        <template v-else-if="isDirty">
                             @{{
                                 inputValue.length > 20
                                     ? inputValue.substring(0, 20) + '...'
                                     : inputValue
                             }}
                         </template>
-
                         <template v-else>
                             @{{
                                 (valueLabel || inputValue || '').length > 20
@@ -54,13 +63,13 @@
                         </template>
                     </span>
 
-                    <!-- Tooltip -->
+                    <!-- Tooltip (only when not multiline) -->
                     <div
                         class="absolute bottom-0 mb-5 hidden flex-col group-hover:flex"
-                        v-if="inputValue?.length > 20"
+                        v-if="! multiline && (inputValue?.length > 20 || (valueLabel || inputValue)?.length > 20)"
                     >
                         <span class="whitespace-no-wrap relative z-10 rounded-md bg-black px-4 py-2 text-xs leading-none text-white shadow-lg dark:bg-white dark:text-gray-900">
-                            @{{ inputValue }}
+                            @{{ inputValue || valueLabel }}
                         </span>
 
                         <div class="-mt-2 ml-4 h-3 w-3 rotate-45 bg-black dark:bg-white"></div>
@@ -130,6 +139,11 @@
 
                 value: {
                     required: true,
+                },
+
+                multiline: {
+                    type: Boolean,
+                    default: false,
                 },
 
                 rules: {

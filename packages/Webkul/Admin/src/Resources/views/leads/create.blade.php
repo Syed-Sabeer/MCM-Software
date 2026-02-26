@@ -127,6 +127,23 @@
                         <div class="w-1/2 max-md:w-full grid gap-4">
                             {!! view_render_event('admin.leads.create.case-information.attributes.before') !!}
 
+                            <!-- Case No -->
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Case No
+                                </x-admin::form.control-group.label>
+
+                                <input
+                                    type="text"
+                                    name="case_no"
+                                    value="{{ $nextCaseNo ?? '' }}"
+                                    placeholder="00001"
+                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                />
+
+                                <x-admin::form.control-group.error control-name="case_no" />
+                            </x-admin::form.control-group>
+
                             <!-- Status (Pipeline Stage) -->
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label class="required">

@@ -28,6 +28,7 @@ class Lead extends Model implements LeadContract
      * @var array
      */
     protected $fillable = [
+        'case_no',
         'title',
         'description',
         'lead_value',

@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Requests;
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Core\Contracts\Validations\Decimal;
@@ -132,6 +133,13 @@ class LeadForm extends FormRequest
             'nullable',
             'date_format:Y-m-d',
             'after:'.Carbon::yesterday()->format('Y-m-d'),
+        ];
+
+        $this->rules['case_no'] = [
+            'nullable',
+            'string',
+            'max:20',
+            Rule::unique('leads', 'case_no')->ignore($this->route('id')),
         ];
 
         return [

@@ -42,6 +42,10 @@ class PersonDataGrid extends DataGrid
             $queryBuilder->whereIn('persons.user_id', $userIds);
         }
 
+        if ($organizationId = request('organization_id')) {
+            $queryBuilder->where('persons.organization_id', $organizationId);
+        }
+
         $this->addFilter('id', 'persons.id');
         $this->addFilter('person_name', 'persons.name');
         $this->addFilter('organization', 'organizations.name');

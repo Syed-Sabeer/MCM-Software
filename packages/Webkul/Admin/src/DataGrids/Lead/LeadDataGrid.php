@@ -89,11 +89,14 @@ class LeadDataGrid extends DataGrid
             $queryBuilder->havingRaw($tablePrefix.'rotten_lead = '.request()->input('rotten_lead.in'));
         }
 
-        if (request('organization_id')) {
-            $queryBuilder->where(function ($query) {
-                $query->where('leads.organization_id', request('organization_id'))
-                    ->orWhereHas('persons', function ($personQuery) {
-                        $personQuery->where('organization_id', request('organization_id'));
+        if ($organizationId = request('organization_id')) {
+            $queryBuilder->where(function ($query) use ($organizationId) {
+                $query->where('leads.organization_id', $organizationId)
+                    ->orWhereExists(function ($subQuery) use ($organizationId) {
+                        $subQuery->select(DB::raw(1))
+                            ->from('persons')
+                            ->whereColumn('persons.id', 'leads.person_id')
+                            ->where('persons.organization_id', $organizationId);
                     });
             });
         }

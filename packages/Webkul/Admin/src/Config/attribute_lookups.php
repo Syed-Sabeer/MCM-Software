@@ -17,6 +17,11 @@ return [
         'repository'   => 'Webkul\Lead\Repositories\TypeRepository',
     ],
 
+    'lead_priorities' => [
+        'name'         => 'Lead Priorities',
+        'repository'   => 'Webkul\Lead\Repositories\PriorityRepository',
+    ],
+
     'lead_pipelines' => [
         'name'         => 'Lead Pipelines',
         'repository'   => 'Webkul\Lead\Repositories\PipelineRepository',
