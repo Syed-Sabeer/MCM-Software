@@ -26,6 +26,7 @@ class PersonDataGrid extends DataGrid
                 'persons.id',
                 DB::raw("NULLIF(TRIM(CONCAT_WS(' ', persons.first_name, persons.last_name)), '') as person_name"),
                 'persons.name as legacy_name',
+                'persons.type',
                 'persons.emails',
                 'persons.contact_numbers',
                 'persons.email',
@@ -47,7 +48,8 @@ class PersonDataGrid extends DataGrid
         }
 
         $this->addFilter('id', 'persons.id');
-        $this->addFilter('person_name', 'persons.name');
+        $this->addFilter('person_name', DB::raw("COALESCE(NULLIF(TRIM(CONCAT_WS(' ', persons.first_name, persons.last_name)), ''), persons.name)"));
+        $this->addFilter('type', 'persons.type');
         $this->addFilter('organization', 'organizations.name');
 
         return $queryBuilder;
@@ -80,6 +82,34 @@ class PersonDataGrid extends DataGrid
                 }
 
                 return $row->legacy_name ?? '';
+            },
+        ]);
+
+        $this->addColumn([
+            'index'              => 'type',
+            'label'              => trans('admin::app.contacts.persons.index.datagrid.type'),
+            'type'               => 'string',
+            'sortable'           => true,
+            'filterable'         => true,
+            'searchable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => [
+                ['label' => trans('admin::app.contacts.persons.index.datagrid.types.customer'), 'value' => 'customer'],
+                ['label' => trans('admin::app.contacts.persons.index.datagrid.types.vendor'), 'value' => 'vendor'],
+                ['label' => trans('admin::app.contacts.persons.index.datagrid.types.employee'), 'value' => 'employee'],
+                ['label' => trans('admin::app.contacts.persons.index.datagrid.types.partner'), 'value' => 'partner'],
+                ['label' => trans('admin::app.contacts.persons.index.datagrid.types.other'), 'value' => 'other'],
+            ],
+            'closure'    => function ($row) {
+                $types = [
+                    'customer' => '<span class="badge badge-round badge-success"></span> ' . trans('admin::app.contacts.persons.index.datagrid.types.customer'),
+                    'vendor'   => '<span class="badge badge-round badge-warning"></span> ' . trans('admin::app.contacts.persons.index.datagrid.types.vendor'),
+                    'employee' => '<span class="badge badge-round badge-info"></span> ' . trans('admin::app.contacts.persons.index.datagrid.types.employee'),
+                    'partner'  => '<span class="badge badge-round badge-primary"></span> ' . trans('admin::app.contacts.persons.index.datagrid.types.partner'),
+                    'other'    => '<span class="badge badge-round badge-secondary"></span> ' . trans('admin::app.contacts.persons.index.datagrid.types.other'),
+                ];
+
+                return $types[$row->type] ?? ucfirst($row->type ?? 'customer');
             },
         ]);
 

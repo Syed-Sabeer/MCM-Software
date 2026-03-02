@@ -5,6 +5,7 @@ return [
         'leads'           => 'Case',
         'lead'            => 'Case',
         'quotes'          => 'Quotes',
+        'purchase-orders' => 'Purchase Orders',
         'mail'            => 'Mail',
         'inbox'           => 'Inbox',
         'draft'           => 'Draft',
@@ -555,6 +556,88 @@ return [
         ],
     ],
 
+    'purchase-orders' => [
+        'index' => [
+            'title'          => 'Purchase Orders',
+            'create-btn'     => 'Create PO',
+            'create-success' => 'Purchase Order created successfully.',
+            'update-success' => 'Purchase Order updated successfully.',
+            'delete-success' => 'Purchase Order deleted successfully.',
+            'delete-failed'  => 'Purchase Order can not be deleted.',
+
+            'datagrid' => [
+                'po-number'      => 'PO #',
+                'job-number'     => 'Job #',
+                'sales-person'   => 'Sales Person',
+                'person'         => 'Person',
+                'subtotal'       => 'Subtotal',
+                'tax'            => 'Tax',
+                'freight'        => 'Freight',
+                'grand-total'    => 'Grand Total',
+                'created-at'     => 'Created At',
+                'edit'           => 'Edit',
+                'delete'         => 'Delete',
+                'print'          => 'Print',
+            ],
+        ],
+
+        'create' => [
+            'title'                 => 'Create Purchase Order',
+            'save-btn'              => 'Save PO',
+            'po-number'             => 'PO #',
+            'job-number'            => 'Job #',
+            'sales-tax-percent'     => 'Sales Tax %',
+            'freight'               => 'Freight',
+            'notes'                 => 'Notes',
+            'notes-placeholder'     => 'Add any additional notes or comments...',
+            'completion-date'       => 'Completion Date',
+            'last-delivery-date'    => 'Last Delivery Date',
+            'payment-term'          => 'Payment Term',
+            'select-payment-term'   => 'Select Payment Term',
+            'shipping-method'       => 'Shipping Method',
+            'select-shipping-method' => 'Select Shipping Method',
+            'items'                 => 'Items',
+            'item'                  => 'Item',
+            'description'           => 'Description',
+            'qty'                   => 'Qty',
+            'price-each'            => 'Price Each',
+            'total'                 => 'Total',
+            'actions'               => 'Actions',
+            'add-item'              => 'Add Item',
+            'subtotal'              => 'Subtotal',
+            'tax'                   => 'Tax',
+            'grand-total'           => 'Grand Total',
+        ],
+
+        'edit' => [
+            'title'                  => 'Edit Purchase Order',
+            'save-btn'               => 'Save PO',
+            'po-number'              => 'PO #',
+            'job-number'             => 'Job #',
+            'sales-tax-percent'      => 'Sales Tax %',
+            'freight'                => 'Freight',
+            'notes'                  => 'Notes',
+            'notes-placeholder'      => 'Add any additional notes or comments...',
+            'completion-date'        => 'Completion Date',
+            'last-delivery-date'     => 'Last Delivery Date',
+            'payment-term'           => 'Payment Term',
+            'select-payment-term'    => 'Select Payment Term',
+            'shipping-method'        => 'Shipping Method',
+            'select-shipping-method' => 'Select Shipping Method',
+            'items'                  => 'Items',
+            'item'                   => 'Item',
+            'description'            => 'Description',
+            'qty'                    => 'Qty',
+            'price-each'             => 'Price Each',
+            'total'                  => 'Total',
+            'actions'                => 'Actions',
+            'add-item'               => 'Add Item',
+            'subtotal'               => 'Subtotal',
+            'tax'                    => 'Tax',
+            'grand-total'            => 'Grand Total',
+        ],
+    ],
+
     'contacts' => [
         'persons' => [
             'index' => [
@@ -576,7 +659,16 @@ return [
                     'id'                => 'ID',
                     'view'              => 'View',
                     'name'              => 'Name',
+                    'type'              => 'Type',
                     'organization-name' => 'Organization Name',
+
+                    'types' => [
+                        'customer' => 'Customer',
+                        'vendor'   => 'Vendor',
+                        'employee' => 'Employee',
+                        'partner'  => 'Partner',
+                        'other'    => 'Other',
+                    ],
                 ],
             ],
 
@@ -584,6 +676,15 @@ return [
                 'title'              => ':name',
                 'about-person'       => 'About Person',
                 'about-organization' => 'About Organization',
+                'type'               => 'Type',
+
+                'types' => [
+                    'customer' => 'Customer',
+                    'vendor'   => 'Vendor',
+                    'employee' => 'Employee',
+                    'partner'  => 'Partner',
+                    'other'    => 'Other',
+                ],
 
                 'activities' => [
                     'index' => [
@@ -659,11 +760,29 @@ return [
                 'title'        => 'Create Person',
                 'save-btn'     => 'Save Person',
                 'organization' => 'Organization',
+                'type'         => 'Type',
+
+                'types' => [
+                    'customer' => 'Customer',
+                    'vendor'   => 'Vendor',
+                    'employee' => 'Employee',
+                    'partner'  => 'Partner',
+                    'other'    => 'Other',
+                ],
             ],
 
             'edit' => [
                 'title'    => 'Edit Person',
                 'save-btn' => 'Save Person',
+                'type'     => 'Type',
+
+                'types' => [
+                    'customer' => 'Customer',
+                    'vendor'   => 'Vendor',
+                    'employee' => 'Employee',
+                    'partner'  => 'Partner',
+                    'other'    => 'Other',
+                ],
             ],
         ],
 
@@ -2215,6 +2334,17 @@ return [
                         'title'      => 'Admin Logo',
                         'title-info' => 'Configure logo image for your admin panel.',
                     ],
+
+                    'company-info' => [
+                        'title'        => 'Company Information',
+                        'title-info'   => 'Configure your company details for documents and PDFs.',
+                        'company-name' => 'Company Name',
+                        'address'      => 'Address',
+                        'telephone'    => 'Telephone',
+                        'cell'         => 'Cell Phone',
+                        'email'        => 'Email',
+                        'website'      => 'Website',
+                    ],
                 ],
 
                 'settings' => [
@@ -2379,6 +2509,7 @@ return [
         'leads'                => 'Case',
         'quotes'               => 'Quotes',
         'quote'                => 'Quote',
+        'purchase-orders'      => 'PO',
         'mail'                 => [
             'title'   => 'Mail',
             'compose' => 'Compose',

@@ -35,6 +35,17 @@ return [
     ],
 
     /**
+     * Purchase Orders.
+     */
+    [
+        'key'        => 'purchase_orders',
+        'name'       => 'admin::app.layouts.purchase-orders',
+        'route'      => 'admin.purchase_orders.index',
+        'sort'       => 4,
+        'icon-class' => 'icon-quote',
+    ],
+
+    /**
      * Emails.
      */
     [

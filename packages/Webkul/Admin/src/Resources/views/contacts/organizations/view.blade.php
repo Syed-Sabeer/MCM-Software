@@ -332,6 +332,7 @@
                         @foreach ($recentContacts as $contact)
                             @php
                                 $contactName = trim(($contact->first_name ?? '') . ' ' . ($contact->last_name ?? '')) ?: $contact->name;
+                                $contactNameLimited = \Illuminate\Support\Str::limit($contactName, 35);
                             @endphp
                             <a
                                 href="{{ route('admin.contacts.persons.view', $contact->id) }}"
@@ -340,7 +341,7 @@
                                 <x-admin::avatar :name="$contactName" class="h-8 w-8 flex-shrink-0" />
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                        {{ $contactName }}
+                                        {{ $contactNameLimited }}
                                     </p>
                                     @if ($contact->email)
                                         <p class="truncate text-xs text-gray-500 dark:text-gray-400">
@@ -428,7 +429,7 @@
                                         href="{{ route('admin.leads.view', $case->id) }}"
                                         class="block text-sm font-medium text-brandColor hover:underline"
                                     >
-                                        {{ $case->title }}
+                                        {{ \Illuminate\Support\Str::limit($case->title, 35) }}
                                     </a>
 
                                     @if ($case->person)

@@ -165,6 +165,14 @@ class PersonRepository extends Repository
             $data['organization_id'] = null;
         }
 
+        // Convert array format [['value' => 'x', 'label' => 'work']] to string for string columns
+        foreach (['cell_phone', 'direct_phone', 'phone', 'email', 'email_secondary'] as $field) {
+            if (isset($data[$field]) && is_array($data[$field])) {
+                $first = $data[$field][0] ?? null;
+                $data[$field] = is_array($first) && isset($first['value']) ? $first['value'] : '';
+            }
+        }
+
         $emailValue = $data['emails'][0]['value'] ?? null;
         $contactValue = $data['contact_numbers'][0]['value'] ?? null;
 

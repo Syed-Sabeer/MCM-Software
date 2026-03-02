@@ -41,6 +41,11 @@ require 'activities-routes.php';
 require 'quote-routes.php';
 
 /**
+ * Purchase Orders routes.
+ */
+require 'purchase-order-routes.php';
+
+/**
  * Configuration routes.
  */
 require 'configuration-routes.php';

@@ -99,7 +99,7 @@ class PersonController extends Controller
      */
     public function show(int $id): View
     {
-        $person = $this->personRepository->findOrFail($id);
+        $person = $this->personRepository->with('attribute_values')->findOrFail($id);
 
         return view('admin::contacts.persons.view', compact('person'));
     }

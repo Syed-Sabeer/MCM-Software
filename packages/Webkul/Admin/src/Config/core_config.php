@@ -43,6 +43,49 @@ return [
             ],
         ],
     ], [
+        'key'    => 'general.general.company_info',
+        'name'   => 'admin::app.configuration.index.general.general.company-info.title',
+        'info'   => 'admin::app.configuration.index.general.general.company-info.title-info',
+        'sort'   => 3,
+        'fields' => [
+            [
+                'name'       => 'company_name',
+                'title'      => 'admin::app.configuration.index.general.general.company-info.company-name',
+                'type'       => 'text',
+                'default'    => '',
+            ],
+            [
+                'name'       => 'address',
+                'title'      => 'admin::app.configuration.index.general.general.company-info.address',
+                'type'       => 'textarea',
+                'default'    => '',
+            ],
+            [
+                'name'       => 'telephone',
+                'title'      => 'admin::app.configuration.index.general.general.company-info.telephone',
+                'type'       => 'text',
+                'default'    => '',
+            ],
+            [
+                'name'       => 'cell',
+                'title'      => 'admin::app.configuration.index.general.general.company-info.cell',
+                'type'       => 'text',
+                'default'    => '',
+            ],
+            [
+                'name'       => 'email',
+                'title'      => 'admin::app.configuration.index.general.general.company-info.email',
+                'type'       => 'text',
+                'default'    => '',
+            ],
+            [
+                'name'       => 'website',
+                'title'      => 'admin::app.configuration.index.general.general.company-info.website',
+                'type'       => 'text',
+                'default'    => '',
+            ],
+        ],
+    ], [
         'key'    => 'general.settings',
         'name'   => 'admin::app.configuration.index.general.settings.title',
         'info'   => 'admin::app.configuration.index.general.settings.info',

@@ -50,6 +50,24 @@ Breadcrumbs::for('quotes.edit', function (BreadcrumbTrail $trail, $quote) {
     $trail->push(trans('admin::app.quotes.edit.title'), route('admin.quotes.edit', $quote->id));
 });
 
+// Dashboard > Purchase Orders
+Breadcrumbs::for('purchase_orders', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push(trans('admin::app.layouts.purchase-orders'), route('admin.purchase_orders.index'));
+});
+
+// Dashboard > Purchase Orders > Create
+Breadcrumbs::for('purchase_orders.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('purchase_orders');
+    $trail->push(trans('admin::app.purchase-orders.create.title'), route('admin.purchase_orders.create'));
+});
+
+// Dashboard > Purchase Orders > Edit
+Breadcrumbs::for('purchase_orders.edit', function (BreadcrumbTrail $trail, $purchaseOrder) {
+    $trail->parent('purchase_orders');
+    $trail->push(trans('admin::app.purchase-orders.edit.title'), route('admin.purchase_orders.edit', $purchaseOrder->id));
+});
+
 // Mail
 Breadcrumbs::for('mail', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');

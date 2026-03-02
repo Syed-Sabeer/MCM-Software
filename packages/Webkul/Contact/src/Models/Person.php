@@ -52,6 +52,7 @@ class Person extends Model implements PersonContract
      */
     protected $fillable = [
         'name',
+        'type',
         'emails',
         'contact_numbers',
         'job_title',
@@ -75,6 +76,20 @@ class Person extends Model implements PersonContract
         'mailing_postcode',
         'mailing_country',
     ];
+
+    /**
+     * Person type options.
+     */
+    public static function getTypeOptions(): array
+    {
+        return [
+            'customer' => 'Customer',
+            'vendor'   => 'Vendor',
+            'employee' => 'Employee',
+            'partner'  => 'Partner',
+            'other'    => 'Other',
+        ];
+    }
 
     /**
      * Get the user that owns the lead.

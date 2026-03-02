@@ -1,0 +1,26 @@
+{
+    "name": "webkul/purchase-order",
+    "description": "Purchase Order module for Krayin CRM",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Webkul Software Pvt. Ltd.",
+            "email": "support@webkul.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Webkul\\PurchaseOrder\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Webkul\\PurchaseOrder\\Providers\\PurchaseOrderServiceProvider",
+                "Webkul\\PurchaseOrder\\Providers\\ModuleServiceProvider"
+            ]
+        }
+    }
+}

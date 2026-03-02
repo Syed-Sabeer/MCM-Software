@@ -103,6 +103,25 @@
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.contacts.persons.create.type')
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="select"
+                                id="type"
+                                name="type"
+                                :value="old('type', 'customer')"
+                            >
+                                <option value="customer" {{ old('type', 'customer') == 'customer' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.customer')</option>
+                                <option value="vendor" {{ old('type') == 'vendor' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.vendor')</option>
+                                <option value="employee" {{ old('type') == 'employee' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.employee')</option>
+                                <option value="partner" {{ old('type') == 'partner' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.partner')</option>
+                                <option value="other" {{ old('type') == 'other' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.other')</option>
+                            </x-admin::form.control-group.control>
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
                             <x-admin::form.control-group.label class="required">First Name</x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.control
