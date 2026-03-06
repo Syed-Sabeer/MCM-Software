@@ -111,6 +111,27 @@
             letter-spacing: 1px;
         }
 
+        .two-column-section {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+
+        .two-column-section th {
+            background-color: #111827;
+            color: #ffffff;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 11px;
+        }
+
+        .two-column-section td {
+            padding: 6px 8px;
+            vertical-align: top;
+            border: 1px solid #e5e7eb;
+        }
+
         .items-table {
             width: 100%;
             border-collapse: collapse;
@@ -324,7 +345,80 @@
             </table>
         </div>
 
-        <div class="section-title">Order Details</div>
+        @php
+            $organization = $purchaseOrder->organization;
+
+            $shippingAddressLines = [];
+            if ($organization) {
+                if ($organization->shipping_street) {
+                    $shippingAddressLines[] = $organization->shipping_street;
+                }
+                $cityStateZip = trim(implode(' ', array_filter([
+                    $organization->shipping_city,
+                    $organization->shipping_state,
+                    $organization->shipping_postcode,
+                ])));
+                if ($cityStateZip) {
+                    $shippingAddressLines[] = $cityStateZip;
+                }
+                if ($organization->shipping_country) {
+                    $shippingAddressLines[] = $organization->shipping_country;
+                }
+            }
+        @endphp
+
+        @if($organization)
+            <table class="two-column-section">
+                <tr>
+                    <th style="width: 50%;">Vendor</th>
+                    <th style="width: 50%;">Ship To</th>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>{{ $companyName ?? config('app.name') }}</strong><br>
+                        @if($address)
+                            {!! nl2br(e($address)) !!}<br>
+                        @endif
+                        @if($telephone)
+                            Phone: {{ $telephone }}<br>
+                        @endif
+                        @if($email)
+                            Email: {{ $email }}<br>
+                        @endif
+                    </td>
+                    <td>
+                        <strong>{{ $organization->name }}</strong><br>
+                        @foreach($shippingAddressLines as $line)
+                            {{ $line }}<br>
+                        @endforeach
+                        @if($organization->phone)
+                            Phone: {{ $organization->phone }}<br>
+                        @endif
+                    </td>
+                </tr>
+            </table>
+
+            <table class="two-column-section" style="margin-top: 12px;">
+                <tr>
+                    <th style="width: 33%;">Shipping Terms</th>
+                    <th style="width: 33%;">Shipping Method</th>
+                    <th style="width: 34%;">Delivery Date</th>
+                </tr>
+                <tr>
+                    <td>{{ $purchaseOrder->payment_term ? ucwords(str_replace('_', ' ', $purchaseOrder->payment_term)) : '—' }}</td>
+                    <td>{{ $purchaseOrder->shipping_method ? ucwords(str_replace('_', ' ', $purchaseOrder->shipping_method)) : '—' }}</td>
+                    <td>
+                        @if($purchaseOrder->last_delivery_date)
+                            {{ $purchaseOrder->last_delivery_date->format('M d, Y') }}
+                        @else
+                            —
+                        @endif
+                    </td>
+                </tr>
+            </table>
+        @endif
+
+        <div class="section-title" style="margin-top: 24px;">Order Details</div>
 
         <table class="items-table">
             <thead>

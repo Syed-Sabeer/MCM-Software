@@ -45,6 +45,7 @@
             id="v-purchase-order-form-template"
         >
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                {{-- Top meta info --}}
                 <div class="mb-4 grid gap-4 md:grid-cols-3">
                     <x-admin::form.control-group>
                         <x-admin::form.control-group.label class="required">
@@ -188,8 +189,36 @@
                     </x-admin::form.control-group>
                 </div>
 
-                <!-- Notes Section -->
-                <div class="mb-4">
+                <!-- Organization & Notes Section -->
+                <div class="mb-4 grid gap-4 md:grid-cols-2">
+                    {{-- Organization select --}}
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.purchase-orders.edit.organization')
+                        </x-admin::form.control-group.label>
+
+                        <select
+                            name="organization_id"
+                            v-model="formData.organization_id"
+                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                        >
+                            <option value="">
+                                @lang('admin::app.purchase-orders.edit.select-organization')
+                            </option>
+
+                            @foreach(app(\Webkul\Contact\Repositories\OrganizationRepository::class)->all() as $organization)
+                                <option
+                                    value="{{ $organization->id }}"
+                                >
+                                    {{ $organization->name }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <x-admin::form.control-group.error control-name="organization_id" />
+                    </x-admin::form.control-group>
+
+                    {{-- Notes --}}
                     <x-admin::form.control-group>
                         <x-admin::form.control-group.label>
                             @lang('admin::app.purchase-orders.edit.notes')
@@ -353,6 +382,7 @@
                             last_delivery_date: this.purchaseOrder.last_delivery_date ? this.purchaseOrder.last_delivery_date.split('T')[0] : '',
                             payment_term: this.purchaseOrder.payment_term || '',
                             shipping_method: this.purchaseOrder.shipping_method || '',
+                            organization_id: this.purchaseOrder.organization_id || '',
                             items: items,
                         },
                     };

@@ -229,6 +229,7 @@
                         name="description"
                         :value="old('description')"
                         label="Description"
+                        rules="max:100"
                     />
 
                     <x-admin::form.control-group.error control-name="description" />
@@ -258,6 +259,7 @@
                             name="billing_street"
                             :value="old('billing_street')"
                             label="Billing Street"
+                        rules="max:100"
                         />
                     </x-admin::form.control-group>
 
@@ -357,6 +359,7 @@
                             name="shipping_street"
                             :value="old('shipping_street')"
                             label="Shipping Street"
+                        rules="max:100"
                         />
                     </x-admin::form.control-group>
 

@@ -5,6 +5,7 @@ namespace Webkul\PurchaseOrder\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Webkul\Contact\Models\OrganizationProxy;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\PurchaseOrder\Contracts\PurchaseOrder as PurchaseOrderContract;
 use Webkul\User\Models\UserProxy;
@@ -28,6 +29,7 @@ class PurchaseOrder extends Model implements PurchaseOrderContract
         'tax_amount',
         'grand_total',
         'person_id',
+        'organization_id',
         'user_id',
     ];
 
@@ -63,6 +65,14 @@ class PurchaseOrder extends Model implements PurchaseOrderContract
     public function person(): BelongsTo
     {
         return $this->belongsTo(PersonProxy::modelClass());
+    }
+
+    /**
+     * Get the organization.
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationProxy::modelClass());
     }
 
     /**

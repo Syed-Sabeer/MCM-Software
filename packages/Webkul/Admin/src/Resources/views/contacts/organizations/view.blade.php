@@ -139,7 +139,7 @@
                     @endif
 
                     @if ($organization->description)
-                        <div>
+                        <div style="max-width: 280px; word-wrap: break-word; word-break: break-word;">
                             <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Description</p>
                             <p>{{ $organization->description }}</p>
                         </div>

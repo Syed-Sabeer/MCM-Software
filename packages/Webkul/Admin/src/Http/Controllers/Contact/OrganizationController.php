@@ -76,6 +76,12 @@ class OrganizationController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse
     {
+        $request->validate([
+            'description'      => ['nullable', 'max:100'],
+            'billing_street'   => ['nullable', 'max:100'],
+            'shipping_street'  => ['nullable', 'max:100'],
+        ]);
+
         $data = $request->all();
 
         if ($request->boolean('same_as_billing')) {
@@ -112,6 +118,12 @@ class OrganizationController extends Controller
      */
     public function update(AttributeForm $request, int $id): RedirectResponse
     {
+        $request->validate([
+            'description'      => ['nullable', 'max:100'],
+            'billing_street'   => ['nullable', 'max:100'],
+            'shipping_street'  => ['nullable', 'max:100'],
+        ]);
+
         $data = $request->all();
 
         if ($request->boolean('same_as_billing')) {
