@@ -59,25 +59,67 @@
 
                     <x-admin::form.control-group class="!mb-0">
                         <x-admin::form.control-group.label class="required">Customer</x-admin::form.control-group.label>
-                        <input
-                            type="text"
-                            list="quote-customer-list"
-                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                            v-model="customerName"
-                            @change="syncCustomerId"
-                            placeholder="Search customer"
-                            autocomplete="off"
-                        >
-                        <datalist id="quote-customer-list">
-                            <option v-for="customer in customers" :key="customer.id" :value="customer.name"></option>
-                        </datalist>
+                        <div class="relative" ref="customerLookup">
+                            <div class="relative inline-block w-full" @click="toggleCustomerLookup">
+                                <div class="relative flex cursor-pointer items-center justify-between rounded border border-gray-200 p-2 hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:text-gray-300">
+                                    <span class="overflow-hidden text-ellipsis" :title="customerName">
+                                        @{{ customerName !== '' ? customerName : 'Click to add' }}
+                                    </span>
+
+                                    <div class="flex items-center gap-2">
+                                        <i
+                                            v-if="customerName"
+                                            class="icon-cross-large cursor-pointer text-xl text-gray-600"
+                                            @click.stop="clearCustomer"
+                                        ></i>
+
+                                        <i class="text-2xl text-gray-600" :class="showCustomerLookup ? 'icon-up-arrow' : 'icon-down-arrow'"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                v-if="showCustomerLookup"
+                                class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
+                            >
+                                <div class="relative flex items-center">
+                                    <input
+                                        type="text"
+                                        v-model="customerSearchTerm"
+                                        class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                        placeholder="Search"
+                                        ref="customerSearchInput"
+                                    />
+                                </div>
+
+                                <ul class="max-h-40 divide-y divide-gray-100 overflow-y-auto">
+                                    <li
+                                        v-for="customer in filteredCustomers"
+                                        :key="customer.id"
+                                        class="cursor-pointer px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
+                                        @click="selectCustomer(customer)"
+                                    >
+                                        @{{ customer.name }}
+                                    </li>
+
+                                    <li v-if="! filteredCustomers.length" class="px-4 py-2 text-gray-500">
+                                        No results
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                         <input type="hidden" name="organization_id" :value="selectedOrganizationId">
                         <x-admin::form.control-group.error control-name="organization_id" />
                     </x-admin::form.control-group>
 
                     <x-admin::form.control-group class="!mb-0">
                         <x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="text" value="{{ auth()->user()?->name }}" disabled="true" />
+                        <input
+                            type="text"
+                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                            value="{{ optional(auth()->user())->name }}"
+                            disabled
+                        />
                         <input type="hidden" name="user_id" value="{{ auth()->id() }}">
                     </x-admin::form.control-group>
 
@@ -89,7 +131,12 @@
 
                     <x-admin::form.control-group class="!mb-0">
                         <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="text" value="Approved" disabled="true" />
+                        <input
+                            type="text"
+                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                            value="Approved"
+                            disabled
+                        />
                         <input type="hidden" name="status" value="approved">
                     </x-admin::form.control-group>
                 </div>
@@ -271,21 +318,64 @@
                 data() {
                     return {
                         customerName: '',
+                        customerSearchTerm: '',
+                        showCustomerLookup: false,
                         selectedOrganizationId: '{{ old('organization_id') }}',
                     }
                 },
+                computed: {
+                    filteredCustomers() {
+                        const query = (this.customerSearchTerm || '').toLowerCase().trim();
+
+                        if (! query) {
+                            return this.customers;
+                        }
+
+                        return this.customers.filter((customer) => (customer.name || '').toLowerCase().includes(query));
+                    }
+                },
                 methods: {
+                    toggleCustomerLookup() {
+                        this.showCustomerLookup = ! this.showCustomerLookup;
+
+                        if (this.showCustomerLookup) {
+                            this.$nextTick(() => this.$refs.customerSearchInput.focus());
+                        }
+                    },
+                    selectCustomer(customer) {
+                        this.customerName = customer?.name || '';
+                        this.selectedOrganizationId = customer?.id ? String(customer.id) : '';
+                        this.customerSearchTerm = '';
+                        this.showCustomerLookup = false;
+                    },
+                    clearCustomer() {
+                        this.customerName = '';
+                        this.selectedOrganizationId = '';
+                        this.customerSearchTerm = '';
+                    },
                     syncCustomerId() {
                         const exact = this.customers.find(customer => customer.name === this.customerName);
                         this.selectedOrganizationId = exact ? String(exact.id) : '';
                     },
+                    handleFocusOut(event) {
+                        const lookup = this.$refs.customerLookup;
+
+                        if (lookup && ! lookup.contains(event.target)) {
+                            this.showCustomerLookup = false;
+                        }
+                    },
                 },
                 mounted() {
+                    window.addEventListener('click', this.handleFocusOut);
+
                     if (this.selectedOrganizationId) {
                         const selected = this.customers.find(customer => String(customer.id) === String(this.selectedOrganizationId));
                         this.customerName = selected ? selected.name : '';
                     }
-                }
+                },
+                beforeUnmount() {
+                    window.removeEventListener('click', this.handleFocusOut);
+                },
             });
 
             app.component('v-quote-item-list', {

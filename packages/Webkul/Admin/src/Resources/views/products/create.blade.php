@@ -31,67 +31,57 @@
                     <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">Product Details</p>
 
-                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">Item Code</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control type="text" name="sku" id="item_code" :value="old('sku')" />
+                        <div class="grid gap-4" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Item Code</label>
+                                <input type="text" name="sku" id="item_code" value="{{ old('sku') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <x-admin::form.control-group.error control-name="sku" />
-                            </x-admin::form.control-group>
+                            </div>
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Internal Code</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control type="text" name="internal_code" id="internal_code" :value="old('internal_code')" />
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Internal Code</label>
+                                <input type="text" name="internal_code" id="internal_code" value="{{ old('internal_code') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <x-admin::form.control-group.error control-name="internal_code" />
-                            </x-admin::form.control-group>
+                            </div>
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">Product Name</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control type="text" name="name" :value="old('name')" />
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Product Name</label>
+                                <input type="text" name="name" value="{{ old('name') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <x-admin::form.control-group.error control-name="name" />
-                            </x-admin::form.control-group>
+                            </div>
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Customer (Optional)</x-admin::form.control-group.label>
-                                <input
-                                    type="text"
-                                    id="customer_search"
-                                    list="product-customer-list"
-                                    value="{{ old('customer_name', $selectedCustomerName) }}"
-                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                    placeholder="Search customer"
-                                    autocomplete="off"
-                                >
-                                <datalist id="product-customer-list">
-                                    @foreach ($customers as $customer)
-                                        <option value="{{ $customer->name }}"></option>
-                                    @endforeach
-                                </datalist>
-                                <input type="hidden" name="customer_organization_id" id="customer_organization_id" value="{{ $selectedCustomerId }}">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Size</label>
+                                <input type="text" name="size" value="{{ old('size') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                <x-admin::form.control-group.error control-name="size" />
+                            </div>
+
+                            <div style="grid-column: 1 / -1;">
+                                <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Customer (Optional)</label>
+                                <v-customer-lookup
+                                    input-name="customer_organization_id"
+                                    :customers='@json($customersForSearch)'
+                                    :value='@json($selectedCustomerId ? ['id' => $selectedCustomerId, 'name' => $selectedCustomerName] : null)'
+                                ></v-customer-lookup>
                                 <x-admin::form.control-group.error control-name="customer_organization_id" />
-                            </x-admin::form.control-group>
+                            </div>
                         </div>
-
-                        <x-admin::form.control-group class="mt-4">
-                            <x-admin::form.control-group.label>Size</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="text" name="size" :value="old('size')" />
-                            <x-admin::form.control-group.error control-name="size" />
-                        </x-admin::form.control-group>
 
                         <div class="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
                             <p class="mb-3 text-sm font-semibold text-gray-800 dark:text-white">Pricing</p>
 
-                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <x-admin::form.control-group class="!mb-0">
-                                    <x-admin::form.control-group.label>Cost Price</x-admin::form.control-group.label>
-                                    <x-admin::form.control-group.control type="number" step="0.0001" min="0" name="cost_price" :value="old('cost_price')" />
+                            <div class="grid gap-4" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;">
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Cost Price</label>
+                                    <input type="number" step="0.0001" min="0" name="cost_price" value="{{ old('cost_price') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                     <x-admin::form.control-group.error control-name="cost_price" />
-                                </x-admin::form.control-group>
+                                </div>
 
-                                <x-admin::form.control-group class="!mb-0">
-                                    <x-admin::form.control-group.label>Selling Price</x-admin::form.control-group.label>
-                                    <x-admin::form.control-group.control type="number" step="0.0001" min="0" name="selling_price" :value="old('selling_price', old('price'))" />
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Selling Price</label>
+                                    <input type="number" step="0.0001" min="0" name="selling_price" value="{{ old('selling_price', old('price')) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                     <x-admin::form.control-group.error control-name="selling_price" />
-                                </x-admin::form.control-group>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -100,6 +90,13 @@
                         <div class="mb-3 flex items-center justify-between">
                             <p class="text-base font-semibold text-gray-800 dark:text-white">Material Consumption</p>
                             <button type="button" id="add-consumption" class="secondary-button">Add Row</button>
+                        </div>
+
+                        <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1fr) 120px 120px 40px; gap: 0.5rem;">
+                            <div>Material Name</div>
+                            <div>Qty</div>
+                            <div>Unit</div>
+                            <div></div>
                         </div>
 
                         <div id="consumptions-container" class="flex flex-col gap-2"></div>
@@ -117,11 +114,17 @@
                     </div>
                 </div>
 
-                <div class="flex w-[420px] max-w-full flex-col gap-2 max-sm:w-full">
+                <div class="flex w-[540px] max-w-full flex-col gap-2 max-sm:w-full">
                     <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <div class="mb-3 flex items-center justify-between">
                             <p class="text-base font-semibold text-gray-800 dark:text-white">Color Variants</p>
                             <button type="button" id="add-color" class="secondary-button">Add Color</button>
+                        </div>
+
+                        <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1fr) 88px 44px; gap: 0.5rem;">
+                            <div>Color Name</div>
+                            <div>Color</div>
+                            <div></div>
                         </div>
 
                         <div id="colors-container" class="flex flex-col gap-2"></div>
@@ -145,6 +148,12 @@
 
                             <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">Add images and optionally link to a color:</p>
 
+                            <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) 44px; gap: 0.5rem;">
+                                <div>Image</div>
+                                <div>Color</div>
+                                <div></div>
+                            </div>
+
                             <div id="other-images-container" class="flex flex-col gap-2"></div>
                         </div>
                     </div>
@@ -154,12 +163,146 @@
     </x-admin::form>
 
     @pushOnce('scripts')
-        <script>
+        <script type="module">
+            app.component('v-customer-lookup', {
+                template: `
+                    <div class="relative" ref="lookup">
+                        <div class="relative inline-block w-full" @click="toggle">
+                            <div class="relative flex items-center justify-between rounded border border-gray-200 p-2 hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:text-gray-300">
+                                <span class="overflow-hidden text-ellipsis" :title="selectedItem?.name">
+                                    @{{ selectedItem?.name !== '' ? selectedItem?.name : 'Click to add' }}
+                                </span>
+
+                                <div class="flex items-center gap-2">
+                                    <i
+                                        v-if="selectedItem?.name && ! isSearching"
+                                        class="icon-cross-large cursor-pointer text-xl text-gray-600"
+                                        @click.stop="remove"
+                                    ></i>
+
+                                    <i class="text-2xl text-gray-600" :class="showPopup ? 'icon-up-arrow' : 'icon-down-arrow'"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" :name="inputName" :value="selectedItem.id || ''">
+
+                        <div
+                            v-if="showPopup"
+                            class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
+                        >
+                            <div class="relative flex items-center">
+                                <input
+                                    type="text"
+                                    v-model="searchTerm"
+                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                    placeholder="Search"
+                                    ref="searchInput"
+                                />
+                            </div>
+
+                            <ul class="max-h-40 divide-y divide-gray-100 overflow-y-auto">
+                                <li
+                                    class="cursor-pointer px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
+                                    @click="selectItem({ id: '', name: '' })"
+                                >
+                                    Global Product
+                                </li>
+
+                                <li
+                                    v-for="item in filteredResults"
+                                    :key="item.id"
+                                    class="cursor-pointer px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
+                                    @click="selectItem(item)"
+                                >
+                                    @{{ item.name }}
+                                </li>
+
+                                <li v-if="! filteredResults.length" class="px-4 py-2 text-gray-500">
+                                    No results
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                `,
+
+                props: {
+                    customers: {
+                        type: Array,
+                        default: () => [],
+                    },
+                    inputName: {
+                        type: String,
+                        required: true,
+                    },
+                    value: {
+                        type: Object,
+                        default: null,
+                    },
+                },
+
+                data() {
+                    return {
+                        showPopup: false,
+                        searchTerm: '',
+                        isSearching: false,
+                        selectedItem: this.value || { id: '', name: '' },
+                    };
+                },
+
+                computed: {
+                    filteredResults() {
+                        const query = (this.searchTerm || '').toLowerCase().trim();
+
+                        if (! query) {
+                            return this.customers;
+                        }
+
+                        return this.customers.filter((item) => (item.name || '').toLowerCase().includes(query));
+                    },
+                },
+
+                mounted() {
+                    window.addEventListener('click', this.handleFocusOut);
+                },
+
+                beforeUnmount() {
+                    window.removeEventListener('click', this.handleFocusOut);
+                },
+
+                methods: {
+                    toggle() {
+                        this.showPopup = ! this.showPopup;
+
+                        if (this.showPopup) {
+                            this.$nextTick(() => this.$refs.searchInput.focus());
+                        }
+                    },
+
+                    selectItem(item) {
+                        this.selectedItem = item || { id: '', name: '' };
+                        this.searchTerm = '';
+                        this.showPopup = false;
+                    },
+
+                    remove() {
+                        this.selectedItem = { id: '', name: '' };
+                        this.searchTerm = '';
+                    },
+
+                    handleFocusOut(event) {
+                        const lookup = this.$refs.lookup;
+
+                        if (lookup && ! lookup.contains(event.target)) {
+                            this.showPopup = false;
+                        }
+                    },
+                },
+            });
+
             function initProductCreateForm() {
                 var itemCodeInput = document.getElementById('item_code');
                 var internalCodeInput = document.getElementById('internal_code');
-                var customerSearchInput = document.getElementById('customer_search');
-                var customerIdInput = document.getElementById('customer_organization_id');
                 var colorsContainer = document.getElementById('colors-container');
                 var addColorButton = document.getElementById('add-color');
                 var consumptionsContainer = document.getElementById('consumptions-container');
@@ -172,7 +315,6 @@
                 var oldColors = @json(old('colors', []));
                 var oldConsumptions = @json(old('consumptions', []));
                 var oldSections = @json(old('production_sections', []));
-                var customers = @json($customersForSearch);
                 var lastAutoInternalCode = internalCodeInput ? (internalCodeInput.value || '') : '';
 
                 function escapeHtml(value) {
@@ -200,29 +342,21 @@
                     }
                 }
 
-                function syncCustomerId() {
-                    if (!customerSearchInput || !customerIdInput) {
-                        return;
-                    }
-
-                    var selectedName = (customerSearchInput.value || '').trim().toLowerCase();
-                    var selectedCustomer = customers.find(function (customer) {
-                        return (customer.name || '').trim().toLowerCase() === selectedName;
-                    });
-
-                    customerIdInput.value = selectedCustomer ? selectedCustomer.id : '';
-                }
-
                 function addColorRow(data) {
                     var index = colorsContainer.querySelectorAll('.color-row').length;
                     var colorCode = valueOf(data, 'color_code', '#000000');
                     var row = document.createElement('div');
-                    row.className = 'color-row grid grid-cols-1 gap-2 rounded border border-gray-200 p-2 md:grid-cols-[1fr_180px_100px_auto] dark:border-gray-700';
+                    row.className = 'color-row items-center rounded border border-gray-200 p-2 dark:border-gray-700';
+                    row.style.display = 'grid';
+                    row.style.gridTemplateColumns = 'minmax(0, 1fr) 88px 44px';
+                    row.style.gap = '0.5rem';
                     row.innerHTML = ''
                         + '<input type="text" name="colors[' + index + '][name]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Color Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
-                        + '<input type="text" name="colors[' + index + '][color_code]" class="color-code-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="#000000" value="' + escapeHtml(colorCode) + '">'
-                        + '<input type="color" class="color-picker h-[40px] w-full cursor-pointer rounded border border-gray-200 dark:border-gray-700" value="' + escapeHtml(colorCode) + '">'
-                        + '<button type="button" class="remove-color secondary-button">Remove</button>';
+                        + '<div class="flex items-center gap-2">'
+                        + '  <input type="text" name="colors[' + index + '][color_code]" class="color-code-input w-full rounded border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="#000000" value="' + escapeHtml(colorCode) + '">'
+                        + '  <input type="color" class="color-picker h-[40px] w-[40px] cursor-pointer rounded border border-gray-200 p-0 dark:border-gray-700" value="' + escapeHtml(colorCode) + '">'
+                        + '</div>'
+                        + '<button type="button" class="remove-color inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove color">&times;</button>';
                     colorsContainer.appendChild(row);
                     refreshOtherImageColorOptions();
                 }
@@ -248,13 +382,16 @@
                     }
 
                     var row = document.createElement('div');
-                    row.className = 'other-image-row grid grid-cols-1 gap-2 rounded border border-gray-200 p-2 md:grid-cols-[1fr_180px_auto] dark:border-gray-700';
+                    row.className = 'other-image-row items-center rounded border border-gray-200 p-2 dark:border-gray-700';
+                    row.style.display = 'grid';
+                    row.style.gridTemplateColumns = 'minmax(0, 1.5fr) minmax(0, 1fr) 44px';
+                    row.style.gap = '0.5rem';
                     row.innerHTML = ''
                         + '<input type=\"file\" name=\"other_images[]\" accept=\"image/*\" class=\"rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300\">'
                         + '<select name=\"other_image_colors[]\" class=\"other-image-color rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300\">'
                         + colorOptionsMarkup(selectedColor || '')
                         + '</select>'
-                        + '<button type=\"button\" class=\"remove-other-image secondary-button\">Remove</button>';
+                        + '<button type=\"button\" class=\"remove-other-image inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800\" aria-label=\"Remove image\">&times;</button>';
                     otherImagesContainer.appendChild(row);
                 }
 
@@ -272,12 +409,15 @@
                 function addConsumptionRow(data) {
                     var index = consumptionsContainer.querySelectorAll('.consumption-row').length;
                     var row = document.createElement('div');
-                    row.className = 'consumption-row grid grid-cols-1 gap-2 rounded border border-gray-200 p-2 md:grid-cols-[1fr_180px_180px_auto] dark:border-gray-700';
+                    row.className = 'consumption-row rounded border border-gray-200 p-2 dark:border-gray-700';
+                    row.style.display = 'grid';
+                    row.style.gridTemplateColumns = 'minmax(0, 1fr) 120px 120px 40px';
+                    row.style.gap = '0.5rem';
                     row.innerHTML = ''
                         + '<input type="text" name="consumptions[' + index + '][name]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Material Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
                         + '<input type="number" step="0.0001" name="consumptions[' + index + '][qty]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
                         + '<input type="text" name="consumptions[' + index + '][unit]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Unit" value="' + escapeHtml(valueOf(data, 'unit', '')) + '">'
-                        + '<button type="button" class="remove-consumption secondary-button">Remove</button>';
+                        + '<button type="button" class="remove-consumption inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove consumption">&times;</button>';
                     consumptionsContainer.appendChild(row);
                 }
 
@@ -289,8 +429,9 @@
                         + '<div class="mb-2 flex items-center gap-2">'
                         + '  <input type="text" name="production_sections[' + sectionIndex + '][section_name]" class="flex-1 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Section Name" value="' + escapeHtml(valueOf(sectionData, 'section_name', '')) + '">'
                         + '  <button type="button" class="add-section-item secondary-button">Add Row</button>'
-                        + '  <button type="button" class="remove-section secondary-button">Delete Section</button>'
+                        + '  <button type="button" class="remove-section inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove section">&times;</button>'
                         + '</div>'
+                        + '<div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display:grid;grid-template-columns:minmax(0, 1fr) 120px 120px 40px;gap:0.5rem;"><div>Name</div><div>Qty</div><div>Unit</div><div></div></div>'
                         + '<div class="section-items flex flex-col gap-2"></div>';
 
                     sectionsContainer.appendChild(section);
@@ -310,12 +451,15 @@
                 function addSectionItem(itemsContainer, sectionIndex, itemData) {
                     var itemIndex = itemsContainer.querySelectorAll('.section-item').length;
                     var row = document.createElement('div');
-                    row.className = 'section-item grid grid-cols-1 gap-2 md:grid-cols-[1fr_180px_180px_auto]';
+                    row.className = 'section-item';
+                    row.style.display = 'grid';
+                    row.style.gridTemplateColumns = 'minmax(0, 1fr) 120px 120px 40px';
+                    row.style.gap = '0.5rem';
                     row.innerHTML = ''
                         + '<input type="text" name="production_sections[' + sectionIndex + '][items][' + itemIndex + '][name]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Name" value="' + escapeHtml(valueOf(itemData, 'name', '')) + '">'
                         + '<input type="number" step="0.0001" name="production_sections[' + sectionIndex + '][items][' + itemIndex + '][qty]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(itemData, 'qty', '')) + '">'
                         + '<input type="text" name="production_sections[' + sectionIndex + '][items][' + itemIndex + '][unit]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Unit" value="' + escapeHtml(valueOf(itemData, 'unit', '')) + '">'
-                        + '<button type="button" class="remove-section-item secondary-button">Remove</button>';
+                        + '<button type="button" class="remove-section-item inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove section row">&times;</button>';
                     itemsContainer.appendChild(row);
                 }
 
@@ -400,11 +544,6 @@
                     });
                 }
 
-                if (customerSearchInput) {
-                    customerSearchInput.addEventListener('change', syncCustomerId);
-                    customerSearchInput.addEventListener('blur', syncCustomerId);
-                }
-
                 if (addColorButton) {
                     addColorButton.addEventListener('click', function () {
                         addColorRow(null);
@@ -467,12 +606,15 @@
                     if (removeSectionItem) {
                         var item = removeSectionItem.closest('.section-item');
                         var container = item.closest('.section-items');
+
                         if (container.querySelectorAll('.section-item').length > 1) {
                             item.remove();
                             renumber();
                         }
+
                         return;
                     }
+
                 });
 
                 document.body.addEventListener('input', function (event) {
@@ -534,7 +676,6 @@
                 }
 
                 renumber();
-                syncCustomerId();
                 updateInternalCodeFromItemCode();
 
                 var form = document.querySelector('form');
