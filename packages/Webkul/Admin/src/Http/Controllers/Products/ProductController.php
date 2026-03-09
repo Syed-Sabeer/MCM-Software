@@ -451,6 +451,8 @@ class ProductController extends Controller
      */
     protected function validateProductFields($request, bool $isUpdate, ?int $productId): void
     {
+        $this->normalizeDynamicProductInputs($request);
+
         $skuRule = ['required', 'string', 'max:255'];
 
         if ($isUpdate && $productId) {
@@ -485,7 +487,92 @@ class ProductController extends Controller
             'production_sections.*.items.*.unit'           => ['required', 'string', 'max:100'],
         ];
 
-        $request->validate($rules);
+        $messages = [
+            'sku.required'                                 => 'Item Code is required.',
+            'name.required'                                => 'Product Name is required.',
+            'consumptions.*.name.required'                 => 'Material name is required.',
+            'consumptions.*.qty.required'                  => 'Material qty is required.',
+            'consumptions.*.unit.required'                 => 'Material unit is required.',
+            'production_sections.*.section_name.required'  => 'Production section name is required.',
+            'production_sections.*.items.*.name.required'  => 'Production row name is required.',
+            'production_sections.*.items.*.qty.required'   => 'Production row qty is required.',
+            'production_sections.*.items.*.unit.required'  => 'Production row unit is required.',
+        ];
+
+        $request->validate($rules, $messages);
+    }
+
+    /**
+     * Remove blank dynamic rows before validation so optional UI rows do not block saving.
+     */
+    protected function normalizeDynamicProductInputs($request): void
+    {
+        $consumptions = [];
+
+        foreach ((array) $request->input('consumptions', []) as $consumption) {
+            if (! is_array($consumption)) {
+                continue;
+            }
+
+            $name = trim((string) ($consumption['name'] ?? ''));
+            $qty = $consumption['qty'] ?? null;
+            $unit = trim((string) ($consumption['unit'] ?? ''));
+
+            if ($name === '' && ($qty === null || $qty === '') && $unit === '') {
+                continue;
+            }
+
+            $consumptions[] = [
+                'name' => $name,
+                'qty'  => $qty,
+                'unit' => $unit,
+            ];
+        }
+
+        $sections = [];
+
+        foreach ((array) $request->input('production_sections', []) as $section) {
+            if (! is_array($section)) {
+                continue;
+            }
+
+            $sectionName = trim((string) ($section['section_name'] ?? ''));
+            $items = [];
+
+            foreach ((array) ($section['items'] ?? []) as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+
+                $name = trim((string) ($item['name'] ?? ''));
+                $qty = $item['qty'] ?? null;
+                $unit = trim((string) ($item['unit'] ?? ''));
+
+                if ($name === '' && ($qty === null || $qty === '') && $unit === '') {
+                    continue;
+                }
+
+                $items[] = [
+                    'name' => $name,
+                    'qty'  => $qty,
+                    'unit' => $unit,
+                ];
+            }
+
+            if ($sectionName === '' && empty($items)) {
+                continue;
+            }
+
+            $sections[] = [
+                'section_name' => $sectionName,
+                'items'        => $items,
+            ];
+        }
+
+        $request->merge([
+            'consumptions'        => $consumptions,
+            'production_sections' => $sections,
+        ]);
     }
 
     /**

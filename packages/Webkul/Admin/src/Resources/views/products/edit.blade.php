@@ -60,7 +60,7 @@
                         <div class="grid gap-4" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;">
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Item Code</label>
-                                <input type="text" name="sku" id="item_code" value="{{ old('sku', $product->sku) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                <input type="text" name="sku" id="item_code" value="{{ old('sku', $product->sku) }}" required class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <x-admin::form.control-group.error control-name="sku" />
                             </div>
 
@@ -72,7 +72,7 @@
 
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Product Name</label>
-                                <input type="text" name="name" value="{{ old('name', $product->name) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                <input type="text" name="name" value="{{ old('name', $product->name) }}" required class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <x-admin::form.control-group.error control-name="name" />
                             </div>
 
