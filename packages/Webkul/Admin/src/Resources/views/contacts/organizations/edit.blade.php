@@ -143,25 +143,19 @@
                             Type
                         </x-admin::form.control-group.label>
 
-                        <x-admin::form.control-group.control
-                            type="select"
-                            id="type"
-                            name="type"
-                            label="Type"
-                        >
-                            @php($selectedType = old('type', $organization->type))
+                        @php($selectedType = strtolower((string) old('organization_type', old('type', $organization->type))))
 
-                            <option value="">Select Type</option>
-                            <option value="factory" {{ $selectedType === 'factory' ? 'selected' : '' }}>Factory</option>
+                        <select
+                            id="organization_type"
+                            name="organization_type"
+                            class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:ring-1 focus:ring-brandColor dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                        >
+                            <option value="">Select Organization Type</option>
                             <option value="customer" {{ $selectedType === 'customer' ? 'selected' : '' }}>Customer</option>
                             <option value="vendor" {{ $selectedType === 'vendor' ? 'selected' : '' }}>Vendor</option>
-                            <option value="marketing" {{ $selectedType === 'marketing' ? 'selected' : '' }}>Marketing</option>
-                            <option value="prospect" {{ $selectedType === 'prospect' ? 'selected' : '' }}>Prospect</option>
-                            <option value="salesrep" {{ $selectedType === 'salesrep' ? 'selected' : '' }}>Sales Rep</option>
-                            <option value="other" {{ $selectedType === 'other' ? 'selected' : '' }}>Other</option>
-                        </x-admin::form.control-group.control>
+                        </select>
 
-                        <x-admin::form.control-group.error control-name="type" />
+                        <x-admin::form.control-group.error control-name="organization_type" />
                     </x-admin::form.control-group>
 
                     <!-- Industry -->

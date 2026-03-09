@@ -41,6 +41,11 @@ require 'activities-routes.php';
 require 'quote-routes.php';
 
 /**
+ * Proforma Invoices routes.
+ */
+require 'proforma-invoice-routes.php';
+
+/**
  * Purchase Orders routes.
  */
 require 'purchase-order-routes.php';

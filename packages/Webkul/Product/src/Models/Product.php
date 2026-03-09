@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
+use Webkul\Contact\Models\Organization;
 use Webkul\Product\Contracts\Product as ProductContract;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\Warehouse\Models\LocationProxy;
@@ -27,9 +28,13 @@ class Product extends Model implements ProductContract
         'name',
         'slug',
         'sku',
+        'internal_code',
+        'customer_organization_id',
         'description',
         'quantity',
         'price',
+        'cost_price',
+        'selling_price',
         'category_id',
         'style',
         'size',
@@ -44,6 +49,9 @@ class Product extends Model implements ProductContract
      */
     protected $casts = [
         'publish_on_website' => 'boolean',
+        'price'              => 'decimal:4',
+        'cost_price'         => 'decimal:4',
+        'selling_price'      => 'decimal:4',
     ];
 
     /**
@@ -52,6 +60,14 @@ class Product extends Model implements ProductContract
     public function category(): BelongsTo
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
+    }
+
+    /**
+     * Customer organization owning this product (optional).
+     */
+    public function customerOrganization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class, 'customer_organization_id');
     }
 
     /**
@@ -84,6 +100,22 @@ class Product extends Model implements ProductContract
     public function pricingCharts(): HasMany
     {
         return $this->hasMany(ProductPricingChart::class, 'product_id')->orderBy('sort_order');
+    }
+
+    /**
+     * Material consumption rows (BOM-like).
+     */
+    public function consumptions(): HasMany
+    {
+        return $this->hasMany(ProductConsumption::class, 'product_id')->orderBy('sort_order');
+    }
+
+    /**
+     * Production sections for job card template.
+     */
+    public function productionSections(): HasMany
+    {
+        return $this->hasMany(ProductProductionSection::class, 'product_id')->orderBy('sort_order');
     }
 
     /**

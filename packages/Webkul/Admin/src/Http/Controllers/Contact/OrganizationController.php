@@ -4,12 +4,15 @@ namespace Webkul\Admin\Http\Controllers\Contact;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
+use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Contact\OrganizationDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
+use Webkul\Admin\Http\Resources\OrganizationResource;
 use Webkul\Contact\Repositories\OrganizationRepository;
 
 class OrganizationController extends Controller
@@ -62,6 +65,20 @@ class OrganizationController extends Controller
     }
 
     /**
+     * Search customers only (for lookup/searchable dropdowns).
+     */
+    public function searchCustomers(): AnonymousResourceCollection
+    {
+        $organizations = $this->organizationRepository
+            ->pushCriteria(app(RequestCriteria::class))
+            ->whereIn('type', ['customer', 'Customer'])
+            ->take(20)
+            ->get();
+
+        return OrganizationResource::collection($organizations);
+    }
+
+    /**
      * Display the specified organization (detail page).
      */
     public function show(int $id): View
@@ -76,13 +93,21 @@ class OrganizationController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse
     {
+        $normalizedType = $this->normalizeOrganizationType(
+            $request->input('organization_type', $request->input('type'))
+        );
+
         $request->validate([
             'description'      => ['nullable', 'max:100'],
             'billing_street'   => ['nullable', 'max:100'],
             'shipping_street'  => ['nullable', 'max:100'],
+            'organization_type' => ['required_without:type', 'in:customer,vendor,Customer,Vendor'],
+            'type'             => ['nullable', 'in:customer,vendor,Customer,Vendor'],
         ]);
 
         $data = $request->all();
+        $data['type'] = $normalizedType;
+        unset($data['organization_type']);
 
         if ($request->boolean('same_as_billing')) {
             $data['shipping_street']   = $data['billing_street']   ?? null;
@@ -118,13 +143,21 @@ class OrganizationController extends Controller
      */
     public function update(AttributeForm $request, int $id): RedirectResponse
     {
+        $normalizedType = $this->normalizeOrganizationType(
+            $request->input('organization_type', $request->input('type'))
+        );
+
         $request->validate([
             'description'      => ['nullable', 'max:100'],
             'billing_street'   => ['nullable', 'max:100'],
             'shipping_street'  => ['nullable', 'max:100'],
+            'organization_type' => ['required_without:type', 'in:customer,vendor,Customer,Vendor'],
+            'type'             => ['nullable', 'in:customer,vendor,Customer,Vendor'],
         ]);
 
         $data = $request->all();
+        $data['type'] = $normalizedType;
+        unset($data['organization_type']);
 
         if ($request->boolean('same_as_billing')) {
             $data['shipping_street']   = $data['billing_street']   ?? null;
@@ -185,5 +218,19 @@ class OrganizationController extends Controller
         return response()->json([
             'message' => trans('admin::app.contacts.organizations.index.delete-success'),
         ]);
+    }
+
+    /**
+     * Normalize organization type to canonical lowercase values.
+     */
+    protected function normalizeOrganizationType(?string $type): ?string
+    {
+        if (! $type) {
+            return null;
+        }
+
+        $normalized = strtolower(trim($type));
+
+        return in_array($normalized, ['customer', 'vendor']) ? $normalized : null;
     }
 }

@@ -142,23 +142,19 @@
                             Type
                         </x-admin::form.control-group.label>
 
-                        <x-admin::form.control-group.control
-                            type="select"
-                            id="type"
-                            name="type"
-                            label="Type"
-                        >
-                            <option value="">Select Type</option>
-                            <option value="factory">Factory</option>
-                            <option value="customer">Customer</option>
-                            <option value="vendor">Vendor</option>
-                            <option value="marketing">Marketing</option>
-                            <option value="prospect">Prospect</option>
-                            <option value="salesrep">Sales Rep</option>
-                            <option value="other">Other</option>
-                        </x-admin::form.control-group.control>
+                        @php($selectedType = strtolower((string) old('organization_type', old('type'))))
 
-                        <x-admin::form.control-group.error control-name="type" />
+                        <select
+                            id="organization_type"
+                            name="organization_type"
+                            class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:ring-1 focus:ring-brandColor dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                        >
+                            <option value="">Select Organization Type</option>
+                            <option value="customer" {{ $selectedType === 'customer' ? 'selected' : '' }}>Customer</option>
+                            <option value="vendor" {{ $selectedType === 'vendor' ? 'selected' : '' }}>Vendor</option>
+                        </select>
+
+                        <x-admin::form.control-group.error control-name="organization_type" />
                     </x-admin::form.control-group>
 
                     <!-- Industry -->

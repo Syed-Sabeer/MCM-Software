@@ -9,11 +9,14 @@ use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Product\Contracts\Product;
 use Webkul\Product\Models\ProductColor;
+use Webkul\Product\Models\ProductConsumption;
 use Webkul\Product\Models\ProductKeyPoint;
 use Webkul\Product\Models\ProductOtherImage;
 use Webkul\Product\Models\ProductPricingChart;
 use Webkul\Product\Models\ProductPricingChartTier;
 use Webkul\Product\Models\ProductPricingChartType;
+use Webkul\Product\Models\ProductProductionSection;
+use Webkul\Product\Models\ProductProductionSectionItem;
 
 class ProductRepository extends Repository
 {
@@ -22,6 +25,7 @@ class ProductRepository extends Repository
      */
     protected $fieldSearchable = [
         'sku',
+        'internal_code',
         'name',
         'description',
     ];
@@ -62,7 +66,16 @@ class ProductRepository extends Repository
         $colors = $data['colors'] ?? [];
         $keyPoints = $data['key_points'] ?? [];
         $pricingCharts = $data['pricing_charts'] ?? [];
-        $productData = collect($data)->except(['other_images', 'other_image_colors', 'colors', 'key_points', 'pricing_charts'])->only($this->model->getFillable())->toArray();
+        $consumptions = $data['consumptions'] ?? [];
+        $productionSections = $data['production_sections'] ?? [];
+        $productData = collect($data)
+            ->except(['other_images', 'other_image_colors', 'colors', 'key_points', 'pricing_charts', 'consumptions', 'production_sections'])
+            ->only($this->model->getFillable())
+            ->toArray();
+
+        if (isset($productData['customer_organization_id']) && $productData['customer_organization_id'] === '') {
+            $productData['customer_organization_id'] = null;
+        }
 
         $product = parent::create($productData);
 
@@ -170,6 +183,9 @@ class ProductRepository extends Repository
             }
         }
 
+        $this->syncConsumptions($product->id, $consumptions);
+        $this->syncProductionSections($product->id, $productionSections);
+
         return $product;
     }
 
@@ -191,7 +207,28 @@ class ProductRepository extends Repository
         $colors = $data['colors'] ?? [];
         $keyPoints = $data['key_points'] ?? [];
         $pricingCharts = $data['pricing_charts'] ?? [];
-        $productData = collect($data)->except(['other_images', 'other_image_colors', 'existing_image_ids', 'existing_image_colors', 'delete_image_ids', 'replace_images', 'colors', 'key_points', 'pricing_charts'])->only($this->model->getFillable())->toArray();
+        $consumptions = $data['consumptions'] ?? [];
+        $productionSections = $data['production_sections'] ?? [];
+        $productData = collect($data)
+            ->except([
+                'other_images',
+                'other_image_colors',
+                'existing_image_ids',
+                'existing_image_colors',
+                'delete_image_ids',
+                'replace_images',
+                'colors',
+                'key_points',
+                'pricing_charts',
+                'consumptions',
+                'production_sections',
+            ])
+            ->only($this->model->getFillable())
+            ->toArray();
+
+        if (isset($productData['customer_organization_id']) && $productData['customer_organization_id'] === '') {
+            $productData['customer_organization_id'] = null;
+        }
 
         $product = parent::update($productData, $id);
 
@@ -373,7 +410,95 @@ class ProductRepository extends Repository
             }
         }
 
+        $this->syncConsumptions($id, $consumptions);
+        $this->syncProductionSections($id, $productionSections);
+
         return $product;
+    }
+
+    /**
+     * Replace product material consumptions with supplied rows.
+     */
+    protected function syncConsumptions(int $productId, array $consumptions): void
+    {
+        ProductConsumption::where('product_id', $productId)->delete();
+
+        foreach ($consumptions as $sortOrder => $consumption) {
+            if (! is_array($consumption)) {
+                continue;
+            }
+
+            $name = trim((string) ($consumption['name'] ?? ''));
+            $unit = trim((string) ($consumption['unit'] ?? ''));
+            $qty = $consumption['qty'] ?? null;
+
+            if ($name === '' || $unit === '' || $qty === null || $qty === '') {
+                continue;
+            }
+
+            ProductConsumption::create([
+                'product_id'  => $productId,
+                'name'        => $name,
+                'qty'         => $qty,
+                'unit'        => $unit,
+                'sort_order'  => $sortOrder,
+            ]);
+        }
+    }
+
+    /**
+     * Replace product production sections and section items.
+     */
+    protected function syncProductionSections(int $productId, array $productionSections): void
+    {
+        $existingSections = ProductProductionSection::where('product_id', $productId)->get(['id']);
+
+        foreach ($existingSections as $existingSection) {
+            ProductProductionSectionItem::where('product_production_section_id', $existingSection->id)->delete();
+        }
+
+        ProductProductionSection::where('product_id', $productId)->delete();
+
+        foreach ($productionSections as $sectionOrder => $section) {
+            if (! is_array($section)) {
+                continue;
+            }
+
+            $sectionName = trim((string) ($section['section_name'] ?? ''));
+            $items = $section['items'] ?? [];
+
+            if ($sectionName === '') {
+                continue;
+            }
+
+            $savedSection = ProductProductionSection::create([
+                'product_id'    => $productId,
+                'section_name'  => $sectionName,
+                'sort_order'    => $sectionOrder,
+            ]);
+
+            foreach ($items as $itemOrder => $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+
+                $name = trim((string) ($item['name'] ?? ''));
+                $unit = trim((string) ($item['unit'] ?? ''));
+                $qty = $item['qty'] ?? null;
+
+                if ($name === '' || $unit === '' || $qty === null || $qty === '') {
+                    continue;
+                }
+
+                ProductProductionSectionItem::create([
+                    'product_production_section_id' => $savedSection->id,
+                    'name'                          => $name,
+                    'qty'                           => $qty,
+                    'unit'                          => $unit,
+                    'sort_order'                    => $itemOrder,
+                ]);
+            }
+        }
     }
 
     /**

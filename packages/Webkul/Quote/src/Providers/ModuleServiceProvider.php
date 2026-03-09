@@ -9,5 +9,8 @@ class ModuleServiceProvider extends BaseModuleServiceProvider
     protected $models = [
         \Webkul\Quote\Models\Quote::class,
         \Webkul\Quote\Models\QuoteItem::class,
+        \Webkul\Quote\Models\ProformaInvoice::class,
+        \Webkul\Quote\Models\ProformaInvoiceItem::class,
+        \Webkul\Quote\Models\ProformaReceipt::class,
     ];
 }

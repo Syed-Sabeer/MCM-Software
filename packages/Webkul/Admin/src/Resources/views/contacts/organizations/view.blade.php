@@ -109,13 +109,8 @@
 
                     @php
                         $typeLabels = [
-                            'factory'   => 'Factory',
                             'customer'  => 'Customer',
                             'vendor'    => 'Vendor',
-                            'marketing' => 'Marketing',
-                            'prospect'  => 'Prospect',
-                            'salesrep'  => 'Sales Representative',
-                            'other'     => 'Other',
                         ];
 
                         $industryLabels = [
@@ -125,9 +120,10 @@
                     @endphp
 
                     @if ($organization->type)
+                        @php($normalizedType = strtolower((string) $organization->type))
                         <div>
                             <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Type</p>
-                            <p>{{ $typeLabels[$organization->type] ?? ucfirst(str_replace('_', ' ', $organization->type)) }}</p>
+                            <p>{{ $typeLabels[$normalizedType] ?? ucfirst(str_replace('_', ' ', $organization->type)) }}</p>
                         </div>
                     @endif
 
@@ -139,7 +135,7 @@
                     @endif
 
                     @if ($organization->description)
-                        <div style="max-width: 280px; word-wrap: break-word; word-break: break-word;">
+                        <div>
                             <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Description</p>
                             <p>{{ $organization->description }}</p>
                         </div>

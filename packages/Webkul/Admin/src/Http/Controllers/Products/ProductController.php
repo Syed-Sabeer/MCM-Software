@@ -9,13 +9,12 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Product\ProductDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\ProductResource;
-use Webkul\Product\Models\ProductCategory;
+use Webkul\Contact\Models\Organization;
 use Webkul\Product\Repositories\ProductRepository;
 
 class ProductController extends Controller
@@ -47,9 +46,12 @@ class ProductController extends Controller
      */
     public function create(): View
     {
-        $categories = ProductCategory::orderBy('name')->get();
+        $customers = Organization::query()
+            ->whereIn('type', ['customer', 'Customer'])
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        return view('admin::products.create', compact('categories'));
+        return view('admin::products.create', compact('customers'));
     }
 
     /**
@@ -79,7 +81,9 @@ class ProductController extends Controller
      */
     public function view(int $id): View
     {
-        $product = $this->productRepository->with(['category', 'otherImages', 'colors', 'keyPoints', 'pricingCharts.tiers'])->findOrFail($id);
+        $product = $this->productRepository
+            ->with(['customerOrganization', 'colors', 'otherImages.color', 'consumptions', 'productionSections.items'])
+            ->findOrFail($id);
 
         return view('admin::products.view', compact('product'));
     }
@@ -89,7 +93,9 @@ class ProductController extends Controller
      */
     public function edit(int $id): View|JsonResponse
     {
-        $product = $this->productRepository->with(['category', 'otherImages', 'colors', 'keyPoints', 'pricingCharts.tiers'])->findOrFail($id);
+        $product = $this->productRepository
+            ->with(['customerOrganization', 'consumptions', 'productionSections.items'])
+            ->findOrFail($id);
 
         $inventories = $product->inventories()
             ->with('location')
@@ -105,9 +111,12 @@ class ProductController extends Controller
                 ];
             });
 
-        $categories = ProductCategory::orderBy('name')->get();
+        $customers = Organization::query()
+            ->whereIn('type', ['customer', 'Customer'])
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        return view('admin::products.edit', compact('product', 'inventories', 'categories'));
+        return view('admin::products.edit', compact('product', 'inventories', 'customers'));
     }
 
     /**
@@ -169,10 +178,27 @@ class ProductController extends Controller
      */
     public function search(): JsonResource
     {
+        $query = trim((string) request('query', ''));
+        $organizationId = request('organization_id');
+
         $products = $this->productRepository
-            ->pushCriteria(app(RequestCriteria::class))
+            ->with(['colors', 'otherImages'])
+            ->when($query !== '', function ($builder) use ($query) {
+                $builder->where(function ($inner) use ($query) {
+                    $inner->where('sku', 'like', "%{$query}%")
+                        ->orWhere('internal_code', 'like', "%{$query}%");
+                });
+            })
+            ->when($organizationId, function ($builder) use ($organizationId) {
+                $builder->where(function ($inner) use ($organizationId) {
+                    $inner->whereNull('customer_organization_id')
+                        ->orWhere('customer_organization_id', $organizationId);
+                });
+            }, function ($builder) {
+                $builder->whereNull('customer_organization_id');
+            })
             ->orderBy('created_at', 'desc')
-            ->take(5)
+            ->take(10)
             ->get();
 
         return ProductResource::collection($products);
@@ -271,7 +297,9 @@ class ProductController extends Controller
                 'otherImages',
                 'colors',
                 'keyPoints',
-                'pricingCharts.types.tiers'
+                'pricingCharts.types.tiers',
+                'consumptions',
+                'productionSections.items',
             ])->findOrFail($id);
 
             Event::dispatch('product.create.before');
@@ -281,6 +309,8 @@ class ProductController extends Controller
                 'name'            => $original->name . ' (Copy)',
                 'slug'            => '',  // Will be auto-generated from name
                 'sku'             => '',  // Will be auto-generated
+                'internal_code'   => $original->internal_code,
+                'customer_organization_id' => $original->customer_organization_id,
                 'description'     => $original->description,
                 'quantity'        => $original->quantity ?? 0,
                 'price'           => $original->price ?? 0,
@@ -365,6 +395,21 @@ class ProductController extends Controller
             }
             $newData['pricing_charts'] = $pricingCharts;
 
+            $newData['consumptions'] = $original->consumptions->map(fn ($consumption) => [
+                'name' => $consumption->name,
+                'qty'  => $consumption->qty,
+                'unit' => $consumption->unit,
+            ])->toArray();
+
+            $newData['production_sections'] = $original->productionSections->map(fn ($section) => [
+                'section_name' => $section->section_name,
+                'items' => $section->items->map(fn ($item) => [
+                    'name' => $item->name,
+                    'qty'  => $item->qty,
+                    'unit' => $item->unit,
+                ])->toArray(),
+            ])->toArray();
+
             // Generate unique slug and SKU
             $data = $this->prepareProductData($newData, null);
 
@@ -402,38 +447,42 @@ class ProductController extends Controller
     }
 
     /**
-     * Validate product-specific fields (name, slug, category, style, size, images, colors).
+     * Validate product-specific ERP catalog fields.
      */
     protected function validateProductFields($request, bool $isUpdate, ?int $productId): void
     {
-        $slugRule = $isUpdate && $productId
-            ? ['nullable', 'string', 'max:255']
-            : ['nullable', 'string', 'max:255'];
+        $skuRule = ['required', 'string', 'max:255'];
+
+        if ($isUpdate && $productId) {
+            $skuRule[] = Rule::unique('products', 'sku')->ignore($productId);
+        } else {
+            $skuRule[] = Rule::unique('products', 'sku');
+        }
 
         $rules = [
-            'name'           => ['required', 'string', 'max:255'],
-            'slug'           => $slugRule,
-            'category_id'    => ['nullable', 'exists:product_categories,id'],
-            'style'          => ['nullable', 'string', 'max:255'],
-            'size'           => ['nullable', 'string', 'max:100'],
-            'cover_image'    => [$isUpdate ? 'nullable' : 'nullable', 'image', 'max:5120'],
-            'other_images'   => ['nullable', 'array'],
-            'other_images.*' => ['nullable', 'image', 'max:5120'],
-            'additional_info' => ['nullable', 'string'],
-            'shipping_info'  => ['nullable', 'string'],
-            'colors'         => ['nullable', 'array'],
-            'colors.*.name'  => ['nullable', 'string', 'max:100'],
-            'colors.*.color_code' => ['nullable', 'string', 'max:20'],
-            'key_points'     => ['nullable', 'array'],
-            'key_points.*.key_heading' => ['nullable', 'string', 'max:255'],
-            'key_points.*.key_point'   => ['nullable', 'string'],
-            'pricing_charts' => ['nullable', 'array'],
-            'pricing_charts.*.heading' => ['nullable', 'string', 'max:255'],
-            'pricing_charts.*.types'   => ['nullable', 'array'],
-            'pricing_charts.*.types.*.type' => ['nullable', 'string', 'max:100'],
-            'pricing_charts.*.types.*.tiers' => ['nullable', 'array'],
-            'pricing_charts.*.types.*.tiers.*.quantity' => ['nullable', 'numeric', 'min:0'],
-            'pricing_charts.*.types.*.tiers.*.price'    => ['nullable', 'numeric', 'min:0'],
+            'sku'                  => $skuRule,
+            'internal_code'        => ['nullable', 'string', 'max:255'],
+            'name'                 => ['required', 'string', 'max:255'],
+            'customer_organization_id' => [
+                'nullable',
+                Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['customer', 'Customer'])),
+            ],
+            'size'                 => ['nullable', 'string', 'max:100'],
+            'cost_price'           => ['nullable', 'numeric', 'min:0'],
+            'selling_price'        => ['nullable', 'numeric', 'min:0'],
+            'colors'               => ['nullable', 'array'],
+            'colors.*.name'        => ['nullable', 'string', 'max:100'],
+            'colors.*.color_code'  => ['nullable', 'string', 'max:20'],
+            'consumptions'         => ['nullable', 'array'],
+            'consumptions.*.name'  => ['required', 'string', 'max:255'],
+            'consumptions.*.qty'   => ['required', 'numeric'],
+            'consumptions.*.unit'  => ['required', 'string', 'max:100'],
+            'production_sections'                          => ['nullable', 'array'],
+            'production_sections.*.section_name'           => ['required', 'string', 'max:255'],
+            'production_sections.*.items'                  => ['required', 'array', 'min:1'],
+            'production_sections.*.items.*.name'           => ['required', 'string', 'max:255'],
+            'production_sections.*.items.*.qty'            => ['required', 'numeric'],
+            'production_sections.*.items.*.unit'           => ['required', 'string', 'max:100'],
         ];
 
         $request->validate($rules);
@@ -537,6 +586,16 @@ class ProductController extends Controller
      */
     protected function prepareProductData(array $data, ?int $productId): array
     {
+        $data['sku'] = isset($data['sku']) ? trim((string) $data['sku']) : '';
+
+        $data['internal_code'] = isset($data['internal_code'])
+            ? trim((string) $data['internal_code'])
+            : '';
+
+        if ($data['internal_code'] === '') {
+            $data['internal_code'] = $data['sku'];
+        }
+
         $baseSlug = isset($data['slug']) && trim((string) $data['slug']) !== ''
             ? \Illuminate\Support\Str::slug(trim($data['slug']))
             : \Illuminate\Support\Str::slug($data['name'] ?? '');
@@ -545,6 +604,19 @@ class ProductController extends Controller
 
         if (empty($data['sku'])) {
             $data['sku'] = $this->generateUniqueSku($data['name'] ?? 'product', $productId);
+        }
+
+        $data['cost_price'] = isset($data['cost_price']) && $data['cost_price'] !== ''
+            ? $data['cost_price']
+            : null;
+
+        $data['selling_price'] = isset($data['selling_price']) && $data['selling_price'] !== ''
+            ? $data['selling_price']
+            : null;
+
+        if ($data['selling_price'] !== null) {
+            // Keep legacy price field aligned with ERP selling price.
+            $data['price'] = $data['selling_price'];
         }
 
         if (request()->hasFile('cover_image')) {
@@ -630,6 +702,68 @@ class ProductController extends Controller
             ];
         }
         $data['pricing_charts'] = $pricingCharts;
+
+        $consumptions = [];
+        foreach ($data['consumptions'] ?? [] as $consumption) {
+            if (! is_array($consumption)) {
+                continue;
+            }
+
+            $name = trim((string) ($consumption['name'] ?? ''));
+            $unit = trim((string) ($consumption['unit'] ?? ''));
+            $qty = $consumption['qty'] ?? null;
+
+            if ($name === '' && ($qty === null || $qty === '') && $unit === '') {
+                continue;
+            }
+
+            $consumptions[] = [
+                'name' => $name,
+                'qty'  => $qty,
+                'unit' => $unit,
+            ];
+        }
+        $data['consumptions'] = $consumptions;
+
+        $productionSections = [];
+        foreach ($data['production_sections'] ?? [] as $section) {
+            if (! is_array($section)) {
+                continue;
+            }
+
+            $sectionName = trim((string) ($section['section_name'] ?? ''));
+            $items = [];
+
+            foreach ($section['items'] ?? [] as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+
+                $name = trim((string) ($item['name'] ?? ''));
+                $unit = trim((string) ($item['unit'] ?? ''));
+                $qty = $item['qty'] ?? null;
+
+                if ($name === '' && ($qty === null || $qty === '') && $unit === '') {
+                    continue;
+                }
+
+                $items[] = [
+                    'name' => $name,
+                    'qty'  => $qty,
+                    'unit' => $unit,
+                ];
+            }
+
+            if ($sectionName === '' && empty($items)) {
+                continue;
+            }
+
+            $productionSections[] = [
+                'section_name' => $sectionName,
+                'items'        => $items,
+            ];
+        }
+        $data['production_sections'] = $productionSections;
 
         return $data;
     }

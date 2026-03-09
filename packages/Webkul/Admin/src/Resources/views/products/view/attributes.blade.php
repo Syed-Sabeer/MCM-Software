@@ -50,7 +50,7 @@
                             <p class="mb-1 font-semibold dark:text-white">@lang('admin::app.products.create.other-images')</p>
                             <div class="flex flex-wrap gap-2">
                                 @foreach ($product->otherImages as $img)
-                                    <a href="{{ asset('storage/' . $img->path) }}" target="_blank" class="text-brandColor hover:underline">{{ $img->original_name ?: 'Image' }}</a>
+                                    <a href="{{ secure_url('public/storage/' . $img->path) }}" target="_blank" class="text-brandColor hover:underline">{{ $img->original_name ?: 'Image' }}</a>
                                 @endforeach
                             </div>
                         </div>

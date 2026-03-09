@@ -16,6 +16,12 @@ Route::controller(QuoteController::class)->prefix('quotes')->group(function () {
 
     Route::get('print/{id?}', 'print')->name('admin.quotes.print');
 
+    Route::post('{id}/status', 'changeStatus')->name('admin.quotes.status');
+
+    Route::post('{id}/duplicate', 'duplicate')->name('admin.quotes.duplicate');
+
+    Route::post('{id}/convert-to-proforma', 'convertToProforma')->name('admin.quotes.convert_to_proforma');
+
     Route::delete('{id}', 'destroy')->name('admin.quotes.delete');
 
     Route::get('search', 'search')->name('admin.quotes.search');

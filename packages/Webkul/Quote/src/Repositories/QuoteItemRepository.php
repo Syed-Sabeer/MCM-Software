@@ -35,16 +35,25 @@ class QuoteItemRepository extends Repository
      */
     public function create(array $data)
     {
-        if (empty($data['product_id'])) {
-            return null;
+        if (! empty($data['product_id'])) {
+            $product = $this->productRepository->findOrFail($data['product_id']);
+
+            $data = array_merge($data, [
+                'sku'       => $data['sku'] ?? $product->sku,
+                'item_code' => $data['item_code'] ?? $product->sku,
+                'name'      => $data['name'] ?? $product->name,
+                'item_name' => $data['item_name'] ?? $product->name,
+            ]);
+        } else {
+            $data = array_merge($data, [
+                'sku'       => $data['sku'] ?? ($data['item_code'] ?? null),
+                'item_code' => $data['item_code'] ?? ($data['sku'] ?? null),
+                'name'      => $data['name'] ?? ($data['item_name'] ?? 'Manual Item'),
+                'item_name' => $data['item_name'] ?? ($data['name'] ?? 'Manual Item'),
+            ]);
         }
 
-        $product = $this->productRepository->findOrFail($data['product_id']);
-
-        $quoteItem = parent::create(array_merge($data, [
-            'sku'  => $product->sku,
-            'name' => $product->name,
-        ]));
+        $quoteItem = parent::create($data);
 
         return $quoteItem;
     }
@@ -56,12 +65,25 @@ class QuoteItemRepository extends Repository
      */
     public function update(array $data, $id, $attribute = 'id')
     {
-        $product = $this->productRepository->findOrFail($data['product_id']);
+        if (! empty($data['product_id'])) {
+            $product = $this->productRepository->findOrFail($data['product_id']);
 
-        $quoteItem = parent::update(array_merge($data, [
-            'sku'  => $product->sku,
-            'name' => $product->name,
-        ]), $id);
+            $data = array_merge($data, [
+                'sku'       => $data['sku'] ?? $product->sku,
+                'item_code' => $data['item_code'] ?? $product->sku,
+                'name'      => $data['name'] ?? $product->name,
+                'item_name' => $data['item_name'] ?? $product->name,
+            ]);
+        } else {
+            $data = array_merge($data, [
+                'sku'       => $data['sku'] ?? ($data['item_code'] ?? null),
+                'item_code' => $data['item_code'] ?? ($data['sku'] ?? null),
+                'name'      => $data['name'] ?? ($data['item_name'] ?? 'Manual Item'),
+                'item_name' => $data['item_name'] ?? ($data['name'] ?? 'Manual Item'),
+            ]);
+        }
+
+        $quoteItem = parent::update($data, $id);
 
         return $quoteItem;
     }

@@ -1,0 +1,119 @@
+<?php
+
+namespace Webkul\Quote\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Webkul\Contact\Models\OrganizationProxy;
+use Webkul\Contact\Models\PersonProxy;
+use Webkul\Quote\Contracts\ProformaInvoice as ProformaInvoiceContract;
+use Webkul\User\Models\UserProxy;
+
+class ProformaInvoice extends Model implements ProformaInvoiceContract
+{
+    protected $fillable = [
+        'proforma_number',
+        'quote_id',
+        'organization_id',
+        'person_id',
+        'sales_owner_id',
+        'subject',
+        'issue_date',
+        'due_date',
+        'billing_address',
+        'shipping_address',
+        'subtotal',
+        'discount_percent',
+        'discount_amount',
+        'tax_amount',
+        'adjustment_amount',
+        'grand_total',
+        'received_amount',
+        'remaining_amount',
+        'status',
+        'notes',
+        'terms',
+        'customer_po_reference',
+        'source_type',
+        'created_by',
+        'approved_by',
+        'approved_at',
+        'attachment_path',
+    ];
+
+    protected $casts = [
+        'billing_address'    => 'array',
+        'shipping_address'   => 'array',
+        'issue_date'         => 'date',
+        'due_date'           => 'date',
+        'approved_at'        => 'datetime',
+        'subtotal'           => 'decimal:4',
+        'discount_percent'   => 'decimal:4',
+        'discount_amount'    => 'decimal:4',
+        'tax_amount'         => 'decimal:4',
+        'adjustment_amount'  => 'decimal:4',
+        'grand_total'        => 'decimal:4',
+        'received_amount'    => 'decimal:4',
+        'remaining_amount'   => 'decimal:4',
+    ];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->proforma_number)) {
+                $model->proforma_number = static::generateNextProformaNumber();
+            }
+        });
+    }
+
+    public static function generateNextProformaNumber(): string
+    {
+        $last = static::orderByRaw('CAST(SUBSTRING_INDEX(proforma_number, \"-\", -1) AS UNSIGNED) DESC')->first();
+
+        $next = 1;
+
+        if ($last && preg_match('/(\\d+)$/', (string) $last->proforma_number, $matches)) {
+            $next = ((int) $matches[1]) + 1;
+        }
+
+        return 'PF-' . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function quote(): BelongsTo
+    {
+        return $this->belongsTo(QuoteProxy::modelClass(), 'quote_id');
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationProxy::modelClass(), 'organization_id');
+    }
+
+    public function customerOrganization(): BelongsTo
+    {
+        return $this->organization();
+    }
+
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(PersonProxy::modelClass(), 'person_id');
+    }
+
+    public function salesOwner(): BelongsTo
+    {
+        return $this->belongsTo(UserProxy::modelClass(), 'sales_owner_id');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(ProformaInvoiceItemProxy::modelClass(), 'proforma_invoice_id')->orderBy('sort_order');
+    }
+
+    public function receipts(): HasMany
+    {
+        return $this->hasMany(ProformaReceiptProxy::modelClass(), 'proforma_invoice_id')->orderByDesc('payment_date');
+    }
+}

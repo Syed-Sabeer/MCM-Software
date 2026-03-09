@@ -4,6 +4,7 @@ namespace Webkul\Quote\Repositories;
 
 use Illuminate\Container\Container;
 use Illuminate\Support\Str;
+use Webkul\Contact\Models\Person;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Core\Eloquent\Repository;
@@ -54,13 +55,15 @@ class QuoteRepository extends Repository
      */
     public function create(array $data)
     {
+        $data = $this->prepareQuoteData($data);
+
         $quote = parent::create($data);
 
         $this->attributeValueRepository->save(array_merge($data, [
             'entity_id' => $quote->id,
         ]));
 
-        foreach ($data['items'] as $itemData) {
+        foreach ($data['items'] ?? [] as $itemData) {
             $this->quoteItemRepository->create(array_merge($itemData, [
                 'quote_id' => $quote->id,
             ]));
@@ -78,6 +81,8 @@ class QuoteRepository extends Repository
      */
     public function update(array $data, $id, $attributes = [])
     {
+        $data = $this->prepareQuoteData($data);
+
         $quote = $this->find($id);
 
         parent::update($data, $id);
@@ -130,6 +135,92 @@ class QuoteRepository extends Repository
         }
 
         return $quote;
+    }
+
+    /**
+     * Normalize quote payload and recalculate totals server-side.
+     */
+    protected function prepareQuoteData(array $data): array
+    {
+        if (empty($data['quote_date'])) {
+            $data['quote_date'] = now()->toDateString();
+        }
+
+        if (empty($data['status'])) {
+            $data['status'] = 'draft';
+        }
+
+        if (empty($data['subject'])) {
+            $data['subject'] = ! empty($data['quote_number'])
+                ? 'Quote ' . $data['quote_number']
+                : 'Quote Draft';
+        }
+
+        if (! empty($data['person_id']) && empty($data['organization_id'])) {
+            $person = Person::find($data['person_id']);
+            $data['organization_id'] = $person?->organization_id;
+        }
+
+        $items = $data['items'] ?? [];
+        $normalizedItems = [];
+        $subTotal = 0;
+        $discountAmount = 0;
+        $taxAmount = 0;
+
+        foreach ($items as $itemKey => $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $qty = (float) ($item['qty'] ?? $item['quantity'] ?? 0);
+            $unitPrice = (float) ($item['unit_price'] ?? $item['price'] ?? 0);
+            $lineSubTotal = $qty * $unitPrice;
+
+            $lineDiscountPercent = (float) ($item['discount_percent'] ?? 0);
+            $lineDiscountAmount = isset($item['discount_amount']) && $item['discount_amount'] !== ''
+                ? (float) $item['discount_amount']
+                : ($lineSubTotal * $lineDiscountPercent / 100);
+
+            $lineTaxPercent = (float) ($item['tax_percent'] ?? 0);
+            $lineTaxAmount = isset($item['tax_amount']) && $item['tax_amount'] !== ''
+                ? (float) $item['tax_amount']
+                : max(($lineSubTotal - $lineDiscountAmount), 0) * $lineTaxPercent / 100;
+
+            $lineTotal = max($lineSubTotal - $lineDiscountAmount + $lineTaxAmount, 0);
+            $name = $item['item_name'] ?? $item['name'] ?? '';
+            $code = $item['item_code'] ?? $item['sku'] ?? null;
+
+            $normalizedItems[$itemKey] = array_merge($item, [
+                'item_name'       => $name,
+                'name'            => $name,
+                'item_code'       => $code,
+                'sku'             => $code,
+                'qty'             => $qty,
+                'quantity'        => $qty,
+                'unit_price'      => $unitPrice,
+                'price'           => $unitPrice,
+                'discount_amount' => $lineDiscountAmount,
+                'tax_amount'      => $lineTaxAmount,
+                'line_subtotal'   => $lineSubTotal,
+                'line_total'      => $lineTotal,
+                'total'           => $lineTotal,
+            ]);
+
+            $subTotal += $lineSubTotal;
+            $discountAmount += $lineDiscountAmount;
+            $taxAmount += $lineTaxAmount;
+        }
+
+        $adjustment = (float) ($data['adjustment_amount'] ?? 0);
+        $grandTotal = max($subTotal - $discountAmount + $taxAmount + $adjustment, 0);
+
+        $data['items'] = $normalizedItems;
+        $data['sub_total'] = $subTotal;
+        $data['discount_amount'] = $discountAmount;
+        $data['tax_amount'] = $taxAmount;
+        $data['grand_total'] = $grandTotal;
+
+        return $data;
     }
 
     /**

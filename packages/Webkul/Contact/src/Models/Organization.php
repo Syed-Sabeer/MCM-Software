@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Organization as OrganizationContract;
-use Webkul\User\Models\UserProxy;
 use Webkul\Contact\Models\OrganizationFile;
+use Webkul\Product\Models\ProductProxy;
+use Webkul\Quote\Models\ProformaInvoiceProxy;
+use Webkul\Quote\Models\QuoteProxy;
+use Webkul\User\Models\UserProxy;
 
 class Organization extends Model implements OrganizationContract
 {
@@ -84,5 +87,29 @@ class Organization extends Model implements OrganizationContract
     public function activities()
     {
         return $this->belongsToMany(ActivityProxy::modelClass(), 'organization_activities');
+    }
+
+    /**
+     * Products where this organization is selected as customer owner.
+     */
+    public function productsAsCustomer()
+    {
+        return $this->hasMany(ProductProxy::modelClass(), 'customer_organization_id');
+    }
+
+    /**
+     * Quotes for this organization as customer.
+     */
+    public function quotes()
+    {
+        return $this->hasMany(QuoteProxy::modelClass(), 'organization_id');
+    }
+
+    /**
+     * Proforma invoices for this organization as customer.
+     */
+    public function proformaInvoices()
+    {
+        return $this->hasMany(ProformaInvoiceProxy::modelClass(), 'organization_id');
     }
 }

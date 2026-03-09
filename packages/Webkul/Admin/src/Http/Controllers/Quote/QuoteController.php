@@ -6,7 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -17,6 +19,7 @@ use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\QuoteResource;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\Lead\Repositories\LeadRepository;
+use Webkul\Quote\Repositories\ProformaInvoiceRepository;
 use Webkul\Quote\Repositories\QuoteRepository;
 
 class QuoteController extends Controller
@@ -30,7 +33,8 @@ class QuoteController extends Controller
      */
     public function __construct(
         protected QuoteRepository $quoteRepository,
-        protected LeadRepository $leadRepository
+        protected LeadRepository $leadRepository,
+        protected ProformaInvoiceRepository $proformaInvoiceRepository
     ) {
         request()->request->add(['entity_type' => 'quotes']);
     }
@@ -62,6 +66,8 @@ class QuoteController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse
     {
+        $this->validateQuote($request);
+
         Event::dispatch('quote.create.before');
 
         $quote = $this->quoteRepository->create($request->all());
@@ -98,6 +104,8 @@ class QuoteController extends Controller
      */
     public function update(AttributeForm $request, int $id): RedirectResponse
     {
+        $this->validateQuote($request, $id);
+
         Event::dispatch('quote.update.before', $id);
 
         $quote = $this->quoteRepository->update($request->all(), $id);
@@ -192,7 +200,155 @@ class QuoteController extends Controller
 
         return $this->downloadPDF(
             view('admin::quotes.pdf', compact('quote'))->render(),
-            'Quote_'.$quote->subject.'_'.$quote->created_at->format('d-m-Y')
+            'Quote_'.($quote->subject ?: $quote->quote_number).'_'.$quote->created_at->format('d-m-Y')
         );
+    }
+
+    /**
+     * Update quote status.
+     */
+    public function changeStatus(int $id): RedirectResponse
+    {
+        $quote = $this->quoteRepository->findOrFail($id);
+
+        $allowed = ['draft', 'sent', 'approved', 'rejected', 'expired', 'cancelled'];
+        $status = request('status');
+
+        if (! in_array($status, $allowed)) {
+            abort(422, 'Invalid status.');
+        }
+
+        Event::dispatch('quote.status.update.before', [$quote, $status]);
+
+        $this->quoteRepository->update([
+            'status' => $status,
+        ], $quote->id, ['status']);
+
+        Event::dispatch('quote.status.update.after', [$quote->fresh(), $status]);
+
+        session()->flash('success', 'Quote status updated successfully.');
+
+        return redirect()->back();
+    }
+
+    /**
+     * Duplicate quote.
+     */
+    public function duplicate(int $id): RedirectResponse
+    {
+        $quote = $this->quoteRepository->with('items')->findOrFail($id);
+
+        DB::beginTransaction();
+
+        try {
+            $payload = $quote->toArray();
+            unset($payload['id'], $payload['created_at'], $payload['updated_at']);
+
+            $payload['subject'] = $payload['subject'].' (Copy)';
+            $payload['status'] = 'draft';
+            $payload['quote_number'] = null;
+
+            $payload['items'] = $quote->items->map(function ($item) {
+                return [
+                    'product_id'        => $item->product_id,
+                    'item_name'         => $item->item_name ?: $item->name,
+                    'item_code'         => $item->item_code ?: $item->sku,
+                    'description'       => $item->description,
+                    'qty'               => $item->qty ?: $item->quantity,
+                    'unit'              => $item->unit,
+                    'unit_price'        => $item->unit_price ?: $item->price,
+                    'discount_percent'  => $item->discount_percent,
+                    'discount_amount'   => $item->discount_amount,
+                    'tax_percent'       => $item->tax_percent,
+                    'tax_amount'        => $item->tax_amount,
+                ];
+            })->toArray();
+
+            $newQuote = $this->quoteRepository->create($payload);
+            DB::commit();
+
+            session()->flash('success', 'Quote duplicated successfully.');
+
+            return redirect()->route('admin.quotes.edit', $newQuote->id);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Convert quote to proforma.
+     */
+    public function convertToProforma(int $id): RedirectResponse
+    {
+        $quote = $this->quoteRepository->with('items', 'organization', 'person')->findOrFail($id);
+
+        $allowOverride = (bool) request('allow_override', false);
+
+        if ($quote->status !== 'approved' && ! $allowOverride) {
+            return redirect()->back()->withErrors([
+                'status' => 'Only approved quotes can be converted to proforma.',
+            ]);
+        }
+
+        Event::dispatch('quote.convert_to_proforma.before', $quote);
+
+        $proforma = $this->proformaInvoiceRepository->createFromQuote($quote, [
+            'status' => request('issue_now') ? 'issued' : 'draft',
+        ]);
+
+        Event::dispatch('quote.convert_to_proforma.after', [$quote, $proforma]);
+
+        session()->flash('success', 'Proforma invoice created successfully.');
+
+        return redirect()->route('admin.proforma_invoices.edit', $proforma->id);
+    }
+
+    /**
+     * Validate quote payload while preserving current attribute flow.
+     */
+    protected function validateQuote(AttributeForm $request, ?int $quoteId = null): void
+    {
+        $request->validate([
+            'quote_number'           => ['nullable', 'string', 'max:50'],
+            'organization_id'        => ['required', 'exists:organizations,id'],
+            'person_id'              => ['nullable', 'exists:persons,id'],
+            'user_id'                => ['required', 'exists:users,id'],
+            'subject'                => ['nullable', 'string', 'max:255'],
+            'quote_date'             => ['nullable', 'date'],
+            'expired_at'             => ['nullable', 'date'],
+            'items'                  => ['required', 'array', 'min:1'],
+            'items.*.product_id'     => ['nullable', 'exists:products,id'],
+            'items.*.item_name'      => ['nullable', 'string', 'max:255'],
+            'items.*.qty'            => ['nullable', 'numeric', 'gt:0'],
+            'items.*.quantity'       => ['nullable', 'numeric', 'gt:0'],
+            'items.*.unit_price'     => ['nullable', 'numeric', 'min:0'],
+            'items.*.price'          => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $organizationId = $request->input('organization_id');
+
+        $customerTypeExists = DB::table('organizations')
+            ->where('id', $organizationId)
+            ->whereIn('type', ['customer', 'Customer'])
+            ->exists();
+
+        if (! $customerTypeExists) {
+            throw ValidationException::withMessages([
+                'organization_id' => 'Selected organization must be a customer.',
+            ]);
+        }
+
+        if ($request->filled('person_id')) {
+            $personOrgId = DB::table('persons')
+                ->where('id', $request->input('person_id'))
+                ->value('organization_id');
+
+            if ((int) $personOrgId !== (int) $organizationId) {
+                throw ValidationException::withMessages([
+                    'person_id' => 'Selected person does not belong to selected customer.',
+                ]);
+            }
+        }
     }
 }

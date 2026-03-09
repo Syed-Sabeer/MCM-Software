@@ -57,6 +57,26 @@ return [
         'route' => ['admin.quotes.delete', 'admin.quotes.mass_delete'],
         'sort'  => 4,
     ], [
+        'key'   => 'proforma_invoices',
+        'name'  => 'Proforma Invoices',
+        'route' => 'admin.proforma_invoices.index',
+        'sort'  => 4,
+    ], [
+        'key'   => 'proforma_invoices.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.proforma_invoices.create', 'admin.proforma_invoices.store', 'admin.proforma_invoices.receipts.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'proforma_invoices.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.proforma_invoices.edit', 'admin.proforma_invoices.update', 'admin.proforma_invoices.view', 'admin.proforma_invoices.status', 'admin.proforma_invoices.receipts.delete'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'proforma_invoices.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.proforma_invoices.delete', 'admin.proforma_invoices.mass_delete'],
+        'sort'  => 3,
+    ], [
         'key'   => 'purchase_orders',
         'name'  => 'admin::app.acl.purchase-orders',
         'route' => 'admin.purchase_orders.index',

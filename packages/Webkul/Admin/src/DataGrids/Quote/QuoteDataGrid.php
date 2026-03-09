@@ -13,12 +13,13 @@ class QuoteDataGrid extends DataGrid
      */
     public function prepareQueryBuilder(): Builder
     {
-        $tablePrefix = DB::getTablePrefix();
-
         $queryBuilder = DB::table('quotes')
             ->addSelect(
                 'quotes.id',
+                'quotes.quote_number',
                 'quotes.subject',
+                'quotes.status',
+                'quotes.quote_date',
                 'quotes.expired_at',
                 'quotes.sub_total',
                 'quotes.discount_amount',
@@ -30,27 +31,28 @@ class QuoteDataGrid extends DataGrid
                 'users.name as sales_person',
                 'persons.id as person_id',
                 'persons.name as person_name',
-                'quotes.expired_at as expired_quotes'
+                'organizations.id as organization_id',
+                'organizations.name as organization_name'
             )
             ->leftJoin('users', 'quotes.user_id', '=', 'users.id')
-            ->leftJoin('persons', 'quotes.person_id', '=', 'persons.id');
+            ->leftJoin('persons', 'quotes.person_id', '=', 'persons.id')
+            ->leftJoin('organizations', 'quotes.organization_id', '=', 'organizations.id');
 
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $queryBuilder->whereIn('quotes.user_id', $userIds);
         }
 
         $this->addFilter('id', 'quotes.id');
+        $this->addFilter('quote_number', 'quotes.quote_number');
+        $this->addFilter('subject', 'quotes.subject');
+        $this->addFilter('status', 'quotes.status');
         $this->addFilter('user', 'quotes.user_id');
         $this->addFilter('sales_person', 'users.name');
         $this->addFilter('person_name', 'persons.name');
+        $this->addFilter('organization_name', 'organizations.name');
+        $this->addFilter('quote_date', 'quotes.quote_date');
         $this->addFilter('expired_at', 'quotes.expired_at');
         $this->addFilter('created_at', 'quotes.created_at');
-
-        if (request()->input('expired_quotes.in') == 1) {
-            $this->addFilter('expired_quotes', DB::raw('DATEDIFF(NOW(), '.$tablePrefix.'quotes.expired_at) >= '.$tablePrefix.'NOW()'));
-        } else {
-            $this->addFilter('expired_quotes', DB::raw('DATEDIFF(NOW(), '.$tablePrefix.'quotes.expired_at) < '.$tablePrefix.'NOW()'));
-        }
 
         return $queryBuilder;
     }
@@ -61,11 +63,36 @@ class QuoteDataGrid extends DataGrid
     public function prepareColumns(): void
     {
         $this->addColumn([
+            'index'      => 'quote_number',
+            'label'      => 'Quote #',
+            'type'       => 'string',
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
+
+        $this->addColumn([
             'index'      => 'subject',
             'label'      => trans('admin::app.quotes.index.datagrid.subject'),
             'type'       => 'string',
             'filterable' => true,
             'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'              => 'organization_name',
+            'label'              => 'Customer',
+            'type'               => 'string',
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'searchable_dropdown',
+            'filterable_options' => [
+                'repository' => \Webkul\Contact\Repositories\OrganizationRepository::class,
+                'column'     => [
+                    'label' => 'name',
+                    'value' => 'name',
+                ],
+            ],
+            'closure'            => fn ($row) => $row->organization_name ?: '--',
         ]);
 
         $this->addColumn([
@@ -99,10 +126,22 @@ class QuoteDataGrid extends DataGrid
                 ],
             ],
             'closure'    => function ($row) {
+                if (! $row->person_id) {
+                    return '--';
+                }
+
                 $route = route('admin.contacts.persons.view', $row->person_id);
 
                 return "<a class=\"text-brandColor transition-all hover:underline\" href='".$route."'>".$row->person_name.'</a>';
             },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'status',
+            'label'      => 'Status',
+            'type'       => 'string',
+            'sortable'   => true,
+            'filterable' => true,
         ]);
 
         $this->addColumn([
@@ -151,6 +190,16 @@ class QuoteDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
+            'index'      => 'quote_date',
+            'label'      => 'Quote Date',
+            'type'       => 'date',
+            'searchable' => false,
+            'sortable'   => true,
+            'filterable' => true,
+            'closure'    => fn ($row) => $row->quote_date ? core()->formatDate($row->quote_date, 'd M Y') : '--',
+        ]);
+
+        $this->addColumn([
             'index'      => 'expired_at',
             'label'      => trans('admin::app.quotes.index.datagrid.expired-at'),
             'type'       => 'date',
@@ -186,6 +235,16 @@ class QuoteDataGrid extends DataGrid
             ]);
         }
 
+        if (bouncer()->hasPermission('quotes.edit')) {
+            $this->addAction([
+                'index'  => 'convert',
+                'icon'   => 'icon-add',
+                'title'  => 'Convert to Proforma',
+                'method' => 'POST',
+                'url'    => fn ($row) => route('admin.quotes.convert_to_proforma', $row->id),
+            ]);
+        }
+
         if (bouncer()->hasPermission('quotes.print')) {
             $this->addAction([
                 'index'  => 'print',
@@ -212,18 +271,13 @@ class QuoteDataGrid extends DataGrid
      */
     public function prepareMassActions(): void
     {
-        $this->addMassAction([
-            'icon'   => 'icon-delete',
-            'title'  => trans('admin::app.quotes.index.datagrid.delete'),
-            'method' => 'POST',
-            'url'    => route('admin.quotes.mass_delete'),
-        ]);
-
-        $this->addMassAction([
-            'icon'   => 'icon-delete',
-            'title'  => trans('admin::app.quotes.index.datagrid.delete'),
-            'method' => 'POST',
-            'url'    => route('admin.quotes.mass_delete'),
-        ]);
+        if (bouncer()->hasPermission('quotes.delete')) {
+            $this->addMassAction([
+                'icon'   => 'icon-delete',
+                'title'  => trans('admin::app.quotes.index.datagrid.delete'),
+                'method' => 'POST',
+                'url'    => route('admin.quotes.mass_delete'),
+            ]);
+        }
     }
 }

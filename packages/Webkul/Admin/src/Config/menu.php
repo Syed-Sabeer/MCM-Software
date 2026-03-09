@@ -35,13 +35,24 @@ return [
     ],
 
     /**
+     * Proforma Invoices.
+     */
+    [
+        'key'        => 'proforma_invoices',
+        'name'       => 'Proforma Invoices',
+        'route'      => 'admin.proforma_invoices.index',
+        'sort'       => 4,
+        'icon-class' => 'icon-quote',
+    ],
+
+    /**
      * Purchase Orders.
      */
     [
         'key'        => 'purchase_orders',
         'name'       => 'admin::app.layouts.purchase-orders',
         'route'      => 'admin.purchase_orders.index',
-        'sort'       => 4,
+        'sort'       => 5,
         'icon-class' => 'icon-quote',
     ],
 

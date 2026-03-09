@@ -60,6 +60,8 @@ Route::prefix('contacts')->group(function () {
 
         Route::get('fetch/{id}', 'fetch')->name('admin.contacts.organizations.fetch');
 
+        Route::get('search-customers', 'searchCustomers')->name('admin.contacts.organizations.search_customers');
+
         Route::get('view/{id}', 'show')->name('admin.contacts.organizations.view');
 
         Route::get('edit/{id?}', 'edit')->name('admin.contacts.organizations.edit');
