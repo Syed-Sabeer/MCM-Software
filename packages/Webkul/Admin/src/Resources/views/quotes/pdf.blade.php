@@ -175,6 +175,19 @@
                         $price = $item->price ?: $item->unit_price ?: 0;
                         $lineTotal = ($price * $qty) + ($item->tax_amount ?: 0) - ($item->discount_amount ?: 0);
                         $itemImage = $item->preview_image ?: null;
+
+                        if ($itemImage) {
+                            $imageUrlPath = parse_url($itemImage, PHP_URL_PATH) ?: $itemImage;
+
+                            if (str_contains($imageUrlPath, '/public/storage/')) {
+                                $relativeStoragePath = \Illuminate\Support\Str::after($imageUrlPath, '/public/storage/');
+                                $localStoragePath = public_path('storage/' . $relativeStoragePath);
+
+                                if (file_exists($localStoragePath)) {
+                                    $itemImage = $localStoragePath;
+                                }
+                            }
+                        }
                     @endphp
                     <tr>
                         <td class="text-center">

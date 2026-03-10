@@ -4,13 +4,16 @@ namespace Webkul\Admin\Http\Controllers\Quote;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Quote\ProformaInvoiceDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Admin\Http\Requests\ProformaInvoiceRequest;
+use Webkul\Admin\Http\Requests\ProformaReceiptRequest;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
+use Webkul\Quote\Models\ProformaInvoice;
 use Webkul\Quote\Repositories\ProformaInvoiceRepository;
 use Webkul\Quote\Repositories\QuoteRepository;
 
@@ -34,25 +37,26 @@ class ProformaInvoiceController extends Controller
     public function create(): View
     {
         $quote = null;
+        $nextProformaNumber = ProformaInvoice::generateNextProformaNumber();
 
         if (request()->filled('quote_id')) {
             $quote = $this->quoteRepository->with('items', 'person', 'organization')->find(request('quote_id'));
         }
 
-        return view('admin::proforma-invoices.create', compact('quote'));
+        return view('admin::proforma-invoices.create', compact('quote', 'nextProformaNumber'));
     }
 
-    public function store(): RedirectResponse
+    public function store(ProformaInvoiceRequest $request): RedirectResponse
     {
-        $this->validateForm();
-
         Event::dispatch('proforma_invoice.create.before');
 
-        if (request()->filled('quote_id')) {
-            $quote = $this->quoteRepository->with('items', 'person', 'organization')->findOrFail(request('quote_id'));
-            $proforma = $this->proformaInvoiceRepository->createFromQuote($quote, request()->all());
+        $payload = $this->prepareProformaPayload($request);
+
+        if ($request->filled('quote_id')) {
+            $quote = $this->quoteRepository->with('items', 'person', 'organization')->findOrFail($request->input('quote_id'));
+            $proforma = $this->proformaInvoiceRepository->createFromQuote($quote, $payload);
         } else {
-            $proforma = $this->proformaInvoiceRepository->create(request()->all());
+            $proforma = $this->proformaInvoiceRepository->create($payload);
         }
 
         Event::dispatch('proforma_invoice.create.after', $proforma);
@@ -64,25 +68,25 @@ class ProformaInvoiceController extends Controller
 
     public function edit(int $id): View
     {
-        $proformaInvoice = $this->proformaInvoiceRepository->with(['items', 'receipts.receivedBy', 'organization', 'person', 'quote'])->findOrFail($id);
+        $proformaInvoice = $this->proformaInvoiceRepository->with(['items', 'receipts.receivedBy', 'organization', 'person', 'quote', 'salesOwner'])->findOrFail($id);
 
         return view('admin::proforma-invoices.edit', compact('proformaInvoice'));
     }
 
     public function view(int $id): View
     {
-        $proformaInvoice = $this->proformaInvoiceRepository->with(['items', 'receipts.receivedBy', 'organization', 'person', 'quote'])->findOrFail($id);
+        $proformaInvoice = $this->proformaInvoiceRepository->with(['items', 'receipts.receivedBy', 'organization', 'person', 'quote', 'salesOwner'])->findOrFail($id);
 
         return view('admin::proforma-invoices.view', compact('proformaInvoice'));
     }
 
-    public function update(int $id): RedirectResponse
+    public function update(ProformaInvoiceRequest $request, int $id): RedirectResponse
     {
-        $this->validateForm($id);
-
         Event::dispatch('proforma_invoice.update.before', $id);
 
-        $proforma = $this->proformaInvoiceRepository->update(request()->all(), $id);
+        $existing = $this->proformaInvoiceRepository->findOrFail($id);
+        $payload = $this->prepareProformaPayload($request, $existing);
+        $proforma = $this->proformaInvoiceRepository->update($payload, $id);
 
         Event::dispatch('proforma_invoice.update.after', $proforma);
 
@@ -91,19 +95,11 @@ class ProformaInvoiceController extends Controller
         return redirect()->route('admin.proforma_invoices.edit', $id);
     }
 
-    public function storeReceipt(int $id): RedirectResponse
+    public function storeReceipt(ProformaReceiptRequest $request, int $id): RedirectResponse
     {
-        request()->validate([
-            'payment_date' => ['required', 'date'],
-            'amount'       => ['required', 'numeric', 'gt:0'],
-            'payment_method' => ['nullable', 'string', 'max:100'],
-            'reference_no' => ['nullable', 'string', 'max:100'],
-            'notes'        => ['nullable', 'string'],
-        ]);
-
         Event::dispatch('proforma_invoice.receipt.create.before', $id);
 
-        $this->proformaInvoiceRepository->addReceipt($id, request()->all());
+        $this->proformaInvoiceRepository->addReceipt($id, $this->prepareReceiptPayload($request));
 
         Event::dispatch('proforma_invoice.receipt.create.after', $id);
 
@@ -195,43 +191,35 @@ class ProformaInvoiceController extends Controller
         }
     }
 
-    protected function validateForm(?int $id = null): void
+    protected function prepareProformaPayload(ProformaInvoiceRequest $request, ?ProformaInvoice $existing = null): array
     {
-        request()->validate([
-            'organization_id' => ['required', 'exists:organizations,id'],
-            'person_id'       => ['nullable', 'exists:persons,id'],
-            'quote_id'        => ['nullable', 'exists:quotes,id'],
-            'subject'         => ['nullable', 'string', 'max:255'],
-            'issue_date'      => ['required', 'date'],
-            'due_date'        => ['nullable', 'date'],
-            'status'          => ['nullable', 'string', 'max:50'],
-            'items'           => ['required', 'array', 'min:1'],
-            'items.*.product_id'      => ['nullable', 'exists:products,id'],
-            'items.*.item_name'       => ['nullable', 'string', 'max:255'],
-            'items.*.qty'             => ['required', 'numeric', 'gt:0'],
-            'items.*.unit_price'      => ['required', 'numeric', 'min:0'],
-            'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'items.*.tax_amount'      => ['nullable', 'numeric', 'min:0'],
-        ]);
+        $payload = $request->validated();
 
-        $organizationType = DB::table('organizations')
-            ->where('id', request('organization_id'))
-            ->value('type');
+        $payload['sales_owner_id'] = $payload['sales_owner_id'] ?? auth()->id();
+        $payload['created_by'] = $existing?->created_by ?? auth()->id();
 
-        if (! in_array($organizationType, ['customer', 'Customer'])) {
-            throw ValidationException::withMessages([
-                'organization_id' => 'Organization must be customer type.',
-            ]);
-        }
-
-        if (request()->filled('person_id')) {
-            $personOrgId = DB::table('persons')->where('id', request('person_id'))->value('organization_id');
-
-            if ((int) $personOrgId !== (int) request('organization_id')) {
-                throw ValidationException::withMessages([
-                    'person_id' => 'Selected person does not belong to selected organization.',
-                ]);
+        if ($request->hasFile('attachment')) {
+            if ($existing?->attachment_path) {
+                Storage::disk('public')->delete($existing->attachment_path);
             }
+
+            $payload['attachment_path'] = $request->file('attachment')->store('proforma-attachments', 'public');
+        } elseif ($existing) {
+            $payload['attachment_path'] = $existing->attachment_path;
         }
+
+        return $payload;
+    }
+
+    protected function prepareReceiptPayload(ProformaReceiptRequest $request): array
+    {
+        $payload = $request->validated();
+        $payload['received_by'] = auth()->id();
+
+        if ($request->hasFile('attachment')) {
+            $payload['attachment_path'] = $request->file('attachment')->store('proforma-receipts', 'public');
+        }
+
+        return $payload;
     }
 }

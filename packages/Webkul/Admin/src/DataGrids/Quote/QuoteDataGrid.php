@@ -134,11 +134,11 @@ class QuoteDataGrid extends DataGrid
 
         if (bouncer()->hasPermission('quotes.edit')) {
             $this->addAction([
-                'index'  => 'convert',
-                'icon'   => 'icon-add',
-                'title'  => 'Convert to Proforma',
-                'method' => 'POST',
-                'url'    => fn ($row) => route('admin.quotes.convert_to_proforma', $row->id),
+                'index'  => 'create_proforma',
+                'icon'   => 'icon-note',
+                'title'  => 'Create Proforma',
+                'method' => 'GET',
+                'url'    => fn ($row) => route('admin.proforma_invoices.create', ['quote_id' => $row->id]),
             ]);
         }
 

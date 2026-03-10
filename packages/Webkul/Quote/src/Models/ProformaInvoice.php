@@ -36,6 +36,7 @@ class ProformaInvoice extends Model implements ProformaInvoiceContract
         'terms',
         'customer_po_reference',
         'source_type',
+        'converted_to_invoice_id',
         'created_by',
         'approved_by',
         'approved_at',
@@ -71,7 +72,7 @@ class ProformaInvoice extends Model implements ProformaInvoiceContract
 
     public static function generateNextProformaNumber(): string
     {
-        $last = static::orderByRaw('CAST(SUBSTRING_INDEX(proforma_number, \"-\", -1) AS UNSIGNED) DESC')->first();
+        $last = static::orderByRaw("CAST(SUBSTRING_INDEX(proforma_number, '-', -1) AS UNSIGNED) DESC")->first();
 
         $next = 1;
 

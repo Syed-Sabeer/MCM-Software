@@ -95,6 +95,7 @@ class ProformaInvoiceRepository extends Repository
             'adjustment_amount'    => $quote->adjustment_amount,
             'notes'                => $quote->notes,
             'terms'                => $quote->terms,
+            'attachment_path'      => $quote->attachment_path,
             'source_type'          => 'quote',
             'status'               => 'draft',
             'created_by'           => auth()->id(),

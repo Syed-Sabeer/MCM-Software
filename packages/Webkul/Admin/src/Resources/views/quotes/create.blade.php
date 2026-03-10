@@ -233,7 +233,7 @@
 
                 <x-admin::table.td class="!px-2">
                     <input type="hidden" :name="`${inputName}[preview_image]`" :value="product.preview_image || ''">
-                    <img v-if="product.preview_image" :src="product.preview_image" class="mx-auto h-12 w-12 rounded object-cover border border-gray-200" alt="preview">
+                    <img v-if="product.preview_image" :key="product.preview_image" :src="product.preview_image" class="mx-auto h-12 w-12 rounded object-cover border border-gray-200" alt="preview">
                     <span v-else class="text-xs text-gray-500">No image</span>
                 </x-admin::table.td>
 
@@ -666,7 +666,11 @@
 
                         const selected = (this.product.available_colors || []).find(color => String(color.id) === String(this.product.selected_color_id));
                         this.product.selected_color_name = selected ? selected.name : '';
-                        this.product.preview_image = this.resolvePreviewImage(this.product.selected_color_id);
+                        this.product.preview_image = '';
+
+                        this.$nextTick(() => {
+                            this.product.preview_image = this.resolvePreviewImage(this.product.selected_color_id);
+                        });
                     },
                     removeProduct() {
                         this.$emit('onRemoveProduct', this.product);
