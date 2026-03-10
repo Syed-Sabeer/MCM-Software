@@ -329,6 +329,7 @@
                             @php
                                 $contactName = trim(($contact->first_name ?? '') . ' ' . ($contact->last_name ?? '')) ?: $contact->name;
                                 $contactNameLimited = \Illuminate\Support\Str::limit($contactName, 35);
+                                $contactEmail = $contact->email ?: 'No email';
                             @endphp
                             <a
                                 href="{{ route('admin.contacts.persons.view', $contact->id) }}"
@@ -339,11 +340,9 @@
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
                                         {{ $contactNameLimited }}
                                     </p>
-                                    @if ($contact->email)
-                                        <p class="truncate text-xs text-gray-500 dark:text-gray-400">
-                                            {{ $contact->email }}
-                                        </p>
-                                    @endif
+                                    <p class="truncate text-xs text-gray-500 dark:text-gray-400">
+                                        {{ $contactEmail }}
+                                    </p>
                                 </div>
                             </a>
                         @endforeach
@@ -419,6 +418,11 @@
                 @if ($casesCount)
                     <div class="flex flex-col gap-2.5 border-t border-gray-200 pt-3 dark:border-gray-700">
                         @foreach ($recentCases as $case)
+                            @php
+                                $casePersonName = $case->person
+                                    ? ($case->person->name ?? trim(($case->person->first_name ?? '') . ' ' . ($case->person->last_name ?? '')))
+                                    : null;
+                            @endphp
                             <div class="flex items-start justify-between gap-3 rounded-md p-2 transition hover:bg-gray-50 dark:hover:bg-gray-800" data-case-row="{{ $case->id }}">
                                 <div class="min-w-0 flex-1">
                                     <a
@@ -428,9 +432,9 @@
                                         {{ \Illuminate\Support\Str::limit($case->title, 35) }}
                                     </a>
 
-                                    @if ($case->person)
+                                    @if ($casePersonName)
                                         <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                                            {{ $case->person->name ?? trim(($case->person->first_name ?? '') . ' ' . ($case->person->last_name ?? '')) }}
+                                            {{ $casePersonName }}
                                         </p>
                                     @endif
                                 </div>
@@ -590,4 +594,3 @@
         </div>
     </div>
 </x-admin::layouts>
-
