@@ -3,6 +3,7 @@
 namespace Webkul\Quote\Repositories;
 
 use Illuminate\Container\Container;
+use Illuminate\Support\Facades\Schema;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Product\Repositories\ProductRepository;
 
@@ -35,23 +36,7 @@ class QuoteItemRepository extends Repository
      */
     public function create(array $data)
     {
-        if (! empty($data['product_id'])) {
-            $product = $this->productRepository->findOrFail($data['product_id']);
-
-            $data = array_merge($data, [
-                'sku'       => $data['sku'] ?? $product->sku,
-                'item_code' => $data['item_code'] ?? $product->sku,
-                'name'      => $data['name'] ?? $product->name,
-                'item_name' => $data['item_name'] ?? $product->name,
-            ]);
-        } else {
-            $data = array_merge($data, [
-                'sku'       => $data['sku'] ?? ($data['item_code'] ?? null),
-                'item_code' => $data['item_code'] ?? ($data['sku'] ?? null),
-                'name'      => $data['name'] ?? ($data['item_name'] ?? 'Manual Item'),
-                'item_name' => $data['item_name'] ?? ($data['name'] ?? 'Manual Item'),
-            ]);
-        }
+        $data = $this->prepareItemData($data);
 
         $quoteItem = parent::create($data);
 
@@ -64,6 +49,18 @@ class QuoteItemRepository extends Repository
      * @return \Webkul\Quote\Contracts\QuoteItem
      */
     public function update(array $data, $id, $attribute = 'id')
+    {
+        $data = $this->prepareItemData($data);
+
+        $quoteItem = parent::update($data, $id);
+
+        return $quoteItem;
+    }
+
+    /**
+     * Normalize quote item payload and only keep columns that exist in the current schema.
+     */
+    protected function prepareItemData(array $data): array
     {
         if (! empty($data['product_id'])) {
             $product = $this->productRepository->findOrFail($data['product_id']);
@@ -83,8 +80,45 @@ class QuoteItemRepository extends Repository
             ]);
         }
 
-        $quoteItem = parent::update($data, $id);
+        $quantity = $data['quantity'] ?? $data['qty'] ?? 0;
+        $unitPrice = $data['price'] ?? $data['unit_price'] ?? 0;
+        $lineTotal = $data['total'] ?? $data['line_total'] ?? 0;
+        $lineSubtotal = $data['line_subtotal'] ?? $lineTotal;
 
-        return $quoteItem;
+        $data['quantity'] = $quantity;
+        $data['price'] = $unitPrice;
+        $data['total'] = $lineTotal;
+
+        if (Schema::hasColumn('quote_items', 'qty')) {
+            $data['qty'] = $quantity;
+        } else {
+            unset($data['qty']);
+        }
+
+        if (Schema::hasColumn('quote_items', 'unit_price')) {
+            $data['unit_price'] = $unitPrice;
+        } else {
+            unset($data['unit_price']);
+        }
+
+        if (Schema::hasColumn('quote_items', 'line_subtotal')) {
+            $data['line_subtotal'] = $lineSubtotal;
+        } else {
+            unset($data['line_subtotal']);
+        }
+
+        if (Schema::hasColumn('quote_items', 'line_total')) {
+            $data['line_total'] = $lineTotal;
+        } else {
+            unset($data['line_total']);
+        }
+
+        foreach (['item_code', 'item_name', 'unit', 'sort_order', 'color_variant_id', 'color_variant_name', 'preview_image'] as $column) {
+            if (! Schema::hasColumn('quote_items', $column)) {
+                unset($data[$column]);
+            }
+        }
+
+        return $data;
     }
 }

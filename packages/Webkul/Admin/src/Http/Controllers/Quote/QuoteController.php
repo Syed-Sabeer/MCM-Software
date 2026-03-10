@@ -94,7 +94,9 @@ class QuoteController extends Controller
      */
     public function edit(int $id): View
     {
-        $quote = $this->quoteRepository->findOrFail($id);
+        $quote = $this->quoteRepository
+            ->with(['organization', 'user', 'items'])
+            ->findOrFail($id);
 
         return view('admin::quotes.edit', compact('quote'));
     }
@@ -196,7 +198,9 @@ class QuoteController extends Controller
      */
     public function print($id): Response|StreamedResponse
     {
-        $quote = $this->quoteRepository->findOrFail($id);
+        $quote = $this->quoteRepository
+            ->with(['organization', 'user', 'items'])
+            ->findOrFail($id);
 
         return $this->downloadPDF(
             view('admin::quotes.pdf', compact('quote'))->render(),

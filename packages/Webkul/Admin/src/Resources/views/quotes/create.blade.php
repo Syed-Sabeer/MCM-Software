@@ -131,13 +131,15 @@
 
                     <x-admin::form.control-group class="!mb-0">
                         <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
-                        <input
-                            type="text"
+                        <select
+                            name="status"
                             class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                            value="Approved"
-                            disabled
-                        />
-                        <input type="hidden" name="status" value="approved">
+                        >
+                            @foreach (['draft', 'sent', 'approved', 'rejected', 'expired', 'cancelled'] as $status)
+                                <option value="{{ $status }}" @selected(old('status', 'approved') === $status)>{{ ucfirst($status) }}</option>
+                            @endforeach
+                        </select>
+                        <x-admin::form.control-group.error control-name="status" />
                     </x-admin::form.control-group>
                 </div>
 
@@ -156,14 +158,13 @@
 
         <script type="text/x-template" id="v-quote-item-list-template">
             <div class="flex flex-col gap-4">
-                <div class="block w-full overflow-x-auto">
+                <div class="block w-full overflow-visible">
                     <x-admin::table>
                         <x-admin::table.thead>
                             <x-admin::table.thead.tr>
                                 <x-admin::table.th>@lang('admin::app.quotes.create.product-name')</x-admin::table.th>
                                 <x-admin::table.th class="text-center">Image</x-admin::table.th>
                                 <x-admin::table.th class="text-center">Color Variant</x-admin::table.th>
-                                <x-admin::table.th class="text-center">Item Name</x-admin::table.th>
                                 <x-admin::table.th class="text-center">@lang('admin::app.quotes.create.quantity')</x-admin::table.th>
                                 <x-admin::table.th class="text-center">@lang('admin::app.quotes.create.price')</x-admin::table.th>
                                 <x-admin::table.th class="text-center">@lang('admin::app.quotes.create.amount')</x-admin::table.th>
@@ -204,19 +205,7 @@
                             <p>@{{ taxAmount }}</p>
                         </div>
 
-                        <div class="flex w-full justify-between gap-x-5">
-                            @lang('admin::app.quotes.create.total-adjustment', ['symbol' => core()->currencySymbol(config('app.currency'))])
-                            <x-admin::form.control-group.control
-                                type="inline"
-                                ::name="`adjustment_amount`"
-                                ::value="adjustmentAmount"
-                                rules="required|decimal:4"
-                                ::errors="errors"
-                                :label="trans('admin::app.quotes.create.adjustment-amount')"
-                                :placeholder="trans('admin::app.quotes.create.adjustment-amount')"
-                                @on-change="(event) => adjustmentAmount = event.value"
-                            />
-                        </div>
+                        <input type="hidden" name="adjustment_amount" value="0">
 
                         <div class="flex w-full justify-between gap-x-5">
                             @lang('admin::app.quotes.create.grand-total', ['symbol' => core()->currencySymbol(config('app.currency'))])
@@ -230,17 +219,16 @@
 
         <script type="text/x-template" id="v-quote-item-template">
             <x-admin::table.thead.tr>
-                <x-admin::table.td>
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::lookup
-                            ::src="src"
-                            ::name="`${inputName}[product_id]`"
-                            ::params="params"
-                            :preload="true"
-                            :placeholder="'Search by Item Code'"
+                <x-admin::table.td class="!px-2 align-top overflow-visible">
+                    <div class="relative min-w-[380px]">
+                        <v-quote-product-lookup
+                            :src="src"
+                            :organization-id="organizationId"
+                            :selected-product="product"
                             @on-selected="(product) => addProduct(product)"
-                        />
-                    </x-admin::form.control-group>
+                        ></v-quote-product-lookup>
+                        <input type="hidden" :name="`${inputName}[product_id]`" :value="product.product_id || ''">
+                    </div>
                 </x-admin::table.td>
 
                 <x-admin::table.td class="!px-2">
@@ -251,7 +239,7 @@
 
                 <x-admin::table.td class="!px-2">
                     <x-admin::form.control-group class="!mb-0">
-                        <select class="w-full rounded border border-gray-200 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800" v-model="product.selected_color_id" @change="onColorChange">
+                        <select class="w-full rounded border border-gray-200 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800" v-model="product.selected_color_id" @change="onColorChange($event.target.value)">
                             <option value="">No Color</option>
                             <option v-for="color in (product.available_colors || [])" :key="color.id" :value="String(color.id)">@{{ color.name }}</option>
                         </select>
@@ -260,12 +248,8 @@
                     </x-admin::form.control-group>
                 </x-admin::table.td>
 
-                <x-admin::table.td class="!px-2">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[item_name]`" ::value="product.item_name ?? product.name" ::errors="errors" label="Item Name" placeholder="Item Name" @on-change="(event) => product.item_name = event.value" />
-                    </x-admin::form.control-group>
-                    <input type="hidden" :name="`${inputName}[item_code]`" :value="product.item_code || ''">
-                </x-admin::table.td>
+                <input type="hidden" :name="`${inputName}[item_name]`" :value="product.name || ''">
+                <input type="hidden" :name="`${inputName}[item_code]`" :value="product.item_code || ''">
 
                 <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                     <x-admin::form.control-group class="!mb-0">
@@ -384,12 +368,12 @@
                 data() {
                     return {
                         adjustmentAmount: 0,
-                        products: [{ id: null, product_id: null, name: '', item_name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' }],
+                        products: [{ id: null, product_id: null, name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' }],
                     }
                 },
                 watch: {
                     organizationId() {
-                        this.products = [{ id: null, product_id: null, name: '', item_name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' }];
+                        this.products = [{ id: null, product_id: null, name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' }];
                     }
                 },
                 computed: {
@@ -417,14 +401,25 @@
                     },
                 },
                 methods: {
+                    normalizeColorImages(images) {
+                        if (! images || typeof images !== 'object') {
+                            return {};
+                        }
+
+                        return Object.keys(images).reduce((carry, key) => {
+                            carry[String(key)] = images[key];
+
+                            return carry;
+                        }, {});
+                    },
                     addProduct() {
-                        this.products.push({ id: null, product_id: null, name: '', item_name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' });
+                        this.products.push({ id: null, product_id: null, name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' });
                     },
                     removeProduct(product) {
                         this.$emitter.emit('open-confirm-modal', {
                             agree: () => {
                                 if (this.products.length === 1) {
-                                    this.products = [{ id: null, product_id: null, name: '', item_name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' }];
+                                    this.products = [{ id: null, product_id: null, name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' }];
                                 } else {
                                     const index = this.products.indexOf(product);
                                     if (index !== -1) {
@@ -435,6 +430,184 @@
                         });
                     },
                 },
+            });
+
+            app.component('v-quote-product-lookup', {
+                props: ['src', 'organizationId', 'selectedProduct'],
+                emits: ['on-selected'],
+                data() {
+                    return {
+                        showPopup: false,
+                        searchTerm: '',
+                        results: [],
+                        isSearching: false,
+                        cancelToken: null,
+                    };
+                },
+                computed: {
+                    selectedLabel() {
+                        const itemCode = this.selectedProduct?.item_code || '';
+                        const name = this.selectedProduct?.name || '';
+
+                        if (itemCode && name) {
+                            return `${itemCode} - ${name}`;
+                        }
+
+                        return itemCode || name || '';
+                    },
+                },
+                methods: {
+                    toggle() {
+                        this.showPopup = ! this.showPopup;
+
+                        if (this.showPopup) {
+                            this.$nextTick(() => this.$refs.searchInput.focus());
+                        }
+                    },
+                    clearSelection() {
+                        this.searchTerm = '';
+                        this.results = [];
+
+                        this.$emit('on-selected', {
+                            id: null,
+                            name: '',
+                            sku: '',
+                            internal_code: '',
+                            selling_price: 0,
+                            colors: [],
+                            color_images: {},
+                            cover_image_url: '',
+                        });
+                    },
+                    search() {
+                        if (! this.organizationId || this.searchTerm.trim().length < 1) {
+                            this.results = [];
+                            return;
+                        }
+
+                        if (this.cancelToken) {
+                            this.cancelToken.cancel('Operation canceled due to new request.');
+                        }
+
+                        this.cancelToken = this.$axios.CancelToken.source();
+                        this.isSearching = true;
+
+                        this.$axios.get(this.src, {
+                            params: {
+                                organization_id: this.organizationId,
+                                query: this.searchTerm.trim(),
+                            },
+                            cancelToken: this.cancelToken.token,
+                        }).then((response) => {
+                            const items = response?.data?.data || response?.data || [];
+                            this.results = Array.isArray(items) ? items : [];
+                        }).catch((error) => {
+                            if (! this.$axios.isCancel(error)) {
+                                this.results = [];
+                            }
+                        }).finally(() => {
+                            this.isSearching = false;
+                        });
+                    },
+                    selectProduct(product) {
+                        this.showPopup = false;
+                        this.searchTerm = '';
+                        this.results = [];
+                        this.$emit('on-selected', product);
+                    },
+                    handleFocusOut(event) {
+                        if (this.$refs.lookup && ! this.$refs.lookup.contains(event.target)) {
+                            this.showPopup = false;
+                        }
+                    },
+                    resultLabel(product) {
+                        const itemCode = product?.sku || product?.internal_code || '';
+                        const name = product?.name || '';
+
+                        if (itemCode && name) {
+                            return `${itemCode} - ${name}`;
+                        }
+
+                        return itemCode || name || '';
+                    },
+                },
+                watch: {
+                    organizationId() {
+                        this.showPopup = false;
+                        this.searchTerm = '';
+                        this.results = [];
+                    },
+                    searchTerm() {
+                        this.search();
+                    },
+                },
+                mounted() {
+                    window.addEventListener('click', this.handleFocusOut);
+                },
+                beforeUnmount() {
+                    window.removeEventListener('click', this.handleFocusOut);
+                },
+                template: `
+                    <div class="relative" ref="lookup">
+                        <div class="relative inline-block w-full" @click="toggle">
+                            <div class="relative flex min-h-[42px] cursor-pointer items-center justify-between rounded border border-gray-200 p-2 hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:text-gray-300">
+                                <span class="block max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap" :title="selectedLabel">
+                                    @{{ selectedLabel !== '' ? selectedLabel : 'Search by Product Item Code' }}
+                                </span>
+
+                                <div class="flex items-center gap-2">
+                                    <i
+                                        v-if="selectedLabel"
+                                        class="icon-cross-large cursor-pointer text-xl text-gray-600"
+                                        @click.stop="clearSelection"
+                                    ></i>
+
+                                    <i class="text-2xl text-gray-600" :class="showPopup ? 'icon-up-arrow' : 'icon-down-arrow'"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="showPopup"
+                            class="absolute top-full z-50 mt-1 flex w-full min-w-[380px] origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
+                        >
+                            <div class="relative flex items-center">
+                                <input
+                                    type="text"
+                                    v-model="searchTerm"
+                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                    placeholder="Search by Product Item Code"
+                                    ref="searchInput"
+                                    @click.stop
+                                />
+                            </div>
+
+                            <ul class="max-h-56 divide-y divide-gray-100 overflow-y-auto rounded">
+                                <li
+                                    v-for="item in results"
+                                    :key="item.id"
+                                    class="cursor-pointer px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
+                                    @click="selectProduct(item)"
+                                >
+                                    <div class="font-medium">@{{ resultLabel(item) }}</div>
+                                    <div v-if="item.name && (item.sku || item.internal_code)" class="text-xs text-gray-500">@{{ item.name }}</div>
+                                </li>
+
+                                <li v-if="isSearching" class="px-4 py-2 text-gray-500">
+                                    Searching...
+                                </li>
+
+                                <li v-else-if="searchTerm.trim().length > 0 && ! results.length" class="px-4 py-2 text-gray-500">
+                                    No results
+                                </li>
+
+                                <li v-else class="px-4 py-2 text-gray-500">
+                                    Type product item code to search
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                `,
             });
 
             app.component('v-quote-item', {
@@ -450,41 +623,50 @@
                     src() {
                         return "{{ route('admin.products.search') }}";
                     },
-                    params() {
-                        return {
-                            params: {
-                                organization_id: this.organizationId || '',
-                            },
-                        };
-                    },
                 },
                 methods: {
+                    normalizeColorImages(images) {
+                        if (! images || typeof images !== 'object') {
+                            return {};
+                        }
+
+                        return Object.keys(images).reduce((carry, key) => {
+                            carry[String(key)] = images[key];
+
+                            return carry;
+                        }, {});
+                    },
+                    resolvePreviewImage(colorId) {
+                        const normalizedColorId = colorId ? String(colorId) : '';
+                        const imageMap = this.normalizeColorImages(this.product.color_images || {});
+
+                        if (normalizedColorId && imageMap[normalizedColorId]) {
+                            return imageMap[normalizedColorId];
+                        }
+
+                        return this.product.cover_image_url || '';
+                    },
                     addProduct(result) {
                         this.product.product_id = result.id ?? null;
                         this.product.name = result.name ?? '';
-                        this.product.item_name = result.name ?? '';
                         this.product.item_code = result.sku ?? result.internal_code ?? '';
                         this.product.price = result.selling_price ?? result.price ?? 0;
                         this.product.quantity = 1;
                         this.product.discount_amount = 0;
                         this.product.tax_amount = 0;
                         this.product.available_colors = Array.isArray(result.colors) ? result.colors : [];
-                        this.product.color_images = result.color_images || {};
+                        this.product.color_images = this.normalizeColorImages(result.color_images || {});
                         this.product.cover_image_url = result.cover_image_url || '';
                         this.product.selected_color_id = '';
                         this.product.selected_color_name = '';
                         this.product.preview_image = result.cover_image_url || '';
                     },
-                    onColorChange() {
+                    onColorChange(selectedValue) {
+                        this.product.selected_color_id = selectedValue ? String(selectedValue) : '';
+
                         const selected = (this.product.available_colors || []).find(color => String(color.id) === String(this.product.selected_color_id));
                         this.product.selected_color_name = selected ? selected.name : '';
-
-                        if (this.product.selected_color_id && this.product.color_images && this.product.color_images[String(this.product.selected_color_id)]) {
-                            this.product.preview_image = this.product.color_images[String(this.product.selected_color_id)];
-                            return;
-                        }
-
-                        this.product.preview_image = this.product.cover_image_url || '';
+                        this.product.preview_image = this.resolvePreviewImage(this.product.selected_color_id);
                     },
                     removeProduct() {
                         this.$emit('onRemoveProduct', this.product);

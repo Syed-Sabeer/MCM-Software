@@ -3,6 +3,12 @@
         @lang('admin::app.contacts.organizations.view.title', ['name' => $organization->name])
     </x-slot>
 
+    @php
+        $contactsQuery = $organization->persons()->latest();
+        $contactsCount = $contactsQuery->count();
+        $recentContacts = $contactsQuery->take(3)->get();
+    @endphp
+
     <script>
         window.handleCaseDelete = function(e, btn) {
             e.preventDefault();
@@ -300,12 +306,6 @@
             </div>
 
             <!-- Contacts card -->
-            @php
-                $contactsQuery = $organization->persons()->latest();
-                $contactsCount = $contactsQuery->count();
-                $recentContacts = $contactsQuery->take(3)->get();
-            @endphp
-
             <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex items-center justify-between gap-2">
                     <p class="text-base font-bold text-gray-900 dark:text-white">
@@ -482,7 +482,7 @@
             </div>
 
             <!-- Files card -->
-            {{-- @php
+            @php
                 $filesQuery = \Webkul\Activity\Models\Activity::query()
                     ->where('type', 'file')
                     ->where('entity_type', 'organizations')
@@ -586,203 +586,8 @@
                         No files yet. Upload proposals, contracts, and documents here.
                     </p>
                 @endif
-            </div> --}}
+            </div>
         </div>
     </div>
 </x-admin::layouts>
 
-@pushOnce('scripts')
-    <script type="text/x-template" id="v-organization-files-template">
-        <div>
-            <button
-                type="button"
-                class="text-xs font-semibold text-brandColor hover:underline"
-                @click="emitOpen"
-            >
-                Upload Files
-            </button>
-
-            <Teleport to="body">
-                <x-admin::form
-                    v-slot="{ handleSubmit }"
-                    as="div"
-                >
-                    <form @submit="handleSubmit($event, save)">
-                        <x-admin::modal
-                            ref="filesModal"
-                            position="bottom-right"
-                        >
-                            <x-slot:header>
-                                <h3 class="text-base font-semibold dark:text-white">
-                                    Files
-                                </h3>
-                            </x-slot>
-
-                            <x-slot:content>
-                                <div class="flex flex-col gap-4">
-                                    <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label>
-                                            Title
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.control
-                                            type="text"
-                                            name="title"
-                                            v-model="form.title"
-                                        />
-                                    </x-admin::form.control-group>
-
-                                    <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label>
-                                            Description
-                                        </x-admin::form.control-group.label>
-
-                                        <x-admin::form.control-group.control
-                                            type="textarea"
-                                            name="description"
-                                            v-model="form.description"
-                                        />
-                                    </x-admin::form.control-group>
-
-                                    <x-admin::form.control-group>
-                                        <x-admin::form.control-group.label class="required">
-                                            File
-                                        </x-admin::form.control-group.label>
-
-                                        <input
-                                            type="file"
-                                            name="files[]"
-                                            multiple
-                                            class="w-full text-sm text-gray-600 dark:text-gray-300"
-                                            @change="handleFilesChange"
-                                        >
-                                    </x-admin::form.control-group>
-                                </div>
-                            </x-slot>
-
-                            <x-slot:footer>
-                                <x-admin::button
-                                    class="primary-button"
-                                    title="Upload"
-                                    ::loading="isUploading"
-                                    ::disabled="isUploading"
-                                />
-                            </x-slot>
-                        </x-admin::modal>
-                    </form>
-                </x-admin::form>
-            </Teleport>
-        </div>
-    </script>
-
-    <script type="module">
-        app.component('v-organization-files', {
-            template: '#v-organization-files-template',
-
-            props: {
-                organizationId: {
-                    type: Number,
-                    required: true,
-                },
-
-                uploadUrl: {
-                    type: String,
-                    required: true,
-                },
-            },
-
-            data() {
-                return {
-                    isUploading: false,
-                    form: {
-                        title: '',
-                        description: '',
-                        files: [],
-                    },
-                };
-            },
-
-            methods: {
-                emitOpen() {
-                    window.dispatchEvent(new Event('open-organization-files'));
-                },
-
-                openModal() {
-                    if (this.$refs.filesModal && typeof this.$refs.filesModal.open === 'function') {
-                        this.$refs.filesModal.open();
-                        return;
-                    }
-
-                    this.$nextTick(() => {
-                        if (this.$refs.filesModal && typeof this.$refs.filesModal.open === 'function') {
-                            this.$refs.filesModal.open();
-                        }
-                    });
-                },
-
-                handleFilesChange(event) {
-                    this.form.files = Array.from(event.target.files || []);
-                },
-
-                async save(params, { setErrors }) {
-                    if (! this.form.files.length) {
-                        setErrors({ 'files': ['Please select at least one file.'] });
-
-                        return;
-                    }
-
-                    this.isUploading = true;
-
-                    const formData = new FormData();
-
-                    if (this.form.title) {
-                        formData.append('title', this.form.title);
-                    }
-
-                    if (this.form.description) {
-                        formData.append('description', this.form.description);
-                    }
-
-                    this.form.files.forEach((file) => {
-                        formData.append('files[]', file);
-                    });
-
-                    try {
-                        await this.$axios.post(this.uploadUrl, formData, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data',
-                            },
-                        });
-
-                        this.$emitter.emit('add-flash', {
-                            type: 'success',
-                            message: '{{ trans('admin::app.contacts.organizations.view.files-uploaded') }}',
-                        });
-
-                        window.location.reload();
-                    } catch (error) {
-                        if (error.response && error.response.status === 422) {
-                            setErrors(error.response.data.errors);
-                        } else {
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: error.response?.data?.message || 'Upload failed.',
-                            });
-                        }
-                    } finally {
-                        this.isUploading = false;
-                        this.$refs.filesModal.close();
-                    }
-                },
-            },
-            mounted() {
-                this._openFilesListener = () => this.openModal();
-                window.addEventListener('open-organization-files', this._openFilesListener);
-            },
-
-            beforeUnmount() {
-                window.removeEventListener('open-organization-files', this._openFilesListener);
-            },
-        });
-    </script>
-@endPushOnce
