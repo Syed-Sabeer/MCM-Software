@@ -60,7 +60,7 @@ return [
     ], [
         'key'        => 'erp_operations.requirement_sheets',
         'name'       => 'Requirement Sheets',
-        'route'      => 'admin.job_orders.index',
+        'route'      => 'admin.requirements.index',
         'sort'       => 2,
         'icon-class' => '',
     ], [

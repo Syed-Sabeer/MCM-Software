@@ -36,9 +36,17 @@ class VendorQuoteController extends Controller
     {
         $jobOrder = null;
         $nextVendorQuoteNumber = VendorQuote::generateNextNumber();
+        $selectedRequirementIds = collect((array) request('requirement_ids'))->filter()->map(fn ($id) => (int) $id)->all();
 
         if (request()->filled('job_order_id')) {
             $jobOrder = $this->jobOrderRepository->with(['requirements', 'organization'])->findOrFail(request('job_order_id'));
+
+            if ($selectedRequirementIds) {
+                $jobOrder->setRelation(
+                    'requirements',
+                    $jobOrder->requirements->whereIn('id', $selectedRequirementIds)->values()
+                );
+            }
         }
 
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)

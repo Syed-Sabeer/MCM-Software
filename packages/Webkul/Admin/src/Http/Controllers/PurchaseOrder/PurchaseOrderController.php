@@ -44,6 +44,7 @@ class PurchaseOrderController extends Controller
         $nextPoNumber = PurchaseOrder::generateNextPoNumber();
         $vendorQuote = null;
         $jobOrder = null;
+        $selectedRequirementIds = collect((array) request('requirement_ids'))->filter()->map(fn ($id) => (int) $id)->all();
 
         if (request()->filled('vendor_quote_id')) {
             $vendorQuote = $this->vendorQuoteRepository->with(['items', 'organization', 'jobOrder'])->findOrFail(request('vendor_quote_id'));
@@ -51,6 +52,13 @@ class PurchaseOrderController extends Controller
 
         if (request()->filled('job_order_id')) {
             $jobOrder = $this->jobOrderRepository->with(['requirements', 'organization'])->findOrFail(request('job_order_id'));
+
+            if ($selectedRequirementIds) {
+                $jobOrder->setRelation(
+                    'requirements',
+                    $jobOrder->requirements->whereIn('id', $selectedRequirementIds)->values()
+                );
+            }
         }
 
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)

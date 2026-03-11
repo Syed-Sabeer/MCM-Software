@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class VendorQuoteRequest extends FormRequest
@@ -16,7 +17,16 @@ class VendorQuoteRequest extends FormRequest
     {
         return [
             'job_order_id' => ['nullable', 'exists:job_orders,id'],
-            'organization_id' => ['required', 'exists:organizations,id'],
+            'organization_id' => [
+                'required',
+                'exists:organizations,id',
+                function ($attribute, $value, $fail) {
+                    $type = DB::table('organizations')->where('id', $value)->value('type');
+                    if (! in_array($type, ['vendor', 'Vendor'], true)) {
+                        $fail('Selected organization must be a vendor.');
+                    }
+                },
+            ],
             'person_id' => ['nullable', 'exists:persons,id'],
             'issue_date' => ['required', 'date'],
             'expected_response_date' => ['nullable', 'date'],

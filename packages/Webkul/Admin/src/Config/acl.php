@@ -97,6 +97,11 @@ return [
         'route' => ['admin.job_orders.delete', 'admin.job_orders.mass_delete'],
         'sort'  => 3,
     ], [
+        'key'   => 'requirements',
+        'name'  => 'Requirement Sheets',
+        'route' => 'admin.requirements.index',
+        'sort'  => 4,
+    ], [
         'key'   => 'vendor_quotes',
         'name'  => 'Vendor Quotes',
         'route' => 'admin.vendor_quotes.index',
