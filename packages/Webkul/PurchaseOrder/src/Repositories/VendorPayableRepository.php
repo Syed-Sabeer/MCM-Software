@@ -14,6 +14,11 @@ class VendorPayableRepository extends Repository
         return VendorPayable::class;
     }
 
+    public function deleteByReceipt(int $goodsReceiptId): void
+    {
+        $this->model->where('goods_receipt_id', $goodsReceiptId)->delete();
+    }
+
     public function createFromReceipt(GoodsReceipt $goodsReceipt, PurchaseOrder $purchaseOrder): VendorPayable
     {
         $amount = (float) $goodsReceipt->items->sum('line_total');

@@ -193,7 +193,7 @@ class PurchaseOrderRepository extends Repository
         /** @var PurchaseOrder $purchaseOrder */
         $purchaseOrder = $this->with('items')->findOrFail($purchaseOrderId);
 
-        if ($purchaseOrder->status === 'cancelled') {
+        if (in_array($purchaseOrder->status, ['cancelled', 'closed'], true)) {
             return;
         }
 
@@ -212,8 +212,8 @@ class PurchaseOrderRepository extends Repository
 
         parent::update([
             'status' => $status,
-            'closed_at' => $status === 'closed' ? now() : null,
-            'closed_by' => $status === 'closed' ? auth()->id() : null,
+            'closed_at' => null,
+            'closed_by' => null,
         ], $purchaseOrderId);
     }
 }

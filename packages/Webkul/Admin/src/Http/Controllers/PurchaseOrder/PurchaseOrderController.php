@@ -83,6 +83,7 @@ class PurchaseOrderController extends Controller
         if ($request->filled('vendor_quote_id')) {
             $vendorQuote = $this->vendorQuoteRepository->with('items', 'jobOrder')->findOrFail($request->input('vendor_quote_id'));
             $purchaseOrder = $this->purchaseOrderRepository->createFromVendorQuote($vendorQuote, $payload);
+            $this->vendorQuoteRepository->update(['status' => 'selected'], $vendorQuote->id);
         } elseif ($request->filled('job_order_id') && ! $request->filled('organization_id')) {
             $jobOrder = $this->jobOrderRepository->with('requirements')->findOrFail($request->input('job_order_id'));
             $purchaseOrder = $this->purchaseOrderRepository->createFromJobOrder($jobOrder, $payload);

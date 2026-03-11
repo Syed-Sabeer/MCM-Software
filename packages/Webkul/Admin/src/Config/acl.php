@@ -134,8 +134,13 @@ return [
     ], [
         'key'   => 'goods_receipts.edit',
         'name'  => 'admin::app.acl.edit',
-        'route' => ['admin.goods_receipts.view'],
+        'route' => ['admin.goods_receipts.view', 'admin.goods_receipts.edit', 'admin.goods_receipts.update'],
         'sort'  => 2,
+    ], [
+        'key'   => 'goods_receipts.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.goods_receipts.delete'],
+        'sort'  => 3,
     ], [
         'key'   => 'purchase_orders',
         'name'  => 'admin::app.acl.purchase-orders',
