@@ -6,29 +6,30 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Admin\DataGrids\PurchaseOrder\PurchaseOrderDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
+use Webkul\Admin\Http\Requests\PurchaseOrderRequest;
 use Webkul\Core\Traits\PDFHandler;
+use Webkul\PurchaseOrder\Models\PurchaseOrder;
+use Webkul\PurchaseOrder\Repositories\JobOrderRepository;
 use Webkul\PurchaseOrder\Repositories\PurchaseOrderRepository;
+use Webkul\PurchaseOrder\Repositories\VendorQuoteRepository;
 
 class PurchaseOrderController extends Controller
 {
     use PDFHandler;
 
-    /**
-     * Create a new controller instance.
-     */
     public function __construct(
-        protected PurchaseOrderRepository $purchaseOrderRepository
+        protected PurchaseOrderRepository $purchaseOrderRepository,
+        protected VendorQuoteRepository $vendorQuoteRepository,
+        protected JobOrderRepository $jobOrderRepository
     ) {
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index(): View|JsonResponse
     {
         if (request()->ajax()) {
@@ -38,124 +39,125 @@ class PurchaseOrderController extends Controller
         return view('admin::purchase-orders.index');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(): View
     {
-        $nextPoNumber = \Webkul\PurchaseOrder\Models\PurchaseOrder::generateNextPoNumber();
+        $nextPoNumber = PurchaseOrder::generateNextPoNumber();
+        $vendorQuote = null;
+        $jobOrder = null;
 
-        return view('admin::purchase-orders.create', compact('nextPoNumber'));
+        if (request()->filled('vendor_quote_id')) {
+            $vendorQuote = $this->vendorQuoteRepository->with(['items', 'organization', 'jobOrder'])->findOrFail(request('vendor_quote_id'));
+        }
+
+        if (request()->filled('job_order_id')) {
+            $jobOrder = $this->jobOrderRepository->with(['requirements', 'organization'])->findOrFail(request('job_order_id'));
+        }
+
+        $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
+            ->whereIn('type', ['vendor', 'Vendor'])
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('admin::purchase-orders.create', compact('nextPoNumber', 'vendorQuote', 'jobOrder', 'vendors'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(): RedirectResponse
+    public function store(PurchaseOrderRequest $request): RedirectResponse
     {
-        $this->validate(request(), [
-            'po_number'   => 'required|unique:purchase_orders,po_number',
-            'job_number'  => 'nullable|string|max:255',
-        ]);
-
         Event::dispatch('purchase_order.create.before');
 
-        $purchaseOrder = $this->purchaseOrderRepository->create(request()->all());
+        $payload = $request->validated();
+        $payload['user_id'] = auth()->id();
+
+        if ($request->hasFile('attachment')) {
+            $payload['attachment_path'] = $request->file('attachment')->store('purchase-orders', 'public');
+        }
+
+        if ($request->filled('vendor_quote_id')) {
+            $vendorQuote = $this->vendorQuoteRepository->with('items', 'jobOrder')->findOrFail($request->input('vendor_quote_id'));
+            $purchaseOrder = $this->purchaseOrderRepository->createFromVendorQuote($vendorQuote, $payload);
+        } elseif ($request->filled('job_order_id') && ! $request->filled('organization_id')) {
+            $jobOrder = $this->jobOrderRepository->with('requirements')->findOrFail($request->input('job_order_id'));
+            $purchaseOrder = $this->purchaseOrderRepository->createFromJobOrder($jobOrder, $payload);
+        } else {
+            $purchaseOrder = $this->purchaseOrderRepository->create($payload);
+        }
 
         Event::dispatch('purchase_order.create.after', $purchaseOrder);
 
-        session()->flash('success', trans('admin::app.purchase-orders.index.create-success'));
+        session()->flash('success', 'Purchase order created successfully.');
 
-        return redirect()->route('admin.purchase_orders.index');
+        return redirect()->route('admin.purchase_orders.view', $purchaseOrder->id);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    public function view(int $id): View
+    {
+        $purchaseOrder = $this->purchaseOrderRepository->with(['items.requirement', 'organization', 'person', 'user', 'jobOrder', 'vendorQuote', 'receipts.items', 'payables'])->findOrFail($id);
+
+        return view('admin::purchase-orders.view', compact('purchaseOrder'));
+    }
+
     public function edit(int $id): View
     {
-        $purchaseOrder = $this->purchaseOrderRepository->with('items')->findOrFail($id);
+        $purchaseOrder = $this->purchaseOrderRepository->with(['items', 'organization', 'jobOrder', 'vendorQuote'])->findOrFail($id);
+        $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
+            ->whereIn('type', ['vendor', 'Vendor'])
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        return view('admin::purchase-orders.edit', compact('purchaseOrder'));
+        return view('admin::purchase-orders.edit', compact('purchaseOrder', 'vendors'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(int $id): RedirectResponse
+    public function update(PurchaseOrderRequest $request, int $id): RedirectResponse
     {
-        $this->validate(request(), [
-            'po_number'   => 'required|unique:purchase_orders,po_number,' . $id,
-            'job_number'  => 'nullable|string|max:255',
-        ]);
-
         Event::dispatch('purchase_order.update.before', $id);
 
-        $purchaseOrder = $this->purchaseOrderRepository->update(request()->all(), $id);
+        $existing = $this->purchaseOrderRepository->findOrFail($id);
+        $payload = $request->validated();
+
+        if ($request->hasFile('attachment')) {
+            if ($existing->attachment_path) {
+                Storage::disk('public')->delete($existing->attachment_path);
+            }
+
+            $payload['attachment_path'] = $request->file('attachment')->store('purchase-orders', 'public');
+        } else {
+            $payload['attachment_path'] = $existing->attachment_path;
+        }
+
+        $purchaseOrder = $this->purchaseOrderRepository->update($payload, $id);
 
         Event::dispatch('purchase_order.update.after', $purchaseOrder);
 
-        session()->flash('success', trans('admin::app.purchase-orders.index.update-success'));
+        session()->flash('success', 'Purchase order updated successfully.');
 
-        return redirect()->route('admin.purchase_orders.index');
+        return redirect()->route('admin.purchase_orders.view', $id);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(int $id): JsonResponse
     {
-        $this->purchaseOrderRepository->findOrFail($id);
-
         try {
             Event::dispatch('purchase_order.delete.before', $id);
-
             $this->purchaseOrderRepository->delete($id);
-
             Event::dispatch('purchase_order.delete.after', $id);
 
-            return response()->json([
-                'message' => trans('admin::app.purchase-orders.index.delete-success'),
-            ], 200);
+            return response()->json(['message' => 'Purchase order deleted successfully.']);
         } catch (\Exception $exception) {
-            return response()->json([
-                'message' => trans('admin::app.purchase-orders.index.delete-failed'),
-            ], 400);
+            return response()->json(['message' => 'Purchase order cannot be deleted.'], 400);
         }
     }
 
-    /**
-     * Mass Delete the specified resources.
-     */
     public function massDestroy(MassDestroyRequest $massDestroyRequest): JsonResponse
     {
-        $purchaseOrders = $this->purchaseOrderRepository->findWhereIn('id', $massDestroyRequest->input('indices'));
-
-        try {
-            foreach ($purchaseOrders as $purchaseOrder) {
-                Event::dispatch('purchase_order.delete.before', $purchaseOrder->id);
-
-                $this->purchaseOrderRepository->delete($purchaseOrder->id);
-
-                Event::dispatch('purchase_order.delete.after', $purchaseOrder->id);
-            }
-
-            return response()->json([
-                'message' => trans('admin::app.purchase-orders.index.delete-success'),
-            ]);
-        } catch (\Exception $exception) {
-            return response()->json([
-                'message' => trans('admin::app.purchase-orders.index.delete-failed'),
-            ], 400);
+        foreach ($massDestroyRequest->input('indices') as $id) {
+            $this->purchaseOrderRepository->delete($id);
         }
+
+        return response()->json(['message' => 'Purchase orders deleted successfully.']);
     }
 
-    /**
-     * Print and download the PDF for the specified resource.
-     */
     public function print(int $id): Response|StreamedResponse
     {
-        $purchaseOrder = $this->purchaseOrderRepository->with('items')->findOrFail($id);
+        $purchaseOrder = $this->purchaseOrderRepository->with(['items', 'organization', 'jobOrder', 'vendorQuote'])->findOrFail($id);
 
         return $this->downloadPDF(
             view('admin::purchase-orders.pdf', compact('purchaseOrder'))->render(),

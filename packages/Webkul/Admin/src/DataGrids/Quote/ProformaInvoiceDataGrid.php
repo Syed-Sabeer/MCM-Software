@@ -146,6 +146,16 @@ class ProformaInvoiceDataGrid extends DataGrid
             ]);
         }
 
+        if (bouncer()->hasPermission('job_orders.create')) {
+            $this->addAction([
+                'index'  => 'create_job_order',
+                'icon'   => 'icon-note',
+                'title'  => 'Create Job Order',
+                'method' => 'GET',
+                'url'    => fn ($row) => route('admin.job_orders.create', ['proforma_invoice_id' => $row->id]),
+            ]);
+        }
+
         if (bouncer()->hasPermission('proforma_invoices.delete')) {
             $this->addAction([
                 'index'  => 'delete',

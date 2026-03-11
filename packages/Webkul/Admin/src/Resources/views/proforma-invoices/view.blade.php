@@ -13,6 +13,7 @@
 
                 <div class="flex gap-2">
                     <a href="{{ route('admin.proforma_invoices.print', $proformaInvoice->id) }}" class="secondary-button">Print</a>
+                    <a href="{{ route('admin.job_orders.create', ['proforma_invoice_id' => $proformaInvoice->id]) }}" class="secondary-button">Create Job Order</a>
                     <a href="{{ route('admin.proforma_invoices.edit', $proformaInvoice->id) }}" class="primary-button">Edit</a>
                 </div>
             </div>

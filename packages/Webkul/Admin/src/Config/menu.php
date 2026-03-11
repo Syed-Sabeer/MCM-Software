@@ -45,15 +45,42 @@ return [
         'icon-class' => 'icon-quote',
     ],
 
-    /**
-     * Purchase Orders.
-     */
     [
-        'key'        => 'purchase_orders',
-        'name'       => 'admin::app.layouts.purchase-orders',
-        'route'      => 'admin.purchase_orders.index',
+        'key'        => 'erp_operations',
+        'name'       => 'ERP Operations',
+        'route'      => 'admin.job_orders.index',
         'sort'       => 5,
-        'icon-class' => 'icon-quote',
+        'icon-class' => 'icon-activity',
+    ], [
+        'key'        => 'erp_operations.job_orders',
+        'name'       => 'Job Orders',
+        'route'      => 'admin.job_orders.index',
+        'sort'       => 1,
+        'icon-class' => '',
+    ], [
+        'key'        => 'erp_operations.requirement_sheets',
+        'name'       => 'Requirement Sheets',
+        'route'      => 'admin.job_orders.index',
+        'sort'       => 2,
+        'icon-class' => '',
+    ], [
+        'key'        => 'erp_operations.vendor_quotes',
+        'name'       => 'Vendor Quotes / RFQs',
+        'route'      => 'admin.vendor_quotes.index',
+        'sort'       => 3,
+        'icon-class' => '',
+    ], [
+        'key'        => 'erp_operations.purchase_orders',
+        'name'       => 'Vendor Purchase Orders',
+        'route'      => 'admin.purchase_orders.index',
+        'sort'       => 4,
+        'icon-class' => '',
+    ], [
+        'key'        => 'erp_operations.goods_receipts',
+        'name'       => 'Goods Receipts',
+        'route'      => 'admin.goods_receipts.index',
+        'sort'       => 5,
+        'icon-class' => '',
     ],
 
     /**

@@ -51,6 +51,21 @@ require 'proforma-invoice-routes.php';
 require 'purchase-order-routes.php';
 
 /**
+ * Job Orders routes.
+ */
+require 'job-order-routes.php';
+
+/**
+ * Vendor Quotes routes.
+ */
+require 'vendor-quote-routes.php';
+
+/**
+ * Goods Receipts routes.
+ */
+require 'goods-receipt-routes.php';
+
+/**
  * Configuration routes.
  */
 require 'configuration-routes.php';

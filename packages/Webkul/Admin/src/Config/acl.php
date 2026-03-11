@@ -77,6 +77,61 @@ return [
         'route' => ['admin.proforma_invoices.delete', 'admin.proforma_invoices.mass_delete'],
         'sort'  => 3,
     ], [
+        'key'   => 'job_orders',
+        'name'  => 'Job Orders',
+        'route' => 'admin.job_orders.index',
+        'sort'  => 4,
+    ], [
+        'key'   => 'job_orders.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.job_orders.create', 'admin.job_orders.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'job_orders.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.job_orders.edit', 'admin.job_orders.update', 'admin.job_orders.view'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'job_orders.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.job_orders.delete', 'admin.job_orders.mass_delete'],
+        'sort'  => 3,
+    ], [
+        'key'   => 'vendor_quotes',
+        'name'  => 'Vendor Quotes',
+        'route' => 'admin.vendor_quotes.index',
+        'sort'  => 4,
+    ], [
+        'key'   => 'vendor_quotes.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.vendor_quotes.create', 'admin.vendor_quotes.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'vendor_quotes.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.vendor_quotes.edit', 'admin.vendor_quotes.update', 'admin.vendor_quotes.view'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'vendor_quotes.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.vendor_quotes.delete', 'admin.vendor_quotes.mass_delete'],
+        'sort'  => 3,
+    ], [
+        'key'   => 'goods_receipts',
+        'name'  => 'Goods Receipts',
+        'route' => 'admin.goods_receipts.index',
+        'sort'  => 4,
+    ], [
+        'key'   => 'goods_receipts.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.goods_receipts.create', 'admin.goods_receipts.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'goods_receipts.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.goods_receipts.view'],
+        'sort'  => 2,
+    ], [
         'key'   => 'purchase_orders',
         'name'  => 'admin::app.acl.purchase-orders',
         'route' => 'admin.purchase_orders.index',
