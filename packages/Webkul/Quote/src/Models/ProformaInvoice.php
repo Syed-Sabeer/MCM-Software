@@ -34,6 +34,7 @@ class ProformaInvoice extends Model implements ProformaInvoiceContract
         'status',
         'notes',
         'terms',
+        'payment_term',
         'customer_po_reference',
         'source_type',
         'converted_to_invoice_id',

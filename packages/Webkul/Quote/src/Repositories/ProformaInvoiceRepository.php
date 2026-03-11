@@ -68,6 +68,9 @@ class ProformaInvoiceRepository extends Repository
         $items = $quote->items->map(function ($item) {
             return [
                 'product_id'        => $item->product_id,
+                'color_variant_id'  => $item->color_variant_id,
+                'color_variant_name'=> $item->color_variant_name,
+                'preview_image'     => $item->preview_image,
                 'item_name'         => $item->item_name ?: $item->name,
                 'item_code'         => $item->item_code ?: $item->sku,
                 'description'       => $item->description,
@@ -95,6 +98,7 @@ class ProformaInvoiceRepository extends Repository
             'adjustment_amount'    => $quote->adjustment_amount,
             'notes'                => $quote->notes,
             'terms'                => $quote->terms,
+            'payment_term'         => null,
             'attachment_path'      => $quote->attachment_path,
             'source_type'          => 'quote',
             'status'               => 'draft',
@@ -256,6 +260,9 @@ class ProformaInvoiceRepository extends Repository
             $payload = [
                 'proforma_invoice_id' => $proformaInvoiceId,
                 'product_id'          => $item['product_id'] ?? null,
+                'color_variant_id'    => $item['color_variant_id'] ?? null,
+                'color_variant_name'  => $item['color_variant_name'] ?? null,
+                'preview_image'       => $item['preview_image'] ?? null,
                 'item_name'           => $item['item_name'] ?? '',
                 'item_code'           => $item['item_code'] ?? null,
                 'description'         => $item['description'] ?? null,

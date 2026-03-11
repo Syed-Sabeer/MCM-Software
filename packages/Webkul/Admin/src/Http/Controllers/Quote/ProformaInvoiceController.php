@@ -4,21 +4,26 @@ namespace Webkul\Admin\Http\Controllers\Quote;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Admin\DataGrids\Quote\ProformaInvoiceDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\ProformaInvoiceRequest;
 use Webkul\Admin\Http\Requests\ProformaReceiptRequest;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
+use Webkul\Core\Traits\PDFHandler;
 use Webkul\Quote\Models\ProformaInvoice;
 use Webkul\Quote\Repositories\ProformaInvoiceRepository;
 use Webkul\Quote\Repositories\QuoteRepository;
 
 class ProformaInvoiceController extends Controller
 {
+    use PDFHandler;
+
     public function __construct(
         protected ProformaInvoiceRepository $proformaInvoiceRepository,
         protected QuoteRepository $quoteRepository
@@ -78,6 +83,18 @@ class ProformaInvoiceController extends Controller
         $proformaInvoice = $this->proformaInvoiceRepository->with(['items', 'receipts.receivedBy', 'organization', 'person', 'quote', 'salesOwner'])->findOrFail($id);
 
         return view('admin::proforma-invoices.view', compact('proformaInvoice'));
+    }
+
+    public function print(int $id): Response|StreamedResponse
+    {
+        $proformaInvoice = $this->proformaInvoiceRepository
+            ->with(['organization', 'salesOwner', 'quote', 'items'])
+            ->findOrFail($id);
+
+        return $this->downloadPDF(
+            view('admin::proforma-invoices.pdf', compact('proformaInvoice'))->render(),
+            'Proforma_' . ($proformaInvoice->proforma_number ?: $proformaInvoice->id) . '_' . $proformaInvoice->created_at->format('d-m-Y')
+        );
     }
 
     public function update(ProformaInvoiceRequest $request, int $id): RedirectResponse
@@ -195,6 +212,7 @@ class ProformaInvoiceController extends Controller
     {
         $payload = $request->validated();
 
+        $payload['person_id'] = $payload['person_id'] ?: null;
         $payload['sales_owner_id'] = $payload['sales_owner_id'] ?? auth()->id();
         $payload['created_by'] = $existing?->created_by ?? auth()->id();
 

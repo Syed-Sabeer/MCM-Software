@@ -11,6 +11,9 @@ class ProformaInvoiceItem extends Model implements ProformaInvoiceItemContract
     protected $fillable = [
         'proforma_invoice_id',
         'product_id',
+        'color_variant_id',
+        'color_variant_name',
+        'preview_image',
         'item_name',
         'item_code',
         'description',

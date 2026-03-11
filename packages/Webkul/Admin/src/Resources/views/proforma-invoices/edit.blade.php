@@ -1,95 +1,164 @@
 @php
-    $quotes = \Webkul\Quote\Models\Quote::query()
+    use Webkul\Product\Models\Product;
+
+    $quoteModels = \Webkul\Quote\Models\Quote::query()
         ->with(['items', 'organization', 'person', 'user'])
+        ->get();
+
+    $productIds = collect($initialItems ?? [])->pluck('product_id')->filter()->map(fn ($id) => (int) $id)->unique();
+    $quoteProductIds = $quoteModels->pluck('items')->flatten()->pluck('product_id')->filter()->map(fn ($id) => (int) $id)->unique();
+    $productIds = $productIds->merge($quoteProductIds)->unique()->values();
+
+    $productPayload = Product::query()
+        ->with(['colors', 'otherImages'])
+        ->whereIn('id', $productIds)
         ->get()
-        ->map(fn ($quoteRow) => [
+        ->mapWithKeys(function ($product) {
+            $coverImageUrl = $product->cover_image ? secure_url('public/storage/'.$product->cover_image) : null;
+            $colorImages = [];
+
+            foreach ($product->otherImages as $image) {
+                if (! $image->color_id || empty($image->path)) {
+                    continue;
+                }
+
+                $colorImages[(string) $image->color_id] = secure_url('public/storage/'.$image->path);
+            }
+
+            return [
+                $product->id => [
+                    'cover_image_url' => $coverImageUrl,
+                    'colors'          => $product->colors->map(fn ($color) => [
+                        'id'         => $color->id,
+                        'name'       => $color->name,
+                        'color_code' => $color->color_code,
+                    ])->values()->toArray(),
+                    'color_images'    => $colorImages,
+                ],
+            ];
+        });
+
+    $quotes = $quoteModels->map(function ($quoteRow) use ($productPayload) {
+        return [
             'id' => $quoteRow->id,
             'quote_number' => $quoteRow->quote_number,
-            'subject' => $quoteRow->subject,
+            'quote_number_display' => 'Q' . ltrim((string) $quoteRow->quote_number, 'Q'),
             'organization_id' => $quoteRow->organization_id,
             'organization_name' => optional($quoteRow->organization)->name,
             'person_id' => $quoteRow->person_id,
-            'person_name' => optional($quoteRow->person)->name,
             'sales_owner_id' => $quoteRow->user_id,
             'sales_owner_name' => optional($quoteRow->user)->name,
-            'due_date' => optional($quoteRow->expired_at)->format('Y-m-d'),
-            'adjustment_amount' => $quoteRow->adjustment_amount,
+            'adjustment_amount' => (float) ($quoteRow->adjustment_amount ?? 0),
             'notes' => $quoteRow->notes,
             'terms' => $quoteRow->terms,
             'billing_address' => $quoteRow->billing_address ?: ['address' => ''],
             'shipping_address' => $quoteRow->shipping_address ?: ['address' => ''],
-            'items' => $quoteRow->items->map(fn ($item) => [
-                'id' => null,
-                'product_id' => $item->product_id,
-                'item_name' => $item->item_name ?: $item->name,
-                'item_code' => $item->item_code ?: $item->sku,
-                'description' => $item->description,
-                'qty' => $item->qty ?: $item->quantity,
-                'unit' => $item->unit,
-                'unit_price' => $item->unit_price ?: $item->price,
-                'discount_amount' => $item->discount_amount ?: 0,
-                'tax_amount' => $item->tax_amount ?: 0,
-            ])->values()->all(),
-        ])
-        ->values();
+            'items' => $quoteRow->items->map(function ($item) use ($productPayload) {
+                $productMeta = $productPayload->get((int) ($item->product_id ?? 0), [
+                    'cover_image_url' => null,
+                    'colors'          => [],
+                    'color_images'    => [],
+                ]);
+                $selectedColorId = (string) ($item->color_variant_id ?? '');
+                $previewImage = $item->preview_image;
+                if (! $previewImage && $selectedColorId && isset($productMeta['color_images'][$selectedColorId])) {
+                    $previewImage = $productMeta['color_images'][$selectedColorId];
+                }
+                if (! $previewImage) {
+                    $previewImage = $productMeta['cover_image_url'] ?? null;
+                }
+                return [
+                    'id'                  => null,
+                    'product_id'          => $item->product_id,
+                    'name'                => $item->item_name ?: $item->name,
+                    'item_name'           => $item->item_name ?: $item->name,
+                    'item_code'           => $item->item_code ?: $item->sku,
+                    'quantity'            => (int) round((float) ($item->qty ?: $item->quantity ?: 1)),
+                    'price'               => number_format((float) ($item->unit_price ?: $item->price ?: 0), 2, '.', ''),
+                    'discount_amount'     => number_format((float) ($item->discount_amount ?: 0), 2, '.', ''),
+                    'tax_amount'          => number_format((float) ($item->tax_amount ?: 0), 2, '.', ''),
+                    'available_colors'    => $productMeta['colors'] ?? [],
+                    'color_images'        => $productMeta['color_images'] ?? [],
+                    'selected_color_id'   => $selectedColorId,
+                    'selected_color_name' => $item->color_variant_name ?? '',
+                    'cover_image_url'     => $productMeta['cover_image_url'] ?? '',
+                    'preview_image'       => $previewImage,
+                ];
+            })->values()->all(),
+        ];
+    })->values();
 
-    $initialItems = $proformaInvoice->items->map(fn ($item) => [
-        'id' => $item->id,
-        'product_id' => $item->product_id,
-        'item_name' => $item->item_name,
-        'item_code' => $item->item_code,
-        'description' => $item->description,
-        'qty' => $item->qty,
-        'unit' => $item->unit,
-        'unit_price' => $item->unit_price,
-        'discount_amount' => $item->discount_amount,
-        'tax_amount' => $item->tax_amount,
-    ])->values()->all();
+    $rawItems = $proformaInvoice->items->map(function ($item) use ($productPayload) {
+        $productMeta = $productPayload->get((int) ($item->product_id ?? 0), [
+            'cover_image_url' => null,
+            'colors'          => [],
+            'color_images'    => [],
+        ]);
+        $selectedColorId = (string) ($item->color_variant_id ?? '');
+        $previewImage = $item->preview_image;
+        if (! $previewImage && $selectedColorId && isset($productMeta['color_images'][$selectedColorId])) {
+            $previewImage = $productMeta['color_images'][$selectedColorId];
+        }
+        if (! $previewImage) {
+            $previewImage = $productMeta['cover_image_url'] ?? null;
+        }
+        return [
+            'id'                  => $item->id,
+            'product_id'          => $item->product_id,
+            'name'                => $item->item_name,
+            'item_name'           => $item->item_name,
+            'item_code'           => $item->item_code,
+            'quantity'            => (int) round((float) ($item->qty ?: 1)),
+            'price'               => number_format((float) ($item->unit_price ?: 0), 2, '.', ''),
+            'discount_amount'     => number_format((float) ($item->discount_amount ?: 0), 2, '.', ''),
+            'tax_amount'          => number_format((float) ($item->tax_amount ?: 0), 2, '.', ''),
+            'available_colors'    => $productMeta['colors'] ?? [],
+            'color_images'        => $productMeta['color_images'] ?? [],
+            'selected_color_id'   => $selectedColorId,
+            'selected_color_name' => $item->color_variant_name ?? '',
+            'cover_image_url'     => $productMeta['cover_image_url'] ?? '',
+            'preview_image'       => $previewImage,
+        ];
+    })->values();
 
     $initialForm = [
         'proforma_number' => $proformaInvoice->proforma_number,
         'quote_id' => $proformaInvoice->quote_id,
+        'quote_number_display' => $proformaInvoice->quote_id ? ('Q' . ltrim((string) optional($proformaInvoice->quote)->quote_number, 'Q')) : '',
         'organization_id' => $proformaInvoice->organization_id,
         'organization_name' => optional($proformaInvoice->organization)->name,
         'person_id' => $proformaInvoice->person_id,
         'sales_owner_id' => $proformaInvoice->sales_owner_id,
         'sales_owner_name' => optional($proformaInvoice->salesOwner)->name,
-        'subject' => $proformaInvoice->subject,
         'issue_date' => optional($proformaInvoice->issue_date)->format('Y-m-d'),
-        'due_date' => optional($proformaInvoice->due_date)->format('Y-m-d'),
         'status' => $proformaInvoice->status,
-        'adjustment_amount' => $proformaInvoice->adjustment_amount,
+        'adjustment_amount' => (float) $proformaInvoice->adjustment_amount,
         'notes' => $proformaInvoice->notes,
         'terms' => $proformaInvoice->terms,
+        'payment_term' => $proformaInvoice->payment_term,
         'billing_address' => $proformaInvoice->billing_address ?: ['address' => ''],
         'shipping_address' => $proformaInvoice->shipping_address ?: ['address' => ''],
-        'items' => $initialItems,
+        'items' => $rawItems->all(),
     ];
 @endphp
 
 <x-admin::layouts>
-    <x-slot:title>
-        Edit Proforma Invoice
-    </x-slot>
+    <x-slot:title>Edit Proforma Invoice</x-slot:title>
 
-    <x-admin::form :action="route('admin.proforma_invoices.update', $proformaInvoice->id)" method="PUT" enctype="multipart/form-data">
+    <x-admin::form :action="route('admin.proforma_invoices.update', $proformaInvoice->id)" method="PUT">
         <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                <div class="flex flex-col">
-                    <div class="text-xl font-bold dark:text-white">Edit Proforma Invoice</div>
-                    <div class="text-sm text-gray-500">#{{ $proformaInvoice->proforma_number }}</div>
-                </div>
-
+                <div class="text-xl font-bold dark:text-white">Edit Proforma Invoice</div>
                 <div class="flex gap-2">
+                    <a href="{{ route('admin.proforma_invoices.print', $proformaInvoice->id) }}" class="secondary-button">Print</a>
                     <a href="{{ route('admin.proforma_invoices.view', $proformaInvoice->id) }}" class="secondary-button">View</a>
                     <button type="submit" class="primary-button">Update Proforma</button>
                 </div>
             </div>
 
-            <v-proforma-form
-                :initial-form='@json($initialForm)'
-                :quotes='@json($quotes)'
-            ></v-proforma-form>
+            <v-proforma :initial-form='@json($initialForm)' :quotes='@json($quotes)' :errors="errors">
+                <x-admin::shimmer.quotes />
+            </v-proforma>
         </div>
     </x-admin::form>
 
@@ -101,60 +170,17 @@
                 <div class="flex justify-between"><span>Received Amount</span><span>{{ core()->formatBasePrice($proformaInvoice->received_amount) }}</span></div>
                 <div class="flex justify-between font-bold"><span>Remaining Amount</span><span>{{ core()->formatBasePrice($proformaInvoice->remaining_amount) }}</span></div>
             </div>
-
-            <div class="mt-4">
-                <x-admin::form :action="route('admin.proforma_invoices.status', $proformaInvoice->id)" method="POST">
-                    <div class="flex items-end gap-2">
-                        <x-admin::form.control-group class="!mb-0 flex-1">
-                            <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="select" name="status">
-                                @foreach (['draft', 'issued', 'partially_paid', 'fully_paid', 'cancelled', 'ready_for_job_order', 'converted'] as $status)
-                                    <option value="{{ $status }}" @selected($proformaInvoice->status === $status)>{{ $status }}</option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
-                        </x-admin::form.control-group>
-
-                        <button type="submit" class="secondary-button">Update Status</button>
-                    </div>
-                </x-admin::form>
-            </div>
         </div>
 
         <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <h3 class="mb-3 text-lg font-semibold dark:text-white">Add Advance Receipt</h3>
-
-            <x-admin::form :action="route('admin.proforma_invoices.receipts.store', $proformaInvoice->id)" method="POST" enctype="multipart/form-data">
+            <x-admin::form :action="route('admin.proforma_invoices.receipts.store', $proformaInvoice->id)" method="POST">
                 <div class="grid gap-3">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.label class="required">Payment Date</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="date" name="payment_date" rules="required" value="{{ now()->toDateString() }}" />
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.label class="required">Amount</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="number" name="amount" step="0.0001" min="0.0001" rules="required" />
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.label>Payment Method</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="text" name="payment_method" />
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.label>Reference No</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="text" name="reference_no" />
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.label>Notes</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="textarea" name="notes" />
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.label>Attachment</x-admin::form.control-group.label>
-                        <input type="file" name="attachment" class="custom-input">
-                    </x-admin::form.control-group>
-
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label class="required">Payment Date</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="payment_date" rules="required" value="{{ now()->toDateString() }}" /></x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label class="required">Amount</x-admin::form.control-group.label><x-admin::form.control-group.control type="number" name="amount" step="0.0001" min="0.0001" rules="required" /></x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Payment Method</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="payment_method" /></x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Reference No</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="reference_no" /></x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Notes</x-admin::form.control-group.label><x-admin::form.control-group.control type="textarea" name="notes" /></x-admin::form.control-group>
                     <button type="submit" class="primary-button w-max">Add Receipt</button>
                 </div>
             </x-admin::form>
@@ -165,37 +191,10 @@
         <h3 class="mb-3 text-lg font-semibold dark:text-white">Receipt History</h3>
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-                <thead class="border-b border-gray-200 dark:border-gray-700">
-                    <tr>
-                        <th class="px-2 py-2">Receipt #</th>
-                        <th class="px-2 py-2">Date</th>
-                        <th class="px-2 py-2">Amount</th>
-                        <th class="px-2 py-2">Method</th>
-                        <th class="px-2 py-2">Reference</th>
-                        <th class="px-2 py-2">Received By</th>
-                        <th class="px-2 py-2">Action</th>
-                    </tr>
-                </thead>
+                <thead class="border-b border-gray-200 dark:border-gray-700"><tr><th class="px-2 py-2">Receipt #</th><th class="px-2 py-2">Date</th><th class="px-2 py-2">Amount</th><th class="px-2 py-2">Method</th><th class="px-2 py-2">Reference</th><th class="px-2 py-2">Received By</th><th class="px-2 py-2">Action</th></tr></thead>
                 <tbody>
                     @forelse ($proformaInvoice->receipts as $receipt)
-                        <tr class="border-b border-gray-200 dark:border-gray-700">
-                            <td class="px-2 py-2">{{ $receipt->receipt_number ?: '-' }}</td>
-                            <td class="px-2 py-2">{{ optional($receipt->payment_date)->format('Y-m-d') }}</td>
-                            <td class="px-2 py-2">
-                                <div>{{ core()->formatBasePrice($receipt->amount) }}</div>
-                                @if ($receipt->attachment_path)
-                                    <a href="{{ asset('storage/' . $receipt->attachment_path) }}" target="_blank" class="text-xs text-brandColor">Attachment</a>
-                                @endif
-                            </td>
-                            <td class="px-2 py-2">{{ $receipt->payment_method ?: '-' }}</td>
-                            <td class="px-2 py-2">{{ $receipt->reference_no ?: '-' }}</td>
-                            <td class="px-2 py-2">{{ optional($receipt->receivedBy)->name ?: '-' }}</td>
-                            <td class="px-2 py-2">
-                                <x-admin::form :action="route('admin.proforma_invoices.receipts.delete', [$proformaInvoice->id, $receipt->id])" method="DELETE">
-                                    <button class="text-red-600">Delete</button>
-                                </x-admin::form>
-                            </td>
-                        </tr>
+                        <tr class="border-b border-gray-200 dark:border-gray-700"><td class="px-2 py-2">{{ $receipt->receipt_number ?: '-' }}</td><td class="px-2 py-2">{{ optional($receipt->payment_date)->format('Y-m-d') }}</td><td class="px-2 py-2">{{ core()->formatBasePrice($receipt->amount) }}</td><td class="px-2 py-2">{{ $receipt->payment_method ?: '-' }}</td><td class="px-2 py-2">{{ $receipt->reference_no ?: '-' }}</td><td class="px-2 py-2">{{ optional($receipt->receivedBy)->name ?: '-' }}</td><td class="px-2 py-2"><x-admin::form :action="route('admin.proforma_invoices.receipts.delete', [$proformaInvoice->id, $receipt->id])" method="DELETE"><button class="text-red-600">Delete</button></x-admin::form></td></tr>
                     @empty
                         <tr><td class="px-2 py-3 text-gray-500" colspan="7">No receipts recorded yet.</td></tr>
                     @endforelse
@@ -205,256 +204,81 @@
     </div>
 
     @pushOnce('scripts')
-        <script type="text/x-template" id="v-proforma-form-template">
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <input type="hidden" name="organization_id" :value="form.organization_id">
+        <script type="text/x-template" id="v-proforma-template">
+            <div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <input type="hidden" name="organization_id" :value="form.organization_id || ''">
                 <input type="hidden" name="person_id" :value="form.person_id || ''">
                 <input type="hidden" name="sales_owner_id" :value="form.sales_owner_id || ''">
-                <input type="hidden" name="due_date" :value="form.due_date || ''">
+                <input type="hidden" name="adjustment_amount" :value="form.adjustment_amount || 0">
                 <input type="hidden" name="billing_address[address]" :value="form.billing_address?.address || ''">
                 <input type="hidden" name="shipping_address[address]" :value="form.shipping_address?.address || ''">
 
+                <div class="grid gap-4 md:grid-cols-2">
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Proforma #</x-admin::form.control-group.label><input type="text" name="proforma_number" v-model="form.proforma_number" class="custom-input"></x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label class="required">Quote #</x-admin::form.control-group.label><select name="quote_id" v-model="form.quote_id" class="custom-select" required @change="applyQuoteDetails"><option value="">Select Quote</option><option v-for="quote in quotes" :key="quote.id" :value="quote.id">@{{ quote.quote_number_display }}</option></select></x-admin::form.control-group>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-2">
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Customer</x-admin::form.control-group.label><input type="text" class="custom-input" :value="form.organization_name || ''" disabled></x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label><input type="text" class="custom-input" :value="form.sales_owner_name || ''" disabled></x-admin::form.control-group>
+                </div>
+
                 <div class="grid gap-4 md:grid-cols-3">
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>Proforma #</x-admin::form.control-group.label>
-                        <input type="text" name="proforma_number" v-model="form.proforma_number" class="custom-input">
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label class="required">Quote</x-admin::form.control-group.label>
-                        <select name="quote_id" v-model="form.quote_id" @change="applyQuoteDetails" class="custom-select" required>
-                            <option value="">Select Quote</option>
-                            <option v-for="q in quotes" :key="q.id" :value="q.id">@{{ q.quote_number ? q.quote_number + ' - ' + q.subject : ('Quote #' + q.id) }}</option>
-                        </select>
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>Customer</x-admin::form.control-group.label>
-                        <input type="text" class="custom-input" :value="form.organization_name || ''" disabled>
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label>
-                        <input type="text" class="custom-input" :value="form.sales_owner_name || ''" disabled>
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>Subject</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="text" name="subject" v-model="form.subject" />
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label class="required">Issue Date</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="date" name="issue_date" v-model="form.issue_date" rules="required" />
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
-                        <select name="status" v-model="form.status" class="custom-select">
-                            <option value="draft">draft</option>
-                            <option value="issued">issued</option>
-                            <option value="partially_paid">partially_paid</option>
-                            <option value="fully_paid">fully_paid</option>
-                            <option value="cancelled">cancelled</option>
-                            <option value="ready_for_job_order">ready_for_job_order</option>
-                            <option value="converted">converted</option>
-                        </select>
-                    </x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label class="required">Issue Date</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="issue_date" v-model="form.issue_date" rules="required" /></x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Status</x-admin::form.control-group.label><select name="status" v-model="form.status" class="custom-select"><option value="draft">draft</option><option value="issued">issued</option><option value="partially_paid">partially_paid</option><option value="fully_paid">fully_paid</option><option value="cancelled">cancelled</option><option value="ready_for_job_order">ready_for_job_order</option><option value="converted">converted</option></select></x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Payment Term</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="payment_term" v-model="form.payment_term" /></x-admin::form.control-group>
                 </div>
 
-                <div class="mt-6">
-                    <div class="mb-4 flex flex-col gap-1">
-                        <p class="text-base font-semibold text-gray-800 dark:text-white">Proforma Items</p>
-                        <p class="text-sm text-gray-600 dark:text-white">Add Product Request for this proforma invoice.</p>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
-                                <tr>
-                                    <th class="px-3 py-2">Name</th>
-                                    <th class="px-3 py-2">Code</th>
-                                    <th class="px-3 py-2">Qty</th>
-                                    <th class="px-3 py-2">Unit Price</th>
-                                    <th class="px-3 py-2">Discount</th>
-                                    <th class="px-3 py-2">Tax</th>
-                                    <th class="px-3 py-2">Total</th>
-                                    <th class="px-3 py-2">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(item, index) in form.items" :key="index" class="border-b border-gray-200 dark:border-gray-700">
-                                    <td class="px-3 py-2">
-                                        <input :name="`items[${index}][item_name]`" v-model="item.item_name" class="custom-input">
-                                        <input type="hidden" :name="`items[${index}][id]`" v-model="item.id">
-                                    </td>
-                                    <td class="px-3 py-2"><input :name="`items[${index}][item_code]`" v-model="item.item_code" class="custom-input"></td>
-                                    <td class="px-3 py-2"><input type="number" step="0.0001" min="0.0001" :name="`items[${index}][qty]`" v-model.number="item.qty" class="custom-input"></td>
-                                    <input type="hidden" :name="`items[${index}][unit]`" :value="item.unit || ''">
-                                    <td class="px-3 py-2"><input type="number" step="0.0001" min="0" :name="`items[${index}][unit_price]`" v-model.number="item.unit_price" class="custom-input"></td>
-                                    <td class="px-3 py-2"><input type="number" step="0.0001" min="0" :name="`items[${index}][discount_amount]`" v-model.number="item.discount_amount" class="custom-input"></td>
-                                    <td class="px-3 py-2"><input type="number" step="0.0001" min="0" :name="`items[${index}][tax_amount]`" v-model.number="item.tax_amount" class="custom-input"></td>
-                                    <td class="px-3 py-2">@{{ formatPrice(lineTotal(item)) }}</td>
-                                    <td class="px-3 py-2">
-                                        <button type="button" @click="removeItem(index)" v-if="form.items.length > 1">
-                                            <i class="icon-delete cursor-pointer text-2xl"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <button type="button" class="mt-3 text-brandColor" @click="addItem">Add Row</button>
+                <div class="mt-2 flex flex-col gap-4">
+                    <div class="flex flex-col gap-1"><p class="text-base font-semibold text-gray-800 dark:text-white">Proforma Invoice Items</p><p class="text-sm text-gray-600 dark:text-white">Add Product Request for this proforma invoice.</p></div>
+                    <v-proforma-item-list :errors="errors" :organization-id="form.organization_id" :initial-products="form.items"></v-proforma-item-list>
                 </div>
 
-                <div class="mt-6 grid gap-4 md:grid-cols-2">
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>Notes</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="textarea" name="notes" v-model="form.notes" />
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>Terms</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="textarea" name="terms" v-model="form.terms" />
-                    </x-admin::form.control-group>
-                </div>
-
-                <div class="mt-6 grid gap-4 md:grid-cols-2">
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>Replace Attachment</x-admin::form.control-group.label>
-                        <input type="file" name="attachment" class="custom-input">
-
-                        @if ($proformaInvoice->attachment_path)
-                            <a href="{{ asset('storage/' . $proformaInvoice->attachment_path) }}" target="_blank" class="mt-2 inline-flex text-sm text-brandColor">View current attachment</a>
-                        @endif
-                    </x-admin::form.control-group>
-
-                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-                        <div class="mb-2 font-semibold">Payment Summary</div>
-                        <div class="flex justify-between"><span>Received Amount</span><span>{{ core()->formatBasePrice($proformaInvoice->received_amount) }}</span></div>
-                        <div class="mt-2 flex justify-between font-semibold"><span>Remaining Amount</span><span>{{ core()->formatBasePrice($proformaInvoice->remaining_amount) }}</span></div>
-                    </div>
-                </div>
-
-                <div class="mt-4 flex justify-end">
-                    <div class="w-72 space-y-2 text-sm dark:text-white">
-                        <div class="flex justify-between"><span>Subtotal</span><span>@{{ formatPrice(subtotal) }}</span></div>
-                        <div class="flex justify-between"><span>Discount</span><span>@{{ formatPrice(discountAmount) }}</span></div>
-                        <div class="flex justify-between"><span>Tax</span><span>@{{ formatPrice(taxAmount) }}</span></div>
-                        <input type="hidden" name="adjustment_amount" v-model.number="form.adjustment_amount">
-                        <div class="flex justify-between border-t border-gray-200 pt-2 font-bold dark:border-gray-700"><span>Grand Total</span><span>@{{ formatPrice(grandTotal) }}</span></div>
-                    </div>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Notes</x-admin::form.control-group.label><x-admin::form.control-group.control type="textarea" name="notes" v-model="form.notes" /></x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Terms</x-admin::form.control-group.label><x-admin::form.control-group.control type="textarea" name="terms" v-model="form.terms" /></x-admin::form.control-group>
                 </div>
             </div>
         </script>
 
-        <script type="module">
-            app.component('v-proforma-form', {
-                template: '#v-proforma-form-template',
-                props: ['initialForm', 'quotes'],
-                data() {
-                    return {
-                        form: {
-                            ...this.initialForm,
-                            billing_address: this.initialForm?.billing_address || { address: '' },
-                            shipping_address: this.initialForm?.shipping_address || { address: '' },
-                        }
-                    };
-                },
-                computed: {
-                    subtotal() {
-                        return this.form.items.reduce((sum, item) => sum + ((parseFloat(item.qty) || 0) * (parseFloat(item.unit_price) || 0)), 0);
-                    },
-                    discountAmount() {
-                        return this.form.items.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0);
-                    },
-                    taxAmount() {
-                        return this.form.items.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
-                    },
-                    grandTotal() {
-                        return this.subtotal - this.discountAmount + this.taxAmount + (parseFloat(this.form.adjustment_amount) || 0);
-                    },
-                    selectedQuote() {
-                        return this.quotes.find(quote => String(quote.id) === String(this.form.quote_id)) || null;
-                    },
-                },
-                watch: {
-                    'form.quote_id'(value, oldValue) {
-                        if (! value || String(value) === String(oldValue)) {
-                            return;
-                        }
+        <script type="text/x-template" id="v-proforma-item-list-template">
+            <div class="flex flex-col gap-4"><div class="block w-full overflow-visible"><x-admin::table><x-admin::table.thead><x-admin::table.thead.tr><x-admin::table.th>Product Name</x-admin::table.th><x-admin::table.th class="text-center">Image</x-admin::table.th><x-admin::table.th class="text-center">Color Variant</x-admin::table.th><x-admin::table.th class="text-center">Quantity</x-admin::table.th><x-admin::table.th class="text-center">Price</x-admin::table.th><x-admin::table.th class="text-center">Amount</x-admin::table.th><x-admin::table.th class="text-center">Discount</x-admin::table.th><x-admin::table.th class="text-center">Tax</x-admin::table.th><x-admin::table.th class="text-center">Total</x-admin::table.th><x-admin::table.th class="text-center">Action</x-admin::table.th></x-admin::table.thead.tr></x-admin::table.thead><x-admin::table.tbody><template v-for="(product, index) in products" :key="index"><v-proforma-item :product="product" :index="index" :organization-id="organizationId" @onRemoveProduct="removeProduct($event)"></v-proforma-item></template></x-admin::table.tbody></x-admin::table></div><span class="text-md flex max-w-max cursor-pointer items-center gap-2 text-brandColor" @click="addProduct">+ Add Item</span><div class="flex justify-end"><div class="grid w-[348px] gap-4 rounded-lg bg-gray-100 p-4 text-sm dark:bg-gray-950 dark:text-white"><div class="flex w-full justify-between gap-x-5"><span>Sub Total</span><p>@{{ formatPrice(subTotal) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Total Discount</span><p>@{{ formatPrice(discountAmount) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Total Tax</span><p>@{{ formatPrice(taxAmount) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Grand Total</span><p>@{{ formatPrice(grandTotal) }}</p></div></div></div></div>
+        </script>
 
-                        this.applyQuoteDetails();
-                    }
-                },
+        <script type="text/x-template" id="v-proforma-item-template">
+            <x-admin::table.thead.tr><x-admin::table.td class="!px-2 align-top overflow-visible"><div class="relative min-w-[380px]"><v-proforma-product-lookup :src="src" :organization-id="organizationId" :selected-product="product" @on-selected="(product) => addProduct(product)"></v-proforma-product-lookup><input type="hidden" :name="`${inputName}[product_id]`" :value="product.product_id || ''"></div></x-admin::table.td><x-admin::table.td class="!px-2 text-center"><input type="hidden" :name="`${inputName}[preview_image]`" :value="product.preview_image || ''"><img v-if="product.preview_image" :key="product.preview_image" :src="product.preview_image" class="mx-auto h-12 w-12 rounded object-cover border border-gray-200" alt="preview"><span v-else class="text-xs text-gray-500">No image</span></x-admin::table.td><x-admin::table.td class="!px-2"><select class="w-full rounded border border-gray-200 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800" v-model="product.selected_color_id" @change="onColorChange($event.target.value)"><option value="">No Color</option><option v-for="color in (product.available_colors || [])" :key="color.id" :value="String(color.id)">@{{ color.name }}</option></select><input type="hidden" :name="`${inputName}[color_variant_id]`" :value="product.selected_color_id || ''"><input type="hidden" :name="`${inputName}[color_variant_name]`" :value="product.selected_color_name || ''"></x-admin::table.td><input type="hidden" :name="`${inputName}[item_name]`" :value="product.name || ''"><input type="hidden" :name="`${inputName}[item_code]`" :value="product.item_code || ''"><input type="hidden" :name="`${inputName}[unit]`" value=""><x-admin::table.td class="!px-2 text-center"><input type="number" min="1" step="1" :name="`${inputName}[qty]`" v-model.number="product.quantity" class="custom-input text-center"></x-admin::table.td><x-admin::table.td class="!px-2 text-center"><input type="number" min="0" step="0.01" :name="`${inputName}[unit_price]`" v-model="product.price" class="custom-input text-center"></x-admin::table.td><x-admin::table.td class="!px-2 text-center">@{{ formatPrice(amount) }}</x-admin::table.td><x-admin::table.td class="!px-2 text-center"><input type="number" min="0" step="0.01" :name="`${inputName}[discount_amount]`" v-model="product.discount_amount" class="custom-input text-center"></x-admin::table.td><x-admin::table.td class="!px-2 text-center"><input type="number" min="0" step="0.01" :name="`${inputName}[tax_amount]`" v-model="product.tax_amount" class="custom-input text-center"></x-admin::table.td><x-admin::table.td class="!px-2 text-center">@{{ formatPrice(total) }}</x-admin::table.td><x-admin::table.td class="!px-2 text-center"><i @click="removeProduct" class="icon-delete cursor-pointer text-2xl"></i></x-admin::table.td></x-admin::table.thead.tr>
+        </script>
+
+        <script type="module">
+            app.component('v-proforma', {
+                template: '#v-proforma-template',
+                props: ['initialForm', 'quotes', 'errors'],
+                data() { return { form: this.initialForm }; },
                 methods: {
                     applyQuoteDetails() {
-                        if (! this.selectedQuote) {
-                            return;
-                        }
+                        const selected = this.quotes.find(q => String(q.id) === String(this.form.quote_id));
 
-                        this.form.organization_id = this.selectedQuote.organization_id || '';
-                        this.form.organization_name = this.selectedQuote.organization_name || '';
-                        this.form.person_id = this.selectedQuote.person_id || '';
-                        this.form.sales_owner_id = this.selectedQuote.sales_owner_id || '';
-                        this.form.sales_owner_name = this.selectedQuote.sales_owner_name || '';
-                        this.form.subject = this.selectedQuote.subject || '';
-                        this.form.due_date = this.selectedQuote.due_date || '';
-                        this.form.adjustment_amount = parseFloat(this.selectedQuote.adjustment_amount || 0);
-                        this.form.notes = this.selectedQuote.notes || '';
-                        this.form.terms = this.selectedQuote.terms || '';
-                        this.form.billing_address = this.selectedQuote.billing_address || { address: '' };
-                        this.form.shipping_address = this.selectedQuote.shipping_address || { address: '' };
-                        this.form.items = (this.selectedQuote.items || []).map(item => ({ ...item }));
-                    },
-                    addItem() {
-                        this.form.items.push({
-                            id: null,
-                            item_name: '',
-                            item_code: '',
-                            qty: 1,
-                            unit: '',
-                            unit_price: 0,
-                            discount_amount: 0,
-                            tax_amount: 0,
-                            description: '',
-                        });
-                    },
-                    removeItem(index) {
-                        this.form.items.splice(index, 1);
-                    },
-                    lineTotal(item) {
-                        const subtotal = (parseFloat(item.qty) || 0) * (parseFloat(item.unit_price) || 0);
-                        return subtotal - (parseFloat(item.discount_amount) || 0) + (parseFloat(item.tax_amount) || 0);
-                    },
-                    formatPrice(value) {
-                        return this.$admin.formatPrice(value || 0);
-                    },
+                        if (! selected) return;
+
+                        this.form.quote_number_display = selected.quote_number_display || '';
+                        this.form.organization_id = selected.organization_id || '';
+                        this.form.organization_name = selected.organization_name || '';
+                        this.form.person_id = selected.person_id || '';
+                        this.form.sales_owner_id = selected.sales_owner_id || '';
+                        this.form.sales_owner_name = selected.sales_owner_name || '';
+                        this.form.adjustment_amount = selected.adjustment_amount || 0;
+                        this.form.notes = selected.notes || '';
+                        this.form.terms = selected.terms || '';
+                        this.form.billing_address = selected.billing_address || { address: '' };
+                        this.form.shipping_address = selected.shipping_address || { address: '' };
+                        this.form.items = (selected.items || []).map(item => ({ ...item }));
+                    }
                 },
             });
         </script>
     @endPushOnce
 
     @pushOnce('styles')
-        <style>
-            .custom-input {
-                width: 100%;
-                border: 1px solid #d1d5db;
-                border-radius: 0.375rem;
-                padding: 0.45rem 0.6rem;
-                font-size: 0.875rem;
-                background: transparent;
-            }
-
-            .custom-select {
-                width: 100%;
-                border: 1px solid #d1d5db;
-                border-radius: 0.375rem;
-                padding: 0.45rem 0.6rem;
-                font-size: 0.875rem;
-                background: transparent;
-            }
-        </style>
+        <style>.custom-input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.45rem 0.6rem; font-size: 0.875rem; background: transparent; } .custom-select { width: 100%; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.45rem 0.6rem; font-size: 0.875rem; background: transparent; }</style>
     @endPushOnce
 </x-admin::layouts>

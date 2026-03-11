@@ -16,6 +16,8 @@ Route::controller(ProformaInvoiceController::class)->prefix('proforma-invoices')
 
     Route::get('view/{id}', 'view')->name('admin.proforma_invoices.view');
 
+    Route::get('print/{id}', 'print')->name('admin.proforma_invoices.print');
+
     Route::post('{id}/status', 'changeStatus')->name('admin.proforma_invoices.status');
 
     Route::post('{id}/receipts', 'storeReceipt')->name('admin.proforma_invoices.receipts.store');
