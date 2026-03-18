@@ -52,14 +52,19 @@
     @pushOnce('scripts')
         <script type="text/x-template" id="v-quote-template">
             <div class="document-form-panel box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div class="grid gap-4 md:grid-cols-2">
-                    <x-admin::form.control-group class="!mb-0">
+                <div>
+                    <div class="document-form-section-title dark:text-white">Document Header</div>
+                    <div class="document-form-section-note dark:text-gray-400">Keep the quote identity and customer context together in one smart row.</div>
+                </div>
+
+                <div class="document-form-mini-grid">
+                    <x-admin::form.control-group class="!mb-0 span-2">
                         <x-admin::form.control-group.label class="required">Quote #</x-admin::form.control-group.label>
                         <x-admin::form.control-group.control type="text" name="quote_number" value="{{ old('quote_number', $quote->quote_number) }}" rules="required" />
                         <x-admin::form.control-group.error control-name="quote_number" />
                     </x-admin::form.control-group>
 
-                    <x-admin::form.control-group class="!mb-0">
+                    <x-admin::form.control-group class="!mb-0 span-4">
                         <x-admin::form.control-group.label class="required">Customer</x-admin::form.control-group.label>
                         <div class="relative" ref="customerLookup">
                             <div class="relative inline-block w-full" @click="toggleCustomerLookup">
@@ -114,7 +119,7 @@
                         <x-admin::form.control-group.error control-name="organization_id" />
                     </x-admin::form.control-group>
 
-                    <x-admin::form.control-group class="!mb-0">
+                    <x-admin::form.control-group class="!mb-0 span-2">
                         <x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label>
                         <input
                             type="text"
@@ -125,13 +130,13 @@
                         <input type="hidden" name="user_id" value="{{ auth()->id() }}">
                     </x-admin::form.control-group>
 
-                    <x-admin::form.control-group class="!mb-0">
+                    <x-admin::form.control-group class="!mb-0 span-2">
                         <x-admin::form.control-group.label class="required">Quote Date</x-admin::form.control-group.label>
                         <x-admin::form.control-group.control type="date" name="quote_date" value="{{ old('quote_date', $quote->quote_date?->format('Y-m-d')) }}" rules="required" />
                         <x-admin::form.control-group.error control-name="quote_date" />
                     </x-admin::form.control-group>
 
-                    <x-admin::form.control-group class="!mb-0">
+                    <x-admin::form.control-group class="!mb-0 span-2">
                         <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
                         <select
                             name="status"
@@ -682,6 +687,9 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
+
+
+
 
 
 

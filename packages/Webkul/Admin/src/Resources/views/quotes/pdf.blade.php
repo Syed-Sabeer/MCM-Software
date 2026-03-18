@@ -7,133 +7,175 @@
     $companyName = core()->getConfigData('general.general.company_info.company_name') ?: config('app.name');
     $companyLines = array_filter([
         core()->getConfigData('general.general.company_info.address'),
-        core()->getConfigData('general.general.company_info.telephone') ? 'Phone: ' . core()->getConfigData('general.general.company_info.telephone') : null,
-        core()->getConfigData('general.general.company_info.cell') ? 'Cell: ' . core()->getConfigData('general.general.company_info.cell') : null,
-        core()->getConfigData('general.general.company_info.email') ? 'Email: ' . core()->getConfigData('general.general.company_info.email') : null,
+        core()->getConfigData('general.general.company_info.telephone') ? 'Tel: ' . core()->getConfigData('general.general.company_info.telephone') : null,
+        core()->getConfigData('general.general.company_info.cell') ? 'Tel: ' . core()->getConfigData('general.general.company_info.cell') : null,
     ]);
-
-    $resolveImage = function ($path) {
-        if (! $path) {
-            return null;
-        }
-
-        $imageUrlPath = parse_url($path, PHP_URL_PATH) ?: $path;
-
-        if (str_contains($imageUrlPath, '/public/storage/')) {
-            $relativeStoragePath = \Illuminate\Support\Str::after($imageUrlPath, '/public/storage/');
-            $localStoragePath = public_path('storage/' . $relativeStoragePath);
-
-            return file_exists($localStoragePath) ? $localStoragePath : null;
-        }
-
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return null;
-        }
-
-        return file_exists($path) ? $path : null;
-    };
 
     $billToLines = array_filter([
         $organization?->name,
         $organization?->billing_street ?: $organization?->shipping_street,
-        trim(implode(' ', array_filter([
+        trim(implode(', ', array_filter([
             $organization?->billing_city ?: $organization?->shipping_city,
             $organization?->billing_state ?: $organization?->shipping_state,
             $organization?->billing_postcode ?: $organization?->shipping_postcode,
+            $organization?->billing_country ?: $organization?->shipping_country,
         ]))),
-        $organization?->billing_country ?: $organization?->shipping_country,
-        $organization?->phone ? 'Phone: ' . $organization->phone : null,
-        data_get($organization, 'email') ? 'Email: ' . data_get($organization, 'email') : null,
     ]);
 
     $shipToLines = array_filter([
         $organization?->name,
         $organization?->shipping_street ?: $organization?->billing_street,
-        trim(implode(' ', array_filter([
+        trim(implode(', ', array_filter([
             $organization?->shipping_city ?: $organization?->billing_city,
             $organization?->shipping_state ?: $organization?->billing_state,
             $organization?->shipping_postcode ?: $organization?->billing_postcode,
+            $organization?->shipping_country ?: $organization?->billing_country,
         ]))),
-        $organization?->shipping_country ?: $organization?->billing_country,
-        $organization?->phone ? 'Phone: ' . $organization->phone : null,
     ]);
 
-    $items = $quote->items->map(function ($item) use ($resolveImage) {
-        $qty = (float) ($item->quantity ?: $item->qty ?: 0);
-        $price = (float) ($item->price ?: $item->unit_price ?: 0);
-        $lineTotal = ($price * $qty) + (float) ($item->tax_amount ?: 0) - (float) ($item->discount_amount ?: 0);
-
-        return [
-            'preview_image' => $resolveImage($item->preview_image),
-            'item_code'     => $item->item_code ?: $item->sku,
-            'item_name'     => $item->item_name ?: $item->name,
-            'color'         => $item->color_variant_name,
-            'quantity'      => rtrim(rtrim(number_format($qty, 4, '.', ''), '0'), '.'),
-            'price'         => core()->formatBasePrice($price),
-            'discount'      => core()->formatBasePrice($item->discount_amount ?: 0),
-            'tax'           => core()->formatBasePrice($item->tax_amount ?: 0),
-            'total'         => core()->formatBasePrice($lineTotal),
-        ];
-    })->values()->all();
+    $paymentTerms = data_get($quote, 'payment_terms') ?: data_get($quote, 'payment_term') ?: '-';
+    $shippingMethod = data_get($quote, 'shipping_method') ?: '-';
+    $productionTime = data_get($quote, 'production_time') ?: '-';
+    $transitTime = data_get($quote, 'transit_time') ?: '-';
+    $etd = data_get($quote, 'etd') ?: (optional($quote->expired_at)?->format('Y-m-d'));
+    $eta = data_get($quote, 'eta') ?: '-';
 @endphp
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Quote {{ $quote->quote_number }}</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; color: #111827; font-size: 12px; margin: 0; }
+        .page { padding: 24px; }
+        .header-table, .party-table, .items-table, .totals-table, .summary-table, .notes-table, .sign-table { width: 100%; border-collapse: collapse; }
+        .brand { color: #0E90D9; }
+        .title { font-size: 24px; font-weight: 700; text-align: right; }
+        .logo { max-width: 120px; max-height: 70px; margin-bottom: 8px; }
+        .meta-label { font-weight: 700; width: 35%; background: #f5f7fb; }
+        .meta-table td { border: 1px solid #d8e0ea; padding: 7px 10px; }
+        .section-box { border: 1px solid #d8e0ea; padding: 12px; min-height: 90px; }
+        .section-title { color: #0E90D9; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+        .summary-table { margin: 16px 0; }
+        .summary-table td { border: 1px solid #d8e0ea; padding: 8px; width: 16.66%; }
+        .summary-label { display: block; color: #6b7280; font-size: 10px; text-transform: uppercase; margin-bottom: 4px; }
+        .summary-value { font-weight: 700; }
+        .items-table th { background: #0E90D9; color: #fff; border: 1px solid #0E90D9; padding: 8px; text-align: left; font-size: 10px; text-transform: uppercase; }
+        .items-table td { border: 1px solid #d8e0ea; padding: 8px; vertical-align: top; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .totals-table { width: 300px; margin-left: auto; margin-top: 16px; }
+        .totals-table td { border: 1px solid #d8e0ea; padding: 8px 10px; }
+        .totals-label { background: #f5f7fb; font-weight: 700; }
+        .totals-value { text-align: right; font-weight: 700; }
+        .grand-row td { background: #eef6ff; color: #0E90D9; font-weight: 700; }
+        .notes-table { margin-top: 18px; }
+        .notes-table td { width: 50%; vertical-align: top; padding-right: 12px; }
+        .note-card { border: 1px solid #d8e0ea; padding: 12px; min-height: 90px; }
+        .preline { white-space: pre-line; }
+        .sign-table { margin-top: 26px; }
+        .sign-cell { width: 33.33%; padding-right: 18px; }
+        .sign-line { border-top: 1px solid #111827; padding-top: 8px; color: #6b7280; font-size: 10px; }
+    </style>
 </head>
 <body>
-    <x-admin::documents.standard
-        mode="print"
-        title="Quote"
-        :accent-color="core()->getConfigData('general.settings.menu_color.brand_color') ?: '#0E90D9'"
-        :company="[
-            'logo' => $logoPath,
-            'name' => $companyName,
-            'lines' => $companyLines,
-        ]"
-        :meta="[
-            ['label' => 'Quote #', 'value' => $quote->quote_number ?: ('#' . $quote->id)],
-            ['label' => 'Quote Date', 'value' => $quote->quote_date ? core()->formatDate($quote->quote_date, 'M d, Y') : core()->formatDate($quote->created_at, 'M d, Y')],
-            ['label' => 'Sales Person', 'value' => $salesPerson?->name ?: '-'],
-            ['label' => 'Status', 'value' => ucfirst($quote->status ?: 'draft')],
-            ['label' => 'Expiry Date', 'value' => $quote->expired_at ? core()->formatDate($quote->expired_at, 'M d, Y') : null],
-        ]"
-        :party-blocks="[
-            ['title' => 'Bill To', 'lines' => $billToLines],
-            ['title' => 'Ship To', 'lines' => $shipToLines],
-        ]"
-        :summary-rows="[
-            ['label' => 'Customer ID', 'value' => $organization?->id ?: null],
-            ['label' => 'Contact', 'value' => optional($quote->person)->name ?: null],
-            ['label' => 'Quote Ref', 'value' => $quote->quote_number ?: null],
-            ['label' => 'Created On', 'value' => $quote->created_at?->format('M d, Y')],
-        ]"
-        :columns="[
-            ['key' => 'preview_image', 'label' => 'Image', 'type' => 'image', 'align' => 'text-center', 'width' => '10%'],
-            ['key' => 'item_code', 'label' => 'Item Code', 'width' => '14%'],
-            ['key' => 'item_name', 'label' => 'Description', 'width' => '24%'],
-            ['key' => 'color', 'label' => 'Color', 'width' => '10%'],
-            ['key' => 'quantity', 'label' => 'Qty', 'align' => 'text-right', 'width' => '8%'],
-            ['key' => 'price', 'label' => 'Rate', 'align' => 'text-right', 'width' => '11%'],
-            ['key' => 'discount', 'label' => 'Discount', 'align' => 'text-right', 'width' => '11%'],
-            ['key' => 'tax', 'label' => 'Tax', 'align' => 'text-right', 'width' => '10%'],
-            ['key' => 'total', 'label' => 'Amount', 'align' => 'text-right', 'width' => '12%'],
-        ]"
-        :items="$items"
-        :totals="[
-            ['label' => 'Sub Total', 'value' => core()->formatBasePrice($quote->sub_total ?: 0), 'always' => true],
-            ['label' => 'Discount', 'value' => core()->formatBasePrice($quote->discount_amount ?: 0), 'always' => true],
-            ['label' => 'Tax', 'value' => core()->formatBasePrice($quote->tax_amount ?: 0), 'always' => true],
-            ['label' => 'Adjustment', 'value' => core()->formatBasePrice($quote->adjustment_amount ?: 0)],
-            ['label' => 'Grand Total', 'value' => core()->formatBasePrice($quote->grand_total ?: 0), 'highlight' => true, 'always' => true],
-        ]"
-        :notes="[
-            ['label' => 'Remarks', 'value' => $quote->description ?: $quote->notes],
-            ['label' => 'Commercial Terms', 'value' => $quote->terms],
-        ]"
-        :signatures="['Prepared By', 'Approved By', 'Customer Acceptance']"
-    />
+<div class="page">
+    <table class="header-table">
+        <tr>
+            <td style="width: 52%; vertical-align: top;">
+                @if ($logoPath)
+                    <img src="{{ $logoPath }}" alt="Logo" class="logo">
+                @endif
+                <div class="brand" style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">{{ $companyName }}</div>
+                @foreach ($companyLines as $line)
+                    <div>{{ $line }}</div>
+                @endforeach
+            </td>
+            <td style="width: 48%; vertical-align: top;">
+                <div class="title brand">Quote</div>
+                <table class="meta-table">
+                    <tr><td class="meta-label">Quote #</td><td>{{ $quote->quote_number ?: ('Q' . $quote->id) }}</td></tr>
+                    <tr><td class="meta-label">Quote Date</td><td>{{ $quote->quote_date ? core()->formatDate($quote->quote_date, 'Y-m-d') : core()->formatDate($quote->created_at, 'Y-m-d') }}</td></tr>
+                    <tr><td class="meta-label">Sales Person</td><td>{{ $salesPerson?->name ?: '-' }}</td></tr>
+                    <tr><td class="meta-label">Status</td><td>{{ ucfirst($quote->status ?: 'draft') }}</td></tr>
+                    <tr><td class="meta-label">Expiry Date</td><td>{{ $quote->expired_at ? core()->formatDate($quote->expired_at, 'Y-m-d') : '-' }}</td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table class="party-table" style="margin-top: 16px;">
+        <tr>
+            <td style="width: 50%; padding-right: 8px; vertical-align: top;"><div class="section-box"><div class="section-title">Bill To</div>@foreach ($billToLines as $line)<div>{{ $line }}</div>@endforeach</div></td>
+            <td style="width: 50%; padding-left: 8px; vertical-align: top;"><div class="section-box"><div class="section-title">Ship To</div>@foreach ($shipToLines as $line)<div>{{ $line }}</div>@endforeach</div></td>
+        </tr>
+    </table>
+
+    <table class="summary-table">
+        <tr>
+            <td><span class="summary-label">Payment Terms</span><span class="summary-value">{{ $paymentTerms }}</span></td>
+            <td><span class="summary-label">Shipping Method</span><span class="summary-value">{{ $shippingMethod }}</span></td>
+            <td><span class="summary-label">Production Time</span><span class="summary-value">{{ $productionTime }}</span></td>
+            <td><span class="summary-label">Transit Time</span><span class="summary-value">{{ $transitTime }}</span></td>
+            <td><span class="summary-label">ETD</span><span class="summary-value">{{ $etd ?: '-' }}</span></td>
+            <td><span class="summary-label">ETA</span><span class="summary-value">{{ $eta }}</span></td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 10%;" class="text-right">Qty</th>
+                <th style="width: 16%;">Item #</th>
+                <th style="width: 14%;">Colors</th>
+                <th style="width: 34%;">Description</th>
+                <th style="width: 13%;" class="text-right">Rate</th>
+                <th style="width: 13%;" class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($quote->items as $item)
+                @php
+                    $qty = (float) ($item->quantity ?: $item->qty ?: 0);
+                    $price = (float) ($item->price ?: $item->unit_price ?: 0);
+                    $lineTotal = ($price * $qty) + (float) ($item->tax_amount ?: 0) - (float) ($item->discount_amount ?: 0);
+                @endphp
+                <tr>
+                    <td class="text-right">{{ rtrim(rtrim(number_format($qty, 4, '.', ''), '0'), '.') }}</td>
+                    <td>{{ $item->item_code ?: $item->sku ?: '-' }}</td>
+                    <td>{{ $item->color_variant_name ?: '-' }}</td>
+                    <td>{{ $item->item_name ?: $item->name ?: '-' }}</td>
+                    <td class="text-right">{{ core()->formatBasePrice($price, 2) }}</td>
+                    <td class="text-right">{{ core()->formatBasePrice($lineTotal, 2) }}</td>
+                </tr>
+            @empty
+                <tr><td colspan="6" class="text-center">No line items available.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <table class="totals-table">
+        <tr><td class="totals-label">Sub Total</td><td class="totals-value">{{ core()->formatBasePrice($quote->sub_total ?: 0, 2) }}</td></tr>
+        <tr><td class="totals-label">Discount</td><td class="totals-value">{{ core()->formatBasePrice($quote->discount_amount ?: 0, 2) }}</td></tr>
+        <tr><td class="totals-label">Tax</td><td class="totals-value">{{ core()->formatBasePrice($quote->tax_amount ?: 0, 2) }}</td></tr>
+        <tr><td class="totals-label">Adjustment</td><td class="totals-value">{{ core()->formatBasePrice($quote->adjustment_amount ?: 0, 2) }}</td></tr>
+        <tr class="grand-row"><td class="totals-label">Grand Total</td><td class="totals-value">{{ core()->formatBasePrice($quote->grand_total ?: 0, 2) }}</td></tr>
+    </table>
+
+    <table class="notes-table">
+        <tr>
+            <td><div class="note-card"><div class="section-title">Remarks</div><div class="preline">{{ $quote->description ?: $quote->notes ?: '-' }}</div></div></td>
+            <td><div class="note-card"><div class="section-title">Terms & Conditions</div><div class="preline">{{ $quote->terms ?: '-' }}</div></div></td>
+        </tr>
+    </table>
+
+    <table class="sign-table">
+        <tr>
+            <td class="sign-cell"><div class="sign-line">Prepared By</div></td>
+            <td class="sign-cell"><div class="sign-line">Approved By</div></td>
+            <td class="sign-cell" style="padding-right:0;"><div class="sign-line">Customer Acceptance</div></td>
+        </tr>
+    </table>
+</div>
 </body>
 </html>

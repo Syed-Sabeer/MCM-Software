@@ -143,40 +143,43 @@
                 <input type="hidden" name="billing_address[address]" :value="form.billing_address?.address || ''">
                 <input type="hidden" name="shipping_address[address]" :value="form.shipping_address?.address || ''">
 
-                <div class="grid gap-4 md:grid-cols-2">
-                    <x-admin::form.control-group class="!mb-0">
+                <div>
+                    <div class="document-form-section-title dark:text-white">Document Header</div>
+                    <div class="document-form-section-note dark:text-gray-400">The proforma header stays compact so the commercial context is visible immediately.</div>
+                </div>
+
+                <div class="document-form-mini-grid">
+                    <x-admin::form.control-group class="!mb-0 span-2">
                         <x-admin::form.control-group.label>Proforma #</x-admin::form.control-group.label>
                         <input type="text" name="proforma_number" v-model="form.proforma_number" class="custom-input">
                     </x-admin::form.control-group>
 
-                    <x-admin::form.control-group class="!mb-0">
+                    <x-admin::form.control-group class="!mb-0 span-2">
                         <x-admin::form.control-group.label class="required">Quote #</x-admin::form.control-group.label>
                         <select name="quote_id" v-model="form.quote_id" class="custom-select" required @change="applyQuoteDetails">
                             <option value="">Select Quote</option>
                             <option v-for="quote in quotes" :key="quote.id" :value="quote.id">@{{ quote.quote_number_display }}</option>
                         </select>
                     </x-admin::form.control-group>
-                </div>
 
-                <div class="grid gap-4 md:grid-cols-2">
-                    <x-admin::form.control-group class="!mb-0">
+                    <x-admin::form.control-group class="!mb-0 span-4">
                         <x-admin::form.control-group.label>Customer</x-admin::form.control-group.label>
                         <input type="text" class="custom-input" :value="form.organization_name || ''" disabled>
                     </x-admin::form.control-group>
 
-                    <x-admin::form.control-group class="!mb-0">
+                    <x-admin::form.control-group class="!mb-0 span-4">
                         <x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label>
                         <input type="text" class="custom-input" :value="form.sales_owner_name || ''" disabled>
                     </x-admin::form.control-group>
                 </div>
 
-                <div class="grid gap-4 md:grid-cols-3">
-                    <x-admin::form.control-group class="!mb-0">
+                <div class="document-form-mini-grid document-form-section">
+                    <x-admin::form.control-group class="!mb-0 span-3">
                         <x-admin::form.control-group.label class="required">Issue Date</x-admin::form.control-group.label>
                         <x-admin::form.control-group.control type="date" name="issue_date" v-model="form.issue_date" rules="required" />
                     </x-admin::form.control-group>
 
-                    <x-admin::form.control-group class="!mb-0">
+                    <x-admin::form.control-group class="!mb-0 span-3">
                         <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
                         <select name="status" v-model="form.status" class="custom-select">
                             <option value="draft">draft</option>
@@ -189,7 +192,7 @@
                         </select>
                     </x-admin::form.control-group>
 
-                    <x-admin::form.control-group class="!mb-0">
+                    <x-admin::form.control-group class="!mb-0 span-6">
                         <x-admin::form.control-group.label>Payment Term</x-admin::form.control-group.label>
                         <x-admin::form.control-group.control type="text" name="payment_term" v-model="form.payment_term" />
                     </x-admin::form.control-group>
@@ -449,6 +452,9 @@
         </style>
     @endPushOnce
 </x-admin::layouts>
+
+
+
 
 
 
