@@ -39,7 +39,13 @@
                         </tr>
                         <tr>
                             <td class="py-2 pr-4 text-gray-500 dark:text-gray-400">Customer</td>
-                            <td class="py-2 font-medium text-gray-800 dark:text-white">{{ optional($product->customerOrganization)->name ?: 'Global Product' }}</td>
+                            <td class="py-2 font-medium text-gray-800 dark:text-white">
+                                @if ($product->customer_organization_id && $product->customerOrganization)
+                                    <a class="text-brandColor" href="{{ route('admin.contacts.organizations.view', $product->customer_organization_id) }}">{{ $product->customerOrganization->name }}</a>
+                                @else
+                                    Global Product
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <td class="py-2 pr-4 text-gray-500 dark:text-gray-400">Size</td>

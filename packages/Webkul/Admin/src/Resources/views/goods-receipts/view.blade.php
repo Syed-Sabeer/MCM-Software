@@ -14,7 +14,14 @@
             </div>
 
             <div class="mt-4 grid gap-4 text-sm dark:text-white md:grid-cols-4">
-                <div><strong>Vendor:</strong> {{ optional($goodsReceipt->vendor)->name }}</div>
+                <div>
+                    <strong>Vendor:</strong>
+                    @if ($goodsReceipt->vendor_id && $goodsReceipt->vendor)
+                        <a class="text-brandColor" href="{{ route('admin.contacts.organizations.view', $goodsReceipt->vendor_id) }}">{{ $goodsReceipt->vendor->name }}</a>
+                    @else
+                        -
+                    @endif
+                </div>
                 <div><strong>PO:</strong> <a class="text-brandColor" href="{{ route('admin.purchase_orders.view', $goodsReceipt->purchase_order_id) }}">{{ optional($goodsReceipt->purchaseOrder)->po_number }}</a></div>
                 <div><strong>Date:</strong> {{ optional($goodsReceipt->receipt_date)->format('Y-m-d') }}</div>
                 <div><strong>Status:</strong> {{ ucfirst((string) $goodsReceipt->status) }}</div>
@@ -55,7 +62,13 @@
                 <tbody>
                     @foreach ($goodsReceipt->items as $item)
                         <tr class="border-b dark:border-gray-800">
-                            <td class="py-2">{{ $item->material_name }}</td>
+                            <td class="py-2">
+                                @if ($item->product_id)
+                                    <a class="text-brandColor" href="{{ route('admin.products.view', $item->product_id) }}">{{ $item->material_name }}</a>
+                                @else
+                                    {{ $item->material_name }}
+                                @endif
+                            </td>
                             <td class="py-2">{{ $item->received_qty }} {{ $item->unit }}</td>
                             <td class="py-2">{{ core()->formatBasePrice($item->unit_price, 2) }}</td>
                             <td class="py-2">{{ core()->formatBasePrice($item->line_total, 2) }}</td>

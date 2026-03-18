@@ -23,8 +23,22 @@
             </div>
 
             <div class="mt-4 grid gap-4 text-sm dark:text-white md:grid-cols-4">
-                <div><strong>Customer:</strong> {{ optional($jobOrder->organization)->name }}</div>
-                <div><strong>Proforma:</strong> {{ optional($jobOrder->proformaInvoice)->proforma_number }}</div>
+                <div>
+                    <strong>Customer:</strong>
+                    @if ($jobOrder->organization_id && $jobOrder->organization)
+                        <a class="text-brandColor" href="{{ route('admin.contacts.organizations.view', $jobOrder->organization_id) }}">{{ $jobOrder->organization->name }}</a>
+                    @else
+                        -
+                    @endif
+                </div>
+                <div>
+                    <strong>Proforma:</strong>
+                    @if ($jobOrder->proforma_invoice_id && $jobOrder->proformaInvoice)
+                        <a class="text-brandColor" href="{{ route('admin.proforma_invoices.view', $jobOrder->proforma_invoice_id) }}">{{ $jobOrder->proformaInvoice->proforma_number }}</a>
+                    @else
+                        -
+                    @endif
+                </div>
                 <div><strong>Issue Date:</strong> {{ optional($jobOrder->issue_date)->format('Y-m-d') }}</div>
                 <div><strong>Required Delivery:</strong> {{ optional($jobOrder->required_delivery_date)->format('Y-m-d') ?: '-' }}</div>
             </div>
@@ -71,7 +85,13 @@
                                     ?? ((float) $item->qty * (float) $displayRate);
                             @endphp
                             <tr class="border-b dark:border-gray-800">
-                                <td class="py-2 font-medium">{{ $item->display_code }}</td>
+                                <td class="py-2 font-medium">
+                                    @if ($item->product_id)
+                                        <a class="text-brandColor" href="{{ route('admin.products.view', $item->product_id) }}">{{ $item->display_code }}</a>
+                                    @else
+                                        {{ $item->display_code }}
+                                    @endif
+                                </td>
                                 <td class="py-2">{{ $item->item_name ?: '-' }}</td>
                                 <td class="py-2 text-right">{{ $formatItemQty($item->qty) }}</td>
                                 <td class="py-2">{{ $item->unit ?: 'PCS' }}</td>
@@ -101,7 +121,15 @@
                         @foreach ($jobOrder->requirements as $requirement)
                             <tr class="border-b dark:border-gray-800">
                                 <td class="py-2">
-                                    {{ optional($jobOrder->items->firstWhere('id', $requirement->job_order_item_id))->display_code ?: '-' }}
+                                    @php
+                                        $linkedItem = $jobOrder->items->firstWhere('id', $requirement->job_order_item_id);
+                                    @endphp
+
+                                    @if ($linkedItem?->product_id)
+                                        <a class="text-brandColor" href="{{ route('admin.products.view', $linkedItem->product_id) }}">{{ $linkedItem->display_code ?: '-' }}</a>
+                                    @else
+                                        {{ $linkedItem?->display_code ?: '-' }}
+                                    @endif
                                 </td>
                                 <td class="py-2">{{ $requirement->material_name }}</td>
                                 <td class="py-2">{{ $formatStageQty($requirement->qty_per_unit) }} {{ $requirement->unit }}</td>

@@ -102,6 +102,18 @@ class QuoteController extends Controller
     }
 
     /**
+     * Display quote details in read-only mode.
+     */
+    public function view(int $id): View
+    {
+        $quote = $this->quoteRepository
+            ->with(['organization', 'person', 'user', 'items', 'proformaInvoices'])
+            ->findOrFail($id);
+
+        return view('admin::quotes.view', compact('quote'));
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(AttributeForm $request, int $id): RedirectResponse

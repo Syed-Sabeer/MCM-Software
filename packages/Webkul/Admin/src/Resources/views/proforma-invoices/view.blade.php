@@ -46,7 +46,14 @@
             <div class="flex items-center justify-between gap-4">
                 <div>
                     <h1 class="text-xl font-bold dark:text-white">Proforma {{ $proformaInvoice->proforma_number }}</h1>
-                    <p class="text-sm text-gray-500">Commercial confirmation linked to quote {{ optional($proformaInvoice->quote)->quote_number ? 'Q' . ltrim((string) optional($proformaInvoice->quote)->quote_number, 'Q') : '-' }}</p>
+                    <p class="text-sm text-gray-500">
+                        Commercial confirmation linked to quote
+                        @if ($proformaInvoice->quote_id && $proformaInvoice->quote)
+                            <a class="text-brandColor" href="{{ route('admin.quotes.view', $proformaInvoice->quote_id) }}">{{ 'Q' . ltrim((string) $proformaInvoice->quote->quote_number, 'Q') }}</a>
+                        @else
+                            -
+                        @endif
+                    </p>
                 </div>
 
                 <div class="flex gap-2">
@@ -62,7 +69,14 @@
                 <div class="mb-3 text-base font-semibold">Document Summary</div>
                 <div class="grid gap-3 text-sm md:grid-cols-2">
                     <div><strong>Proforma #:</strong> {{ $proformaInvoice->proforma_number }}</div>
-                    <div><strong>Quote #:</strong> {{ optional($proformaInvoice->quote)->quote_number ? 'Q' . ltrim((string) optional($proformaInvoice->quote)->quote_number, 'Q') : '-' }}</div>
+                    <div>
+                        <strong>Quote #:</strong>
+                        @if ($proformaInvoice->quote_id && $proformaInvoice->quote)
+                            <a class="text-brandColor" href="{{ route('admin.quotes.view', $proformaInvoice->quote_id) }}">{{ 'Q' . ltrim((string) $proformaInvoice->quote->quote_number, 'Q') }}</a>
+                        @else
+                            -
+                        @endif
+                    </div>
                     <div><strong>Issue Date:</strong> {{ optional($proformaInvoice->issue_date)->format('Y-m-d') ?: '-' }}</div>
                     <div><strong>Status:</strong> {{ ucfirst((string) ($proformaInvoice->status ?: 'draft')) }}</div>
                     <div><strong>Sales Owner:</strong> {{ $salesPerson?->name ?: '-' }}</div>
@@ -87,7 +101,12 @@
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <div class="mb-3 text-base font-semibold">Bill To</div>
                 <div class="space-y-1 text-sm">
+                    @if ($organization?->id)
+                        <div><a class="text-brandColor" href="{{ route('admin.contacts.organizations.view', $organization->id) }}">{{ $organization->name }}</a></div>
+                    @endif
+
                     @foreach ($billTo as $line)
+                        @continue($organization?->name && $line === $organization->name)
                         <div>{{ $line }}</div>
                     @endforeach
                 </div>
@@ -96,7 +115,12 @@
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <div class="mb-3 text-base font-semibold">Ship To</div>
                 <div class="space-y-1 text-sm">
+                    @if ($organization?->id)
+                        <div><a class="text-brandColor" href="{{ route('admin.contacts.organizations.view', $organization->id) }}">{{ $organization->name }}</a></div>
+                    @endif
+
                     @foreach ($shipTo as $line)
+                        @continue($organization?->name && $line === $organization->name)
                         <div>{{ $line }}</div>
                     @endforeach
                 </div>
@@ -131,7 +155,13 @@
                                             <span class="text-xs text-gray-500">No image</span>
                                         @endif
                                     </td>
-                                    <td class="py-2 font-medium">{{ $item->item_code ?: '-' }}</td>
+                                    <td class="py-2 font-medium">
+                                        @if ($item->product_id)
+                                            <a class="text-brandColor" href="{{ route('admin.products.view', $item->product_id) }}">{{ $item->item_code ?: '-' }}</a>
+                                        @else
+                                            {{ $item->item_code ?: '-' }}
+                                        @endif
+                                    </td>
                                     <td class="py-2">{{ $item->item_name ?: '-' }}</td>
                                     <td class="py-2">{{ $item->color_variant_name ?: '-' }}</td>
                                     <td class="py-2 text-right">{{ $formatQty($item->qty ?: 0) }}</td>

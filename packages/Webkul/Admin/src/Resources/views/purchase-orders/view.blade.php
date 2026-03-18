@@ -6,7 +6,14 @@
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <div class="text-xl font-bold dark:text-white">Purchase Order {{ $purchaseOrder->po_number }}</div>
-                    <div class="text-sm text-gray-500">Vendor-facing procurement document linked to {{ optional($purchaseOrder->jobOrder)->job_order_number ?: 'manual purchasing' }}</div>
+                    <div class="text-sm text-gray-500">
+                        Vendor-facing procurement document linked to
+                        @if ($purchaseOrder->job_order_id && $purchaseOrder->jobOrder)
+                            <a class="text-brandColor" href="{{ route('admin.job_orders.view', $purchaseOrder->job_order_id) }}">{{ $purchaseOrder->jobOrder->job_order_number }}</a>
+                        @else
+                            manual purchasing
+                        @endif
+                    </div>
                 </div>
 
                 <div class="flex gap-2">
@@ -20,14 +27,33 @@
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Vendor</div>
-                <div class="font-semibold">{{ optional($purchaseOrder->organization)->name ?: '-' }}</div>
+                <div class="font-semibold">
+                    @if ($purchaseOrder->organization_id && $purchaseOrder->organization)
+                        <a class="text-brandColor" href="{{ route('admin.contacts.organizations.view', $purchaseOrder->organization_id) }}">{{ $purchaseOrder->organization->name }}</a>
+                    @else
+                        -
+                    @endif
+                </div>
                 <div class="mt-1 text-gray-500">{{ optional($purchaseOrder->organization)->phone ?: '' }}</div>
             </div>
 
             <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Job Order</div>
-                <div class="font-semibold">{{ $purchaseOrder->job_number ?: optional($purchaseOrder->jobOrder)->job_order_number ?: '-' }}</div>
-                <div class="mt-1 text-gray-500">Vendor Quote: {{ optional($purchaseOrder->vendorQuote)->vendor_quote_number ?: '-' }}</div>
+                <div class="font-semibold">
+                    @if ($purchaseOrder->job_order_id && $purchaseOrder->jobOrder)
+                        <a class="text-brandColor" href="{{ route('admin.job_orders.view', $purchaseOrder->job_order_id) }}">{{ $purchaseOrder->job_number ?: $purchaseOrder->jobOrder->job_order_number }}</a>
+                    @else
+                        {{ $purchaseOrder->job_number ?: '-' }}
+                    @endif
+                </div>
+                <div class="mt-1 text-gray-500">
+                    Vendor Quote:
+                    @if ($purchaseOrder->vendor_quote_id && $purchaseOrder->vendorQuote)
+                        <a class="text-brandColor" href="{{ route('admin.vendor_quotes.view', $purchaseOrder->vendor_quote_id) }}">{{ $purchaseOrder->vendorQuote->vendor_quote_number }}</a>
+                    @else
+                        -
+                    @endif
+                </div>
             </div>
 
             <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
@@ -65,7 +91,13 @@
                     <tbody>
                         @forelse ($purchaseOrder->items as $item)
                             <tr class="border-b dark:border-gray-800">
-                                <td class="py-2">{{ $item->material_name ?: $item->item ?: '-' }}</td>
+                                <td class="py-2">
+                                    @if ($item->product_id)
+                                        <a class="text-brandColor" href="{{ route('admin.products.view', $item->product_id) }}">{{ $item->material_name ?: $item->item ?: '-' }}</a>
+                                    @else
+                                        {{ $item->material_name ?: $item->item ?: '-' }}
+                                    @endif
+                                </td>
                                 <td class="py-2">{{ $item->description ?: '-' }}</td>
                                 <td class="py-2 text-right">{{ rtrim(rtrim(number_format((float) ($item->ordered_quantity ?: $item->quantity ?: 0), 4, '.', ''), '0'), '.') }}</td>
                                 <td class="py-2 text-right">{{ rtrim(rtrim(number_format((float) ($item->received_quantity ?: 0), 4, '.', ''), '0'), '.') }}</td>

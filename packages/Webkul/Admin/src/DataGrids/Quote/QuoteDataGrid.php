@@ -54,6 +54,7 @@ class QuoteDataGrid extends DataGrid
             'type'       => 'string',
             'filterable' => true,
             'sortable'   => true,
+            'closure'    => fn ($row) => '<a href="'.e(route('admin.quotes.view', $row->id)).'" class="text-brandColor">'.e($row->quote_number).'</a>',
         ]);
 
         $this->addColumn([
@@ -70,7 +71,9 @@ class QuoteDataGrid extends DataGrid
                     'value' => 'name',
                 ],
             ],
-            'closure'            => fn ($row) => $row->organization_name ?: '--',
+            'closure'            => fn ($row) => $row->organization_id
+                ? '<a href="'.e(route('admin.contacts.organizations.view', $row->organization_id)).'" class="text-brandColor">'.e($row->organization_name).'</a>'
+                : '--',
         ]);
 
         $this->addColumn([
@@ -122,6 +125,16 @@ class QuoteDataGrid extends DataGrid
      */
     public function prepareActions(): void
     {
+        if (bouncer()->hasPermission('quotes.edit')) {
+            $this->addAction([
+                'index'  => 'view',
+                'icon'   => 'icon-eye',
+                'title'  => 'View',
+                'method' => 'GET',
+                'url'    => fn ($row) => route('admin.quotes.view', $row->id),
+            ]);
+        }
+
         if (bouncer()->hasPermission('quotes.edit')) {
             $this->addAction([
                 'index'  => 'edit',

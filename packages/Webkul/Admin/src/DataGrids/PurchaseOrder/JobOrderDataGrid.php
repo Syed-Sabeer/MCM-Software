@@ -13,7 +13,7 @@ class JobOrderDataGrid extends DataGrid
         $queryBuilder = DB::table('job_orders')
             ->leftJoin('organizations', 'job_orders.organization_id', '=', 'organizations.id')
             ->leftJoin('proforma_invoices', 'job_orders.proforma_invoice_id', '=', 'proforma_invoices.id')
-            ->addSelect('job_orders.id', 'job_orders.job_order_number', 'job_orders.required_delivery_date', 'job_orders.status', 'organizations.name as customer_name', 'proforma_invoices.proforma_number');
+            ->addSelect('job_orders.id', 'job_orders.job_order_number', 'job_orders.required_delivery_date', 'job_orders.status', 'organizations.id as organization_id', 'organizations.name as customer_name', 'proforma_invoices.id as proforma_invoice_id', 'proforma_invoices.proforma_number');
 
         $this->addFilter('job_order_number', 'job_orders.job_order_number');
         $this->addFilter('customer_name', 'organizations.name');
@@ -33,13 +33,31 @@ class JobOrderDataGrid extends DataGrid
             ['required_delivery_date', 'Required Delivery', 'date'],
             ['status', 'Status', 'string'],
         ] as [$index, $label, $type]) {
+            $closure = fn ($row) => $row->{$index} ?: '--';
+
+            if ($index === 'job_order_number') {
+                $closure = fn ($row) => '<a href="'.e(route('admin.job_orders.view', $row->id)).'" class="text-brandColor">'.e($row->job_order_number).'</a>';
+            }
+
+            if ($index === 'customer_name') {
+                $closure = fn ($row) => $row->organization_id
+                    ? '<a href="'.e(route('admin.contacts.organizations.view', $row->organization_id)).'" class="text-brandColor">'.e($row->customer_name).'</a>'
+                    : '--';
+            }
+
+            if ($index === 'proforma_number') {
+                $closure = fn ($row) => $row->proforma_invoice_id
+                    ? '<a href="'.e(route('admin.proforma_invoices.view', $row->proforma_invoice_id)).'" class="text-brandColor">'.e($row->proforma_number).'</a>'
+                    : '--';
+            }
+
             $this->addColumn([
                 'index' => $index,
                 'label' => $label,
                 'type' => $type,
                 'sortable' => true,
                 'filterable' => true,
-                'closure' => fn ($row) => $row->{$index} ?: '--',
+                'closure' => $closure,
             ]);
         }
     }

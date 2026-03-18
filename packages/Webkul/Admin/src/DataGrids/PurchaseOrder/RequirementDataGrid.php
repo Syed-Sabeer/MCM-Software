@@ -23,6 +23,7 @@ class RequirementDataGrid extends DataGrid
                 'job_order_requirements.balance_qty',
                 'job_order_requirements.status',
                 'job_orders.job_order_number',
+                'organizations.id as organization_id',
                 'organizations.name as customer_name'
             );
 
@@ -40,8 +41,8 @@ class RequirementDataGrid extends DataGrid
 
     public function prepareColumns(): void
     {
-        $this->addColumn(['index' => 'job_order_number', 'label' => 'Job Order', 'type' => 'string', 'sortable' => true, 'filterable' => true]);
-        $this->addColumn(['index' => 'customer_name', 'label' => 'Customer', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->customer_name ?: '--']);
+        $this->addColumn(['index' => 'job_order_number', 'label' => 'Job Order', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => '<a href="'.e(route('admin.job_orders.view', $row->job_order_id)).'" class="text-brandColor">'.e($row->job_order_number).'</a>']);
+        $this->addColumn(['index' => 'customer_name', 'label' => 'Customer', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->organization_id ? '<a href="'.e(route('admin.contacts.organizations.view', $row->organization_id)).'" class="text-brandColor">'.e($row->customer_name).'</a>' : '--']);
         $this->addColumn(['index' => 'material_name', 'label' => 'Material', 'type' => 'string', 'sortable' => true, 'filterable' => true]);
         $this->addColumn(['index' => 'required_qty', 'label' => 'Required Qty', 'type' => 'string', 'sortable' => true, 'filterable' => false, 'closure' => fn ($row) => rtrim(rtrim(number_format((float) $row->required_qty, 4, '.', ''), '0'), '.') . ' ' . ($row->unit ?: '')]);
         $this->addColumn(['index' => 'received_qty', 'label' => 'Received Qty', 'type' => 'string', 'sortable' => true, 'filterable' => false, 'closure' => fn ($row) => rtrim(rtrim(number_format((float) $row->received_qty, 4, '.', ''), '0'), '.')]);

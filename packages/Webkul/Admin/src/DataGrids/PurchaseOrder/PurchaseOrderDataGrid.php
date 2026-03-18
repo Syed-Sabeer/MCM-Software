@@ -22,7 +22,9 @@ class PurchaseOrderDataGrid extends DataGrid
                 'purchase_orders.status',
                 'purchase_orders.created_at',
                 'users.name as sales_person',
+                'organizations.id as organization_id',
                 'organizations.name as vendor_name',
+                'job_orders.id as job_order_id',
                 'job_orders.job_order_number'
             );
 
@@ -37,9 +39,9 @@ class PurchaseOrderDataGrid extends DataGrid
 
     public function prepareColumns(): void
     {
-        $this->addColumn(['index' => 'po_number', 'label' => 'PO #', 'type' => 'string', 'sortable' => true, 'filterable' => true]);
-        $this->addColumn(['index' => 'vendor_name', 'label' => 'Vendor', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->vendor_name ?: '--']);
-        $this->addColumn(['index' => 'job_order_number', 'label' => 'Job Order', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->job_order_number ?: '--']);
+        $this->addColumn(['index' => 'po_number', 'label' => 'PO #', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => '<a href="'.e(route('admin.purchase_orders.view', $row->id)).'" class="text-brandColor">'.e($row->po_number).'</a>']);
+        $this->addColumn(['index' => 'vendor_name', 'label' => 'Vendor', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->organization_id ? '<a href="'.e(route('admin.contacts.organizations.view', $row->organization_id)).'" class="text-brandColor">'.e($row->vendor_name).'</a>' : '--']);
+        $this->addColumn(['index' => 'job_order_number', 'label' => 'Job Order', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->job_order_id ? '<a href="'.e(route('admin.job_orders.view', $row->job_order_id)).'" class="text-brandColor">'.e($row->job_order_number).'</a>' : '--']);
         $this->addColumn(['index' => 'expected_receive_date', 'label' => 'Expected Receive Date', 'type' => 'date', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->expected_receive_date ? core()->formatDate($row->expected_receive_date, 'd M Y') : '--']);
         $this->addColumn(['index' => 'grand_total', 'label' => 'Grand Total', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => core()->formatBasePrice($row->grand_total, 2)]);
         $this->addColumn(['index' => 'status', 'label' => 'Status', 'type' => 'string', 'sortable' => true, 'filterable' => true]);

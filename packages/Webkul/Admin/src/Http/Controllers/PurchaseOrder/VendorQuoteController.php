@@ -4,19 +4,24 @@ namespace Webkul\Admin\Http\Controllers\PurchaseOrder;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Admin\DataGrids\PurchaseOrder\VendorQuoteDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\VendorQuoteRequest;
+use Webkul\Core\Traits\PDFHandler;
 use Webkul\PurchaseOrder\Models\VendorQuote;
 use Webkul\PurchaseOrder\Repositories\JobOrderRepository;
 use Webkul\PurchaseOrder\Repositories\VendorQuoteRepository;
 
 class VendorQuoteController extends Controller
 {
+    use PDFHandler;
+
     public function __construct(
         protected VendorQuoteRepository $vendorQuoteRepository,
         protected JobOrderRepository $jobOrderRepository
@@ -87,6 +92,18 @@ class VendorQuoteController extends Controller
         $vendorQuote = $this->vendorQuoteRepository->with(['organization', 'person', 'jobOrder.organization', 'items.requirement'])->findOrFail($id);
 
         return view('admin::vendor-quotes.view', compact('vendorQuote'));
+    }
+
+    public function print(int $id): Response|StreamedResponse
+    {
+        $vendorQuote = $this->vendorQuoteRepository
+            ->with(['organization', 'jobOrder', 'items.requirement'])
+            ->findOrFail($id);
+
+        return $this->downloadPDF(
+            view('admin::vendor-quotes.pdf', compact('vendorQuote'))->render(),
+            'Vendor_Quote_' . ($vendorQuote->vendor_quote_number ?: $vendorQuote->id) . '_' . $vendorQuote->created_at->format('d-m-Y')
+        );
     }
 
     public function edit(int $id): View

@@ -65,6 +65,7 @@ class ProductDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
+            'closure'    => fn ($row) => '<a href="'.e(route('admin.products.view', $row->id)).'" class="text-brandColor">'.e($row->name).'</a>',
         ]);
 
         $this->addColumn([
@@ -93,7 +94,9 @@ class ProductDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
-            'closure'    => fn ($row) => $row->customer_name ?: '—',
+            'closure'    => fn ($row) => $row->customer_organization_id
+                ? '<a href="'.e(route('admin.contacts.organizations.view', $row->customer_organization_id)).'" class="text-brandColor">'.e($row->customer_name).'</a>'
+                : '—',
         ]);
 
         $this->addColumn([

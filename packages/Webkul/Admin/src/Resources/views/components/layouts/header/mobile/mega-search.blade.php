@@ -228,7 +228,7 @@
                             <div class="grid max-h-[400px] overflow-y-auto">
                                 <template v-for="quote in searchedResults.quotes">
                                     <a
-                                        :href="'{{ route('admin.quotes.edit', ':id') }}'.replace(':id', quote.id)"
+                                        :href="'{{ route('admin.quotes.view', ':id') }}'.replace(':id', quote.id)"
                                         class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
                                     >
                                         <!-- Left Information -->

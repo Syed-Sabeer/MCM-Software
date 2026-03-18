@@ -10,6 +10,8 @@ Route::controller(QuoteController::class)->prefix('quotes')->group(function () {
 
     Route::post('create', 'store')->name('admin.quotes.store');
 
+    Route::get('view/{id}', 'view')->name('admin.quotes.view');
+
     Route::get('edit/{id?}', 'edit')->name('admin.quotes.edit');
 
     Route::put('edit/{id}', 'update')->name('admin.quotes.update');

@@ -2,7 +2,7 @@
 
 return [
     [
-        'key'   => 'dashboard',
+        'route' => ['admin.quotes.edit', 'admin.quotes.update', 'admin.quotes.view'],
         'name'  => 'admin::app.layouts.dashboard',
         'route' => 'admin.dashboard.index',
         'sort'  => 1,
@@ -122,10 +122,15 @@ return [
         'route' => ['admin.vendor_quotes.edit', 'admin.vendor_quotes.update', 'admin.vendor_quotes.view'],
         'sort'  => 2,
     ], [
+        'key'   => 'vendor_quotes.print',
+        'name'  => 'admin::app.acl.print',
+        'route' => 'admin.vendor_quotes.print',
+        'sort'  => 3,
+    ], [
         'key'   => 'vendor_quotes.delete',
         'name'  => 'admin::app.acl.delete',
         'route' => ['admin.vendor_quotes.delete', 'admin.vendor_quotes.mass_delete'],
-        'sort'  => 3,
+        'sort'  => 4,
     ], [
         'key'   => 'goods_receipts',
         'name'  => 'Goods Receipts',

@@ -51,6 +51,7 @@ class ProformaInvoiceDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => true,
             'filterable' => true,
+            'closure'    => fn ($row) => '<a href="'.e(route('admin.proforma_invoices.view', $row->id)).'" class="text-brandColor">'.e($row->proforma_number).'</a>',
         ]);
 
         $this->addColumn([
@@ -67,7 +68,9 @@ class ProformaInvoiceDataGrid extends DataGrid
                     'value' => 'name',
                 ],
             ],
-            'closure'            => fn ($row) => $row->organization_name ?: '--',
+            'closure'            => fn ($row) => $row->organization_id
+                ? '<a href="'.e(route('admin.contacts.organizations.view', $row->organization_id)).'" class="text-brandColor">'.e($row->organization_name).'</a>'
+                : '--',
         ]);
 
         $this->addColumn([
@@ -76,7 +79,9 @@ class ProformaInvoiceDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => true,
             'filterable' => true,
-            'closure'    => fn ($row) => $row->quote_number ?: '--',
+            'closure'    => fn ($row) => $row->quote_id
+                ? '<a href="'.e(route('admin.quotes.view', $row->quote_id)).'" class="text-brandColor">'.e($row->quote_number).'</a>'
+                : '--',
         ]);
 
         $this->addColumn([
