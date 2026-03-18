@@ -14,7 +14,7 @@ class PurchaseOrder extends Model implements \Webkul\PurchaseOrder\Contracts\Pur
     protected $table = 'purchase_orders';
 
     protected $fillable = [
-        'po_number', 'job_number', 'job_order_id', 'vendor_quote_id', 'description', 'notes', 'attachment_path',
+        'po_number', 'job_number', 'job_order_id', 'vendor_quote_id', 'description', 'notes', 'terms', 'attachment_path',
         'completion_date', 'last_delivery_date', 'expected_receive_date', 'status', 'payment_term', 'shipping_method',
         'sales_tax_percent', 'freight', 'sub_total', 'tax_amount', 'grand_total', 'person_id', 'organization_id', 'user_id', 'closed_at', 'closed_by',
     ];

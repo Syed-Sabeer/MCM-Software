@@ -79,7 +79,7 @@
                 @if ($logoPath)
                     <img src="{{ $logoPath }}" alt="Logo" class="logo">
                 @endif
-                <div class="brand" style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">{{ $companyName }}</div>
+                <div class="brand" style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">{{ $companyName }}</div>
                 @foreach ($companyLines as $line)
                     <div>{{ $line }}</div>
                 @endforeach
@@ -90,7 +90,7 @@
                     <tr><td class="meta-label">PO #</td><td>{{ $purchaseOrder->po_number }}</td></tr>
                     <tr><td class="meta-label">Issue Date</td><td>{{ optional($purchaseOrder->created_at)->format('Y-m-d') }}</td></tr>
                     <tr><td class="meta-label">Vendor Quote #</td><td>{{ optional($purchaseOrder->vendorQuote)->vendor_quote_number ?: '-' }}</td></tr>
-                    <tr><td class="meta-label">Job Order #</td><td>{{ $purchaseOrder->job_number ?: optional($purchaseOrder->jobOrder)->job_order_number ?: '-' }}</td></tr>
+
                     <tr><td class="meta-label">Status</td><td>{{ ucfirst(str_replace('_', ' ', $purchaseOrder->status ?: 'draft')) }}</td></tr>
                 </table>
             </td>
@@ -157,11 +157,8 @@
     <table class="notes-table">
         <tr>
             <td><div class="note-card"><div class="section-title">Remarks</div><div class="preline">{{ $purchaseOrder->notes ?: '-' }}</div></div></td>
-            <td><div class="note-card"><div class="section-title">Delivery Notes</div><div class="preline">{{ collect([
-                $purchaseOrder->payment_term ? 'Payment Terms: ' . $purchaseOrder->payment_term : null,
-                $purchaseOrder->shipping_method ? 'Shipping Method: ' . $purchaseOrder->shipping_method : null,
-                optional($purchaseOrder->expected_receive_date)->format('Y-m-d') ? 'Expected Receive: ' . optional($purchaseOrder->expected_receive_date)->format('Y-m-d') : null,
-            ])->filter()->implode("\n") ?: '-' }}</div></div></td>
+             <td><div class="note-card"><div class="section-title">Terms & Conditions</div><div class="preline">{{ $purchaseOrder->terms ?: '-' }}</div></div></td>
+
         </tr>
     </table>
 

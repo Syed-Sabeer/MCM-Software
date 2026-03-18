@@ -20,7 +20,7 @@ class PurchaseOrderRepository extends Repository
 
     public function model(): string
     {
-        return 'Webkul\PurchaseOrder\Contracts\PurchaseOrder';
+        return 'Webkul\\PurchaseOrder\\Contracts\\PurchaseOrder';
     }
 
     public function createFromVendorQuote(VendorQuote $vendorQuote, array $overrides = []): PurchaseOrder
@@ -34,9 +34,13 @@ class PurchaseOrderRepository extends Repository
             'po_number' => PurchaseOrder::generateNextPoNumber(),
             'job_number' => optional($vendorQuote->jobOrder)->job_order_number,
             'notes' => $vendorQuote->notes,
-            'payment_term' => '',
-            'shipping_method' => '',
-            'expected_receive_date' => optional($vendorQuote->items->sortBy('expected_receive_date')->firstWhere('expected_receive_date', '!=', null))->expected_receive_date?->toDateString(),
+            'payment_term' => $vendorQuote->payment_term,
+            'shipping_method' => $vendorQuote->shipping_method,
+            'completion_date' => $vendorQuote->first_delivery_date?->toDateString(),
+            'last_delivery_date' => $vendorQuote->last_delivery_date?->toDateString(),
+            'sales_tax_percent' => (float) ($vendorQuote->sales_tax_percent ?? 0),
+            'freight' => (float) ($vendorQuote->freight ?? 0),
+            'expected_receive_date' => optional($vendorQuote->last_delivery_date ?: $vendorQuote->first_delivery_date)->toDateString(),
             'status' => 'draft',
             'items' => $vendorQuote->items->map(fn ($item) => [
                 'requirement_id' => $item->requirement_id,
@@ -217,4 +221,3 @@ class PurchaseOrderRepository extends Repository
         ], $purchaseOrderId);
     }
 }
-

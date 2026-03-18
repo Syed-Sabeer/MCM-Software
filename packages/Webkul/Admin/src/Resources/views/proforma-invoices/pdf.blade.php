@@ -5,10 +5,12 @@
     $logo = core()->getConfigData('general.general.admin_logo.logo_image');
     $logoPath = $logo && file_exists(public_path('storage/' . $logo)) ? public_path('storage/' . $logo) : null;
     $companyName = core()->getConfigData('general.general.company_info.company_name') ?: config('app.name');
+    $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?: '#0E90D9';
     $companyLines = array_filter([
         core()->getConfigData('general.general.company_info.address'),
         core()->getConfigData('general.general.company_info.telephone') ? 'Tel: ' . core()->getConfigData('general.general.company_info.telephone') : null,
-        core()->getConfigData('general.general.company_info.cell') ? 'Tel: ' . core()->getConfigData('general.general.company_info.cell') : null,
+        core()->getConfigData('general.general.company_info.cell') ? 'Cell: ' . core()->getConfigData('general.general.company_info.cell') : null,
+        core()->getConfigData('general.general.company_info.email') ? 'Email: ' . core()->getConfigData('general.general.company_info.email') : null,
     ]);
 
     $billToLines = array_filter([
@@ -20,6 +22,8 @@
             $organization?->billing_postcode ?: $organization?->shipping_postcode,
             $organization?->billing_country ?: $organization?->shipping_country,
         ]))),
+        $organization?->phone ? 'Phone: ' . $organization->phone : null,
+        data_get($organization, 'email') ? 'Email: ' . data_get($organization, 'email') : null,
     ]);
 
     $shipToLines = array_filter([
@@ -31,6 +35,8 @@
             $organization?->shipping_postcode ?: $organization?->billing_postcode,
             $organization?->shipping_country ?: $organization?->billing_country,
         ]))),
+        $organization?->phone ? 'Phone: ' . $organization->phone : null,
+        data_get($organization, 'email') ? 'Email: ' . data_get($organization, 'email') : null,
     ]);
 
     $paymentTerms = $proformaInvoice->payment_term ?: data_get($proformaInvoice, 'payment_terms') ?: '-';
@@ -38,7 +44,8 @@
     $productionTime = data_get($proformaInvoice, 'production_time') ?: '-';
     $transitTime = data_get($proformaInvoice, 'transit_time') ?: '-';
     $shipDateRequired = optional($proformaInvoice->due_date)->format('Y-m-d') ?: '-';
-    $etd = data_get($proformaInvoice, 'etd') ?: '-';
+    $etd = data_get($proformaInvoice, 'etd') ? \Carbon\Carbon::parse(data_get($proformaInvoice, 'etd'))->format('Y-m-d') : '-';
+    $eta = data_get($proformaInvoice, 'eta') ? \Carbon\Carbon::parse(data_get($proformaInvoice, 'eta'))->format('Y-m-d') : '-';
 
     $resolveImagePath = function (?string $image) {
         if (! $image) {
@@ -84,18 +91,18 @@
         body { font-family: DejaVu Sans, sans-serif; color: #111827; font-size: 12px; margin: 0; }
         .page { padding: 24px; }
         .header-table, .party-table, .items-table, .totals-table, .summary-table, .notes-table, .sign-table { width: 100%; border-collapse: collapse; }
-        .brand { color: #0E90D9; }
+        .brand { color: {{ $brandColor }}; }
         .title { font-size: 24px; font-weight: 700; text-align: right; }
         .logo { max-width: 120px; max-height: 70px; margin-bottom: 8px; }
         .meta-label { font-weight: 700; width: 35%; background: #f5f7fb; }
         .meta-table td { border: 1px solid #d8e0ea; padding: 7px 10px; }
         .section-box { border: 1px solid #d8e0ea; padding: 12px; min-height: 90px; }
-        .section-title { color: #0E90D9; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+        .section-title { color: {{ $brandColor }}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
         .summary-table { margin: 16px 0; }
         .summary-table td { border: 1px solid #d8e0ea; padding: 8px; width: 16.66%; }
         .summary-label { display: block; color: #6b7280; font-size: 10px; text-transform: uppercase; margin-bottom: 4px; }
         .summary-value { font-weight: 700; }
-        .items-table th { background: #0E90D9; color: #fff; border: 1px solid #0E90D9; padding: 8px; text-align: left; font-size: 10px; text-transform: uppercase; }
+        .items-table th { background: {{ $brandColor }}; color: #fff; border: 1px solid {{ $brandColor }}; padding: 8px; text-align: left; font-size: 10px; text-transform: uppercase; }
         .items-table td { border: 1px solid #d8e0ea; padding: 8px; vertical-align: top; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
@@ -104,7 +111,7 @@
         .totals-table td { border: 1px solid #d8e0ea; padding: 8px 10px; }
         .totals-label { background: #f5f7fb; font-weight: 700; }
         .totals-value { text-align: right; font-weight: 700; }
-        .grand-row td { background: #eef6ff; color: #0E90D9; font-weight: 700; }
+        .grand-row td { background: #eef6ff; color: {{ $brandColor }}; font-weight: 700; }
         .notes-table { margin-top: 18px; }
         .notes-table td { width: 50%; vertical-align: top; padding-right: 12px; }
         .note-card { border: 1px solid #d8e0ea; padding: 12px; min-height: 90px; }
@@ -122,7 +129,7 @@
                 @if ($logoPath)
                     <img src="{{ $logoPath }}" alt="Logo" class="logo">
                 @endif
-                <div class="brand" style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">{{ $companyName }}</div>
+                <div class="brand" style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">{{ $companyName }}</div>
                 @foreach ($companyLines as $line)
                     <div>{{ $line }}</div>
                 @endforeach
@@ -154,7 +161,7 @@
             <td><span class="summary-label">Production Time</span><span class="summary-value">{{ $productionTime }}</span></td>
             <td><span class="summary-label">Transit Time</span><span class="summary-value">{{ $transitTime }}</span></td>
             <td><span class="summary-label">Ship Date Required</span><span class="summary-value">{{ $shipDateRequired }}</span></td>
-            <td><span class="summary-label">ETD</span><span class="summary-value">{{ $etd }}</span></td>
+            <td><span class="summary-label">ETD / ETA</span><span class="summary-value">{{ $etd }} / {{ $eta }}</span></td>
         </tr>
     </table>
 
