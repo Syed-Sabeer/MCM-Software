@@ -126,7 +126,9 @@
                     @endphp
 
                     @if ($organization->type)
-                        @php($normalizedType = strtolower((string) $organization->type))
+                        @php
+                            $normalizedType = strtolower((string) $organization->type);
+                        @endphp
                         <div>
                             <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Type</p>
                             <p>{{ $typeLabels[$normalizedType] ?? ucfirst(str_replace('_', ' ', $organization->type)) }}</p>

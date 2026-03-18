@@ -143,11 +143,13 @@
 @endphp
 
 <x-admin::layouts>
-    <x-slot:title>Edit Proforma Invoice</x-slot:title>
+    
+
+    @include('admin::components.documents.form-styles')
 
     <x-admin::form :action="route('admin.proforma_invoices.update', $proformaInvoice->id)" method="PUT">
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="document-form-toolbar flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="text-xl font-bold dark:text-white">Edit Proforma Invoice</div>
                 <div class="flex gap-2">
                     <a href="{{ route('admin.proforma_invoices.print', $proformaInvoice->id) }}" class="secondary-button">Print</a>
@@ -163,7 +165,7 @@
     </x-admin::form>
 
     <div class="mt-4 grid gap-4 md:grid-cols-2">
-        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <h3 class="mb-3 text-lg font-semibold dark:text-white">Payment Summary</h3>
             <div class="space-y-2 text-sm dark:text-white">
                 <div class="flex justify-between"><span>Grand Total</span><span>{{ core()->formatBasePrice($proformaInvoice->grand_total) }}</span></div>
@@ -172,7 +174,7 @@
             </div>
         </div>
 
-        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <h3 class="mb-3 text-lg font-semibold dark:text-white">Add Advance Receipt</h3>
             <x-admin::form :action="route('admin.proforma_invoices.receipts.store', $proformaInvoice->id)" method="POST">
                 <div class="grid gap-3">
@@ -187,7 +189,7 @@
         </div>
     </div>
 
-    <div class="mt-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+    <div class="mt-4 document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <h3 class="mb-3 text-lg font-semibold dark:text-white">Receipt History</h3>
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
@@ -205,7 +207,7 @@
 
     @pushOnce('scripts')
         <script type="text/x-template" id="v-proforma-template">
-            <div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="document-form-panel box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <input type="hidden" name="organization_id" :value="form.organization_id || ''">
                 <input type="hidden" name="person_id" :value="form.person_id || ''">
                 <input type="hidden" name="sales_owner_id" :value="form.sales_owner_id || ''">
@@ -229,7 +231,7 @@
                     <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Payment Term</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="payment_term" v-model="form.payment_term" /></x-admin::form.control-group>
                 </div>
 
-                <div class="mt-2 flex flex-col gap-4">
+                <div class="document-form-items mt-2 flex flex-col gap-4">
                     <div class="flex flex-col gap-1"><p class="text-base font-semibold text-gray-800 dark:text-white">Proforma Invoice Items</p><p class="text-sm text-gray-600 dark:text-white">Add Product Request for this proforma invoice.</p></div>
                     <v-proforma-item-list :errors="errors" :organization-id="form.organization_id" :initial-products="form.items"></v-proforma-item-list>
                 </div>
@@ -242,7 +244,7 @@
         </script>
 
         <script type="text/x-template" id="v-proforma-item-list-template">
-            <div class="flex flex-col gap-4"><div class="block w-full overflow-visible"><x-admin::table><x-admin::table.thead><x-admin::table.thead.tr><x-admin::table.th>Product Name</x-admin::table.th><x-admin::table.th class="text-center">Image</x-admin::table.th><x-admin::table.th class="text-center">Color Variant</x-admin::table.th><x-admin::table.th class="text-center">Quantity</x-admin::table.th><x-admin::table.th class="text-center">Price</x-admin::table.th><x-admin::table.th class="text-center">Amount</x-admin::table.th><x-admin::table.th class="text-center">Discount</x-admin::table.th><x-admin::table.th class="text-center">Tax</x-admin::table.th><x-admin::table.th class="text-center">Total</x-admin::table.th><x-admin::table.th class="text-center">Action</x-admin::table.th></x-admin::table.thead.tr></x-admin::table.thead><x-admin::table.tbody><template v-for="(product, index) in products" :key="index"><v-proforma-item :product="product" :index="index" :organization-id="organizationId" @onRemoveProduct="removeProduct($event)"></v-proforma-item></template></x-admin::table.tbody></x-admin::table></div><span class="text-md flex max-w-max cursor-pointer items-center gap-2 text-brandColor" @click="addProduct">+ Add Item</span><div class="flex justify-end"><div class="grid w-[348px] gap-4 rounded-lg bg-gray-100 p-4 text-sm dark:bg-gray-950 dark:text-white"><div class="flex w-full justify-between gap-x-5"><span>Sub Total</span><p>@{{ formatPrice(subTotal) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Total Discount</span><p>@{{ formatPrice(discountAmount) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Total Tax</span><p>@{{ formatPrice(taxAmount) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Grand Total</span><p>@{{ formatPrice(grandTotal) }}</p></div></div></div></div>
+            <div class="flex flex-col gap-4"><div class="block w-full overflow-visible"><x-admin::table><x-admin::table.thead><x-admin::table.thead.tr><x-admin::table.th>Product Name</x-admin::table.th><x-admin::table.th class="text-center">Image</x-admin::table.th><x-admin::table.th class="text-center">Color Variant</x-admin::table.th><x-admin::table.th class="text-center">Quantity</x-admin::table.th><x-admin::table.th class="text-center">Price</x-admin::table.th><x-admin::table.th class="text-center">Amount</x-admin::table.th><x-admin::table.th class="text-center">Discount</x-admin::table.th><x-admin::table.th class="text-center">Tax</x-admin::table.th><x-admin::table.th class="text-center">Total</x-admin::table.th><x-admin::table.th class="text-center">Action</x-admin::table.th></x-admin::table.thead.tr></x-admin::table.thead><x-admin::table.tbody><template v-for="(product, index) in products" :key="index"><v-proforma-item :product="product" :index="index" :organization-id="organizationId" @onRemoveProduct="removeProduct($event)"></v-proforma-item></template></x-admin::table.tbody></x-admin::table></div><span class="text-md flex max-w-max cursor-pointer items-center gap-2 text-brandColor" @click="addProduct">+ Add Item</span><div class="flex justify-end"><div class="document-form-summary-box grid w-[348px] gap-4 rounded-lg bg-gray-100 p-4 text-sm dark:bg-gray-950 dark:text-white"><div class="flex w-full justify-between gap-x-5"><span>Sub Total</span><p>@{{ formatPrice(subTotal) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Total Discount</span><p>@{{ formatPrice(discountAmount) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Total Tax</span><p>@{{ formatPrice(taxAmount) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Grand Total</span><p>@{{ formatPrice(grandTotal) }}</p></div></div></div></div>
         </script>
 
         <script type="text/x-template" id="v-proforma-item-template">
@@ -282,3 +284,6 @@
         <style>.custom-input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.45rem 0.6rem; font-size: 0.875rem; background: transparent; } .custom-select { width: 100%; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.45rem 0.6rem; font-size: 0.875rem; background: transparent; }</style>
     @endPushOnce
 </x-admin::layouts>
+
+
+

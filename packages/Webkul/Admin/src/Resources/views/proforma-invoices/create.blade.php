@@ -116,11 +116,13 @@
 @endphp
 
 <x-admin::layouts>
-    <x-slot:title>Create Proforma Invoice</x-slot:title>
+    
+
+    @include('admin::components.documents.form-styles')
 
     <x-admin::form :action="route('admin.proforma_invoices.store')" method="POST">
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="document-form-toolbar flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="text-xl font-bold dark:text-white">Create Proforma Invoice</div>
                 <button type="submit" class="primary-button">Save Proforma</button>
             </div>
@@ -133,7 +135,7 @@
 
     @pushOnce('scripts')
         <script type="text/x-template" id="v-proforma-template">
-            <div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="document-form-panel box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <input type="hidden" name="organization_id" :value="form.organization_id || ''">
                 <input type="hidden" name="person_id" :value="form.person_id || ''">
                 <input type="hidden" name="sales_owner_id" :value="form.sales_owner_id || ''">
@@ -193,7 +195,7 @@
                     </x-admin::form.control-group>
                 </div>
 
-                <div class="mt-2 flex flex-col gap-4">
+                <div class="document-form-items mt-2 flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
                         <p class="text-base font-semibold text-gray-800 dark:text-white">Proforma Invoice Items</p>
                         <p class="text-sm text-gray-600 dark:text-white">Add Product Request for this proforma invoice.</p>
@@ -245,7 +247,7 @@
                 <span class="text-md flex max-w-max cursor-pointer items-center gap-2 text-brandColor" @click="addProduct">+ Add Item</span>
 
                 <div class="flex justify-end">
-                    <div class="grid w-[348px] gap-4 rounded-lg bg-gray-100 p-4 text-sm dark:bg-gray-950 dark:text-white">
+                    <div class="document-form-summary-box grid w-[348px] gap-4 rounded-lg bg-gray-100 p-4 text-sm dark:bg-gray-950 dark:text-white">
                         <div class="flex w-full justify-between gap-x-5"><span>Sub Total</span><p>@{{ formatPrice(subTotal) }}</p></div>
                         <div class="flex w-full justify-between gap-x-5"><span>Total Discount</span><p>@{{ formatPrice(discountAmount) }}</p></div>
                         <div class="flex w-full justify-between gap-x-5"><span>Total Tax</span><p>@{{ formatPrice(taxAmount) }}</p></div>
@@ -447,3 +449,6 @@
         </style>
     @endPushOnce
 </x-admin::layouts>
+
+
+

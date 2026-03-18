@@ -112,6 +112,8 @@
         @lang('admin::app.quotes.edit.title')
     </x-slot>
 
+    @include('admin::components.documents.form-styles')
+
     <x-admin::form
         :action="route('admin.quotes.update', $quote->id).'?'.http_build_query(array_merge(
             request()->route()->parameters(),
@@ -120,7 +122,7 @@
         method="PUT"
     >
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="document-form-toolbar flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     <x-admin::breadcrumbs name="quotes.edit" :entity="$quote" />
 
@@ -147,7 +149,7 @@
 
     @pushOnce('scripts')
         <script type="text/x-template" id="v-quote-template">
-            <div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="document-form-panel box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="grid gap-4 md:grid-cols-2">
                     <x-admin::form.control-group class="!mb-0">
                         <x-admin::form.control-group.label class="required">Quote #</x-admin::form.control-group.label>
@@ -243,7 +245,7 @@
 
                 <input type="hidden" name="subject" value="{{ old('subject', $quote->subject ?: ('Quote ' . $quote->quote_number)) }}">
 
-                <div class="mt-2 flex flex-col gap-4" id="quote-items">
+                <div class="document-form-items mt-2 flex flex-col gap-4" id="quote-items">
                     <div class="flex flex-col gap-1">
                         <p class="text-base font-semibold text-gray-800 dark:text-white">@lang('admin::app.quotes.create.quote-items')</p>
                         <p class="text-sm text-gray-600 dark:text-white">@lang('admin::app.quotes.create.quote-item-info')</p>
@@ -284,7 +286,7 @@
                 <span class="text-md flex max-w-max cursor-pointer items-center gap-2 text-brandColor" @click="addProduct">@lang('admin::app.quotes.create.add-item')</span>
 
                 <div class="flex justify-end">
-                    <div class="grid w-[348px] gap-4 rounded-lg bg-gray-100 p-4 text-sm dark:bg-gray-950 dark:text-white">
+                    <div class="document-form-summary-box grid w-[348px] gap-4 rounded-lg bg-gray-100 p-4 text-sm dark:bg-gray-950 dark:text-white">
                         <div class="flex w-full justify-between gap-x-5">
                             @lang('admin::app.quotes.create.sub-total', ['symbol' => core()->currencySymbol(config('app.currency'))])
                             <input type="hidden" name="sub_total" class="control" :value="subTotal" readonly>
@@ -776,3 +778,8 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
+
+
+
+
+
