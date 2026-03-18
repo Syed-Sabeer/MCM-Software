@@ -98,7 +98,7 @@ class ProformaInvoiceRepository extends Repository
             'adjustment_amount'    => $quote->adjustment_amount,
             'notes'                => $quote->notes,
             'terms'                => $quote->terms,
-            'payment_term'         => null,
+            'payment_term'         => $quote->payment_term,
             'attachment_path'      => $quote->attachment_path,
             'source_type'          => 'quote',
             'status'               => 'draft',
@@ -198,45 +198,38 @@ class ProformaInvoiceRepository extends Repository
     protected function calculateTotals(array $data): array
     {
         $subTotal = 0;
-        $discountAmount = 0;
-        $taxAmount = 0;
-
         $items = $data['items'] ?? [];
 
         foreach ($items as $index => $item) {
-            $qty = (float) ($item['qty'] ?? 0);
-            $unitPrice = (float) ($item['unit_price'] ?? 0);
+            $qty = (float) ($item['qty'] ?? $item['quantity'] ?? 0);
+            $unitPrice = (float) ($item['unit_price'] ?? $item['price'] ?? 0);
             $lineSubTotal = $qty * $unitPrice;
+            $lineTotal = max($lineSubTotal, 0);
 
-            $lineDiscountPercent = (float) ($item['discount_percent'] ?? 0);
-            $lineDiscountAmount = isset($item['discount_amount']) && $item['discount_amount'] !== ''
-                ? (float) $item['discount_amount']
-                : ($lineSubTotal * $lineDiscountPercent / 100);
-
-            $taxPercent = (float) ($item['tax_percent'] ?? 0);
-            $lineTaxAmount = isset($item['tax_amount']) && $item['tax_amount'] !== ''
-                ? (float) $item['tax_amount']
-                : max(($lineSubTotal - $lineDiscountAmount), 0) * $taxPercent / 100;
-
-            $lineTotal = max($lineSubTotal - $lineDiscountAmount + $lineTaxAmount, 0);
-
+            $items[$index]['qty'] = $qty;
+            $items[$index]['quantity'] = $qty;
+            $items[$index]['unit_price'] = $unitPrice;
+            $items[$index]['price'] = $unitPrice;
+            $items[$index]['discount_amount'] = 0;
+            $items[$index]['tax_amount'] = 0;
             $items[$index]['line_subtotal'] = $lineSubTotal;
             $items[$index]['line_total'] = $lineTotal;
-            $items[$index]['discount_amount'] = $lineDiscountAmount;
-            $items[$index]['tax_amount'] = $lineTaxAmount;
 
             $subTotal += $lineSubTotal;
-            $discountAmount += $lineDiscountAmount;
-            $taxAmount += $lineTaxAmount;
         }
 
-        $adjustment = (float) ($data['adjustment_amount'] ?? 0);
-        $grandTotal = max($subTotal - $discountAmount + $taxAmount + $adjustment, 0);
+        $tariffPercent = (float) ($data['tariff_percent'] ?? 0);
+        $freightPercent = (float) ($data['freight_percent'] ?? 0);
+        $taxAmount = $subTotal * ($tariffPercent / 100);
+        $adjustment = $subTotal * ($freightPercent / 100);
+        $discountAmount = 0;
+        $grandTotal = max($subTotal + $taxAmount + $adjustment, 0);
 
         $data['items'] = $items;
         $data['subtotal'] = $subTotal;
         $data['discount_amount'] = $discountAmount;
         $data['tax_amount'] = $taxAmount;
+        $data['adjustment_amount'] = $adjustment;
         $data['grand_total'] = $grandTotal;
         $data['remaining_amount'] = $grandTotal;
 
@@ -293,3 +286,4 @@ class ProformaInvoiceRepository extends Repository
         }
     }
 }
+

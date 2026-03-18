@@ -88,6 +88,10 @@ class JobOrderRepository extends Repository
         $savedIds = [];
 
         foreach ($items as $index => $item) {
+            $qty = (float) ($item['qty'] ?? 0);
+            $unitPrice = (float) ($item['unit_price'] ?? $item['rate'] ?? 0);
+            $lineTotal = (float) ($item['line_total'] ?? $item['amount'] ?? ($qty * $unitPrice));
+
             $payload = [
                 'job_order_id' => $jobOrder->id,
                 'proforma_invoice_item_id' => $item['proforma_invoice_item_id'] ?? null,
@@ -95,10 +99,10 @@ class JobOrderRepository extends Repository
                 'item_name' => $item['item_name'] ?? '',
                 'item_code' => $item['item_code'] ?? null,
                 'description' => $item['description'] ?? null,
-                'qty' => $item['qty'] ?? 0,
+                'qty' => $qty,
                 'unit' => $item['unit'] ?? null,
-                'unit_price' => $item['unit_price'] ?? null,
-                'line_total' => $item['line_total'] ?? null,
+                'unit_price' => $unitPrice,
+                'line_total' => $lineTotal,
                 'sort_order' => $index,
             ];
 

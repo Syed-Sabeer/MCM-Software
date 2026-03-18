@@ -74,11 +74,11 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b dark:border-gray-700">
+                            <th class="py-2 text-left">Image</th>
                             <th class="py-2 text-left">Item Code</th>
                             <th class="py-2 text-left">Description</th>
                             <th class="py-2 text-left">Color</th>
-                            <th class="py-2 text-right">Qty</th>
-                            <th class="py-2 text-left">Unit</th>
+                            <th class="py-2 text-left">Qty </th>
                             <th class="py-2 text-right">Rate</th>
                             <th class="py-2 text-right">Amount</th>
                         </tr>
@@ -87,20 +87,30 @@
                         @foreach ($proformaInvoice->items as $index => $item)
                             @php $resolvedUnit = $item->unit ?: 'PCS'; @endphp
                             <tr class="border-b dark:border-gray-800 dark:text-white">
+                                <td class="py-2">
+                                    @if ($item->preview_image)
+                                        <img src="{{ $item->preview_image }}" alt="preview" class="h-12 w-12 rounded border border-gray-200 object-cover dark:border-gray-700">
+                                    @else
+                                        <span class="text-xs text-gray-500">No image</span>
+                                    @endif
+                                </td>
                                 <td class="py-2 font-medium">
                                     <input type="hidden" name="items[{{ $index }}][proforma_invoice_item_id]" value="{{ $item->id }}">
                                     <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item->product_id }}">
                                     <input type="hidden" name="items[{{ $index }}][item_name]" value="{{ $item->item_name }}">
                                     <input type="hidden" name="items[{{ $index }}][item_code]" value="{{ $item->item_code }}">
                                     <input type="hidden" name="items[{{ $index }}][description]" value="{{ $item->description }}">
+                                    <input type="hidden" name="items[{{ $index }}][preview_image]" value="{{ $item->preview_image }}">
+                                    <input type="hidden" name="items[{{ $index }}][qty]" value="{{ $formatQty($item->qty ?: 0) }}">
+                                    <input type="hidden" name="items[{{ $index }}][unit]" value="{{ $resolvedUnit }}">
                                     <input type="hidden" name="items[{{ $index }}][unit_price]" value="{{ number_format((float) ($item->unit_price ?: 0), 3, '.', '') }}">
                                     <input type="hidden" name="items[{{ $index }}][line_total]" value="{{ number_format((float) ($item->line_total ?: 0), 3, '.', '') }}">
                                     {{ $item->item_code ?: '-' }}
                                 </td>
                                 <td class="py-2">{{ $item->item_name ?: '-' }}</td>
                                 <td class="py-2">{{ $item->color_variant_name ?: '-' }}</td>
-                                <td class="py-2 text-right"><input type="number" step="1" min="1" name="items[{{ $index }}][qty]" value="{{ $formatQty($item->qty ?: 0) }}" class="w-24 rounded border border-gray-200 px-3 py-2 text-right text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"></td>
-                                <td class="py-2"><input type="text" name="items[{{ $index }}][unit]" value="{{ $resolvedUnit }}" class="w-24 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"></td>
+                                 <td class="py-2">{{ $item->qty ? number_format($item->qty, 0) : '-' }}</td>
+
                                 <td class="py-2 text-right">{{ $formatAmount($item->unit_price ?: 0) }}</td>
                                 <td class="py-2 text-right font-medium">{{ $formatAmount($item->line_total ?: 0) }}</td>
                             </tr>

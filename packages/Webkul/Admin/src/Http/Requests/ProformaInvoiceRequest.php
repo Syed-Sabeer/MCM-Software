@@ -38,6 +38,8 @@ class ProformaInvoiceRequest extends FormRequest
             'shipping_address'       => ['nullable', 'array'],
             'shipping_address.address'=> ['nullable', 'string'],
             'adjustment_amount'      => ['nullable', 'numeric'],
+            'tariff_percent'         => ['nullable', 'numeric', 'min:0'],
+            'freight_percent'        => ['nullable', 'numeric', 'min:0'],
             'attachment'             => ['nullable', 'file', 'max:10240'],
             'items'                  => ['required', 'array', 'min:1'],
             'items.*.id'             => ['nullable', 'integer'],
@@ -79,3 +81,4 @@ class ProformaInvoiceRequest extends FormRequest
         });
     }
 }
+

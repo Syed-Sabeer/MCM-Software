@@ -47,13 +47,36 @@
                     </thead>
                     <tbody>
                         @foreach ($jobOrder->items as $item)
+                            @php
+                                $fallbackProformaItem = $jobOrder->proformaInvoice?->items?->first(function ($proformaItem) use ($item) {
+                                    if (! empty($item->proforma_invoice_item_id)) {
+                                        return (int) $proformaItem->id === (int) $item->proforma_invoice_item_id;
+                                    }
+
+                                    if (! empty($item->product_id)) {
+                                        return (int) $proformaItem->product_id === (int) $item->product_id;
+                                    }
+
+                                    return ! empty($item->item_code)
+                                        && (string) $proformaItem->item_code === (string) $item->item_code;
+                                });
+
+                                $displayRate = $item->unit_price
+                                    ?? $fallbackProformaItem?->unit_price
+                                    ?? $item->product?->selling_price
+                                    ?? 0;
+
+                                $displayAmount = $item->line_total
+                                    ?? $fallbackProformaItem?->line_total
+                                    ?? ((float) $item->qty * (float) $displayRate);
+                            @endphp
                             <tr class="border-b dark:border-gray-800">
                                 <td class="py-2 font-medium">{{ $item->display_code }}</td>
                                 <td class="py-2">{{ $item->item_name ?: '-' }}</td>
                                 <td class="py-2 text-right">{{ $formatItemQty($item->qty) }}</td>
                                 <td class="py-2">{{ $item->unit ?: 'PCS' }}</td>
-                                <td class="py-2 text-right">{{ $formatAmount($item->unit_price ?: 0) }}</td>
-                                <td class="py-2 text-right font-medium">{{ $formatAmount($item->line_total ?: 0) }}</td>
+                                <td class="py-2 text-right">{{ $formatAmount($displayRate) }}</td>
+                                <td class="py-2 text-right font-medium">{{ $formatAmount($displayAmount) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -66,7 +89,9 @@
                 <table class="w-full text-sm dark:text-white">
                     <thead>
                         <tr class="border-b dark:border-gray-700">
+                            <th class="py-2 text-left">Item</th>
                             <th class="py-2 text-left">Material</th>
+                            <th class="py-2 text-left">Per Item Required</th>
                             <th class="py-2 text-left">Required</th>
                             <th class="py-2 text-left">Received</th>
                             <th class="py-2 text-left">Balance</th>
@@ -75,7 +100,11 @@
                     <tbody>
                         @foreach ($jobOrder->requirements as $requirement)
                             <tr class="border-b dark:border-gray-800">
+                                <td class="py-2">
+                                    {{ optional($jobOrder->items->firstWhere('id', $requirement->job_order_item_id))->display_code ?: '-' }}
+                                </td>
                                 <td class="py-2">{{ $requirement->material_name }}</td>
+                                <td class="py-2">{{ $formatStageQty($requirement->qty_per_unit) }} {{ $requirement->unit }}</td>
                                 <td class="py-2">{{ $formatStageQty($requirement->required_qty) }} {{ $requirement->unit }}</td>
                                 <td class="py-2">{{ $formatStageQty($requirement->received_qty) }}</td>
                                 <td class="py-2">{{ $formatStageQty($requirement->balance_qty) }}</td>
@@ -90,26 +119,52 @@
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="mb-3 text-base font-semibold dark:text-white">Job Cards</div>
 
-                <div class="space-y-3">
-                    @foreach ($jobOrder->jobCards as $jobCard)
-                        <div class="rounded border border-gray-200 p-3 text-sm dark:border-gray-700 dark:text-white">
-                            <div class="font-semibold">
-                                {{ optional($jobCard->jobOrderItem)->display_code !== null ? optional($jobCard->jobOrderItem)->display_name : ($jobCard->title ?: 'Job Card') }}
-                            </div>
+                <table class="w-full text-sm dark:text-white">
+                    <thead>
+                        <tr class="border-b dark:border-gray-700">
+                            <th class="py-2 text-left">Item</th>
+                            <th class="py-2 text-left">Section</th>
+                            <th class="py-2 text-left">Process</th>
+                            <th class="py-2 text-left">Requirement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($jobOrder->jobCards as $jobCard)
+                            @php
+                                $itemCode = optional($jobCard->jobOrderItem)->display_code;
+                                $itemLabel = $itemCode && $itemCode !== '-' ? $itemCode : ($jobCard->title ?: 'Job Card');
+                            @endphp
 
                             @foreach ($jobCard->sections as $section)
-                                <div class="mt-2">
-                                    <div class="font-medium">{{ $section->section_name }}</div>
-                                    <ul class="list-disc pl-5">
-                                        @foreach ($section->items as $item)
-                                            <li>{{ $item->name }} @if($item->qty) - {{ $formatStageQty($item->qty) }} {{ $item->unit }} @endif</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
+                                @forelse ($section->items as $sectionItem)
+                                    <tr class="border-b dark:border-gray-800">
+                                        <td class="py-2 font-medium">{{ $itemLabel }}</td>
+                                        <td class="py-2">{{ $section->section_name }}</td>
+                                        <td class="py-2">{{ $sectionItem->name }}</td>
+                                        <td class="py-2">
+                                            @if ($sectionItem->qty)
+                                                {{ $formatStageQty($sectionItem->qty) }} {{ $sectionItem->unit }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr class="border-b dark:border-gray-800">
+                                        <td class="py-2 font-medium">{{ $itemLabel }}</td>
+                                        <td class="py-2">{{ $section->section_name }}</td>
+                                        <td class="py-2">-</td>
+                                        <td class="py-2">-</td>
+                                    </tr>
+                                @endforelse
                             @endforeach
-                        </div>
-                    @endforeach
-                </div>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="py-4 text-center text-gray-500">No job cards available.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
 
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">

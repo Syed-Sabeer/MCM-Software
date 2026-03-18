@@ -27,12 +27,14 @@ class VendorQuoteRepository extends Repository
             'issue_date' => now()->toDateString(),
             'status' => 'draft',
             'created_by' => auth()->id(),
+            'first_delivery_date' => $jobOrder->required_delivery_date?->toDateString(),
+            'last_delivery_date' => $jobOrder->required_delivery_date?->toDateString(),
             'items' => $jobOrder->requirements->map(fn ($requirement) => [
                 'requirement_id' => $requirement->id,
                 'material_name' => $requirement->material_name,
                 'quantity' => $requirement->balance_qty,
                 'unit' => $requirement->unit,
-                'expected_receive_date' => $jobOrder->required_delivery_date?->toDateString(),
+                'unit_price' => 0,
             ])->toArray(),
         ], $overrides);
 
@@ -42,19 +44,53 @@ class VendorQuoteRepository extends Repository
     public function create(array $data)
     {
         return DB::transaction(function () use ($data) {
+            $data = $this->calculateTotals($data);
             $quote = parent::create($data);
             $this->syncItems($quote, $data['items'] ?? []);
-            return $quote->fresh('items');
+            return $quote->fresh(['items', 'organization', 'jobOrder']);
         });
     }
 
     public function update(array $data, $id, $attribute = 'id')
     {
         return DB::transaction(function () use ($data, $id, $attribute) {
+            $data = $this->calculateTotals($data);
             $quote = parent::update($data, $id, $attribute);
             $this->syncItems($quote, $data['items'] ?? []);
-            return $quote->fresh('items');
+            return $quote->fresh(['items', 'organization', 'jobOrder']);
         });
+    }
+
+    protected function calculateTotals(array $data): array
+    {
+        $subtotal = 0;
+        $items = $data['items'] ?? [];
+
+        foreach ($items as $index => $item) {
+            $quantity = (float) ($item['quantity'] ?? 0);
+            $unitPrice = (float) ($item['unit_price'] ?? 0);
+            $lineTotal = $quantity * $unitPrice;
+
+            $items[$index]['quantity'] = $quantity;
+            $items[$index]['unit_price'] = $unitPrice;
+            $items[$index]['total'] = $lineTotal;
+
+            $subtotal += $lineTotal;
+        }
+
+        $salesTaxPercent = (float) ($data['sales_tax_percent'] ?? 0);
+        $salesTaxAmount = $subtotal * ($salesTaxPercent / 100);
+        $freight = (float) ($data['freight'] ?? 0);
+        $grandTotal = $subtotal + $salesTaxAmount + $freight;
+
+        $data['items'] = $items;
+        $data['subtotal'] = $subtotal;
+        $data['sales_tax_percent'] = $salesTaxPercent;
+        $data['sales_tax_amount'] = $salesTaxAmount;
+        $data['freight'] = $freight;
+        $data['grand_total'] = $grandTotal;
+
+        return $data;
     }
 
     protected function syncItems(VendorQuote $vendorQuote, array $items): void
@@ -74,8 +110,8 @@ class VendorQuoteRepository extends Repository
                 'unit' => $item['unit'] ?? null,
                 'unit_price' => $unitPrice,
                 'total' => $quantity * $unitPrice,
-                'vendor_lead_time' => $item['vendor_lead_time'] ?? null,
-                'expected_receive_date' => $item['expected_receive_date'] ?? null,
+                'vendor_lead_time' => null,
+                'expected_receive_date' => null,
                 'sort_order' => $index,
             ];
 

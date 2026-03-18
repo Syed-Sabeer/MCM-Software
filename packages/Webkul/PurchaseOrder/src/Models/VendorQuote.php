@@ -12,9 +12,40 @@ use Webkul\User\Models\UserProxy;
 
 class VendorQuote extends Model implements VendorQuoteContract
 {
-    protected $fillable = ['vendor_quote_number', 'job_order_id', 'organization_id', 'person_id', 'issue_date', 'expected_response_date', 'status', 'notes', 'attachment_path', 'created_by'];
+    protected $fillable = [
+        'vendor_quote_number',
+        'job_order_id',
+        'organization_id',
+        'person_id',
+        'issue_date',
+        'expected_response_date',
+        'payment_term',
+        'shipping_method',
+        'first_delivery_date',
+        'last_delivery_date',
+        'status',
+        'notes',
+        'terms',
+        'subtotal',
+        'sales_tax_percent',
+        'sales_tax_amount',
+        'freight',
+        'grand_total',
+        'attachment_path',
+        'created_by',
+    ];
 
-    protected $casts = ['issue_date' => 'date', 'expected_response_date' => 'date'];
+    protected $casts = [
+        'issue_date' => 'date',
+        'expected_response_date' => 'date',
+        'first_delivery_date' => 'date',
+        'last_delivery_date' => 'date',
+        'subtotal' => 'decimal:4',
+        'sales_tax_percent' => 'decimal:4',
+        'sales_tax_amount' => 'decimal:4',
+        'freight' => 'decimal:4',
+        'grand_total' => 'decimal:4',
+    ];
 
     protected static function boot(): void
     {

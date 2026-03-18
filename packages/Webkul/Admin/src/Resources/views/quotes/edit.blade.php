@@ -263,6 +263,15 @@
 
                 <input type="hidden" name="subject" value="{{ old('subject', $quote->subject ?: ('Quote ' . $quote->quote_number)) }}">
 
+                <div class="document-form-items mt-2 flex flex-col gap-4" id="quote-items">
+                    <div class="flex flex-col gap-1">
+                        <p class="text-base font-semibold text-gray-800 dark:text-white">@lang('admin::app.quotes.create.quote-items')</p>
+                        <p class="text-sm text-gray-600 dark:text-white">@lang('admin::app.quotes.create.quote-item-info')</p>
+                    </div>
+
+                    <v-quote-item-list :errors="errors" :organization-id="selectedOrganizationId" :initial-products="initialProducts" :initial-tariff-percent="tariffPercentInitial" :initial-freight-percent="freightPercentInitial"></v-quote-item-list>
+                </div>
+
                 <div class="document-form-section grid gap-4 md:grid-cols-2">
                     <x-admin::form.control-group class="!mb-0">
                         <x-admin::form.control-group.label>Remarks</x-admin::form.control-group.label>
@@ -283,15 +292,6 @@
                         >{{ old('terms', $quote->terms) }}</textarea>
                         <x-admin::form.control-group.error control-name="terms" />
                     </x-admin::form.control-group>
-                </div>
-
-                <div class="document-form-items mt-2 flex flex-col gap-4" id="quote-items">
-                    <div class="flex flex-col gap-1">
-                        <p class="text-base font-semibold text-gray-800 dark:text-white">@lang('admin::app.quotes.create.quote-items')</p>
-                        <p class="text-sm text-gray-600 dark:text-white">@lang('admin::app.quotes.create.quote-item-info')</p>
-                    </div>
-
-                    <v-quote-item-list :errors="errors" :organization-id="selectedOrganizationId" :initial-products="initialProducts"></v-quote-item-list>
                 </div>
             </div>
         </script>
@@ -453,6 +453,12 @@
                         }
 
                         return this.customers.filter((customer) => (customer.name || '').toLowerCase().includes(query));
+                    },
+                    tariffPercentInitial() {
+                        return '{{ old('tariff_percent', $quote->tariff_percent ?? (($quote->sub_total ?: 0) > 0 ? round(((float) $quote->tax_amount / (float) $quote->sub_total) * 100, 2) : 0)) }}';
+                    },
+                    freightPercentInitial() {
+                        return '{{ old('freight_percent', $quote->freight_percent ?? (($quote->sub_total ?: 0) > 0 ? round(((float) $quote->adjustment_amount / (float) $quote->sub_total) * 100, 2) : 0)) }}';
                     }
                 },
                 methods: {
@@ -497,11 +503,11 @@
 
             app.component('v-quote-item-list', {
                 template: '#v-quote-item-list-template',
-                props: ['errors', 'organizationId', 'initialProducts'],
+                props: ['errors', 'organizationId', 'initialProducts', 'initialTariffPercent', 'initialFreightPercent'],
                 data() {
                     return {
-                        tariffPercent: '{{ old('tariff_percent', $quote->tariff_percent ?? (($quote->sub_total ?: 0) > 0 ? round(((float) $quote->tax_amount / (float) $quote->sub_total) * 100, 2) : 0)) }}',
-                        freightPercent: '{{ old('freight_percent', $quote->freight_percent ?? (($quote->sub_total ?: 0) > 0 ? round(((float) $quote->adjustment_amount / (float) $quote->sub_total) * 100, 2) : 0)) }}',
+                        tariffPercent: this.initialTariffPercent || '{{ old('tariff_percent', $quote->tariff_percent ?? (($quote->sub_total ?: 0) > 0 ? round(((float) $quote->tax_amount / (float) $quote->sub_total) * 100, 2) : 0)) }}',
+                        freightPercent: this.initialFreightPercent || '{{ old('freight_percent', $quote->freight_percent ?? (($quote->sub_total ?: 0) > 0 ? round(((float) $quote->adjustment_amount / (float) $quote->sub_total) * 100, 2) : 0)) }}',
                         products: this.initialProducts?.length
                             ? this.initialProducts
                             : [{ id: null, product_id: null, name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' }],
@@ -514,6 +520,12 @@
                         }
 
                         this.products = [{ id: null, product_id: null, name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' }];
+                    },
+                    initialTariffPercent(value) {
+                        this.tariffPercent = value || 0;
+                    },
+                    initialFreightPercent(value) {
+                        this.freightPercent = value || 0;
                     }
                 },
                 computed: {
@@ -808,7 +820,6 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
-
 
 
 

@@ -158,6 +158,15 @@
 
                 <input type="hidden" name="subject" value="{{ old('subject', 'Quote ' . $quote->quote_number) }}">
 
+
+                <div class="document-form-items mt-2 flex flex-col gap-4" id="quote-items">
+                    <div class="flex flex-col gap-1">
+                        <p class="text-base font-semibold text-gray-800 dark:text-white">@lang('admin::app.quotes.create.quote-items')</p>
+                        <p class="text-sm text-gray-600 dark:text-white">@lang('admin::app.quotes.create.quote-item-info')</p>
+                    </div>
+
+                    <v-quote-item-list :errors="errors" :organization-id="selectedOrganizationId"></v-quote-item-list>
+                </div>
                 <div class="document-form-section grid gap-4 md:grid-cols-2">
                     <x-admin::form.control-group class="!mb-0">
                         <x-admin::form.control-group.label>Remarks</x-admin::form.control-group.label>
@@ -178,15 +187,6 @@
                         >{{ old('terms') }}</textarea>
                         <x-admin::form.control-group.error control-name="terms" />
                     </x-admin::form.control-group>
-                </div>
-
-                <div class="document-form-items mt-2 flex flex-col gap-4" id="quote-items">
-                    <div class="flex flex-col gap-1">
-                        <p class="text-base font-semibold text-gray-800 dark:text-white">@lang('admin::app.quotes.create.quote-items')</p>
-                        <p class="text-sm text-gray-600 dark:text-white">@lang('admin::app.quotes.create.quote-item-info')</p>
-                    </div>
-
-                    <v-quote-item-list :errors="errors" :organization-id="selectedOrganizationId"></v-quote-item-list>
                 </div>
             </div>
         </script>
@@ -702,6 +702,7 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
+
 
 
 
