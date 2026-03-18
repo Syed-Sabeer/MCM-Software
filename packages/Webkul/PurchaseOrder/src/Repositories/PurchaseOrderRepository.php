@@ -47,7 +47,7 @@ class PurchaseOrderRepository extends Repository
                 'ordered_quantity' => $item->quantity,
                 'received_quantity' => 0,
                 'pending_quantity' => $item->quantity,
-                'unit' => $item->unit ?: optional($item->requirement)->unit,
+                'unit' => $item->unit ?: optional($item->requirement)->unit ?: 'PCS',
                 'price' => $item->unit_price,
                 'expected_receive_date' => $item->expected_receive_date?->toDateString(),
                 'line_status' => 'open',
@@ -77,7 +77,7 @@ class PurchaseOrderRepository extends Repository
                 'ordered_quantity' => $requirement->balance_qty,
                 'received_quantity' => 0,
                 'pending_quantity' => $requirement->balance_qty,
-                'unit' => $requirement->unit,
+                'unit' => $requirement->unit ?: 'PCS',
                 'price' => 0,
                 'expected_receive_date' => $jobOrder->required_delivery_date?->toDateString(),
                 'line_status' => 'open',
@@ -168,7 +168,7 @@ class PurchaseOrderRepository extends Repository
                 'ordered_quantity' => $orderedQuantity,
                 'received_quantity' => $receivedQuantity,
                 'pending_quantity' => $pendingQuantity,
-                'unit' => $itemData['unit'] ?? null,
+                'unit' => ! empty($itemData['unit']) ? $itemData['unit'] : 'PCS',
                 'price' => $price,
                 'total' => $orderedQuantity * $price,
                 'expected_receive_date' => $itemData['expected_receive_date'] ?? null,
@@ -217,3 +217,4 @@ class PurchaseOrderRepository extends Repository
         ], $purchaseOrderId);
     }
 }
+

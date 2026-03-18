@@ -15,9 +15,9 @@ class JobOrderItem extends Model implements JobOrderItemContract
     ];
 
     protected $casts = [
-        'qty' => 'decimal:4',
-        'unit_price' => 'decimal:4',
-        'line_total' => 'decimal:4',
+        'qty' => 'integer',
+        'unit_price' => 'decimal:3',
+        'line_total' => 'decimal:3',
     ];
 
     public function jobOrder(): BelongsTo
@@ -45,3 +45,4 @@ class JobOrderItem extends Model implements JobOrderItemContract
         return (string) ($this->display_code !== '-' ? $this->display_code : ($this->item_name ?: $this->product?->name ?: '-'));
     }
 }
+

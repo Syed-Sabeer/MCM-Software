@@ -23,6 +23,10 @@ class Quote extends Model implements QuoteContract
         'shipping_address' => 'array',
         'quote_date'       => 'date',
         'expired_at'       => 'datetime',
+        'etd'              => 'date',
+        'eta'              => 'date',
+        'tariff_percent'   => 'decimal:4',
+        'freight_percent'  => 'decimal:4',
     ];
 
     /**
@@ -47,6 +51,14 @@ class Quote extends Model implements QuoteContract
         'organization_id',
         'notes',
         'terms',
+        'payment_term',
+        'shipping_method',
+        'production_time',
+        'transit_time',
+        'etd',
+        'eta',
+        'tariff_percent',
+        'freight_percent',
         'attachment_path',
         'expired_at',
         'user_id',

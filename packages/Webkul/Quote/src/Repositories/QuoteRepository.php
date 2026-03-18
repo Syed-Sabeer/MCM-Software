@@ -176,17 +176,11 @@ class QuoteRepository extends Repository
             $unitPrice = (float) ($item['unit_price'] ?? $item['price'] ?? 0);
             $lineSubTotal = $qty * $unitPrice;
 
-            $lineDiscountPercent = (float) ($item['discount_percent'] ?? 0);
-            $lineDiscountAmount = isset($item['discount_amount']) && $item['discount_amount'] !== ''
-                ? (float) $item['discount_amount']
-                : ($lineSubTotal * $lineDiscountPercent / 100);
-
-            $lineTaxPercent = (float) ($item['tax_percent'] ?? 0);
-            $lineTaxAmount = isset($item['tax_amount']) && $item['tax_amount'] !== ''
-                ? (float) $item['tax_amount']
-                : max(($lineSubTotal - $lineDiscountAmount), 0) * $lineTaxPercent / 100;
-
-            $lineTotal = max($lineSubTotal - $lineDiscountAmount + $lineTaxAmount, 0);
+            $lineDiscountPercent = 0;
+            $lineDiscountAmount = 0;
+            $lineTaxPercent = 0;
+            $lineTaxAmount = 0;
+            $lineTotal = max($lineSubTotal, 0);
             $name = $item['item_name'] ?? $item['name'] ?? '';
             $code = $item['item_code'] ?? $item['sku'] ?? null;
 
@@ -211,13 +205,20 @@ class QuoteRepository extends Repository
             $taxAmount += $lineTaxAmount;
         }
 
-        $adjustment = (float) ($data['adjustment_amount'] ?? 0);
-        $grandTotal = max($subTotal - $discountAmount + $taxAmount + $adjustment, 0);
+        $tariffPercent = (float) ($data['tariff_percent'] ?? 0);
+        $freightPercent = (float) ($data['freight_percent'] ?? 0);
+        $taxAmount = $subTotal * ($tariffPercent / 100);
+        $freightAmount = $subTotal * ($freightPercent / 100);
+        $discountAmount = 0;
+        $grandTotal = max($subTotal + $taxAmount + $freightAmount, 0);
 
         $data['items'] = $normalizedItems;
         $data['sub_total'] = $subTotal;
         $data['discount_amount'] = $discountAmount;
         $data['tax_amount'] = $taxAmount;
+        $data['adjustment_amount'] = $freightAmount;
+        $data['tariff_percent'] = $tariffPercent;
+        $data['freight_percent'] = $freightPercent;
         $data['grand_total'] = $grandTotal;
 
         return $data;

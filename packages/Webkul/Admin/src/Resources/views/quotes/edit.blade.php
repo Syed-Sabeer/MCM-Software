@@ -114,6 +114,34 @@
 
     @include('admin::components.documents.form-styles')
 
+    <style>
+        /* Keep key quote metadata sections in one row as requested. */
+        .quote-create-form-panel .document-form-row-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+
+        .quote-create-form-panel .document-form-row-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .quote-create-form-panel .document-form-row-6 {
+            grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+        }
+
+        .quote-create-form-panel .quote-meta-block {
+            margin-top: 14px;
+        }
+
+        .quote-create-form-panel .document-summary-line {
+            grid-template-columns: 120px minmax(180px, 1fr) 110px;
+            gap: 10px;
+        }
+
+        .quote-create-form-panel .document-summary-line > div:nth-child(2) {
+            white-space: nowrap;
+        }
+    </style>
+
     <x-admin::form
         :action="route('admin.quotes.update', $quote->id).'?'.http_build_query(array_merge(
             request()->route()->parameters(),
@@ -149,106 +177,113 @@
 
     @pushOnce('scripts')
         <script type="text/x-template" id="v-quote-template">
-            <div class="document-form-panel box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div>
+            <div class="document-form-panel quote-create-form-panel box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                {{-- <div>
                     <div class="document-form-section-title dark:text-white">Document Header</div>
-                    <div class="document-form-section-note dark:text-gray-400">The quote identity and customer data stay compact and easy to scan while editing.</div>
-                </div>
+                    <div class="document-form-section-note dark:text-gray-400">Keep the commercial details compact, aligned, and easy to scan while preparing the quote.</div>
+                </div> --}}
 
-                <div class="document-form-mini-grid">
-                    <x-admin::form.control-group class="!mb-0 span-2">
-                        <x-admin::form.control-group.label class="required">Quote #</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="text" name="quote_number" value="{{ old('quote_number', $quote->quote_number) }}" rules="required" />
-                        <x-admin::form.control-group.error control-name="quote_number" />
-                    </x-admin::form.control-group>
+                <div class="mt-4 space-y-4">
+                    <div class="document-form-row-3 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px;">
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label class="required">Quote #</x-admin::form.control-group.label>
+                            <x-admin::form.control-group.control type="text" name="quote_number" value="{{ old('quote_number', $quote->quote_number) }}" rules="required" />
+                            <x-admin::form.control-group.error control-name="quote_number" />
+                        </x-admin::form.control-group>
 
-                    <x-admin::form.control-group class="!mb-0 span-4">
-                        <x-admin::form.control-group.label class="required">Customer</x-admin::form.control-group.label>
-                        <div class="relative" ref="customerLookup">
-                            <div class="relative inline-block w-full" @click="toggleCustomerLookup">
-                                <div class="relative flex cursor-pointer items-center justify-between rounded border border-gray-200 p-2 hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:text-gray-300">
-                                    <span class="overflow-hidden text-ellipsis" :title="customerName">
-                                        @{{ customerName !== '' ? customerName : 'Click to add' }}
-                                    </span>
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
+                            <select name="status" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                                @foreach (['draft', 'sent', 'approved', 'rejected', 'expired', 'cancelled'] as $status)
+                                    <option value="{{ $status }}" @selected(old('status', $quote->status ?: 'approved') === $status)>{{ ucfirst($status) }}</option>
+                                @endforeach
+                            </select>
+                            <x-admin::form.control-group.error control-name="status" />
+                        </x-admin::form.control-group>
 
-                                    <div class="flex items-center gap-2">
-                                        <i
-                                            v-if="customerName"
-                                            class="icon-cross-large cursor-pointer text-xl text-gray-600"
-                                            @click.stop="clearCustomer"
-                                        ></i>
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label class="required">Quote Date</x-admin::form.control-group.label>
+                            <x-admin::form.control-group.control type="date" name="quote_date" value="{{ old('quote_date', $quote->quote_date?->format('Y-m-d')) }}" rules="required" />
+                            <x-admin::form.control-group.error control-name="quote_date" />
+                        </x-admin::form.control-group>
+                    </div>
 
-                                        <i class="text-2xl text-gray-600" :class="showCustomerLookup ? 'icon-up-arrow' : 'icon-down-arrow'"></i>
+                    <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px;">
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label>
+                            <input type="text" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" value="{{ optional($quote->user)->name }}" disabled />
+                            <input type="hidden" name="user_id" value="{{ old('user_id', $quote->user_id) }}">
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label class="required">Customer</x-admin::form.control-group.label>
+                            <div class="relative" ref="customerLookup">
+                                <div class="relative inline-block w-full" @click="toggleCustomerLookup">
+                                    <div class="relative flex cursor-pointer items-center justify-between rounded border border-gray-200 p-2 hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:text-gray-300">
+                                        <span class="overflow-hidden text-ellipsis" :title="customerName">
+                                            @{{ customerName !== '' ? customerName : 'Click to add' }}
+                                        </span>
+                                        <div class="flex items-center gap-2">
+                                            <i v-if="customerName" class="icon-cross-large cursor-pointer text-xl text-gray-600" @click.stop="clearCustomer"></i>
+                                            <i class="text-2xl text-gray-600" :class="showCustomerLookup ? 'icon-up-arrow' : 'icon-down-arrow'"></i>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div
-                                v-if="showCustomerLookup"
-                                class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
-                            >
-                                <div class="relative flex items-center">
-                                    <input
-                                        type="text"
-                                        v-model="customerSearchTerm"
-                                        class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                        placeholder="Search"
-                                        ref="customerSearchInput"
-                                    />
+                                <div v-if="showCustomerLookup" class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800">
+                                    <div class="relative flex items-center">
+                                        <input type="text" v-model="customerSearchTerm" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400" placeholder="Search" ref="customerSearchInput" />
+                                    </div>
+
+                                    <ul class="max-h-40 divide-y divide-gray-100 overflow-y-auto">
+                                        <li v-for="customer in filteredCustomers" :key="customer.id" class="cursor-pointer px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900" @click="selectCustomer(customer)">
+                                            @{{ customer.name }}
+                                        </li>
+
+                                        <li v-if="! filteredCustomers.length" class="px-4 py-2 text-gray-500">
+                                            No results
+                                        </li>
+                                    </ul>
                                 </div>
-
-                                <ul class="max-h-40 divide-y divide-gray-100 overflow-y-auto">
-                                    <li
-                                        v-for="customer in filteredCustomers"
-                                        :key="customer.id"
-                                        class="cursor-pointer px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
-                                        @click="selectCustomer(customer)"
-                                    >
-                                        @{{ customer.name }}
-                                    </li>
-
-                                    <li v-if="! filteredCustomers.length" class="px-4 py-2 text-gray-500">
-                                        No results
-                                    </li>
-                                </ul>
                             </div>
-                        </div>
-                        <input type="hidden" name="organization_id" :value="selectedOrganizationId">
-                        <x-admin::form.control-group.error control-name="organization_id" />
-                    </x-admin::form.control-group>
+                            <input type="hidden" name="organization_id" :value="selectedOrganizationId">
+                            <x-admin::form.control-group.error control-name="organization_id" />
+                        </x-admin::form.control-group>
+                    </div>
 
-                    <x-admin::form.control-group class="!mb-0 span-2">
-                        <x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label>
-                        <input
-                            type="text"
-                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                            value="{{ optional($quote->user)->name }}"
-                            disabled
-                        />
-                        <input type="hidden" name="user_id" value="{{ old('user_id', $quote->user_id) }}">
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group class="!mb-0 span-2">
-                        <x-admin::form.control-group.label class="required">Quote Date</x-admin::form.control-group.label>
-                        <x-admin::form.control-group.control type="date" name="quote_date" value="{{ old('quote_date', $quote->quote_date?->format('Y-m-d')) }}" rules="required" />
-                        <x-admin::form.control-group.error control-name="quote_date" />
-                    </x-admin::form.control-group>
-
-                    <x-admin::form.control-group class="!mb-0 span-2">
-                        <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
-                        <select
-                            name="status"
-                            class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                        >
-                            @foreach (['draft', 'sent', 'approved', 'rejected', 'expired', 'cancelled'] as $status)
-                                <option value="{{ $status }}" @selected(old('status', $quote->status ?: 'approved') === $status)>{{ ucfirst($status) }}</option>
-                            @endforeach
-                        </select>
-                        <x-admin::form.control-group.error control-name="status" />
-                    </x-admin::form.control-group>
+                    <div class="document-form-row-6 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 16px;">
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Payment Term</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="payment_term" value="{{ old('payment_term', $quote->payment_term) }}" /><x-admin::form.control-group.error control-name="payment_term" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Shipping Method</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="shipping_method" value="{{ old('shipping_method', $quote->shipping_method) }}" /><x-admin::form.control-group.error control-name="shipping_method" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Production Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="production_time" value="{{ old('production_time', $quote->production_time) }}" /><x-admin::form.control-group.error control-name="production_time" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Transit Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="transit_time" value="{{ old('transit_time', $quote->transit_time) }}" /><x-admin::form.control-group.error control-name="transit_time" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETD</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="etd" value="{{ old('etd', $quote->etd?->format('Y-m-d')) }}" /><x-admin::form.control-group.error control-name="etd" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETA</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="eta" value="{{ old('eta', $quote->eta?->format('Y-m-d')) }}" /><x-admin::form.control-group.error control-name="eta" /></x-admin::form.control-group>
+                    </div>
                 </div>
 
                 <input type="hidden" name="subject" value="{{ old('subject', $quote->subject ?: ('Quote ' . $quote->quote_number)) }}">
+
+                <div class="document-form-section grid gap-4 md:grid-cols-2">
+                    <x-admin::form.control-group class="!mb-0">
+                        <x-admin::form.control-group.label>Remarks</x-admin::form.control-group.label>
+                        <textarea
+                            name="notes"
+                            rows="4"
+                            class="w-full rounded border border-gray-200 px-3 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                        >{{ old('notes', $quote->notes) }}</textarea>
+                        <x-admin::form.control-group.error control-name="notes" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group class="!mb-0">
+                        <x-admin::form.control-group.label>Terms &amp; Conditions</x-admin::form.control-group.label>
+                        <textarea
+                            name="terms"
+                            rows="4"
+                            class="w-full rounded border border-gray-200 px-3 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                        >{{ old('terms', $quote->terms) }}</textarea>
+                        <x-admin::form.control-group.error control-name="terms" />
+                    </x-admin::form.control-group>
+                </div>
 
                 <div class="document-form-items mt-2 flex flex-col gap-4" id="quote-items">
                     <div class="flex flex-col gap-1">
@@ -273,9 +308,6 @@
                                 <x-admin::table.th class="text-center">@lang('admin::app.quotes.create.quantity')</x-admin::table.th>
                                 <x-admin::table.th class="text-center">@lang('admin::app.quotes.create.price')</x-admin::table.th>
                                 <x-admin::table.th class="text-center">@lang('admin::app.quotes.create.amount')</x-admin::table.th>
-                                <x-admin::table.th class="text-center">@lang('admin::app.quotes.create.discount')</x-admin::table.th>
-                                <x-admin::table.th class="text-center">@lang('admin::app.quotes.create.tax')</x-admin::table.th>
-                                <x-admin::table.th class="text-center">@lang('admin::app.quotes.create.total')</x-admin::table.th>
                                 <x-admin::table.th v-if="products.length > 1" class="!px-2 ltr:text-right rtl:text-left">@lang('admin::app.quotes.create.action')</x-admin::table.th>
                             </x-admin::table.thead.tr>
                         </x-admin::table.thead>
@@ -291,31 +323,45 @@
                 <span class="text-md flex max-w-max cursor-pointer items-center gap-2 text-brandColor" @click="addProduct">@lang('admin::app.quotes.create.add-item')</span>
 
                 <div class="flex justify-end">
-                    <div class="document-form-summary-box grid w-[348px] gap-4 rounded-lg bg-gray-100 p-4 text-sm dark:bg-gray-950 dark:text-white">
-                        <div class="flex w-full justify-between gap-x-5">
-                            @lang('admin::app.quotes.create.sub-total', ['symbol' => core()->currencySymbol(config('app.currency'))])
+                    <div class="document-form-summary-box is-wide grid gap-4 rounded-lg bg-gray-100 p-5 text-sm dark:bg-gray-950 dark:text-white" style="max-width: 100%;">
+                        <div class="flex w-full items-center justify-between gap-x-5">
+                            <span>Sub Total ($)</span>
                             <input type="hidden" name="sub_total" class="control" :value="subTotal" readonly>
-                            <p>@{{ subTotal }}</p>
+                            <p class="text-base font-semibold">@{{ $admin.formatPrice(subTotal) }}</p>
                         </div>
 
-                        <div class="flex w-full justify-between gap-x-5">
-                            @lang('admin::app.quotes.create.total-discount', ['symbol' => core()->currencySymbol(config('app.currency'))])
-                            <input type="hidden" name="discount_amount" :value="discountAmount">
-                            <p>@{{ discountAmount }}</p>
+                        <div class="document-summary-line" style="display: grid; grid-template-columns: 120px minmax(170px, 1fr) 120px; align-items: center; gap: 10px;">
+                            <span>Tarrifs (%)</span>
+                            <div class="flex items-center gap-2" style="white-space: nowrap;">
+                                <x-admin::form.control-group.control type="inline" ::name="'tariff_percent_display'" ::value="tariffPercent" ::errors="errors" label="Tarrifs" placeholder="Tarrifs" @on-change="(event) => tariffPercent = event.value" position="center" />
+                                <input type="hidden" name="tariff_percent" :value="tariffPercent">
+
+                            </div>
+                            <div class="text-right font-medium">
+                                <input type="hidden" name="tax_amount" :value="tariffAmount">
+                                <p>@{{ $admin.formatPrice(tariffAmount) }}</p>
+                            </div>
                         </div>
 
-                        <div class="flex w-full justify-between gap-x-5">
-                            @lang('admin::app.quotes.create.total-tax', ['symbol' => core()->currencySymbol(config('app.currency'))])
-                            <input type="hidden" name="tax_amount" :value="taxAmount">
-                            <p>@{{ taxAmount }}</p>
+                        <div class="document-summary-line" style="display: grid; grid-template-columns: 120px minmax(170px, 1fr) 120px; align-items: center; gap: 10px;">
+                            <span>Freight (%)</span>
+                            <div class="flex items-center gap-2" style="white-space: nowrap;">
+                                <x-admin::form.control-group.control type="inline" ::name="'freight_percent_display'" ::value="freightPercent" ::errors="errors" label="Freight" placeholder="Freight" @on-change="(event) => freightPercent = event.value" position="center" />
+                                <input type="hidden" name="freight_percent" :value="freightPercent">
+
+                            </div>
+                            <div class="text-right font-medium">
+                                <input type="hidden" name="adjustment_amount" :value="freightAmount">
+                                <p>@{{ $admin.formatPrice(freightAmount) }}</p>
+                            </div>
                         </div>
 
-                        <input type="hidden" name="adjustment_amount" value="0">
+                        <input type="hidden" name="discount_amount" value="0">
 
-                        <div class="flex w-full justify-between gap-x-5">
-                            @lang('admin::app.quotes.create.grand-total', ['symbol' => core()->currencySymbol(config('app.currency'))])
+                        <div class="flex w-full items-center justify-between gap-x-5 border-t border-gray-200 pt-3 text-base font-semibold dark:border-gray-800">
+                            <span>Grand Total ($)</span>
                             <input type="hidden" name="grand_total" :value="grandTotal">
-                            <p>@{{ grandTotal }}</p>
+                            <p>@{{ $admin.formatPrice(grandTotal) }}</p>
                         </div>
                     </div>
                 </div>
@@ -358,39 +404,25 @@
 
                 <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                     <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[quantity]`" ::value="product.quantity" rules="required|decimal:4" ::errors="errors" :label="trans('admin::app.quotes.create.quantity')" :placeholder="trans('admin::app.quotes.create.quantity')" @on-change="(event) => product.quantity = event.value" position="center" />
+                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[quantity]`" ::value="product.quantity" ::errors="errors" :label="trans('admin::app.quotes.create.quantity')" :placeholder="trans('admin::app.quotes.create.quantity')" @on-change="(event) => product.quantity = event.value" position="center" />
                     </x-admin::form.control-group>
                 </x-admin::table.td>
 
                 <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                     <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[price]`" ::value="product.price" rules="required|decimal:4" ::errors="errors" :label="trans('admin::app.quotes.create.price')" :placeholder="trans('admin::app.quotes.create.price')" @on-change="(event) => product.price = event.value" position="center" ::value-label="$admin.formatPrice(product.price)" />
+                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[price]`" ::value="product.price" ::errors="errors" :label="trans('admin::app.quotes.create.price')" :placeholder="trans('admin::app.quotes.create.price')" @on-change="(event) => product.price = event.value" position="center" ::value-label="$admin.formatPrice(product.price)" />
                     </x-admin::form.control-group>
                 </x-admin::table.td>
 
                 <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                     <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[total]`" ::value="product.price * product.quantity" rules="required|decimal:4" ::errors="errors" :label="trans('admin::app.quotes.create.total')" :placeholder="trans('admin::app.quotes.create.total')" :allowEdit="false" position="center" ::value-label="$admin.formatPrice(product.price * product.quantity)" />
+                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[total]`" ::value="product.price * product.quantity" ::errors="errors" :label="trans('admin::app.quotes.create.total')" :placeholder="trans('admin::app.quotes.create.total')" :allowEdit="false" position="center" ::value-label="$admin.formatPrice(product.price * product.quantity)" />
                     </x-admin::form.control-group>
                 </x-admin::table.td>
 
-                <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[discount_amount]`" ::value="product.discount_amount" rules="required|decimal:4" ::errors="errors" :label="trans('admin::app.quotes.create.discount-amount')" :placeholder="trans('admin::app.quotes.create.discount-amount')" @on-change="(event) => product.discount_amount = event.value" position="center" ::value-label="$admin.formatPrice(product.discount_amount)" />
-                    </x-admin::form.control-group>
-                </x-admin::table.td>
-
-                <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[tax_amount]`" ::value="product.tax_amount" rules="required|decimal:4" ::errors="errors" :label="trans('admin::app.quotes.create.tax-amount')" :placeholder="trans('admin::app.quotes.create.tax-amount')" @on-change="(event) => product.tax_amount = event.value" position="center" ::value-label="$admin.formatPrice(product.tax_amount)" />
-                    </x-admin::form.control-group>
-                </x-admin::table.td>
-
-                <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[final_total]`" ::errors="errors" ::value="parseFloat(product.price * product.quantity) + parseFloat(product.tax_amount) - parseFloat(product.discount_amount)" :allowEdit="false" position="center" ::value-label="$admin.formatPrice(parseFloat(product.price * product.quantity) + parseFloat(product.tax_amount) - parseFloat(product.discount_amount))" />
-                    </x-admin::form.control-group>
-                </x-admin::table.td>
+                <input type="hidden" :name="`${inputName}[discount_amount]`" value="0">
+                <input type="hidden" :name="`${inputName}[tax_amount]`" value="0">
+                <input type="hidden" :name="`${inputName}[final_total]`" :value="parseFloat(product.price * product.quantity)">
 
                 <x-admin::table.td v-if="$parent.products.length > 1" class="!px-2 ltr:text-right rtl:text-left">
                     <x-admin::form.control-group class="!mb-0">
@@ -468,7 +500,8 @@
                 props: ['errors', 'organizationId', 'initialProducts'],
                 data() {
                     return {
-                        adjustmentAmount: 0,
+                        tariffPercent: '{{ old('tariff_percent', $quote->tariff_percent ?? (($quote->sub_total ?: 0) > 0 ? round(((float) $quote->tax_amount / (float) $quote->sub_total) * 100, 2) : 0)) }}',
+                        freightPercent: '{{ old('freight_percent', $quote->freight_percent ?? (($quote->sub_total ?: 0) > 0 ? round(((float) $quote->adjustment_amount / (float) $quote->sub_total) * 100, 2) : 0)) }}',
                         products: this.initialProducts?.length
                             ? this.initialProducts
                             : [{ id: null, product_id: null, name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '' }],
@@ -489,22 +522,14 @@
                         this.products.forEach(product => total += parseFloat(product.price * product.quantity));
                         return total;
                     },
-                    discountAmount() {
-                        let total = 0;
-                        this.products.forEach(product => total += parseFloat(product.discount_amount));
-                        return total;
+                    tariffAmount() {
+                        return this.subTotal * (parseFloat(this.tariffPercent || 0) / 100);
                     },
-                    taxAmount() {
-                        let total = 0;
-                        this.products.forEach(product => total += parseFloat(product.tax_amount));
-                        return total;
+                    freightAmount() {
+                        return this.subTotal * (parseFloat(this.freightPercent || 0) / 100);
                     },
                     grandTotal() {
-                        let total = 0;
-                        this.products.forEach(product => {
-                            total += parseFloat(product.price * product.quantity) + parseFloat(product.tax_amount) - parseFloat(product.discount_amount);
-                        });
-                        return total;
+                        return this.subTotal + this.tariffAmount + this.freightAmount;
                     },
                 },
                 methods: {
@@ -783,6 +808,11 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
+
+
+
+
+
 
 
 

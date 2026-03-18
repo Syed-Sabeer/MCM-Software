@@ -43,11 +43,17 @@
             'id' => $quoteRow->id,
             'quote_number' => $quoteRow->quote_number,
             'quote_number_display' => 'Q' . ltrim((string) $quoteRow->quote_number, 'Q'),
+            'quote_date' => optional($quoteRow->quote_date)->format('Y-m-d'),
             'organization_id' => $quoteRow->organization_id,
             'organization_name' => optional($quoteRow->organization)->name,
             'person_id' => $quoteRow->person_id,
             'sales_owner_id' => $quoteRow->user_id,
             'sales_owner_name' => optional($quoteRow->user)->name,
+            'shipping_method' => $quoteRow->shipping_method,
+            'production_time' => $quoteRow->production_time,
+            'transit_time' => $quoteRow->transit_time,
+            'etd' => optional($quoteRow->etd)->format('Y-m-d'),
+            'eta' => optional($quoteRow->eta)->format('Y-m-d'),
             'adjustment_amount' => (float) ($quoteRow->adjustment_amount ?? 0),
             'notes' => $quoteRow->notes,
             'terms' => $quoteRow->terms,
@@ -132,6 +138,11 @@
         'sales_owner_name' => optional($proformaInvoice->salesOwner)->name,
         'issue_date' => optional($proformaInvoice->issue_date)->format('Y-m-d'),
         'status' => $proformaInvoice->status,
+        'shipping_method' => old('shipping_method', optional($proformaInvoice->quote)->shipping_method),
+        'production_time' => old('production_time', optional($proformaInvoice->quote)->production_time),
+        'transit_time' => old('transit_time', optional($proformaInvoice->quote)->transit_time),
+        'etd' => old('etd', optional(optional($proformaInvoice->quote)->etd)->format('Y-m-d')),
+        'eta' => old('eta', optional(optional($proformaInvoice->quote)->eta)->format('Y-m-d')),
         'adjustment_amount' => (float) $proformaInvoice->adjustment_amount,
         'notes' => $proformaInvoice->notes,
         'terms' => $proformaInvoice->terms,
@@ -143,9 +154,30 @@
 @endphp
 
 <x-admin::layouts>
-    
+
+    <x-slot:title>
+        Edit Proforma Invoice
+    </x-slot>
 
     @include('admin::components.documents.form-styles')
+
+    <style>
+        .quote-create-form-panel .document-form-row-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+
+        .quote-create-form-panel .document-form-row-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .quote-create-form-panel .document-form-row-6 {
+            grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+        }
+
+        .quote-create-form-panel .quote-meta-block {
+            margin-top: 14px;
+        }
+    </style>
 
     <x-admin::form :action="route('admin.proforma_invoices.update', $proformaInvoice->id)" method="PUT">
         <div class="flex flex-col gap-4">
@@ -207,7 +239,7 @@
 
     @pushOnce('scripts')
         <script type="text/x-template" id="v-proforma-template">
-            <div class="document-form-panel box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="document-form-panel quote-create-form-panel box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <input type="hidden" name="organization_id" :value="form.organization_id || ''">
                 <input type="hidden" name="person_id" :value="form.person_id || ''">
                 <input type="hidden" name="sales_owner_id" :value="form.sales_owner_id || ''">
@@ -215,22 +247,57 @@
                 <input type="hidden" name="billing_address[address]" :value="form.billing_address?.address || ''">
                 <input type="hidden" name="shipping_address[address]" :value="form.shipping_address?.address || ''">
 
-                <div>
-                    <div class="document-form-section-title dark:text-white">Document Header</div>
-                    <div class="document-form-section-note dark:text-gray-400">The proforma commercial fields stay grouped so editing feels like working on one document, not many loose form inputs.</div>
-                </div>
+                <div class="mt-4 space-y-4">
+                    <div class="document-form-row-3 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px;">
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label>Proforma #</x-admin::form.control-group.label>
+                            <input type="text" name="proforma_number" v-model="form.proforma_number" class="custom-input">
+                        </x-admin::form.control-group>
 
-                <div class="document-form-mini-grid">
-                    <x-admin::form.control-group class="!mb-0 span-2"><x-admin::form.control-group.label>Proforma #</x-admin::form.control-group.label><input type="text" name="proforma_number" v-model="form.proforma_number" class="custom-input"></x-admin::form.control-group>
-                    <x-admin::form.control-group class="!mb-0 span-2"><x-admin::form.control-group.label class="required">Quote #</x-admin::form.control-group.label><select name="quote_id" v-model="form.quote_id" class="custom-select" required @change="applyQuoteDetails"><option value="">Select Quote</option><option v-for="quote in quotes" :key="quote.id" :value="quote.id">@{{ quote.quote_number_display }}</option></select></x-admin::form.control-group>
-                    <x-admin::form.control-group class="!mb-0 span-4"><x-admin::form.control-group.label>Customer</x-admin::form.control-group.label><input type="text" class="custom-input" :value="form.organization_name || ''" disabled></x-admin::form.control-group>
-                    <x-admin::form.control-group class="!mb-0 span-4"><x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label><input type="text" class="custom-input" :value="form.sales_owner_name || ''" disabled></x-admin::form.control-group>
-                </div>
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
+                            <select name="status" v-model="form.status" class="custom-select">
+                                <option value="draft">draft</option>
+                                <option value="issued">issued</option>
+                                <option value="partially_paid">partially_paid</option>
+                                <option value="fully_paid">fully_paid</option>
+                                <option value="cancelled">cancelled</option>
+                                <option value="ready_for_job_order">ready_for_job_order</option>
+                                <option value="converted">converted</option>
+                            </select>
+                        </x-admin::form.control-group>
 
-                <div class="document-form-mini-grid document-form-section">
-                    <x-admin::form.control-group class="!mb-0 span-3"><x-admin::form.control-group.label class="required">Issue Date</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="issue_date" v-model="form.issue_date" rules="required" /></x-admin::form.control-group>
-                    <x-admin::form.control-group class="!mb-0 span-3"><x-admin::form.control-group.label>Status</x-admin::form.control-group.label><select name="status" v-model="form.status" class="custom-select"><option value="draft">draft</option><option value="issued">issued</option><option value="partially_paid">partially_paid</option><option value="fully_paid">fully_paid</option><option value="cancelled">cancelled</option><option value="ready_for_job_order">ready_for_job_order</option><option value="converted">converted</option></select></x-admin::form.control-group>
-                    <x-admin::form.control-group class="!mb-0 span-6"><x-admin::form.control-group.label>Payment Term</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="payment_term" v-model="form.payment_term" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label class="required">Issue Date</x-admin::form.control-group.label>
+                            <x-admin::form.control-group.control type="date" name="issue_date" v-model="form.issue_date" rules="required" />
+                        </x-admin::form.control-group>
+                    </div>
+
+                    <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px;">
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label>
+                            <input type="text" class="custom-input" :value="form.sales_owner_name || ''" disabled>
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label class="required">Customer</x-admin::form.control-group.label>
+                            <input type="text" class="custom-input" :value="form.organization_name || ''" disabled>
+                        </x-admin::form.control-group>
+                    </div>
+
+                    <div class="document-form-row-6 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 16px;">
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Payment Term</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="payment_term" v-model="form.payment_term" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Shipping Method</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="shipping_method" v-model="form.shipping_method" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Production Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="production_time" v-model="form.production_time" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Transit Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="transit_time" v-model="form.transit_time" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETD</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="etd" v-model="form.etd" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETA</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="eta" v-model="form.eta" /></x-admin::form.control-group>
+                    </div>
+
+                    <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; margin-top: 6px;">
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label class="required">Quote #</x-admin::form.control-group.label><select name="quote_id" v-model="form.quote_id" class="custom-select" required @change="applyQuoteDetails"><option value="">Select Quote</option><option v-for="quote in quotes" :key="quote.id" :value="quote.id">@{{ quote.quote_number_display }}</option></select></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Selected Quote</x-admin::form.control-group.label><input type="text" class="custom-input" :value="form.quote_number_display || ''" disabled></x-admin::form.control-group>
+                    </div>
                 </div>
 
                 <div class="document-form-items mt-2 flex flex-col gap-4">
@@ -246,7 +313,7 @@
         </script>
 
         <script type="text/x-template" id="v-proforma-item-list-template">
-            <div class="flex flex-col gap-4"><div class="block w-full overflow-visible"><x-admin::table><x-admin::table.thead><x-admin::table.thead.tr><x-admin::table.th>Product Name</x-admin::table.th><x-admin::table.th class="text-center">Image</x-admin::table.th><x-admin::table.th class="text-center">Color Variant</x-admin::table.th><x-admin::table.th class="text-center">Quantity</x-admin::table.th><x-admin::table.th class="text-center">Price</x-admin::table.th><x-admin::table.th class="text-center">Amount</x-admin::table.th><x-admin::table.th class="text-center">Discount</x-admin::table.th><x-admin::table.th class="text-center">Tax</x-admin::table.th><x-admin::table.th class="text-center">Total</x-admin::table.th><x-admin::table.th class="text-center">Action</x-admin::table.th></x-admin::table.thead.tr></x-admin::table.thead><x-admin::table.tbody><template v-for="(product, index) in products" :key="index"><v-proforma-item :product="product" :index="index" :organization-id="organizationId" @onRemoveProduct="removeProduct($event)"></v-proforma-item></template></x-admin::table.tbody></x-admin::table></div><span class="text-md flex max-w-max cursor-pointer items-center gap-2 text-brandColor" @click="addProduct">+ Add Item</span><div class="flex justify-end"><div class="document-form-summary-box grid w-[348px] gap-4 rounded-lg bg-gray-100 p-4 text-sm dark:bg-gray-950 dark:text-white"><div class="flex w-full justify-between gap-x-5"><span>Sub Total</span><p>@{{ formatPrice(subTotal) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Total Discount</span><p>@{{ formatPrice(discountAmount) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Total Tax</span><p>@{{ formatPrice(taxAmount) }}</p></div><div class="flex w-full justify-between gap-x-5"><span>Grand Total</span><p>@{{ formatPrice(grandTotal) }}</p></div></div></div></div>
+            <div class="flex flex-col gap-4"><div class="block w-full overflow-visible"><x-admin::table><x-admin::table.thead><x-admin::table.thead.tr><x-admin::table.th>Product Name</x-admin::table.th><x-admin::table.th class="text-center">Image</x-admin::table.th><x-admin::table.th class="text-center">Color Variant</x-admin::table.th><x-admin::table.th class="text-center">Quantity</x-admin::table.th><x-admin::table.th class="text-center">Price</x-admin::table.th><x-admin::table.th class="text-center">Amount</x-admin::table.th><x-admin::table.th class="text-center">Discount</x-admin::table.th><x-admin::table.th class="text-center">Tax</x-admin::table.th><x-admin::table.th class="text-center">Total</x-admin::table.th><x-admin::table.th class="text-center">Action</x-admin::table.th></x-admin::table.thead.tr></x-admin::table.thead><x-admin::table.tbody><template v-for="(product, index) in products" :key="index"><v-proforma-item :product="product" :index="index" :organization-id="organizationId" @onRemoveProduct="removeProduct($event)"></v-proforma-item></template></x-admin::table.tbody></x-admin::table></div><span class="text-md flex max-w-max cursor-pointer items-center gap-2 text-brandColor" @click="addProduct">+ Add Item</span><div class="flex justify-end"><div class="document-form-summary-box is-wide grid gap-4 rounded-lg bg-gray-100 p-5 text-sm dark:bg-gray-950 dark:text-white" style="max-width: 100%;"><div class="flex w-full items-center justify-between gap-x-5"><span>Sub Total ($)</span><p class="text-base font-semibold">@{{ formatPrice(subTotal) }}</p></div><div class="flex w-full items-center justify-between gap-x-5"><span>Total Discount ($)</span><p>@{{ formatPrice(discountAmount) }}</p></div><div class="flex w-full items-center justify-between gap-x-5"><span>Total Tax ($)</span><p>@{{ formatPrice(taxAmount) }}</p></div><div class="flex w-full items-center justify-between gap-x-5 border-t border-gray-200 pt-3 text-base font-semibold dark:border-gray-800"><span>Grand Total ($)</span><p>@{{ formatPrice(grandTotal) }}</p></div></div></div></div>
         </script>
 
         <script type="text/x-template" id="v-proforma-item-template">
@@ -270,6 +337,11 @@
                         this.form.person_id = selected.person_id || '';
                         this.form.sales_owner_id = selected.sales_owner_id || '';
                         this.form.sales_owner_name = selected.sales_owner_name || '';
+                        this.form.shipping_method = selected.shipping_method || '';
+                        this.form.production_time = selected.production_time || '';
+                        this.form.transit_time = selected.transit_time || '';
+                        this.form.etd = selected.etd || '';
+                        this.form.eta = selected.eta || '';
                         this.form.adjustment_amount = selected.adjustment_amount || 0;
                         this.form.notes = selected.notes || '';
                         this.form.terms = selected.terms || '';

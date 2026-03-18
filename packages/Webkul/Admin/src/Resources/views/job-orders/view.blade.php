@@ -1,6 +1,12 @@
 <x-admin::layouts>
     <x-slot:title>{{ $jobOrder->job_order_number }}</x-slot>
 
+    @php
+        $formatItemQty = fn ($value) => number_format((float) $value, 0, '.', '');
+        $formatStageQty = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+        $formatAmount = fn ($value) => number_format((float) $value, 3, '.', ',');
+    @endphp
+
     <div class="flex flex-col gap-4">
         <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div class="flex items-start justify-between gap-4">
@@ -26,22 +32,28 @@
 
         <div class="grid gap-4 md:grid-cols-2">
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div class="mb-3 text-base font-semibold dark:text-white">Items</div>
+                <div class="mb-3 text-base font-semibold dark:text-white">Job Order Items</div>
 
                 <table class="w-full text-sm dark:text-white">
                     <thead>
                         <tr class="border-b dark:border-gray-700">
                             <th class="py-2 text-left">Item Code</th>
-                            <th class="py-2 text-left">Qty</th>
+                            <th class="py-2 text-left">Description</th>
+                            <th class="py-2 text-right">Qty</th>
                             <th class="py-2 text-left">Unit</th>
+                            <th class="py-2 text-right">Rate</th>
+                            <th class="py-2 text-right">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($jobOrder->items as $item)
                             <tr class="border-b dark:border-gray-800">
                                 <td class="py-2 font-medium">{{ $item->display_code }}</td>
-                                <td class="py-2">{{ rtrim(rtrim(number_format((float) $item->qty, 4, '.', ''), '0'), '.') }}</td>
-                                <td class="py-2">{{ $item->unit ?: '-' }}</td>
+                                <td class="py-2">{{ $item->item_name ?: '-' }}</td>
+                                <td class="py-2 text-right">{{ $formatItemQty($item->qty) }}</td>
+                                <td class="py-2">{{ $item->unit ?: 'PCS' }}</td>
+                                <td class="py-2 text-right">{{ $formatAmount($item->unit_price ?: 0) }}</td>
+                                <td class="py-2 text-right font-medium">{{ $formatAmount($item->line_total ?: 0) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -64,9 +76,9 @@
                         @foreach ($jobOrder->requirements as $requirement)
                             <tr class="border-b dark:border-gray-800">
                                 <td class="py-2">{{ $requirement->material_name }}</td>
-                                <td class="py-2">{{ $requirement->required_qty }} {{ $requirement->unit }}</td>
-                                <td class="py-2">{{ $requirement->received_qty }}</td>
-                                <td class="py-2">{{ $requirement->balance_qty }}</td>
+                                <td class="py-2">{{ $formatStageQty($requirement->required_qty) }} {{ $requirement->unit }}</td>
+                                <td class="py-2">{{ $formatStageQty($requirement->received_qty) }}</td>
+                                <td class="py-2">{{ $formatStageQty($requirement->balance_qty) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -90,7 +102,7 @@
                                     <div class="font-medium">{{ $section->section_name }}</div>
                                     <ul class="list-disc pl-5">
                                         @foreach ($section->items as $item)
-                                            <li>{{ $item->name }} @if($item->qty) - {{ $item->qty }} {{ $item->unit }} @endif</li>
+                                            <li>{{ $item->name }} @if($item->qty) - {{ $formatStageQty($item->qty) }} {{ $item->unit }} @endif</li>
                                         @endforeach
                                     </ul>
                                 </div>

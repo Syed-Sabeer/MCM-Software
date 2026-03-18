@@ -22,8 +22,9 @@ class JobOrderRequest extends FormRequest
             'status' => ['required', 'in:draft,open,in_progress,ready_to_ship,completed,closed,cancelled'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_name' => ['required', 'string'],
-            'items.*.qty' => ['required', 'numeric', 'gt:0'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
             'items.*.product_id' => ['nullable', 'exists:products,id'],
         ];
     }
 }
+

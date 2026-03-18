@@ -2,13 +2,15 @@
     $organization = $quote->organization;
     $salesPerson = $quote->user;
 
+    $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?: '#0E90D9';
     $logo = core()->getConfigData('general.general.admin_logo.logo_image');
     $logoPath = $logo && file_exists(public_path('storage/' . $logo)) ? public_path('storage/' . $logo) : null;
     $companyName = core()->getConfigData('general.general.company_info.company_name') ?: config('app.name');
     $companyLines = array_filter([
         core()->getConfigData('general.general.company_info.address'),
         core()->getConfigData('general.general.company_info.telephone') ? 'Tel: ' . core()->getConfigData('general.general.company_info.telephone') : null,
-        core()->getConfigData('general.general.company_info.cell') ? 'Tel: ' . core()->getConfigData('general.general.company_info.cell') : null,
+        core()->getConfigData('general.general.company_info.cell') ? 'Cell: ' . core()->getConfigData('general.general.company_info.cell') : null,
+        core()->getConfigData('general.general.company_info.email') ? 'Email: ' . core()->getConfigData('general.general.company_info.email') : null,
     ]);
 
     $billToLines = array_filter([
@@ -37,8 +39,48 @@
     $shippingMethod = data_get($quote, 'shipping_method') ?: '-';
     $productionTime = data_get($quote, 'production_time') ?: '-';
     $transitTime = data_get($quote, 'transit_time') ?: '-';
-    $etd = data_get($quote, 'etd') ?: (optional($quote->expired_at)?->format('Y-m-d'));
-    $eta = data_get($quote, 'eta') ?: '-';
+    $etd = data_get($quote, 'etd')
+    ? \Carbon\Carbon::parse(data_get($quote, 'etd'))->format('Y-m-d')
+    : (optional($quote->expired_at)?->format('Y-m-d'));
+
+$eta = data_get($quote, 'eta')
+    ? \Carbon\Carbon::parse(data_get($quote, 'eta'))->format('Y-m-d')
+    : '-';
+
+    $resolveImagePath = function (?string $image) {
+        if (! $image) {
+            return null;
+        }
+
+        if (str_starts_with($image, 'http://') || str_starts_with($image, 'https://')) {
+            $parts = parse_url($image);
+            $path = $parts['path'] ?? '';
+
+            if (str_contains($path, '/public/storage/')) {
+                $relative = ltrim(Str::after($path, '/public/storage/'), '/');
+                $candidate = public_path('storage/' . $relative);
+
+                return file_exists($candidate) ? $candidate : null;
+            }
+
+            if (str_contains($path, '/storage/')) {
+                $relative = ltrim(Str::after($path, '/storage/'), '/');
+                $candidate = public_path('storage/' . $relative);
+
+                return file_exists($candidate) ? $candidate : null;
+            }
+        }
+
+        if (str_starts_with($image, 'storage/')) {
+            $candidate = public_path($image);
+
+            return file_exists($candidate) ? $candidate : null;
+        }
+
+        $candidate = public_path('storage/' . ltrim($image, '/'));
+
+        return file_exists($candidate) ? $candidate : null;
+    };
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -48,27 +90,28 @@
     <style>
         body { font-family: DejaVu Sans, sans-serif; color: #111827; font-size: 12px; margin: 0; }
         .page { padding: 24px; }
-        .header-table, .party-table, .items-table, .totals-table, .summary-table, .notes-table, .sign-table { width: 100%; border-collapse: collapse; }
-        .brand { color: #0E90D9; }
+        .header-table, .party-table, .items-table, .totals-table, .summary-table, .notes-table, .sign-table, .meta-table { width: 100%; border-collapse: collapse; }
+        .brand { color: {{ $brandColor }}; }
         .title { font-size: 24px; font-weight: 700; text-align: right; }
         .logo { max-width: 120px; max-height: 70px; margin-bottom: 8px; }
         .meta-label { font-weight: 700; width: 35%; background: #f5f7fb; }
         .meta-table td { border: 1px solid #d8e0ea; padding: 7px 10px; }
         .section-box { border: 1px solid #d8e0ea; padding: 12px; min-height: 90px; }
-        .section-title { color: #0E90D9; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+        .section-title { color: {{ $brandColor }}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
         .summary-table { margin: 16px 0; }
         .summary-table td { border: 1px solid #d8e0ea; padding: 8px; width: 16.66%; }
         .summary-label { display: block; color: #6b7280; font-size: 10px; text-transform: uppercase; margin-bottom: 4px; }
         .summary-value { font-weight: 700; }
-        .items-table th { background: #0E90D9; color: #fff; border: 1px solid #0E90D9; padding: 8px; text-align: left; font-size: 10px; text-transform: uppercase; }
+        .items-table th { background: {{ $brandColor }}; color: #fff; border: 1px solid {{ $brandColor }}; padding: 8px; text-align: left; font-size: 10px; text-transform: uppercase; }
         .items-table td { border: 1px solid #d8e0ea; padding: 8px; vertical-align: top; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
-        .totals-table { width: 300px; margin-left: auto; margin-top: 16px; }
+        .item-image { width: 42px; height: 42px; object-fit: cover; border: 1px solid #d8e0ea; border-radius: 6px; }
+        .totals-table { width: 340px; margin-left: auto; margin-top: 16px; }
         .totals-table td { border: 1px solid #d8e0ea; padding: 8px 10px; }
         .totals-label { background: #f5f7fb; font-weight: 700; }
         .totals-value { text-align: right; font-weight: 700; }
-        .grand-row td { background: #eef6ff; color: #0E90D9; font-weight: 700; }
+        .grand-row td { background: #eef6ff; color: {{ $brandColor }}; font-weight: 700; }
         .notes-table { margin-top: 18px; }
         .notes-table td { width: 50%; vertical-align: top; padding-right: 12px; }
         .note-card { border: 1px solid #d8e0ea; padding: 12px; min-height: 90px; }
@@ -86,7 +129,7 @@
                 @if ($logoPath)
                     <img src="{{ $logoPath }}" alt="Logo" class="logo">
                 @endif
-                <div class="brand" style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">{{ $companyName }}</div>
+                <div class="brand" style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">{{ $companyName }}</div>
                 @foreach ($companyLines as $line)
                     <div>{{ $line }}</div>
                 @endforeach
@@ -125,11 +168,12 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 10%;" class="text-right">Qty</th>
-                <th style="width: 16%;">Item #</th>
-                <th style="width: 14%;">Colors</th>
-                <th style="width: 34%;">Description</th>
-                <th style="width: 13%;" class="text-right">Rate</th>
+                <th style="width: 9%;" class="text-center">Image</th>
+                <th style="width: 9%;" class="text-right">Qty</th>
+                <th style="width: 14%;">Item #</th>
+                <th style="width: 12%;">Colors</th>
+                <th style="width: 31%;">Description</th>
+                <th style="width: 12%;" class="text-right">Rate</th>
                 <th style="width: 13%;" class="text-right">Amount</th>
             </tr>
         </thead>
@@ -138,9 +182,17 @@
                 @php
                     $qty = (float) ($item->quantity ?: $item->qty ?: 0);
                     $price = (float) ($item->price ?: $item->unit_price ?: 0);
-                    $lineTotal = ($price * $qty) + (float) ($item->tax_amount ?: 0) - (float) ($item->discount_amount ?: 0);
+                    $lineTotal = $price * $qty;
+                    $imagePath = $resolveImagePath($item->preview_image);
                 @endphp
                 <tr>
+                    <td class="text-center">
+                        @if ($imagePath)
+                            <img src="{{ $imagePath }}" alt="Item Image" class="item-image">
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td class="text-right">{{ rtrim(rtrim(number_format($qty, 4, '.', ''), '0'), '.') }}</td>
                     <td>{{ $item->item_code ?: $item->sku ?: '-' }}</td>
                     <td>{{ $item->color_variant_name ?: '-' }}</td>
@@ -149,16 +201,15 @@
                     <td class="text-right">{{ core()->formatBasePrice($lineTotal, 2) }}</td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="text-center">No line items available.</td></tr>
+                <tr><td colspan="7" class="text-center">No line items available.</td></tr>
             @endforelse
         </tbody>
     </table>
 
     <table class="totals-table">
         <tr><td class="totals-label">Sub Total</td><td class="totals-value">{{ core()->formatBasePrice($quote->sub_total ?: 0, 2) }}</td></tr>
-        <tr><td class="totals-label">Discount</td><td class="totals-value">{{ core()->formatBasePrice($quote->discount_amount ?: 0, 2) }}</td></tr>
-        <tr><td class="totals-label">Tax</td><td class="totals-value">{{ core()->formatBasePrice($quote->tax_amount ?: 0, 2) }}</td></tr>
-        <tr><td class="totals-label">Adjustment</td><td class="totals-value">{{ core()->formatBasePrice($quote->adjustment_amount ?: 0, 2) }}</td></tr>
+        <tr><td class="totals-label">Tarrifs</td><td class="totals-value">{{ core()->formatBasePrice($quote->tax_amount ?: 0, 2) }}</td></tr>
+        <tr><td class="totals-label">Freight</td><td class="totals-value">{{ core()->formatBasePrice($quote->adjustment_amount ?: 0, 2) }}</td></tr>
         <tr class="grand-row"><td class="totals-label">Grand Total</td><td class="totals-value">{{ core()->formatBasePrice($quote->grand_total ?: 0, 2) }}</td></tr>
     </table>
 
@@ -179,3 +230,4 @@
 </div>
 </body>
 </html>
+

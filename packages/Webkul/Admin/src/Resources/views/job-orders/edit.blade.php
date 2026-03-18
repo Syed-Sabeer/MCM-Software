@@ -1,6 +1,11 @@
 <x-admin::layouts>
     <x-slot:title>Edit Job Order</x-slot>
 
+    @php
+        $formatQty = fn ($value) => number_format((float) $value, 0, '.', '');
+        $formatAmount = fn ($value) => number_format((float) $value, 3, '.', ',');
+    @endphp
+
     <x-admin::form :action="route('admin.job_orders.update', $jobOrder->id)" method="PUT">
         <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
@@ -56,7 +61,7 @@
                     <div class="space-y-2">
                         <div><strong>Customer:</strong> {{ optional($jobOrder->organization)->name }}</div>
                         <div><strong>Proforma:</strong> {{ optional($jobOrder->proformaInvoice)->proforma_number }}</div>
-                        <div><strong>Total Qty:</strong> {{ $jobOrder->total_order_qty }}</div>
+                        <div><strong>Total Qty:</strong> {{ $formatQty($jobOrder->total_order_qty) }}</div>
                     </div>
                 </div>
             </div>
@@ -68,25 +73,32 @@
                     <thead>
                         <tr class="border-b dark:border-gray-700">
                             <th class="py-2 text-left">Item Code</th>
-                            <th class="py-2 text-left">Qty</th>
+                            <th class="py-2 text-left">Description</th>
+                            <th class="py-2 text-right">Qty</th>
                             <th class="py-2 text-left">Unit</th>
+                            <th class="py-2 text-right">Rate</th>
+                            <th class="py-2 text-right">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($jobOrder->items as $index => $item)
-                            <tr class="border-b dark:border-gray-800">
+                            @php $resolvedUnit = $item->unit ?: 'PCS'; @endphp
+                            <tr class="border-b dark:border-gray-800 dark:text-white">
                                 <td class="py-2">
                                     <input type="hidden" name="items[{{ $index }}][id]" value="{{ $item->id }}">
                                     <input type="hidden" name="items[{{ $index }}][proforma_invoice_item_id]" value="{{ $item->proforma_invoice_item_id }}">
                                     <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item->product_id }}">
                                     <input type="hidden" name="items[{{ $index }}][item_name]" value="{{ $item->item_name }}">
+                                    <input type="hidden" name="items[{{ $index }}][description]" value="{{ $item->description }}">
+                                    <input type="hidden" name="items[{{ $index }}][unit_price]" value="{{ number_format((float) ($item->unit_price ?: 0), 3, '.', '') }}">
+                                    <input type="hidden" name="items[{{ $index }}][line_total]" value="{{ number_format((float) ($item->line_total ?: 0), 3, '.', '') }}">
                                     <input type="text" name="items[{{ $index }}][item_code]" value="{{ $item->display_code !== '-' ? $item->display_code : $item->item_code }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm font-medium dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                                 </td>
-                                <td class="py-2"><input type="number" step="0.0001" name="items[{{ $index }}][qty]" value="{{ $item->qty }}" class="w-28 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"></td>
-                                <td class="py-2"><input type="text" name="items[{{ $index }}][unit]" value="{{ $item->unit }}" class="w-28 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"></td>
-                                <input type="hidden" name="items[{{ $index }}][description]" value="{{ $item->description }}">
-                                <input type="hidden" name="items[{{ $index }}][unit_price]" value="{{ $item->unit_price }}">
-                                <input type="hidden" name="items[{{ $index }}][line_total]" value="{{ $item->line_total }}">
+                                <td class="py-2">{{ $item->item_name ?: '-' }}</td>
+                                <td class="py-2 text-right"><input type="number" step="1" min="1" name="items[{{ $index }}][qty]" value="{{ $formatQty($item->qty) }}" class="w-24 rounded border border-gray-200 px-3 py-2 text-right text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"></td>
+                                <td class="py-2"><input type="text" name="items[{{ $index }}][unit]" value="{{ $resolvedUnit }}" class="w-24 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"></td>
+                                <td class="py-2 text-right">{{ $formatAmount($item->unit_price ?: 0) }}</td>
+                                <td class="py-2 text-right font-medium">{{ $formatAmount($item->line_total ?: 0) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
