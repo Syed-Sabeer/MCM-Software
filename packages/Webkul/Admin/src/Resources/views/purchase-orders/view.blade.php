@@ -1,45 +1,3 @@
-@php
-    $organization = $purchaseOrder->organization;
-    $logo = core()->getConfigData('general.general.admin_logo.logo_image');
-    $logoUrl = $logo ? asset('storage/' . $logo) : null;
-    $companyName = core()->getConfigData('general.general.company_info.company_name') ?: config('app.name');
-    $companyLines = array_filter([
-        core()->getConfigData('general.general.company_info.address'),
-        core()->getConfigData('general.general.company_info.telephone') ? 'Phone: ' . core()->getConfigData('general.general.company_info.telephone') : null,
-        core()->getConfigData('general.general.company_info.cell') ? 'Cell: ' . core()->getConfigData('general.general.company_info.cell') : null,
-        core()->getConfigData('general.general.company_info.email') ? 'Email: ' . core()->getConfigData('general.general.company_info.email') : null,
-    ]);
-
-    $vendorLines = array_filter([
-        $organization?->name,
-        $organization?->billing_street ?: $organization?->shipping_street,
-        trim(implode(' ', array_filter([$organization?->billing_city ?: $organization?->shipping_city, $organization?->billing_state ?: $organization?->shipping_state, $organization?->billing_postcode ?: $organization?->shipping_postcode]))),
-        $organization?->billing_country ?: $organization?->shipping_country,
-        $organization?->phone ? 'Phone: ' . $organization->phone : null,
-        data_get($organization, 'email') ? 'Email: ' . data_get($organization, 'email') : null,
-    ]);
-
-    $shipToLines = array_filter([
-        $companyName,
-        core()->getConfigData('general.general.company_info.address'),
-        core()->getConfigData('general.general.company_info.telephone') ? 'Phone: ' . core()->getConfigData('general.general.company_info.telephone') : null,
-        core()->getConfigData('general.general.company_info.email') ? 'Email: ' . core()->getConfigData('general.general.company_info.email') : null,
-    ]);
-
-    $items = $purchaseOrder->items->map(function ($item) {
-        return [
-            'item' => $item->material_name ?: $item->item,
-            'description' => $item->description,
-            'ordered_quantity' => rtrim(rtrim(number_format((float) ($item->ordered_quantity ?: $item->quantity ?: 0), 4, '.', ''), '0'), '.'),
-            'received_quantity' => rtrim(rtrim(number_format((float) ($item->received_quantity ?: 0), 4, '.', ''), '0'), '.'),
-            'pending_quantity' => rtrim(rtrim(number_format((float) ($item->pending_quantity ?: 0), 4, '.', ''), '0'), '.'),
-            'unit' => $item->unit,
-            'price' => core()->formatBasePrice($item->price ?: 0),
-            'total' => core()->formatBasePrice($item->total ?: 0),
-        ];
-    })->values()->all();
-@endphp
-
 <x-admin::layouts>
     <x-slot:title>{{ $purchaseOrder->po_number }}</x-slot>
 
@@ -59,55 +17,89 @@
             </div>
         </div>
 
-        <x-admin::documents.standard
-            mode="screen"
-            title="Purchase Order"
-            :accent-color="core()->getConfigData('general.settings.menu_color.brand_color') ?: '#0E90D9'"
-            :company="['logo' => $logoUrl, 'name' => $companyName, 'lines' => $companyLines]"
-            :meta="[
-                ['label' => 'PO #', 'value' => $purchaseOrder->po_number],
-                ['label' => 'Issue Date', 'value' => $purchaseOrder->created_at?->format('M d, Y')],
-                ['label' => 'Job Order', 'value' => $purchaseOrder->job_number ?: optional($purchaseOrder->jobOrder)->job_order_number],
-                ['label' => 'Status', 'value' => ucfirst(str_replace('_', ' ', $purchaseOrder->status ?: 'draft'))],
-                ['label' => 'Vendor Quote', 'value' => optional($purchaseOrder->vendorQuote)->vendor_quote_number],
-                ['label' => 'Expected Receive', 'value' => optional($purchaseOrder->expected_receive_date)?->format('M d, Y')],
-            ]"
-            :party-blocks="[
-                ['title' => 'Vendor', 'lines' => $vendorLines],
-                ['title' => 'Ship To / Factory', 'lines' => $shipToLines],
-            ]"
-            :summary-rows="[
-                ['label' => 'Payment Term', 'value' => $purchaseOrder->payment_term],
-                ['label' => 'Shipping Method', 'value' => $purchaseOrder->shipping_method],
-                ['label' => 'First Delivery', 'value' => optional($purchaseOrder->completion_date)?->format('M d, Y')],
-                ['label' => 'Last Delivery', 'value' => optional($purchaseOrder->last_delivery_date)?->format('M d, Y')],
-            ]"
-            :columns="[
-                ['key' => 'item', 'label' => 'Material / Item', 'width' => '24%'],
-                ['key' => 'description', 'label' => 'Description', 'width' => '20%'],
-                ['key' => 'ordered_quantity', 'label' => 'Ordered Qty', 'align' => 'text-right', 'width' => '10%'],
-                ['key' => 'received_quantity', 'label' => 'Received Qty', 'align' => 'text-right', 'width' => '10%'],
-                ['key' => 'pending_quantity', 'label' => 'Pending Qty', 'align' => 'text-right', 'width' => '10%'],
-                ['key' => 'unit', 'label' => 'Unit', 'align' => 'text-center', 'width' => '8%'],
-                ['key' => 'price', 'label' => 'Rate', 'align' => 'text-right', 'width' => '9%'],
-                ['key' => 'total', 'label' => 'Amount', 'align' => 'text-right', 'width' => '9%'],
-            ]"
-            :items="$items"
-            :totals="[
-                ['label' => 'Sub Total', 'value' => core()->formatBasePrice($purchaseOrder->sub_total ?: 0), 'always' => true],
-                ['label' => 'Sales Tax', 'value' => core()->formatBasePrice($purchaseOrder->tax_amount ?: 0), 'always' => true],
-                ['label' => 'Freight', 'value' => core()->formatBasePrice($purchaseOrder->freight ?: 0), 'always' => true],
-                ['label' => 'Grand Total', 'value' => core()->formatBasePrice($purchaseOrder->grand_total ?: 0), 'highlight' => true, 'always' => true],
-            ]"
-            :notes="[
-                ['label' => 'Procurement Notes', 'value' => $purchaseOrder->notes],
-                ['label' => 'Commercial References', 'value' => collect([
-                    optional($purchaseOrder->jobOrder)->job_order_number ? 'Job Order: ' . optional($purchaseOrder->jobOrder)->job_order_number : null,
-                    optional($purchaseOrder->vendorQuote)->vendor_quote_number ? 'Vendor Quote: ' . optional($purchaseOrder->vendorQuote)->vendor_quote_number : null,
-                ])->filter()->implode("\n")],
-            ]"
-            :signatures="['Prepared By', 'Approved By', 'Vendor Confirmation']"
-        />
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Vendor</div>
+                <div class="font-semibold">{{ optional($purchaseOrder->organization)->name ?: '-' }}</div>
+                <div class="mt-1 text-gray-500">{{ optional($purchaseOrder->organization)->phone ?: '' }}</div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Job Order</div>
+                <div class="font-semibold">{{ $purchaseOrder->job_number ?: optional($purchaseOrder->jobOrder)->job_order_number ?: '-' }}</div>
+                <div class="mt-1 text-gray-500">Vendor Quote: {{ optional($purchaseOrder->vendorQuote)->vendor_quote_number ?: '-' }}</div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Commercial</div>
+                <div><strong>Status:</strong> {{ ucfirst(str_replace('_', ' ', $purchaseOrder->status ?: 'draft')) }}</div>
+                <div><strong>Payment Term:</strong> {{ $purchaseOrder->payment_term ?: '-' }}</div>
+                <div><strong>Shipping:</strong> {{ $purchaseOrder->shipping_method ?: '-' }}</div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Dates</div>
+                <div><strong>Created:</strong> {{ optional($purchaseOrder->created_at)->format('Y-m-d') }}</div>
+                <div><strong>Expected Receive:</strong> {{ optional($purchaseOrder->expected_receive_date)->format('Y-m-d') ?: '-' }}</div>
+                <div><strong>Last Delivery:</strong> {{ optional($purchaseOrder->last_delivery_date)->format('Y-m-d') ?: '-' }}</div>
+            </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="mb-3 text-base font-semibold dark:text-white">Purchase Order Items</div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm dark:text-white">
+                    <thead>
+                        <tr class="border-b dark:border-gray-700">
+                            <th class="py-2 text-left">Material / Item</th>
+                            <th class="py-2 text-left">Description</th>
+                            <th class="py-2 text-right">Ordered</th>
+                            <th class="py-2 text-right">Received</th>
+                            <th class="py-2 text-right">Pending</th>
+                            <th class="py-2 text-center">Unit</th>
+                            <th class="py-2 text-right">Rate</th>
+                            <th class="py-2 text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($purchaseOrder->items as $item)
+                            <tr class="border-b dark:border-gray-800">
+                                <td class="py-2">{{ $item->material_name ?: $item->item ?: '-' }}</td>
+                                <td class="py-2">{{ $item->description ?: '-' }}</td>
+                                <td class="py-2 text-right">{{ rtrim(rtrim(number_format((float) ($item->ordered_quantity ?: $item->quantity ?: 0), 4, '.', ''), '0'), '.') }}</td>
+                                <td class="py-2 text-right">{{ rtrim(rtrim(number_format((float) ($item->received_quantity ?: 0), 4, '.', ''), '0'), '.') }}</td>
+                                <td class="py-2 text-right">{{ rtrim(rtrim(number_format((float) ($item->pending_quantity ?: 0), 4, '.', ''), '0'), '.') }}</td>
+                                <td class="py-2 text-center">{{ $item->unit ?: '-' }}</td>
+                                <td class="py-2 text-right">{{ core()->formatBasePrice($item->price ?: 0, 2) }}</td>
+                                <td class="py-2 text-right">{{ core()->formatBasePrice($item->total ?: 0, 2) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="py-4 text-center text-gray-500">No line items available.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2">
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div class="mb-3 text-base font-semibold dark:text-white">Notes</div>
+                <div class="text-sm whitespace-pre-line text-gray-600 dark:text-gray-300">{{ $purchaseOrder->notes ?: '-' }}</div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div class="mb-3 text-base font-semibold dark:text-white">Totals</div>
+                <div class="space-y-2 text-sm dark:text-white">
+                    <div class="flex items-center justify-between"><span>Sub Total</span><strong>{{ core()->formatBasePrice($purchaseOrder->sub_total ?: 0, 2) }}</strong></div>
+                    <div class="flex items-center justify-between"><span>Sales Tax</span><strong>{{ core()->formatBasePrice($purchaseOrder->tax_amount ?: 0, 2) }}</strong></div>
+                    <div class="flex items-center justify-between"><span>Freight</span><strong>{{ core()->formatBasePrice($purchaseOrder->freight ?: 0, 2) }}</strong></div>
+                    <div class="flex items-center justify-between border-t pt-2 text-base"><span>Grand Total</span><strong>{{ core()->formatBasePrice($purchaseOrder->grand_total ?: 0, 2) }}</strong></div>
+                </div>
+            </div>
+        </div>
 
         <div class="grid gap-4 md:grid-cols-2">
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">

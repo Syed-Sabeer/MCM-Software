@@ -139,7 +139,7 @@ class ProformaInvoiceDataGrid extends DataGrid
         if (bouncer()->hasPermission('proforma_invoices.edit')) {
             $this->addAction([
                 'index'  => 'view',
-                'icon'   => 'icon-view',
+                'icon'   => 'icon-eye',
                 'title'  => 'View',
                 'method' => 'GET',
                 'url'    => fn ($row) => route('admin.proforma_invoices.view', $row->id),

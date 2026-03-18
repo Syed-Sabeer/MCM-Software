@@ -47,7 +47,7 @@ class PurchaseOrderDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        $this->addAction(['index' => 'view', 'icon' => 'icon-view', 'title' => 'View', 'method' => 'GET', 'url' => fn ($row) => route('admin.purchase_orders.view', $row->id)]);
+        $this->addAction(['index' => 'view', 'icon' => 'icon-eye', 'title' => 'View', 'method' => 'GET', 'url' => fn ($row) => route('admin.purchase_orders.view', $row->id)]);
         $this->addAction(['index' => 'edit', 'icon' => 'icon-edit', 'title' => 'Edit', 'method' => 'GET', 'url' => fn ($row) => route('admin.purchase_orders.edit', $row->id)]);
         $this->addAction(['index' => 'receipt', 'icon' => 'icon-note', 'title' => 'Receive Goods', 'method' => 'GET', 'url' => fn ($row) => route('admin.goods_receipts.create', ['purchase_order_id' => $row->id])]);
         $this->addAction(['index' => 'print', 'icon' => 'icon-print', 'title' => 'Print', 'method' => 'GET', 'url' => fn ($row) => route('admin.purchase_orders.print', $row->id)]);

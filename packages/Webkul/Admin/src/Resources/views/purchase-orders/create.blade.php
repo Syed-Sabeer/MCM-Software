@@ -6,7 +6,7 @@
         'ordered_quantity' => $item->quantity,
         'received_quantity' => 0,
         'pending_quantity' => $item->quantity,
-        'unit' => $item->unit,
+        'unit' => $item->unit ?: optional($item->requirement)->unit,
         'price' => $item->unit_price,
         'expected_receive_date' => optional($item->expected_receive_date)->toDateString(),
     ])->toArray() ?? $jobOrder?->requirements?->map(fn ($req) => [
@@ -35,6 +35,5 @@
     </x-admin::form>
     @pushOnce('scripts')<script>window.addPoRow=function(){const tbody=document.querySelector('#purchase-order-items-table tbody');const index=tbody.children.length;tbody.insertAdjacentHTML('beforeend',`<tr><td class="py-2"><input type="hidden" name="items[${index}][requirement_id]" value=""><input type="text" name="items[${index}][item]" class="w-full rounded border border-gray-200 px-3 py-2 text-sm"><input type="hidden" name="items[${index}][material_name]" value=""></td><td class="py-2"><input type="number" step="0.0001" name="items[${index}][ordered_quantity]" value="1" class="w-full rounded border border-gray-200 px-3 py-2 text-sm"></td><td class="py-2"><input type="text" name="items[${index}][unit]" class="w-full rounded border border-gray-200 px-3 py-2 text-sm"></td><td class="py-2"><input type="number" step="0.0001" name="items[${index}][price]" value="0" class="w-full rounded border border-gray-200 px-3 py-2 text-sm"></td><td class="py-2"><input type="date" name="items[${index}][expected_receive_date]" class="w-full rounded border border-gray-200 px-3 py-2 text-sm"></td><input type="hidden" name="items[${index}][received_quantity]" value="0"><input type="hidden" name="items[${index}][pending_quantity]" value="1"></tr>`);};</script>@endPushOnce
 </x-admin::layouts>
-
 
 

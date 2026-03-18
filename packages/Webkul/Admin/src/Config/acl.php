@@ -102,6 +102,11 @@ return [
         'route' => 'admin.requirements.index',
         'sort'  => 4,
     ], [
+        'key'   => 'requirements.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => 'admin.requirements.delete',
+        'sort'  => 1,
+    ], [
         'key'   => 'vendor_quotes',
         'name'  => 'Vendor Quotes',
         'route' => 'admin.vendor_quotes.index',

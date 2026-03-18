@@ -36,7 +36,7 @@ class GoodsReceiptDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        $this->addAction(['index' => 'view', 'icon' => 'icon-view', 'title' => 'View', 'method' => 'GET', 'url' => fn ($row) => route('admin.goods_receipts.view', $row->id)]);
+        $this->addAction(['index' => 'view', 'icon' => 'icon-eye', 'title' => 'View', 'method' => 'GET', 'url' => fn ($row) => route('admin.goods_receipts.view', $row->id)]);
         $this->addAction(['index' => 'edit', 'icon' => 'icon-edit', 'title' => 'Edit', 'method' => 'GET', 'url' => fn ($row) => route('admin.goods_receipts.edit', $row->id)]);
         $this->addAction(['index' => 'delete', 'icon' => 'icon-delete', 'title' => 'Delete', 'method' => 'DELETE', 'url' => fn ($row) => route('admin.goods_receipts.delete', $row->id)]);
     }

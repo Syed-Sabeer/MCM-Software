@@ -47,7 +47,7 @@ class PurchaseOrderController extends Controller
         $selectedRequirementIds = collect((array) request('requirement_ids'))->filter()->map(fn ($id) => (int) $id)->all();
 
         if (request()->filled('vendor_quote_id')) {
-            $vendorQuote = $this->vendorQuoteRepository->with(['items', 'organization', 'jobOrder'])->findOrFail(request('vendor_quote_id'));
+            $vendorQuote = $this->vendorQuoteRepository->with(['items.requirement', 'organization', 'jobOrder'])->findOrFail(request('vendor_quote_id'));
         }
 
         if (request()->filled('job_order_id')) {

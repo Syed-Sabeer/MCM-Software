@@ -24,30 +24,31 @@ return [
     ],
 
     /**
-     * Quotes.
+     * Sales.
      */
     [
-        'key'        => 'quotes',
-        'name'       => 'admin::app.layouts.quotes',
+        'key'        => 'sales',
+        'name'       => 'Sales',
         'route'      => 'admin.quotes.index',
         'sort'       => 3,
         'icon-class' => 'icon-quote',
-    ],
-
-    /**
-     * Proforma Invoices.
-     */
-    [
-        'key'        => 'proforma_invoices',
+    ], [
+        'key'        => 'sales.quotes',
+        'name'       => 'admin::app.layouts.quotes',
+        'route'      => 'admin.quotes.index',
+        'sort'       => 1,
+        'icon-class' => '',
+    ], [
+        'key'        => 'sales.proforma_invoices',
         'name'       => 'Proforma Invoices',
         'route'      => 'admin.proforma_invoices.index',
-        'sort'       => 4,
-        'icon-class' => 'icon-quote',
+        'sort'       => 2,
+        'icon-class' => '',
     ],
 
     [
         'key'        => 'erp_operations',
-        'name'       => 'ERP Operations',
+        'name'       => 'Purchasing',
         'route'      => 'admin.job_orders.index',
         'sort'       => 5,
         'icon-class' => 'icon-activity',

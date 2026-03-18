@@ -55,14 +55,14 @@ class JobOrderController extends Controller
 
     public function view(int $id): View
     {
-        $jobOrder = $this->jobOrderRepository->with(['organization', 'person', 'proformaInvoice', 'items', 'requirements', 'jobCards.sections.items', 'vendorQuotes', 'purchaseOrders'])->findOrFail($id);
+        $jobOrder = $this->jobOrderRepository->with(['organization', 'person', 'proformaInvoice', 'items.product', 'requirements', 'jobCards.jobOrderItem.product', 'jobCards.sections.items', 'vendorQuotes', 'purchaseOrders'])->findOrFail($id);
 
         return view('admin::job-orders.view', compact('jobOrder'));
     }
 
     public function edit(int $id): View
     {
-        $jobOrder = $this->jobOrderRepository->with(['organization', 'person', 'proformaInvoice', 'items'])->findOrFail($id);
+        $jobOrder = $this->jobOrderRepository->with(['organization', 'person', 'proformaInvoice', 'items.product'])->findOrFail($id);
 
         return view('admin::job-orders.edit', compact('jobOrder'));
     }

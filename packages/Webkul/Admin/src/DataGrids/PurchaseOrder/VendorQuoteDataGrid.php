@@ -46,7 +46,7 @@ class VendorQuoteDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        $this->addAction(['index' => 'view', 'icon' => 'icon-view', 'title' => 'View', 'method' => 'GET', 'url' => fn ($row) => route('admin.vendor_quotes.view', $row->id)]);
+        $this->addAction(['index' => 'view', 'icon' => 'icon-eye', 'title' => 'View', 'method' => 'GET', 'url' => fn ($row) => route('admin.vendor_quotes.view', $row->id)]);
         $this->addAction(['index' => 'edit', 'icon' => 'icon-edit', 'title' => 'Edit', 'method' => 'GET', 'url' => fn ($row) => route('admin.vendor_quotes.edit', $row->id)]);
         $this->addAction(['index' => 'create_po', 'icon' => 'icon-note', 'title' => 'Create Vendor PO', 'method' => 'GET', 'url' => fn ($row) => route('admin.purchase_orders.create', ['vendor_quote_id' => $row->id])]);
         $this->addAction(['index' => 'delete', 'icon' => 'icon-delete', 'title' => 'Delete', 'method' => 'DELETE', 'url' => fn ($row) => route('admin.vendor_quotes.delete', $row->id)]);

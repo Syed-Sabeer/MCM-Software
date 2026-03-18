@@ -35,7 +35,7 @@ class JobCardRepository extends Repository
                     'job_order_id' => $jobOrder->id,
                     'job_order_item_id' => $jobOrderItem->id,
                     'product_id' => $jobOrderItem->product_id,
-                    'title' => trim(($jobOrder->job_order_number ?: 'JO') . ' - ' . $jobOrderItem->item_name),
+                    'title' => trim(($jobOrder->job_order_number ?: 'JO') . ' - ' . $jobOrderItem->display_name),
                     'status' => 'open',
                     'created_by' => auth()->id(),
                 ]);

@@ -51,8 +51,12 @@ class RequirementDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        $this->addAction(['index' => 'job_order', 'icon' => 'icon-view', 'title' => 'View Job Order', 'method' => 'GET', 'url' => fn ($row) => route('admin.job_orders.view', $row->job_order_id)]);
+        $this->addAction(['index' => 'job_order', 'icon' => 'icon-eye', 'title' => 'View Job Order', 'method' => 'GET', 'url' => fn ($row) => route('admin.job_orders.view', $row->job_order_id)]);
         $this->addAction(['index' => 'vendor_quote', 'icon' => 'icon-note', 'title' => 'Create Vendor Quote', 'method' => 'GET', 'url' => fn ($row) => route('admin.vendor_quotes.create', ['job_order_id' => $row->job_order_id, 'requirement_ids' => [$row->id]])]);
         $this->addAction(['index' => 'vendor_po', 'icon' => 'icon-note', 'title' => 'Create Vendor PO', 'method' => 'GET', 'url' => fn ($row) => route('admin.purchase_orders.create', ['job_order_id' => $row->job_order_id, 'requirement_ids' => [$row->id]])]);
+
+        if (bouncer()->hasPermission('requirements.delete')) {
+            $this->addAction(['index' => 'delete', 'icon' => 'icon-delete', 'title' => 'Delete', 'method' => 'DELETE', 'url' => fn ($row) => route('admin.requirements.delete', $row->id)]);
+        }
     }
 }

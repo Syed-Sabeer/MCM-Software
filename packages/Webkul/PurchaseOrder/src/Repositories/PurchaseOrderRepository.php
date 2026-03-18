@@ -47,7 +47,7 @@ class PurchaseOrderRepository extends Repository
                 'ordered_quantity' => $item->quantity,
                 'received_quantity' => 0,
                 'pending_quantity' => $item->quantity,
-                'unit' => $item->unit,
+                'unit' => $item->unit ?: optional($item->requirement)->unit,
                 'price' => $item->unit_price,
                 'expected_receive_date' => $item->expected_receive_date?->toDateString(),
                 'line_status' => 'open',
