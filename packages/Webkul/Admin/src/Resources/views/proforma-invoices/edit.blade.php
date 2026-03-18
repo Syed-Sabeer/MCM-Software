@@ -184,7 +184,7 @@
         }
 
         .quote-create-form-panel .quote-meta-block {
-            margin-top: 14px;
+            margin-top: 16px;
         }
     </style>
 
@@ -284,7 +284,7 @@
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Quote #</x-admin::form.control-group.label><input type="text" class="custom-input" :value="form.quote_number_display || ''" disabled></x-admin::form.control-group>
                     </div>
 
-                    <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px;">
+                    <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; margin-top: 16px;">
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label>
                             <input type="text" class="custom-input" :value="form.sales_owner_name || ''" disabled>
@@ -296,7 +296,7 @@
                         </x-admin::form.control-group>
                     </div>
 
-                    <div class="document-form-row-6 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 16px;">
+                    <div class="document-form-row-6 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 16px; margin-top: 16px;">
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Payment Term</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="payment_term" v-model="form.payment_term" /></x-admin::form.control-group>
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Shipping Method</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="shipping_method" v-model="form.shipping_method" /></x-admin::form.control-group>
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Production Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="production_time" v-model="form.production_time" /></x-admin::form.control-group>

@@ -36,8 +36,15 @@
             grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
         }
 
+        .quote-create-form-panel .quote-meta-stack {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
         .quote-create-form-panel .quote-meta-block {
-            margin-top: 14px;
+            margin-top: 0;
         }
 
         .quote-create-form-panel .document-summary-line {
@@ -85,7 +92,7 @@
                     <div class="document-form-section-note dark:text-gray-400">Keep the commercial details compact, aligned, and easy to scan while preparing the quote.</div>
                 </div> --}}
 
-                <div class="mt-4 space-y-4">
+                <div class="quote-meta-stack">
                     <div class="document-form-row-3 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px;">
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label class="required">Quote #</x-admin::form.control-group.label>
@@ -110,7 +117,7 @@
                         </x-admin::form.control-group>
                     </div>
 
-                    <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px;">
+                    <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; margin-top: 14px;">
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label>Sales Owner</x-admin::form.control-group.label>
                             <input type="text" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" value="{{ optional(auth()->user())->name }}" disabled />
@@ -146,7 +153,7 @@
                         </x-admin::form.control-group>
                     </div>
 
-                    <div class="document-form-row-6 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 16px;">
+                    <div class="document-form-row-6 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 16px; margin-top: 16px;">
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Payment Term</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="payment_term" value="{{ old('payment_term') }}" /><x-admin::form.control-group.error control-name="payment_term" /></x-admin::form.control-group>
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Shipping Method</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="shipping_method" value="{{ old('shipping_method') }}" /><x-admin::form.control-group.error control-name="shipping_method" /></x-admin::form.control-group>
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Production Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="production_time" value="{{ old('production_time') }}" /><x-admin::form.control-group.error control-name="production_time" /></x-admin::form.control-group>

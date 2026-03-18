@@ -78,7 +78,7 @@ return [
         'icon-class' => '',
     ], [
         'key'        => 'erp_operations.goods_receipts',
-        'name'       => 'Goods Receipts',
+        'name'       => 'Goods Receipts / Payables',
         'route'      => 'admin.goods_receipts.index',
         'sort'       => 5,
         'icon-class' => '',

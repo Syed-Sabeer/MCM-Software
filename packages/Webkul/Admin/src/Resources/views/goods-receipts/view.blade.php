@@ -77,5 +77,92 @@
                 </tbody>
             </table>
         </div>
+        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="mb-3 text-base font-semibold dark:text-white">Receipt History</div>
+
+            @php
+                $purchaseOrderItems = optional($goodsReceipt->purchaseOrder)->items ?? collect();
+                $orderedQtyMap = $purchaseOrderItems->mapWithKeys(fn ($item) => [$item->id => (float) $item->ordered_quantity]);
+                $materialNameMap = $purchaseOrderItems->mapWithKeys(fn ($item) => [$item->id => ($item->material_name ?: $item->item)]);
+                $runningReceived = [];
+                $receiptTimeline = [];
+
+                foreach ((optional($goodsReceipt->purchaseOrder)->receipts ?? collect())->sortBy(fn ($receipt) => (optional($receipt->receipt_date)->format('Y-m-d') ?: '0000-00-00') . '-' . str_pad((string) $receipt->id, 10, '0', STR_PAD_LEFT)) as $receiptHistory) {
+                    $lineSnapshots = [];
+
+                    foreach ($receiptHistory->items as $historyItem) {
+                        $poItemId = $historyItem->purchase_order_item_id;
+                        $thisReceiptQty = (float) $historyItem->received_qty;
+                        $runningReceived[$poItemId] = ($runningReceived[$poItemId] ?? 0) + $thisReceiptQty;
+                        $orderedQty = (float) ($orderedQtyMap[$poItemId] ?? $thisReceiptQty);
+                        $remainingQty = max($orderedQty - $runningReceived[$poItemId], 0);
+
+                        $lineSnapshots[] = [
+                            'material' => $materialNameMap[$poItemId] ?? $historyItem->material_name,
+                            'this_receipt' => $thisReceiptQty,
+                            'cumulative_received' => $runningReceived[$poItemId],
+                            'remaining' => $remainingQty,
+                            'unit' => $historyItem->unit,
+                        ];
+                    }
+
+                    $receiptTimeline[] = [
+                        'receipt' => $receiptHistory,
+                        'total_qty' => (float) $receiptHistory->items->sum('received_qty'),
+                        'total_value' => (float) $receiptHistory->items->sum('line_total'),
+                        'lines' => $lineSnapshots,
+                    ];
+                }
+            @endphp
+
+            <div class="grid gap-3">
+                @forelse (collect($receiptTimeline)->reverse() as $timelineEntry)
+                    @php $receiptHistory = $timelineEntry['receipt']; @endphp
+
+                    <div class="rounded border border-gray-200 px-4 py-3 text-sm dark:border-gray-700 dark:text-white">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <a class="font-semibold text-brandColor" href="{{ route('admin.goods_receipts.view', $receiptHistory->id) }}">{{ $receiptHistory->goods_receipt_number }}</a>
+                                <div class="text-xs text-gray-500">{{ optional($receiptHistory->receipt_date)->format('Y-m-d') ?: '-' }}</div>
+                            </div>
+
+                            <div class="text-right">
+                                <div>{{ number_format($timelineEntry['total_qty'], 2) }} qty received</div>
+                                <div class="text-xs text-gray-500">{{ core()->formatBasePrice($timelineEntry['total_value'], 2) }}</div>
+                            </div>
+                        </div>
+
+                        @if (! empty($timelineEntry['lines']))
+                            <div class="mt-3 overflow-x-auto">
+                                <table class="w-full text-xs md:text-sm">
+                                    <thead>
+                                        <tr class="border-b dark:border-gray-700">
+                                            <th class="py-2 text-left">Material</th>
+                                            <th class="py-2 text-right">This Update</th>
+                                            <th class="py-2 text-right">Previously Received</th>
+                                            <th class="py-2 text-right">Remaining Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($timelineEntry['lines'] as $line)
+                                            <tr class="border-b dark:border-gray-800">
+                                                <td class="py-2">{{ $line['material'] }}</td>
+                                                <td class="py-2 text-right">{{ number_format($line['this_receipt'], 2) }} {{ $line['unit'] }}</td>
+                                                <td class="py-2 text-right">{{ number_format(max($line['cumulative_received'] - $line['this_receipt'], 0), 2) }} {{ $line['unit'] }}</td>
+                                                <td class="py-2 text-right">{{ number_format($line['remaining'], 2) }} {{ $line['unit'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                @empty
+                    <div class="text-sm text-gray-500">No receipt history found for this purchase order.</div>
+                @endforelse
+            </div>
+        </div>
     </div>
 </x-admin::layouts>
+
+

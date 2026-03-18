@@ -45,14 +45,9 @@ class GoodsReceiptRepository extends Repository
             $receipt = $this->with('items')->findOrFail($id);
             /** @var PurchaseOrder $purchaseOrder */
             $purchaseOrder = PurchaseOrder::with('items')->findOrFail($receipt->purchase_order_id);
-
-            $this->reverseReceiptEffects($receipt, $purchaseOrder);
-
             $receipt = parent::update($data, $id, $attribute);
-            $receipt->items()->delete();
 
-            $purchaseOrder = PurchaseOrder::with('items')->findOrFail($receipt->purchase_order_id);
-            $this->applyReceiptItems($receipt, $purchaseOrder, $data['items'] ?? []);
+            $this->appendReceiptItems($receipt->fresh('items'), $purchaseOrder, $data['items'] ?? []);
 
             return $receipt->fresh('items');
         });
@@ -63,10 +58,15 @@ class GoodsReceiptRepository extends Repository
         return DB::transaction(function () use ($id) {
             /** @var GoodsReceipt $receipt */
             $receipt = $this->with('items')->findOrFail($id);
-            /** @var PurchaseOrder $purchaseOrder */
-            $purchaseOrder = PurchaseOrder::with('items')->findOrFail($receipt->purchase_order_id);
+            /** @var PurchaseOrder|null $purchaseOrder */
+            $purchaseOrder = PurchaseOrder::with('items')->find($receipt->purchase_order_id);
 
-            $this->reverseReceiptEffects($receipt, $purchaseOrder);
+            if ($purchaseOrder) {
+                $this->reverseReceiptEffects($receipt, $purchaseOrder);
+            } else {
+                $this->vendorPayableRepository->deleteByReceipt($receipt->id);
+            }
+
             $receipt->items()->delete();
 
             return parent::delete($id);
@@ -123,6 +123,75 @@ class GoodsReceiptRepository extends Repository
         $this->vendorPayableRepository->createFromReceipt($receipt->fresh('items'), $purchaseOrder->fresh());
     }
 
+    protected function appendReceiptItems(GoodsReceipt $receipt, PurchaseOrder $purchaseOrder, array $items): void
+    {
+        $postedLines = 0;
+
+        foreach ($items as $item) {
+            $purchaseOrderItem = $purchaseOrder->items->firstWhere('id', (int) ($item['purchase_order_item_id'] ?? 0));
+
+            if (! $purchaseOrderItem) {
+                continue;
+            }
+
+            $receivedQty = (float) ($item['received_qty'] ?? 0);
+
+            if ($receivedQty <= 0) {
+                continue;
+            }
+
+            $pending = (float) $purchaseOrderItem->pending_quantity;
+
+            if ($receivedQty > $pending) {
+                throw ValidationException::withMessages([
+                    'items' => 'Received quantity cannot exceed pending quantity.',
+                ]);
+            }
+
+            $existingReceiptItem = $receipt->items->firstWhere('purchase_order_item_id', $purchaseOrderItem->id);
+            $newReceiptQty = $receivedQty;
+            $newLineTotal = $receivedQty * (float) $purchaseOrderItem->price;
+
+            if ($existingReceiptItem) {
+                $newReceiptQty += (float) $existingReceiptItem->received_qty;
+                $newLineTotal += (float) $existingReceiptItem->line_total;
+
+                $this->goodsReceiptItemRepository->update([
+                    'received_qty' => $newReceiptQty,
+                    'line_total'   => $newLineTotal,
+                    'unit_price'   => $purchaseOrderItem->price,
+                    'unit'         => $purchaseOrderItem->unit,
+                    'material_name'=> $purchaseOrderItem->material_name ?: $purchaseOrderItem->item,
+                    'requirement_id' => $purchaseOrderItem->requirement_id,
+                ], $existingReceiptItem->id);
+            } else {
+                $this->goodsReceiptItemRepository->create([
+                    'goods_receipt_id' => $receipt->id,
+                    'purchase_order_item_id' => $purchaseOrderItem->id,
+                    'requirement_id' => $purchaseOrderItem->requirement_id,
+                    'material_name' => $purchaseOrderItem->material_name ?: $purchaseOrderItem->item,
+                    'received_qty' => $receivedQty,
+                    'unit' => $purchaseOrderItem->unit,
+                    'unit_price' => $purchaseOrderItem->price,
+                    'line_total' => $newLineTotal,
+                ]);
+            }
+
+            $postedLines++;
+            $this->applyItemReceipt($purchaseOrderItem, $receivedQty);
+        }
+
+        if ($postedLines === 0) {
+            throw ValidationException::withMessages([
+                'items' => 'Enter a received quantity for at least one line.',
+            ]);
+        }
+
+        $this->purchaseOrderRepository->refreshReceiptStatus($purchaseOrder->id);
+        $this->vendorPayableRepository->deleteByReceipt($receipt->id);
+        $this->vendorPayableRepository->createFromReceipt($receipt->fresh('items'), $purchaseOrder->fresh());
+    }
+
     protected function reverseReceiptEffects(GoodsReceipt $receipt, PurchaseOrder $purchaseOrder): void
     {
         foreach ($receipt->items as $receiptItem) {
@@ -142,7 +211,12 @@ class GoodsReceiptRepository extends Repository
             ]);
 
             if ($receiptItem->requirement_id) {
-                $requirement = $this->jobOrderRequirementRepository->findOrFail($receiptItem->requirement_id);
+                $requirement = $this->jobOrderRequirementRepository->find($receiptItem->requirement_id);
+
+                if (! $requirement) {
+                    continue;
+                }
+
                 $receivedQty = max((float) $requirement->received_qty - (float) $receiptItem->received_qty, 0);
                 $balanceQty = max((float) $requirement->required_qty - $receivedQty, 0);
                 $status = $receivedQty <= 0 ? 'pending' : ($balanceQty <= 0 ? 'fulfilled' : 'partial');

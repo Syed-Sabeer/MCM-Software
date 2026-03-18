@@ -11,7 +11,7 @@
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                 <div>
                     <div class="text-xl font-bold dark:text-white">Edit Job Order</div>
-                    <div class="text-sm text-gray-500">{{ $jobOrder->job_order_number }}</div>
+                    <div class="text-sm text-gray-500">Source Proforma: {{ optional($jobOrder->proformaInvoice)->proforma_number ?: '-' }}</div>
                 </div>
 
                 <button class="primary-button">Update Job Order</button>
@@ -60,8 +60,10 @@
                 <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                     <div class="space-y-2">
                         <div><strong>Customer:</strong> {{ optional($jobOrder->organization)->name }}</div>
-                        <div><strong>Proforma:</strong> {{ optional($jobOrder->proformaInvoice)->proforma_number }}</div>
-                        <div><strong>Total Qty:</strong> {{ $formatQty($jobOrder->total_order_qty) }}</div>
+                        <div><strong>Linked Quote:</strong> {{ optional(optional($jobOrder->proformaInvoice)->quote)->quote_number ? 'Q' . optional(optional($jobOrder->proformaInvoice)->quote)->quote_number : '-' }}</div>
+                        <div><strong>Grand Total:</strong> {{ $formatAmount(optional($jobOrder->proformaInvoice)->grand_total ?: 0) }}</div>
+                        <div><strong>Advance Received:</strong> {{ $formatAmount(optional($jobOrder->proformaInvoice)->received_amount ?: 0) }}</div>
+                        <div><strong>Remaining Balance:</strong> {{ $formatAmount(optional($jobOrder->proformaInvoice)->remaining_amount ?: 0) }}</div>
                     </div>
                 </div>
             </div>
@@ -72,33 +74,90 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b dark:border-gray-700">
+                            <th class="py-2 text-left">Image</th>
                             <th class="py-2 text-left">Item Code</th>
                             <th class="py-2 text-left">Description</th>
-                            <th class="py-2 text-right">Qty</th>
-                            <th class="py-2 text-left">Unit</th>
+                            <th class="py-2 text-left">Color</th>
+                            <th class="py-2 text-left">Qty</th>
                             <th class="py-2 text-right">Rate</th>
                             <th class="py-2 text-right">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($jobOrder->items as $index => $item)
-                            @php $resolvedUnit = $item->unit ?: 'PCS'; @endphp
+                            @php
+                                $resolvedUnit = $item->unit ?: 'PCS';
+                                $proformaItems = optional($jobOrder->proformaInvoice)->items;
+                                $proformaItem = $proformaItems?->firstWhere('id', $item->proforma_invoice_item_id);
+
+                                if (! $proformaItem && $item->product_id) {
+                                    $proformaItem = $proformaItems?->firstWhere('product_id', $item->product_id);
+                                }
+
+                                $resolvedPreviewImage = optional($proformaItem)->preview_image;
+
+                                if (! $resolvedPreviewImage && optional($item->product)->cover_image) {
+                                    $resolvedPreviewImage = secure_url('public/storage/'.optional($item->product)->cover_image);
+                                }
+
+                                $resolvedItemName = $item->item_name ?: optional($proformaItem)->item_name;
+
+                                $resolvedColorName = optional($proformaItem)->color_variant_name ?: '-';
+
+                                $resolvedQty = $item->qty;
+
+                                if ($resolvedQty === null || $resolvedQty === '') {
+                                    $resolvedQty = optional($proformaItem)->qty;
+                                }
+
+                                $resolvedRate = $item->unit_price;
+
+                                if ($resolvedRate === null || $resolvedRate === '') {
+                                    $resolvedRate = optional($proformaItem)->unit_price;
+                                }
+
+                                $resolvedAmount = $item->line_total;
+
+                                if ($resolvedAmount === null || $resolvedAmount === '') {
+                                    $resolvedAmount = optional($proformaItem)->line_total;
+                                }
+
+                                if (($resolvedAmount === null || $resolvedAmount === '') && $resolvedQty !== null && $resolvedRate !== null) {
+                                    $resolvedAmount = (float) $resolvedQty * (float) $resolvedRate;
+                                }
+
+                                $resolvedQty = (float) ($resolvedQty ?? 0);
+                                $resolvedRate = (float) ($resolvedRate ?? 0);
+                                $resolvedAmount = (float) ($resolvedAmount ?? 0);
+                            @endphp
                             <tr class="border-b dark:border-gray-800 dark:text-white">
-                                <td class="py-2">
+                                <td class="py-2 font-medium">
+                                    @if ($resolvedPreviewImage)
+                                        <img src="{{ $resolvedPreviewImage }}" alt="preview" class="h-12 w-12 rounded border border-gray-200 object-cover dark:border-gray-700">
+                                    @else
+                                        <span class="text-xs text-gray-500">No image</span>
+                                    @endif
+                                </td>
+                                <td class="py-2 font-medium">
                                     <input type="hidden" name="items[{{ $index }}][id]" value="{{ $item->id }}">
                                     <input type="hidden" name="items[{{ $index }}][proforma_invoice_item_id]" value="{{ $item->proforma_invoice_item_id }}">
                                     <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item->product_id }}">
-                                    <input type="hidden" name="items[{{ $index }}][item_name]" value="{{ $item->item_name }}">
+                                    <input type="hidden" name="items[{{ $index }}][item_name]" value="{{ $resolvedItemName }}">
                                     <input type="hidden" name="items[{{ $index }}][description]" value="{{ $item->description }}">
-                                    <input type="hidden" name="items[{{ $index }}][unit_price]" value="{{ number_format((float) ($item->unit_price ?: 0), 3, '.', '') }}">
-                                    <input type="hidden" name="items[{{ $index }}][line_total]" value="{{ number_format((float) ($item->line_total ?: 0), 3, '.', '') }}">
-                                    <input type="text" name="items[{{ $index }}][item_code]" value="{{ $item->display_code !== '-' ? $item->display_code : $item->item_code }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm font-medium dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                                    <input type="hidden" name="items[{{ $index }}][preview_image]" value="{{ $resolvedPreviewImage }}">
+                                    <input type="hidden" name="items[{{ $index }}][unit_price]" value="{{ number_format($resolvedRate, 3, '.', '') }}">
+                                    <input type="hidden" name="items[{{ $index }}][line_total]" value="{{ number_format($resolvedAmount, 3, '.', '') }}">
+                                    <input type="hidden" name="items[{{ $index }}][item_code]" value="{{ $item->display_code !== '-' ? $item->display_code : $item->item_code }}">
+                                    <input type="hidden" name="items[{{ $index }}][qty]" value="{{ $formatQty($resolvedQty) }}">
+                                    <input type="hidden" name="items[{{ $index }}][unit]" value="{{ $resolvedUnit }}">
+                                    {{ $item->display_code !== '-' ? $item->display_code : ($item->item_code ?: '-') }}
                                 </td>
-                                <td class="py-2">{{ $item->item_name ?: '-' }}</td>
-                                <td class="py-2 text-right"><input type="number" step="1" min="1" name="items[{{ $index }}][qty]" value="{{ $formatQty($item->qty) }}" class="w-24 rounded border border-gray-200 px-3 py-2 text-right text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"></td>
-                                <td class="py-2"><input type="text" name="items[{{ $index }}][unit]" value="{{ $resolvedUnit }}" class="w-24 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"></td>
-                                <td class="py-2 text-right">{{ $formatAmount($item->unit_price ?: 0) }}</td>
-                                <td class="py-2 text-right font-medium">{{ $formatAmount($item->line_total ?: 0) }}</td>
+                                <td class="py-2 font-medium">{{ $resolvedItemName ?: '-' }}</td>
+                                <td class="py-2 font-medium">{{ $resolvedColorName }}</td>
+                                <td class="py-2 font-medium">{{ $resolvedQty ? number_format($resolvedQty, 0) : '-' }}</td>
+                                <input type="hidden" name="items[{{ $index }}][unit]" value="{{ $resolvedUnit }}">
+                                <td class="py-2 text-right">{{ $formatAmount($resolvedRate) }}</td>
+                                <td class="py-2 text-right font-medium">{{ $formatAmount($resolvedAmount) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -107,3 +166,7 @@
         </div>
     </x-admin::form>
 </x-admin::layouts>
+
+
+
+

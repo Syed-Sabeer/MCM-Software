@@ -66,6 +66,11 @@ require 'vendor-quote-routes.php';
 require 'goods-receipt-routes.php';
 
 /**
+ * Vendor Payables routes.
+ */
+require 'vendor-payable-routes.php';
+
+/**
  * Requirement routes.
  */
 require 'requirement-routes.php';

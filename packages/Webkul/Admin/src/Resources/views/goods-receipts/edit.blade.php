@@ -54,7 +54,6 @@
                             <th class="py-2 text-left">Material</th>
                             <th class="py-2 text-left">Ordered</th>
                             <th class="py-2 text-left">Previously Received</th>
-                            <th class="py-2 text-left">Current Receipt</th>
                             <th class="py-2 text-left">Available to Receive</th>
                             <th class="py-2 text-left">Receive Now</th>
                         </tr>
@@ -65,19 +64,25 @@
                             @php
                                 $currentReceiptItem = $goodsReceipt->items->firstWhere('purchase_order_item_id', $item->id);
                                 $currentReceiptQty = (float) optional($currentReceiptItem)->received_qty;
-                                $alreadyReceivedElsewhere = max((float) $item->received_quantity - $currentReceiptQty, 0);
-                                $availableToReceive = max((float) $item->ordered_quantity - $alreadyReceivedElsewhere, 0);
+                                $previouslyReceived = (float) $item->received_quantity;
+                                $availableToReceive = max((float) $item->pending_quantity, 0);
                             @endphp
 
                             <tr class="border-b dark:border-gray-800">
                                 <td class="py-2">{{ $item->material_name ?: $item->item }}</td>
-                                <td class="py-2">{{ $item->ordered_quantity }}</td>
-                                <td class="py-2">{{ $alreadyReceivedElsewhere }}</td>
-                                <td class="py-2">{{ $currentReceiptQty }}</td>
-                                <td class="py-2">{{ $availableToReceive }}</td>
+                                <td class="py-2">{{ number_format((float) $item->ordered_quantity, 2) }}</td>
+                                <td class="py-2">
+                                    {{ number_format($previouslyReceived, 2) }}
+
+                                    @if ($currentReceiptQty > 0)
+                                        <div class="text-xs text-gray-500">This receipt: {{ number_format($currentReceiptQty, 2) }}</div>
+                                    @endif
+                                </td>
+                                <td class="py-2">{{ number_format($availableToReceive, 2) }}</td>
                                 <td class="py-2">
                                     <input type="hidden" name="items[{{ $index }}][purchase_order_item_id]" value="{{ $item->id }}">
-                                    <input type="number" step="0.0001" max="{{ $availableToReceive }}" min="0" name="items[{{ $index }}][received_qty]" value="{{ old('items.' . $index . '.received_qty', $currentReceiptQty) }}" class="w-28 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                                    <input type="number" step="0.0001" max="{{ $availableToReceive }}" min="0" name="items[{{ $index }}][received_qty]" value="{{ old('items.' . $index . '.received_qty', 0) }}" class="w-28 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                                    <div class="mt-1 text-xs text-gray-500">Add more on this receipt</div>
                                     @error('items.' . $index . '.received_qty')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </td>
                             </tr>
@@ -88,3 +93,4 @@
         </div>
     </x-admin::form>
 </x-admin::layouts>
+

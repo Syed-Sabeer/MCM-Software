@@ -60,4 +60,16 @@ class RequirementDataGrid extends DataGrid
             $this->addAction(['index' => 'delete', 'icon' => 'icon-delete', 'title' => 'Delete', 'method' => 'DELETE', 'url' => fn ($row) => route('admin.requirements.delete', $row->id)]);
         }
     }
+
+    public function prepareMassActions(): void
+    {
+        if (bouncer()->hasPermission('requirements.delete')) {
+            $this->addMassAction([
+                'icon'   => 'icon-delete',
+                'title'  => 'Delete',
+                'method' => 'POST',
+                'url'    => route('admin.requirements.mass_delete'),
+            ]);
+        }
+    }
 }

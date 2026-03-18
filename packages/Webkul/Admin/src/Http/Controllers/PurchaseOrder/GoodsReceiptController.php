@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\PurchaseOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\PurchaseOrder\GoodsReceiptDataGrid;
@@ -95,12 +96,12 @@ class GoodsReceiptController extends Controller
 
     public function view(int $id): View
     {
-        $goodsReceipt = $this->goodsReceiptRepository->with(['vendor', 'receiver', 'purchaseOrder.organization', 'items'])->findOrFail($id);
+        $goodsReceipt = $this->goodsReceiptRepository->with(['vendor', 'receiver', 'purchaseOrder.organization', 'purchaseOrder.items', 'purchaseOrder.receipts.items', 'items'])->findOrFail($id);
 
         return view('admin::goods-receipts.view', compact('goodsReceipt'));
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id): JsonResponse|RedirectResponse
     {
         try {
             Event::dispatch('goods_receipt.delete.before', $id);
@@ -115,8 +116,24 @@ class GoodsReceiptController extends Controller
 
             Event::dispatch('goods_receipt.delete.after', $id);
 
+            if (! request()->expectsJson()) {
+                session()->flash('success', 'Goods receipt deleted successfully.');
+                return redirect()->route('admin.goods_receipts.index');
+            }
+
             return response()->json(['message' => 'Goods receipt deleted successfully.']);
         } catch (\Throwable $e) {
+            Log::error('Goods receipt delete failed.', [
+                'goods_receipt_id' => $id,
+                'message'          => $e->getMessage(),
+                'trace'            => $e->getTraceAsString(),
+            ]);
+
+            if (! request()->expectsJson()) {
+                session()->flash('error', 'Goods receipt cannot be deleted.');
+                return redirect()->route('admin.goods_receipts.index');
+            }
+
             return response()->json(['message' => 'Goods receipt cannot be deleted.'], 400);
         }
     }

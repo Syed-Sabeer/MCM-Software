@@ -152,6 +152,11 @@ return [
         'route' => ['admin.goods_receipts.delete'],
         'sort'  => 3,
     ], [
+        'key'   => 'vendor_payables',
+        'name'  => 'Vendor Payables',
+        'route' => 'admin.vendor_payables.index',
+        'sort'  => 4,
+    ], [
         'key'   => 'purchase_orders',
         'name'  => 'admin::app.acl.purchase-orders',
         'route' => 'admin.purchase_orders.index',

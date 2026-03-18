@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\PurchaseOrder\RequirementDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\PurchaseOrder\Repositories\JobOrderRequirementRepository;
 
 class RequirementController extends Controller
@@ -33,5 +34,14 @@ class RequirementController extends Controller
         } catch (\Throwable $e) {
             return response()->json(['message' => 'Requirement cannot be deleted.'], 400);
         }
+    }
+
+    public function massDestroy(MassDestroyRequest $request): JsonResponse
+    {
+        foreach ($request->input('indices') as $id) {
+            $this->jobOrderRequirementRepository->delete($id);
+        }
+
+        return response()->json(['message' => 'Requirements deleted successfully.']);
     }
 }
