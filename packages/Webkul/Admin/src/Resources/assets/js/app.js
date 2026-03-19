@@ -35,14 +35,35 @@ window.app = createApp({
             setTimeout(() => {
                 const errorKeys = Object.entries(errors)
                     .map(([key, value]) => ({ key, value }))
-                    .filter(error => error["value"].length);
+                    .filter(error => Array.isArray(error["value"]) ? error["value"].length : !!error["value"]);
 
-                let firstErrorElement = document.querySelector('[name="' + errorKeys[0]["key"] + '"]');
+                if (! errorKeys.length) {
+                    window.emitter?.emit("add-flash", {
+                        type: "error",
+                        message: "Form could not be submitted. Please review the highlighted fields.",
+                    });
 
-                firstErrorElement.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
+                    return;
+                }
+
+                const firstError = errorKeys[0];
+                const firstMessage = Array.isArray(firstError.value)
+                    ? firstError.value[0]
+                    : firstError.value;
+
+                window.emitter?.emit("add-flash", {
+                    type: "error",
+                    message: firstMessage || "Form could not be submitted. Please review the highlighted fields.",
                 });
+
+                const firstErrorElement = document.querySelector('[name="' + firstError["key"] + '"]');
+
+                if (firstErrorElement?.scrollIntoView) {
+                    firstErrorElement.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+                }
             }, 100);
         },
 
@@ -131,4 +152,3 @@ app.directive("safe-html", DOMPurify);
 app.directive("tooltip", ToolTip);
 
 export default app;
-

@@ -12,6 +12,11 @@ use Webkul\Quote\Contracts\Quote;
 
 class QuoteRepository extends Repository
 {
+    protected function roundMoney(float $value): float
+    {
+        return round($value, 3);
+    }
+
     /**
      * Searchable fields.
      */
@@ -173,14 +178,14 @@ class QuoteRepository extends Repository
             }
 
             $qty = (float) ($item['qty'] ?? $item['quantity'] ?? 0);
-            $unitPrice = (float) ($item['unit_price'] ?? $item['price'] ?? 0);
-            $lineSubTotal = $qty * $unitPrice;
+            $unitPrice = $this->roundMoney((float) ($item['unit_price'] ?? $item['price'] ?? 0));
+            $lineSubTotal = $this->roundMoney($qty * $unitPrice);
 
             $lineDiscountPercent = 0;
             $lineDiscountAmount = 0;
             $lineTaxPercent = 0;
             $lineTaxAmount = 0;
-            $lineTotal = max($lineSubTotal, 0);
+            $lineTotal = $this->roundMoney(max($lineSubTotal, 0));
             $name = $item['item_name'] ?? $item['name'] ?? '';
             $code = $item['item_code'] ?? $item['sku'] ?? null;
 
@@ -200,17 +205,17 @@ class QuoteRepository extends Repository
                 'total'           => $lineTotal,
             ]);
 
-            $subTotal += $lineSubTotal;
+            $subTotal = $this->roundMoney($subTotal + $lineSubTotal);
             $discountAmount += $lineDiscountAmount;
             $taxAmount += $lineTaxAmount;
         }
 
-        $tariffPercent = (float) ($data['tariff_percent'] ?? 0);
-        $freightPercent = (float) ($data['freight_percent'] ?? 0);
-        $taxAmount = $subTotal * ($tariffPercent / 100);
-        $freightAmount = $subTotal * ($freightPercent / 100);
+        $tariffPercent = $this->roundMoney((float) ($data['tariff_percent'] ?? 0));
+        $freightPercent = $this->roundMoney((float) ($data['freight_percent'] ?? 0));
+        $taxAmount = $this->roundMoney($subTotal * ($tariffPercent / 100));
+        $freightAmount = $this->roundMoney($subTotal * ($freightPercent / 100));
         $discountAmount = 0;
-        $grandTotal = max($subTotal + $taxAmount + $freightAmount, 0);
+        $grandTotal = $this->roundMoney(max($subTotal + $taxAmount + $freightAmount, 0));
 
         $data['items'] = $normalizedItems;
         $data['sub_total'] = $subTotal;
