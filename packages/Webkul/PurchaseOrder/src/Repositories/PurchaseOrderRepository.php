@@ -94,6 +94,7 @@ class PurchaseOrderRepository extends Repository
     public function create(array $data): PurchaseOrder
     {
         return DB::transaction(function () use ($data) {
+            $data = $this->normalizeOptionalFields($data);
             $data = $this->calculateTotals($data);
 
             /** @var PurchaseOrder $purchaseOrder */
@@ -109,6 +110,7 @@ class PurchaseOrderRepository extends Repository
     public function update(array $data, $id, $attribute = 'id'): PurchaseOrder
     {
         return DB::transaction(function () use ($data, $id, $attribute) {
+            $data = $this->normalizeOptionalFields($data);
             $data = $this->calculateTotals($data);
 
             /** @var PurchaseOrder $purchaseOrder */
@@ -146,6 +148,28 @@ class PurchaseOrderRepository extends Repository
         $data['sub_total'] = $subTotal;
         $data['tax_amount'] = $taxAmount;
         $data['grand_total'] = $grandTotal;
+
+        return $data;
+    }
+
+    protected function normalizeOptionalFields(array $data): array
+    {
+        foreach ([
+            'person_id',
+            'job_order_id',
+            'vendor_quote_id',
+            'completion_date',
+            'last_delivery_date',
+            'expected_receive_date',
+            'payment_term',
+            'shipping_method',
+            'notes',
+            'terms',
+        ] as $field) {
+            if (array_key_exists($field, $data) && $data[$field] === '') {
+                $data[$field] = null;
+            }
+        }
 
         return $data;
     }

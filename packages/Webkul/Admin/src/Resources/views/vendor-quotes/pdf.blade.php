@@ -91,7 +91,7 @@
                 <table class="meta-table">
                     <tr><td class="meta-label">Vendor Quote #</td><td>{{ $vendorQuote->vendor_quote_number }}</td></tr>
                     <tr><td class="meta-label">Issue Date</td><td>{{ optional($vendorQuote->issue_date)->format('Y-m-d') ?: '-' }}</td></tr>
-                    <tr><td class="meta-label">Job Order #</td><td>{{ optional($vendorQuote->jobOrder)->job_order_number ?: '-' }}</td></tr>
+                    {{-- <tr><td class="meta-label">Job Order #</td><td>{{ optional($vendorQuote->jobOrder)->job_order_number ?: '-' }}</td></tr> --}}
                     <tr><td class="meta-label">Status</td><td>{{ ucfirst($vendorQuote->status ?: 'draft') }}</td></tr>
                 </table>
             </td>

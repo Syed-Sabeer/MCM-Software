@@ -7,6 +7,22 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseOrderRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'person_id' => $this->filled('person_id') ? $this->input('person_id') : null,
+            'job_order_id' => $this->filled('job_order_id') ? $this->input('job_order_id') : null,
+            'vendor_quote_id' => $this->filled('vendor_quote_id') ? $this->input('vendor_quote_id') : null,
+            'completion_date' => $this->filled('completion_date') ? $this->input('completion_date') : null,
+            'last_delivery_date' => $this->filled('last_delivery_date') ? $this->input('last_delivery_date') : null,
+            'expected_receive_date' => $this->filled('expected_receive_date') ? $this->input('expected_receive_date') : null,
+            'payment_term' => $this->filled('payment_term') ? $this->input('payment_term') : null,
+            'shipping_method' => $this->filled('shipping_method') ? $this->input('shipping_method') : null,
+            'notes' => $this->filled('notes') ? $this->input('notes') : null,
+            'terms' => $this->filled('terms') ? $this->input('terms') : null,
+        ]);
+    }
+
     public function authorize(): bool
     {
         return true;
