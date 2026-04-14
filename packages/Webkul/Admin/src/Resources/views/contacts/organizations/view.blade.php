@@ -1,12 +1,38 @@
 <x-admin::layouts>
+    @php
+        $currentRouteName = request()->route()?->getName() ?? 'admin.contacts.organizations.view';
+        $routePrefix = str_contains($currentRouteName, 'admin.customers.')
+            ? 'customers'
+            : (str_contains($currentRouteName, 'admin.vendors.') ? 'vendors' : 'contacts');
+        $organizationLabel = $routePrefix === 'vendors' ? 'Vendor' : 'Company';
+        $contactLabel = 'Contact';
+        $contactPluralLabel = 'Contacts';
+    @endphp
+
     <x-slot:title>
-        @lang('admin::app.contacts.organizations.view.title', ['name' => $organization->name])
+        {{ $organizationLabel }}: {{ $organization->name }}
     </x-slot>
 
     @php
         $contactsQuery = $organization->persons()->latest();
         $contactsCount = $contactsQuery->count();
         $recentContacts = $contactsQuery->take(3)->get();
+
+        $formatAddressSummary = function ($city, $state, $postcode, $country) {
+            return collect([$city, $state, $postcode, $country])
+                ->map(fn ($value) => trim((string) $value))
+                ->filter()
+                ->implode(', ');
+        };
+
+        $addressBook = collect($organization->address ?? [])
+            ->filter(fn ($address) => is_array($address));
+
+        $extraAddresses = $addressBook->filter(function ($address) {
+            $type = strtolower((string) ($address['type'] ?? 'other'));
+
+            return $type === 'other';
+        })->values();
     @endphp
 
     <script>
@@ -34,7 +60,7 @@
                 <!-- Breadcrumbs and title -->
                 <div class="flex items-center justify-between">
                     <x-admin::breadcrumbs
-                        name="contacts.organizations.view"
+                        :name="$routePrefix . '.organizations.view'"
                         :entity="$organization"
                     />
                 </div>
@@ -68,7 +94,7 @@
 
                 <div class="flex flex-col gap-2 text-sm dark:text-white">
                     <div>
-                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Account Name</p>
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ $organizationLabel }} Name</p>
                         <p>{{ $organization->name }}</p>
                     </div>
 
@@ -164,16 +190,8 @@
 
                     @if ($organization->billing_postcode || $organization->billing_city)
                         <span>
-                            {{ trim(($organization->billing_postcode ?? '') . ' ' . ($organization->billing_city ?? '')) }}
+                            {{ $formatAddressSummary($organization->billing_city, $organization->billing_state, $organization->billing_postcode, $organization->billing_country) }}
                         </span>
-                    @endif
-
-                    @if ($organization->billing_state)
-                        <span>{{ $organization->billing_state }}</span>
-                    @endif
-
-                    @if ($organization->billing_country)
-                        <span>{{ $organization->billing_country }}</span>
                     @endif
                 </div>
             </div>
@@ -191,19 +209,33 @@
 
                     @if ($organization->shipping_postcode || $organization->shipping_city)
                         <span>
-                            {{ trim(($organization->shipping_postcode ?? '') . ' ' . ($organization->shipping_city ?? '')) }}
+                            {{ $formatAddressSummary($organization->shipping_city, $organization->shipping_state, $organization->shipping_postcode, $organization->shipping_country) }}
                         </span>
-                    @endif
-
-                    @if ($organization->shipping_state)
-                        <span>{{ $organization->shipping_state }}</span>
-                    @endif
-
-                    @if ($organization->shipping_country)
-                        <span>{{ $organization->shipping_country }}</span>
                     @endif
                 </div>
             </div>
+
+            @if ($extraAddresses->isNotEmpty())
+                <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
+                    <p class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Other Addresses
+                    </p>
+
+                    <div class="flex flex-col gap-3 text-sm dark:text-white">
+                        @foreach ($extraAddresses as $address)
+                            <div class="rounded border border-gray-200 p-2 dark:border-gray-700" style="max-width: 280px; word-wrap: break-word; word-break: break-word;">
+                                @if (!empty($address['street']))
+                                    <p>{{ $address['street'] }}</p>
+                                @endif
+
+                                <p>
+                                    {{ $formatAddressSummary($address['city'] ?? '', $address['state'] ?? '', $address['postcode'] ?? '', $address['country'] ?? '') }}
+                                </p>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </div>
 
         <!-- Center Panel: Activities -->
@@ -254,7 +286,7 @@
 
             <!-- Activities Tabs Component -->
             <x-admin::activities
-                :endpoint="route('admin.contacts.organizations.activities.index', $organization->id)"
+                :endpoint="route('admin.' . $routePrefix . '.organizations.activities.index', $organization->id)"
             />
 
             {!! view_render_event('admin.contacts.organizations.view.activities.after', ['organization' => $organization]) !!}
@@ -266,7 +298,7 @@
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col">
                     <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        Company
+                        {{ $organizationLabel }}
                     </p>
 
                     <p class="text-lg font-semibold dark:text-white">
@@ -285,7 +317,7 @@
 
                     <!-- Edit -->
                     <a
-                        href="{{ route('admin.contacts.organizations.edit', $organization->id) }}"
+                        href="{{ route('admin.' . $routePrefix . '.organizations.edit', $organization->id) }}"
                         class="secondary-button"
                     >
                         @lang('admin::app.contacts.organizations.view.edit-btn')
@@ -294,7 +326,7 @@
                     <!-- Delete -->
                     <form
                         method="POST"
-                        action="{{ route('admin.contacts.organizations.delete', $organization->id) }}"
+                        action="{{ route('admin.' . $routePrefix . '.organizations.delete', $organization->id) }}"
                         onsubmit="return confirm('@lang('admin::app.contacts.organizations.view.delete-confirm')');"
                     >
                         @csrf
@@ -311,14 +343,14 @@
             <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex items-center justify-between gap-2">
                     <p class="text-base font-bold text-gray-900 dark:text-white">
-                        Contacts
+                        {{ $contactPluralLabel }}
                         @if ($contactsCount)
                             <span class="text-xs font-normal text-gray-500 dark:text-gray-400">({{ $contactsCount }})</span>
                         @endif
                     </p>
 
                     <a
-                        href="{{ route('admin.contacts.persons.create', ['organization_id' => $organization->id]) }}"
+                        href="{{ route('admin.' . $routePrefix . '.persons.create', ['organization_id' => $organization->id]) }}"
                         class="inline-flex items-center gap-1 rounded bg-brandColor px-2.5 py-1 text-xs font-semibold text-white hover:bg-brandColor/90"
                     >
                         + New
@@ -334,7 +366,7 @@
                                 $contactEmail = $contact->email ?: 'No email';
                             @endphp
                             <a
-                                href="{{ route('admin.contacts.persons.view', $contact->id) }}"
+                                href="{{ route('admin.' . $routePrefix . '.persons.view', $contact->id) }}"
                                 class="flex items-center gap-3 rounded-md p-2 transition hover:bg-gray-50 dark:hover:bg-gray-800"
                             >
                                 <x-admin::avatar :name="$contactName" class="h-8 w-8 flex-shrink-0" />
@@ -353,16 +385,16 @@
                     @if ($contactsCount > 3)
                         <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
                             <a
-                                href="{{ route('admin.contacts.persons.index') }}?organization_id={{ $organization->id }}"
+                                href="{{ route('admin.' . $routePrefix . '.persons.index') }}?organization_id={{ $organization->id }}"
                                 class="text-xs font-semibold text-brandColor hover:underline"
                             >
-                                View All Contacts
+                                View All {{ $contactPluralLabel }}
                             </a>
                         </div>
                     @endif
                 @else
                     <p class="rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                        No contacts yet. Add one to manage people from this organization.
+                        No {{ strtolower($contactPluralLabel) }} yet. Add one to manage people from this {{ strtolower($organizationLabel) }}.
                     </p>
                 @endif
             </div>
@@ -556,7 +588,7 @@
                                     </div>
 
                                     <form
-                                        action="{{ route('admin.contacts.organizations.files.delete', $file->id) }}"
+                                        action="{{ route('admin.' . $routePrefix . '.organizations.files.delete', $file->id) }}"
                                         method="POST"
                                         onsubmit="return confirm('Delete this file?');"
                                         class="inline"

@@ -150,24 +150,47 @@ return [
     ],
 
     /**
-     * Contacts.
+     * Customers.
      */
     [
-        'key'        => 'contacts',
-        'name'       => 'admin::app.layouts.contacts',
-        'route'      => 'admin.contacts.persons.index',
+        'key'        => 'customers',
+        'name'       => 'Customer',
+        'route'      => 'admin.customers.organizations.index',
         'sort'       => 3,
         'icon-class' => 'icon-contact',
     ], [
-        'key'        => 'contacts.persons',
-        'name'       => 'Contacts',
-        'route'      => 'admin.contacts.persons.index',
+        'key'        => 'customers.contacts',
+        'name'       => 'Contact',
+        'route'      => 'admin.customers.persons.index',
         'sort'       => 1,
         'icon-class' => '',
     ], [
-        'key'        => 'contacts.organizations',
+        'key'        => 'customers.companies',
         'name'       => 'Company',
-        'route'      => 'admin.contacts.organizations.index',
+        'route'      => 'admin.customers.organizations.index',
+        'sort'       => 2,
+        'icon-class' => '',
+    ],
+
+    /**
+     * Vendors.
+     */
+    [
+        'key'        => 'vendors',
+        'name'       => 'Vendor',
+        'route'      => 'admin.vendors.organizations.index',
+        'sort'       => 3.5,
+        'icon-class' => 'icon-contact',
+    ], [
+        'key'        => 'vendors.contacts',
+        'name'       => 'Contact',
+        'route'      => 'admin.vendors.persons.index',
+        'sort'       => 1,
+        'icon-class' => '',
+    ], [
+        'key'        => 'vendors.companies',
+        'name'       => 'Vendor',
+        'route'      => 'admin.vendors.organizations.index',
         'sort'       => 2,
         'icon-class' => '',
     ],

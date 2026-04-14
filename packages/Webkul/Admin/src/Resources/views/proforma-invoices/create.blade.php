@@ -596,6 +596,9 @@
                         this.product.selected_color_id = selectedValue ? String(selectedValue) : '';
                         const selected = (this.product.available_colors || []).find(color => String(color.id) === String(this.product.selected_color_id));
                         this.product.selected_color_name = selected ? selected.name : '';
+                        this.product.price = Number(selected && selected.selling_price !== null && selected.selling_price !== undefined
+                            ? selected.selling_price
+                            : (this.product.price ?? 0)).toFixed(2);
                         this.product.preview_image = this.resolvePreviewImage(this.product.selected_color_id);
                     },
                     removeProduct() { this.$emit('onRemoveProduct', this.product); },
@@ -612,7 +615,6 @@
         </style>
     @endPushOnce
 </x-admin::layouts>
-
 
 
 

@@ -16,7 +16,14 @@ class ProductColor extends Model
         'product_id',
         'name',
         'color_code',
+        'cost_price',
+        'selling_price',
         'sort_order',
+    ];
+
+    protected $casts = [
+        'cost_price'    => 'decimal:4',
+        'selling_price' => 'decimal:4',
     ];
 
     /**

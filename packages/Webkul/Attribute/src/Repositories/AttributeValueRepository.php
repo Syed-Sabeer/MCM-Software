@@ -227,10 +227,16 @@ class AttributeValueRepository extends Repository
                     break;
                 }
 
-                $label = $value['address'].'<br>'
-                    .$value['postcode'].'  '.$value['city'].'<br>'
-                    .core()->state_name($value['state']).'<br>'
-                    .core()->country_name($value['country']).'<br>';
+                $street = $value['street'] ?? '';
+                $postcode = $value['postcode'] ?? '';
+                $city = $value['city'] ?? '';
+                $state = $value['state'] ?? '';
+                $country = $value['country'] ?? '';
+
+                $label = $street.'<br>'
+                    .$postcode.'  '.$city.'<br>'
+                    .core()->state_name($state).'<br>'
+                    .core()->country_name($country).'<br>';
 
                 break;
 

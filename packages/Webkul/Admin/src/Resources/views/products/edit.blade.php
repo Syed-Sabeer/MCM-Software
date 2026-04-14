@@ -13,8 +13,10 @@
         $selectedCustomerName = $customers->firstWhere('id', (int) $selectedCustomerId)?->name ?? '';
 
         $colorsData = old('colors', $product->colors->map(fn ($color) => [
-            'name'       => $color->name,
-            'color_code' => $color->color_code,
+            'name'          => $color->name,
+            'color_code'    => $color->color_code,
+            'cost_price'    => $color->cost_price,
+            'selling_price' => $color->selling_price,
         ])->toArray());
 
         $existingOtherImagesData = $product->otherImages->map(fn ($image) => [
@@ -49,7 +51,10 @@
                     <div class="text-xl font-bold dark:text-white">@lang('admin::app.products.edit.title')</div>
                 </div>
 
-                <button type="submit" class="primary-button">@lang('admin::app.products.create.save-btn')</button>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('admin.products.create', ['duplicate_from' => $product->id]) }}" class="secondary-button">Duplicate</a>
+                    <button type="submit" class="primary-button">@lang('admin::app.products.create.save-btn')</button>
+                </div>
             </div>
 
             <div class="flex gap-2.5 max-xl:flex-wrap">
@@ -147,9 +152,11 @@
                             <button type="button" id="add-color" class="secondary-button">Add Color</button>
                         </div>
 
-                        <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1fr) 88px 44px; gap: 0.5rem;">
+                        <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1fr) 88px 140px 140px 44px; gap: 0.5rem;">
                             <div>Color Name</div>
                             <div>Color</div>
+                            <div>Cost Price</div>
+                            <div>Selling Price</div>
                             <div></div>
                         </div>
 
@@ -398,10 +405,12 @@
                 function addColorRow(data) {
                     var index = colorsContainer.querySelectorAll('.color-row').length;
                     var colorCode = valueOf(data, 'color_code', '#000000');
+                    var costPrice = valueOf(data, 'cost_price', '');
+                    var sellingPrice = valueOf(data, 'selling_price', '');
                     var row = document.createElement('div');
                     row.className = 'color-row items-center rounded border border-gray-200 p-2 dark:border-gray-700';
                     row.style.display = 'grid';
-                    row.style.gridTemplateColumns = 'minmax(0, 1fr) 88px 44px';
+                    row.style.gridTemplateColumns = 'minmax(0, 1fr) 88px 140px 140px 44px';
                     row.style.gap = '0.5rem';
                     row.innerHTML = ''
                         + '<input type="text" name="colors[' + index + '][name]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Color Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
@@ -409,6 +418,8 @@
                         + '  <input type="text" name="colors[' + index + '][color_code]" class="color-code-input w-full rounded border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="#000000" value="' + escapeHtml(colorCode) + '">'
                         + '  <input type="color" class="color-picker h-[40px] w-[40px] cursor-pointer rounded border border-gray-200 p-0 dark:border-gray-700" value="' + escapeHtml(colorCode) + '">'
                         + '</div>'
+                        + '<input type="number" step="0.0001" min="0" name="colors[' + index + '][cost_price]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Cost Price" value="' + escapeHtml(costPrice) + '">'
+                        + '<input type="number" step="0.0001" min="0" name="colors[' + index + '][selling_price]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Selling Price" value="' + escapeHtml(sellingPrice) + '">'
                         + '<button type="button" class="remove-color inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove color">&times;</button>';
                     colorsContainer.appendChild(row);
                     refreshImageColorOptions();
@@ -550,6 +561,8 @@
                         var fields = row.querySelectorAll('input');
                         if (fields[0]) fields[0].name = 'colors[' + index + '][name]';
                         if (fields[1]) fields[1].name = 'colors[' + index + '][color_code]';
+                        if (fields[3]) fields[3].name = 'colors[' + index + '][cost_price]';
+                        if (fields[4]) fields[4].name = 'colors[' + index + '][selling_price]';
                     });
 
                     consumptionsContainer.querySelectorAll('.consumption-row').forEach(function (row, index) {
@@ -581,7 +594,9 @@
                         var fields = row.querySelectorAll('input');
                         var c0 = fields[0] ? fields[0].value.trim() : '';
                         var c1 = fields[1] ? fields[1].value.trim() : '';
-                        if (!c0 && !c1) row.remove();
+                        var c2 = fields[3] ? String(fields[3].value || '').trim() : '';
+                        var c3 = fields[4] ? String(fields[4].value || '').trim() : '';
+                        if (!c0 && !c1 && !c2 && !c3) row.remove();
                     });
 
                     consumptionsContainer.querySelectorAll('.consumption-row').forEach(function (row) {

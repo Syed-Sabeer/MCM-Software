@@ -28,10 +28,35 @@ class OrganizationController extends Controller
     }
 
     /**
+     * Get the expected organization type based on route prefix.
+     */
+    protected function getRouteType(): ?string
+    {
+        $routeName = request()->route()?->getName() ?? '';
+
+        if (str_contains($routeName, 'admin.customers.')) {
+            return 'customer';
+        }
+
+        if (str_contains($routeName, 'admin.vendors.')) {
+            return 'vendor';
+        }
+
+        return null;
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(): View|JsonResponse
     {
+        // Detect organization type from current route and inject into query for DataGrid filtering
+        if ($type = $this->getRouteType()) {
+            if (!request()->query('type')) {
+                request()->query->set('type', $type);
+            }
+        }
+
         if (request()->ajax()) {
             return datagrid(OrganizationDataGrid::class)->process();
         }
@@ -44,7 +69,11 @@ class OrganizationController extends Controller
      */
     public function create(): View
     {
-        return view('admin::contacts.organizations.create');
+        $routeType = $this->getRouteType();
+
+        return view('admin::contacts.organizations.create', [
+            'routeType' => $routeType,
+        ]);
     }
 
     /**
@@ -93,14 +122,25 @@ class OrganizationController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse
     {
-        $normalizedType = $this->normalizeOrganizationType(
-            $request->input('organization_type', $request->input('type'))
-        );
+        // If on customers/vendors route, auto-set the type
+        $organizationType = $request->input('organization_type', $request->input('type'));
+        if (! $organizationType && $routeType = $this->getRouteType()) {
+            $organizationType = $routeType;
+        }
+
+        $normalizedType = $this->normalizeOrganizationType($organizationType);
 
         $request->validate([
             'description'      => ['nullable', 'max:100'],
             'billing_street'   => ['nullable', 'max:100'],
             'shipping_street'  => ['nullable', 'max:100'],
+            'addresses'        => ['nullable', 'array'],
+            'addresses.*.type' => ['nullable', 'string', 'max:50'],
+            'addresses.*.street' => ['nullable', 'string', 'max:100'],
+            'addresses.*.city' => ['nullable', 'string', 'max:100'],
+            'addresses.*.state' => ['nullable', 'string', 'max:100'],
+            'addresses.*.postcode' => ['nullable', 'string', 'max:100'],
+            'addresses.*.country' => ['nullable', 'string', 'max:100'],
             'organization_type' => ['required_without:type', 'in:customer,vendor,Customer,Vendor'],
             'type'             => ['nullable', 'in:customer,vendor,Customer,Vendor'],
         ]);
@@ -117,6 +157,11 @@ class OrganizationController extends Controller
             $data['shipping_country']  = $data['billing_country']  ?? null;
         }
 
+        $data['address'] = $this->normalizeAddressBook($data, $request->boolean('same_as_billing'));
+
+        $this->syncPrimaryAddressFields($data, 'billing');
+        $this->syncPrimaryAddressFields($data, 'shipping');
+
         Event::dispatch('contacts.organization.create.before');
 
         $organization = $this->organizationRepository->create($data);
@@ -124,6 +169,14 @@ class OrganizationController extends Controller
         Event::dispatch('contacts.organization.create.after', $organization);
 
         session()->flash('success', trans('admin::app.contacts.organizations.index.create-success'));
+
+        // Redirect to the appropriate list based on route
+        $routeName = request()->route()?->getName() ?? '';
+        if (str_contains($routeName, 'admin.customers.')) {
+            return redirect()->route('admin.customers.organizations.index');
+        } elseif (str_contains($routeName, 'admin.vendors.')) {
+            return redirect()->route('admin.vendors.organizations.index');
+        }
 
         return redirect()->route('admin.contacts.organizations.index');
     }
@@ -134,8 +187,9 @@ class OrganizationController extends Controller
     public function edit(int $id): View
     {
         $organization = $this->organizationRepository->findOrFail($id);
+        $routeType = $this->getRouteType();
 
-        return view('admin::contacts.organizations.edit', compact('organization'));
+        return view('admin::contacts.organizations.edit', compact('organization', 'routeType'));
     }
 
     /**
@@ -143,14 +197,25 @@ class OrganizationController extends Controller
      */
     public function update(AttributeForm $request, int $id): RedirectResponse
     {
-        $normalizedType = $this->normalizeOrganizationType(
-            $request->input('organization_type', $request->input('type'))
-        );
+        // If on customers/vendors route, auto-set the type
+        $organizationType = $request->input('organization_type', $request->input('type'));
+        if (! $organizationType && $routeType = $this->getRouteType()) {
+            $organizationType = $routeType;
+        }
+
+        $normalizedType = $this->normalizeOrganizationType($organizationType);
 
         $request->validate([
             'description'      => ['nullable', 'max:100'],
             'billing_street'   => ['nullable', 'max:100'],
             'shipping_street'  => ['nullable', 'max:100'],
+            'addresses'        => ['nullable', 'array'],
+            'addresses.*.type' => ['nullable', 'string', 'max:50'],
+            'addresses.*.street' => ['nullable', 'string', 'max:100'],
+            'addresses.*.city' => ['nullable', 'string', 'max:100'],
+            'addresses.*.state' => ['nullable', 'string', 'max:100'],
+            'addresses.*.postcode' => ['nullable', 'string', 'max:100'],
+            'addresses.*.country' => ['nullable', 'string', 'max:100'],
             'organization_type' => ['required_without:type', 'in:customer,vendor,Customer,Vendor'],
             'type'             => ['nullable', 'in:customer,vendor,Customer,Vendor'],
         ]);
@@ -167,6 +232,11 @@ class OrganizationController extends Controller
             $data['shipping_country']  = $data['billing_country']  ?? null;
         }
 
+        $data['address'] = $this->normalizeAddressBook($data, $request->boolean('same_as_billing'));
+
+        $this->syncPrimaryAddressFields($data, 'billing');
+        $this->syncPrimaryAddressFields($data, 'shipping');
+
         Event::dispatch('contacts.organization.update.before', $id);
 
         $organization = $this->organizationRepository->update($data, $id);
@@ -175,7 +245,15 @@ class OrganizationController extends Controller
 
         session()->flash('success', trans('admin::app.contacts.organizations.index.update-success'));
 
-        return redirect()->route('admin.contacts.organizations.index');
+        // Redirect to the appropriate list/view based on route
+        $routeName = request()->route()?->getName() ?? '';
+        if (str_contains($routeName, 'admin.customers.')) {
+            return redirect()->route('admin.customers.organizations.view', $id);
+        } elseif (str_contains($routeName, 'admin.vendors.')) {
+            return redirect()->route('admin.vendors.organizations.view', $id);
+        }
+
+        return redirect()->route('admin.contacts.organizations.view', $id);
     }
 
     /**
@@ -232,5 +310,112 @@ class OrganizationController extends Controller
         $normalized = strtolower(trim($type));
 
         return in_array($normalized, ['customer', 'vendor']) ? $normalized : null;
+    }
+
+    /**
+     * Normalize dynamic addresses to a single array payload.
+     */
+    protected function normalizeAddressBook(array $data, bool $sameAsBilling = false): array
+    {
+        $addresses = [];
+
+        foreach (($data['addresses'] ?? []) as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+
+            $type = strtolower(trim((string) ($entry['type'] ?? 'other')));
+            if (! in_array($type, ['billing', 'shipping', 'other'])) {
+                $type = 'other';
+            }
+
+            $normalized = [
+                'type'     => $type,
+                'street'   => trim((string) ($entry['street'] ?? '')),
+                'city'     => trim((string) ($entry['city'] ?? '')),
+                'state'    => trim((string) ($entry['state'] ?? '')),
+                'postcode' => trim((string) ($entry['postcode'] ?? '')),
+                'country'  => trim((string) ($entry['country'] ?? '')),
+            ];
+
+            if (collect($normalized)->except('type')->filter()->isEmpty()) {
+                continue;
+            }
+
+            $addresses[] = $normalized;
+        }
+
+        $primaryBilling = $this->buildPrimaryAddressPayload($data, 'billing');
+        $primaryShipping = $sameAsBilling
+            ? ($primaryBilling ? array_merge($primaryBilling, ['type' => 'shipping']) : null)
+            : $this->buildPrimaryAddressPayload($data, 'shipping');
+
+        if ($primaryBilling) {
+            $addresses = collect($addresses)
+                ->reject(fn (array $address) => $address['type'] === 'billing' && $this->addressesMatch($address, $primaryBilling))
+                ->values()
+                ->all();
+
+            array_unshift($addresses, $primaryBilling);
+        }
+
+        if ($primaryShipping) {
+            $addresses = collect($addresses)
+                ->reject(fn (array $address) => $address['type'] === 'shipping' && $this->addressesMatch($address, $primaryShipping))
+                ->values()
+                ->all();
+
+            $insertAt = $primaryBilling ? 1 : 0;
+            array_splice($addresses, $insertAt, 0, [$primaryShipping]);
+        }
+
+        return array_values($addresses);
+    }
+
+    /**
+     * Build normalized primary billing/shipping address from legacy columns.
+     */
+    protected function buildPrimaryAddressPayload(array $data, string $type): ?array
+    {
+        $address = [
+            'type'     => $type,
+            'street'   => trim((string) ($data["{$type}_street"] ?? '')),
+            'city'     => trim((string) ($data["{$type}_city"] ?? '')),
+            'state'    => trim((string) ($data["{$type}_state"] ?? '')),
+            'postcode' => trim((string) ($data["{$type}_postcode"] ?? '')),
+            'country'  => trim((string) ($data["{$type}_country"] ?? '')),
+        ];
+
+        return collect($address)->except('type')->filter()->isEmpty() ? null : $address;
+    }
+
+    /**
+     * Compare two normalized address payloads.
+     */
+    protected function addressesMatch(array $left, array $right): bool
+    {
+        return ($left['street'] ?? '') === ($right['street'] ?? '')
+            && ($left['city'] ?? '') === ($right['city'] ?? '')
+            && ($left['state'] ?? '') === ($right['state'] ?? '')
+            && ($left['postcode'] ?? '') === ($right['postcode'] ?? '')
+            && ($left['country'] ?? '') === ($right['country'] ?? '');
+    }
+
+    /**
+     * Backward compatibility: map first typed address into legacy columns.
+     */
+    protected function syncPrimaryAddressFields(array &$data, string $type): void
+    {
+        $address = collect($data['address'] ?? [])->firstWhere('type', $type);
+
+        if (! $address) {
+            return;
+        }
+
+        $data["{$type}_street"] = $address['street'] ?: null;
+        $data["{$type}_city"] = $address['city'] ?: null;
+        $data["{$type}_state"] = $address['state'] ?: null;
+        $data["{$type}_postcode"] = $address['postcode'] ?: null;
+        $data["{$type}_country"] = $address['country'] ?: null;
     }
 }

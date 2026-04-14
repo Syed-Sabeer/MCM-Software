@@ -1,4 +1,11 @@
 <x-admin::layouts>
+    @php
+        $currentRouteName = request()->route()?->getName() ?? 'admin.contacts.persons.view';
+        $routePrefix = str_contains($currentRouteName, 'admin.customers.')
+            ? 'customers'
+            : (str_contains($currentRouteName, 'admin.vendors.') ? 'vendors' : 'contacts');
+    @endphp
+
     <x-slot:title>
         @lang('admin::app.contacts.persons.view.title', ['name' => $person->name])
     </x-slot>
@@ -14,7 +21,7 @@
                 <!-- Breadcrumbs -->
                 <div class="flex items-center justify-between">
                     <x-admin::breadcrumbs
-                        name="contacts.persons.view"
+                        :name="$routePrefix . '.persons.view'"
                         :entity="$person"
                     />
                 </div>
@@ -23,8 +30,8 @@
 
                 <!-- Tags -->
                 <x-admin::tags
-                    :attach-endpoint="route('admin.contacts.persons.tags.attach', $person->id)"
-                    :detach-endpoint="route('admin.contacts.persons.tags.detach', $person->id)"
+                    :attach-endpoint="route('admin.' . $routePrefix . '.persons.tags.attach', $person->id)"
+                    :detach-endpoint="route('admin.' . $routePrefix . '.persons.tags.detach', $person->id)"
                     :added-tags="$person->tags"
                 />
 
@@ -98,7 +105,7 @@
             {!! view_render_event('admin.contact.persons.view.right.before', ['person' => $person]) !!}
 
             <!-- Stages Navigation -->
-            <x-admin::activities :endpoint="route('admin.contacts.persons.activities.index', $person->id)" />
+            <x-admin::activities :endpoint="route('admin.' . $routePrefix . '.persons.activities.index', $person->id)" />
 
             {!! view_render_event('admin.contact.persons.view.right.after', ['person' => $person]) !!}
         </div>

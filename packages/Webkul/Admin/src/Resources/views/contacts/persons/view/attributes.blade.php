@@ -26,7 +26,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="salutation"
                                     :value="json_encode($person->salutation ?? '')"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -59,7 +59,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="first_name"
                                     :value="json_encode($person->first_name ?? '')"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -68,7 +68,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="last_name"
                                     :value="json_encode($person->last_name ?? '')"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -77,7 +77,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="title"
                                     :value="json_encode($person->title ?? '')"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -87,7 +87,7 @@
                                     name="description"
                                     :value="json_encode($person->description ?? '')"
                                     multiline="true"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -99,7 +99,7 @@
                                     ['code', 'IN', ['job_title', 'user_id', 'organization_id']]
                                 ])"
                                 :entity="$person"
-                                :url="route('admin.contacts.persons.update', $person->id)"
+                                :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 :allow-edit="true"
                             />
 
@@ -113,7 +113,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="cell_phone"
                                     :value="json_encode($phoneVal($person->cell_phone))"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -122,7 +122,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="direct_phone"
                                     :value="json_encode($phoneVal($person->direct_phone))"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -131,7 +131,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="email_secondary"
                                     :value="json_encode($phoneVal($person->email_secondary))"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -140,7 +140,7 @@
                                 <x-admin::form.control-group.controls.inline.date
                                     name="birth_date"
                                     :value="json_encode(optional($person->birth_date)->format('Y-m-d') ?? '')"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
                         </div>
@@ -155,7 +155,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="phone"
                                     :value="json_encode($phoneVal($person->phone))"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -164,7 +164,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="email"
                                     :value="json_encode($phoneVal($person->email))"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
                         </div>
@@ -179,7 +179,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="mailing_street"
                                     :value="json_encode($person->mailing_street ?? '')"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -188,7 +188,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="mailing_city"
                                     :value="json_encode($person->mailing_city ?? '')"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -197,7 +197,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="mailing_state"
                                     :value="json_encode($person->mailing_state ?? '')"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -206,7 +206,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="mailing_postcode"
                                     :value="json_encode($person->mailing_postcode ?? '')"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
 
@@ -215,7 +215,7 @@
                                 <x-admin::form.control-group.controls.inline.text
                                     name="mailing_country"
                                     :value="json_encode($person->mailing_country ?? '')"
-                                    :url="route('admin.contacts.persons.update', $person->id)"
+                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
                                 />
                             </x-admin::form.control-group>
                         </div>

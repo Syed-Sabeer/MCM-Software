@@ -51,7 +51,23 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('admin::products.create', compact('customers'));
+        $duplicateDraft = null;
+
+        if (request()->filled('duplicate_from')) {
+            $original = $this->productRepository->with([
+                'customerOrganization',
+                'otherImages',
+                'colors',
+                'keyPoints',
+                'pricingCharts.types.tiers',
+                'consumptions',
+                'productionSections.items',
+            ])->findOrFail((int) request('duplicate_from'));
+
+            $duplicateDraft = $this->buildDuplicateDraft($original);
+        }
+
+        return view('admin::products.create', compact('customers', 'duplicateDraft'));
     }
 
     /**
@@ -66,6 +82,11 @@ class ProductController extends Controller
         Event::dispatch('product.create.before');
 
         $data = $this->prepareProductData($request->all(), null);
+
+        if ($request->filled('duplicate_from')) {
+            $original = $this->productRepository->with(['otherImages.color', 'colors'])->findOrFail((int) $request->input('duplicate_from'));
+            $data = $this->duplicateMediaFromOriginal($original, $data);
+        }
 
         $product = $this->productRepository->create($data);
 
@@ -304,24 +325,7 @@ class ProductController extends Controller
 
             Event::dispatch('product.create.before');
 
-            // Prepare base product data with "(Copy)" added to name
-            $newData = [
-                'name'            => $original->name . ' (Copy)',
-                'slug'            => '',  // Will be auto-generated from name
-                'sku'             => '',  // Will be auto-generated
-                'internal_code'   => $original->internal_code,
-                'customer_organization_id' => $original->customer_organization_id,
-                'description'     => $original->description,
-                'quantity'        => $original->quantity ?? 0,
-                'price'           => $original->price ?? 0,
-                'category_id'     => $original->category_id,
-                'style'           => $original->style,
-                'size'            => $original->size,
-                'additional_info' => $original->additional_info,
-                'shipping_info'   => $original->shipping_info,
-                'publish_on_website' => false, // Set to unpublished by default
-                'entity_type'     => 'products', // Required for attribute value repository
-            ];
+            $newData = $this->buildDuplicateDraft($original);
 
             // Copy cover image if exists
             if ($original->cover_image) {
@@ -329,16 +333,10 @@ class ProductController extends Controller
             }
 
             // Prepare colors data
-            $colors = [];
-            $colorMapping = []; // Map old color IDs to new array indices
+            $colorMapping = [];
             foreach ($original->colors as $idx => $color) {
-                $colors[] = [
-                    'name'       => $color->name,
-                    'color_code' => $color->color_code,
-                ];
                 $colorMapping[$color->id] = $idx;
             }
-            $newData['colors'] = $colors;
 
             // Prepare other images data (will be created after colors are saved)
             $otherImagesData = [];
@@ -410,6 +408,12 @@ class ProductController extends Controller
                 ])->toArray(),
             ])->toArray();
 
+            if (! empty($newData['sku']) && $this->productRepository->where('sku', $newData['sku'])->exists()) {
+                return response()->json([
+                    'message' => 'Item Code already exists. Please choose a unique item code.',
+                ], 422);
+            }
+
             // Generate unique slug and SKU
             $data = $this->prepareProductData($newData, null);
 
@@ -475,6 +479,8 @@ class ProductController extends Controller
             'colors'               => ['nullable', 'array'],
             'colors.*.name'        => ['nullable', 'string', 'max:100'],
             'colors.*.color_code'  => ['nullable', 'string', 'max:20'],
+            'colors.*.cost_price'  => ['nullable', 'numeric', 'min:0'],
+            'colors.*.selling_price' => ['nullable', 'numeric', 'min:0'],
             'consumptions'         => ['nullable', 'array'],
             'consumptions.*.name'  => ['required', 'string', 'max:255'],
             'consumptions.*.qty'   => ['required', 'numeric'],
@@ -741,8 +747,10 @@ class ProductController extends Controller
         foreach ($data['colors'] ?? [] as $c) {
             if (is_array($c) && (isset($c['name']) || isset($c['color_code']))) {
                 $colors[] = [
-                    'name'       => $c['name'] ?? '',
-                    'color_code' => $c['color_code'] ?? '#000000',
+                    'name'          => $c['name'] ?? '',
+                    'color_code'    => $c['color_code'] ?? '#000000',
+                    'cost_price'    => isset($c['cost_price']) && $c['cost_price'] !== '' ? $c['cost_price'] : null,
+                    'selling_price' => isset($c['selling_price']) && $c['selling_price'] !== '' ? $c['selling_price'] : null,
                 ];
             }
         }
@@ -851,6 +859,100 @@ class ProductController extends Controller
             ];
         }
         $data['production_sections'] = $productionSections;
+
+        return $data;
+    }
+
+    /**
+     * Build a duplicate-ready payload from an existing product.
+     */
+    protected function buildDuplicateDraft($original): array
+    {
+        return [
+            'name'                     => $original->name,
+            'slug'                     => '',
+            'sku'                      => '',
+            'internal_code'            => '',
+            'customer_organization_id' => $original->customer_organization_id,
+            'description'              => $original->description,
+            'quantity'                 => $original->quantity ?? 0,
+            'price'                    => $original->price ?? 0,
+            'cost_price'               => $original->cost_price,
+            'selling_price'            => $original->selling_price ?? $original->price,
+            'category_id'              => $original->category_id,
+            'style'                    => $original->style,
+            'size'                     => $original->size,
+            'additional_info'          => $original->additional_info,
+            'shipping_info'            => $original->shipping_info,
+            'publish_on_website'       => false,
+            'entity_type'              => 'products',
+            'colors' => $original->colors->map(fn ($color) => [
+                'name'          => $color->name,
+                'color_code'    => $color->color_code,
+                'cost_price'    => $color->cost_price,
+                'selling_price' => $color->selling_price,
+            ])->toArray(),
+            'key_points' => $original->keyPoints->map(fn ($kp) => [
+                'key_heading' => $kp->key_heading,
+                'key_point'   => $kp->key_point,
+            ])->toArray(),
+            'pricing_charts' => $original->pricingCharts->map(function ($chart) {
+                return [
+                    'heading' => $chart->heading,
+                    'types'   => $chart->types->map(fn ($type) => [
+                        'type'  => $type->type,
+                        'tiers' => $type->tiers->map(fn ($tier) => [
+                            'quantity' => $tier->quantity,
+                            'price'    => $tier->price,
+                        ])->toArray(),
+                    ])->toArray(),
+                ];
+            })->toArray(),
+            'consumptions' => $original->consumptions->map(fn ($consumption) => [
+                'name' => $consumption->name,
+                'qty'  => $consumption->qty,
+                'unit' => $consumption->unit,
+            ])->toArray(),
+            'production_sections' => $original->productionSections->map(fn ($section) => [
+                'section_name' => $section->section_name,
+                'items' => $section->items->map(fn ($item) => [
+                    'name' => $item->name,
+                    'qty'  => $item->qty,
+                    'unit' => $item->unit,
+                ])->toArray(),
+            ])->toArray(),
+        ];
+    }
+
+    /**
+     * Copy cover/other images from the original product into a duplicate payload.
+     */
+    protected function duplicateMediaFromOriginal($original, array $data): array
+    {
+        if (empty($data['cover_image']) && $original->cover_image) {
+            $data['cover_image'] = $this->duplicateFile($original->cover_image, 'product-images');
+        }
+
+        $existingOtherImages = $data['other_images'] ?? [];
+        $existingOtherImageColors = $data['other_image_colors'] ?? [];
+
+        foreach ($original->otherImages as $image) {
+            if (! $image->path) {
+                continue;
+            }
+
+            $existingOtherImages[] = [
+                'path'          => $this->duplicateFile($image->path, 'product-other-images'),
+                'original_name' => $image->original_name,
+            ];
+
+            $existingOtherImageColors[] = $image->color
+                ? 'new_' . $image->color->sort_order
+                : null;
+        }
+
+        $data['other_images'] = $existingOtherImages;
+        $data['other_image_colors'] = $existingOtherImageColors;
 
         return $data;
     }

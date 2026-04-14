@@ -90,6 +90,8 @@ class ProductRepository extends Repository
                     'product_id'  => $product->id,
                     'name'        => $color['name'] ?? '',
                     'color_code' => $color['color_code'] ?? '#000000',
+                    'cost_price'  => isset($color['cost_price']) && $color['cost_price'] !== '' ? $color['cost_price'] : null,
+                    'selling_price' => isset($color['selling_price']) && $color['selling_price'] !== '' ? $color['selling_price'] : null,
                     'sort_order'  => $sortOrder,
                 ]);
                 $colorIndexToId[$sortOrder] = $pc->id;
@@ -280,6 +282,8 @@ class ProductRepository extends Repository
                     'product_id'  => $id,
                     'name'        => $color['name'] ?? '',
                     'color_code' => $color['color_code'] ?? '#000000',
+                    'cost_price'  => isset($color['cost_price']) && $color['cost_price'] !== '' ? $color['cost_price'] : null,
+                    'selling_price' => isset($color['selling_price']) && $color['selling_price'] !== '' ? $color['selling_price'] : null,
                     'sort_order'  => $sortOrder,
                 ]);
                 $colorIndexToId[$sortOrder] = $pc->id;

@@ -1,14 +1,23 @@
 <x-admin::layouts>
+    @php
+        $currentRouteName = request()->route()?->getName() ?? 'admin.contacts.persons.create';
+        $routePrefix = str_contains($currentRouteName, 'admin.customers.')
+            ? 'customers'
+            : (str_contains($currentRouteName, 'admin.vendors.') ? 'vendors' : 'contacts');
+        $contactLabel = 'Contact';
+        $routeType = $routeType ?? ($routePrefix === 'vendors' ? 'vendor' : ($routePrefix === 'customers' ? 'customer' : null));
+    @endphp
+
     <!--Page title -->
     <x-slot:title>
-        @lang('admin::app.contacts.persons.create.title')
+        Create {{ $contactLabel }}
     </x-slot>
 
     {!! view_render_event('admin.persons.create.form.before') !!}
 
     <!--Create Page Form -->
     <x-admin::form
-        :action="route('admin.contacts.persons.store')"
+        :action="route('admin.' . $routePrefix . '.persons.store')"
         enctype="multipart/form-data"
     >
         <div class="flex flex-col gap-4">
@@ -18,12 +27,12 @@
                     {!! view_render_event('admin.persons.create.breadcrumbs.before') !!}
 
                     <!-- Breadcrumb -->
-                    <x-admin::breadcrumbs name="contacts.persons.create" />
+                    <x-admin::breadcrumbs :name="$routePrefix . '.persons.create'" />
 
                     {!! view_render_event('admin.persons.create.breadcrumbs.after') !!}
 
                     <div class="text-xl font-bold dark:text-white">
-                        @lang('admin::app.contacts.persons.create.title')
+                        Create {{ $contactLabel }}
                     </div>
                 </div>
 
@@ -39,7 +48,7 @@
                             class="primary-button"
                             onclick="document.getElementById('save_action').value = 'save'"
                         >
-                            @lang('admin::app.contacts.persons.create.save-btn')
+                            Save {{ $contactLabel }}
                         </button>
 
                         <button
@@ -111,14 +120,18 @@
                                 type="select"
                                 id="type"
                                 name="type"
-                                :value="old('type', 'customer')"
+                                :value="old('type', $routeType ?? 'customer')"
+                                {{ $routeType ? 'disabled' : '' }}
                             >
-                                <option value="customer" {{ old('type', 'customer') == 'customer' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.customer')</option>
-                                <option value="vendor" {{ old('type') == 'vendor' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.vendor')</option>
+                                <option value="customer" {{ old('type', $routeType ?? 'customer') == 'customer' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.customer')</option>
+                                <option value="vendor" {{ old('type', $routeType) == 'vendor' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.vendor')</option>
                                 <option value="employee" {{ old('type') == 'employee' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.employee')</option>
                                 <option value="partner" {{ old('type') == 'partner' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.partner')</option>
                                 <option value="other" {{ old('type') == 'other' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.other')</option>
                             </x-admin::form.control-group.control>
+                            @if ($routeType)
+                                <input type="hidden" name="type" value="{{ $routeType }}">
+                            @endif
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group>

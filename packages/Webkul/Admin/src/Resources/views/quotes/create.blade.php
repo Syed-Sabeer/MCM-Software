@@ -812,6 +812,9 @@
 
                         const selected = (this.product.available_colors || []).find(color => String(color.id) === String(this.product.selected_color_id));
                         this.product.selected_color_name = selected ? selected.name : '';
+                        this.product.price = selected && selected.selling_price !== null && selected.selling_price !== undefined
+                            ? selected.selling_price
+                            : (this.product.price ?? 0);
                         this.product.preview_image = this.resolvePreviewImage(this.product.selected_color_id);
                     },
                     removeProduct() {

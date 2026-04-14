@@ -1,21 +1,30 @@
 <x-admin::layouts>
+    @php
+        $currentRouteName = request()->route()?->getName() ?? 'admin.contacts.persons.index';
+        $routePrefix = str_contains($currentRouteName, 'admin.customers.')
+            ? 'customers'
+            : (str_contains($currentRouteName, 'admin.vendors.') ? 'vendors' : 'contacts');
+        $contactLabel = 'Contact';
+        $contactPluralLabel = 'Contacts';
+    @endphp
+
     <x-slot:title>
-        @lang('admin::app.contacts.persons.index.title')
+        {{ $contactPluralLabel }}
     </x-slot>
 
     <div class="flex flex-col gap-4">
         <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-2">
-                <x-admin::breadcrumbs name="contacts.persons" />
+                <x-admin::breadcrumbs :name="$routePrefix . '.persons'" />
 
                 <div class="text-xl font-bold dark:text-white">
-                    @lang('admin::app.contacts.persons.index.title')
+                    {{ $contactPluralLabel }}
                 </div>
             </div>
 
             <div class="flex items-center gap-x-2.5">
                 <!-- Export Modal -->
-                <x-admin::datagrid.export :src="route('admin.contacts.persons.index')" />
+                <x-admin::datagrid.export :src="route('admin.' . $routePrefix . '.persons.index')" />
 
                 <!-- Create button for person -->
                 <div class="flex items-center gap-x-2.5">
@@ -23,10 +32,10 @@
 
                     @if (bouncer()->hasPermission('contacts.persons.create'))
                         <a
-                            href="{{ route('admin.contacts.persons.create') }}"
+                            href="{{ route('admin.' . $routePrefix . '.persons.create') }}"
                             class="primary-button"
                         >
-                            @lang('admin::app.contacts.persons.index.create-btn')
+                            Create {{ $contactLabel }}
                         </a>
                     @endif
 
@@ -51,7 +60,7 @@
             id="v-persons-template"
         >
             <x-admin::datagrid
-                src="{{ route('admin.contacts.persons.index') }}"
+                src="{{ route('admin.' . $routePrefix . '.persons.index') }}"
                 :isMultiRow="true"
                 ref="datagrid"
             >
@@ -236,7 +245,7 @@
                             <!-- Name -->
                             <a
                                 class="flex items-center gap-1.5 text-brandColor hover:underline"
-                                :href="`/crm/admin/contacts/persons/view/${record.id}`"
+                                :href="'{{ route('admin.' . $routePrefix . '.persons.view', ':id') }}'.replace(':id', record.id)"
                             >
                                 <x-admin::avatar ::name="record.person_name" />
 
@@ -256,8 +265,7 @@
                             <!-- Organization -->
                             <a
                                 class="flex items-center text-brandColor hover:underline"
-                                :href="record.organization_id ? `/crm/admin/contacts/organizations/view/${record.organization_id}` : '#'
-                                "
+                                :href="record.organization_id ? '{{ route('admin.' . $routePrefix . '.organizations.view', ':id') }}'.replace(':id', record.organization_id) : '#'"
                             >
                                 @{{ record.organization }}
                             </a>

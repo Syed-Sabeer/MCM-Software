@@ -10,6 +10,24 @@ use Webkul\DataGrid\DataGrid;
 class PersonDataGrid extends DataGrid
 {
     /**
+     * Resolve route prefix from current route.
+     */
+    protected function getRoutePrefix(): string
+    {
+        $routeName = request()->route()?->getName() ?? '';
+
+        if (str_contains($routeName, 'admin.customers.')) {
+            return 'customers';
+        }
+
+        if (str_contains($routeName, 'admin.vendors.')) {
+            return 'vendors';
+        }
+
+        return 'contacts';
+    }
+
+    /**
      * Create a new class instance.
      *
      * @return void
@@ -35,7 +53,8 @@ class PersonDataGrid extends DataGrid
                 'persons.cell_phone',
                 'persons.direct_phone',
                 'organizations.name as organization',
-                'organizations.id as organization_id'
+                'organizations.id as organization_id',
+                'organizations.type as organization_type'
             )
             ->leftJoin('organizations', 'persons.organization_id', '=', 'organizations.id');
 
@@ -45,6 +64,24 @@ class PersonDataGrid extends DataGrid
 
         if ($organizationId = request('organization_id')) {
             $queryBuilder->where('persons.organization_id', $organizationId);
+        }
+
+        // Apply type-based filtering if type is set in query parameter
+        if ($type = request('type')) {
+            $type = strtolower($type);
+            if ($type === 'customer') {
+                // Show customer-linked contacts + unlinked contacts
+                $queryBuilder->where(function ($query) {
+                    $query->where('organizations.type', 'customer')
+                          ->orWhereNull('persons.organization_id');
+                });
+            } elseif ($type === 'vendor') {
+                // Show vendor-linked contacts + unlinked contacts
+                $queryBuilder->where(function ($query) {
+                    $query->where('organizations.type', 'vendor')
+                          ->orWhereNull('persons.organization_id');
+                });
+            }
         }
 
         $this->addFilter('id', 'persons.id');
@@ -172,13 +209,15 @@ class PersonDataGrid extends DataGrid
      */
     public function prepareActions(): void
     {
+        $routePrefix = $this->getRoutePrefix();
+
         if (bouncer()->hasPermission('contacts.persons.view')) {
             $this->addAction([
                 'icon'   => 'icon-eye',
                 'title'  => trans('admin::app.contacts.persons.index.datagrid.view'),
                 'method' => 'GET',
                 'url'    => function ($row) {
-                    return route('admin.contacts.persons.view', $row->id);
+                    return route('admin.'.$this->getRoutePrefix().'.persons.view', $row->id);
                 },
             ]);
         }
@@ -189,7 +228,7 @@ class PersonDataGrid extends DataGrid
                 'title'  => trans('admin::app.contacts.persons.index.datagrid.edit'),
                 'method' => 'GET',
                 'url'    => function ($row) {
-                    return route('admin.contacts.persons.edit', $row->id);
+                    return route('admin.'.$this->getRoutePrefix().'.persons.edit', $row->id);
                 },
             ]);
         }
@@ -200,7 +239,7 @@ class PersonDataGrid extends DataGrid
                 'title'  => trans('admin::app.contacts.persons.index.datagrid.delete'),
                 'method' => 'DELETE',
                 'url'    => function ($row) {
-                    return route('admin.contacts.persons.delete', $row->id);
+                    return route('admin.'.$this->getRoutePrefix().'.persons.delete', $row->id);
                 },
             ]);
         }
@@ -216,7 +255,7 @@ class PersonDataGrid extends DataGrid
                 'icon'   => 'icon-delete',
                 'title'  => trans('admin::app.contacts.persons.index.datagrid.delete'),
                 'method' => 'POST',
-                'url'    => route('admin.contacts.persons.mass_delete'),
+                'url'    => route('admin.'.$this->getRoutePrefix().'.persons.mass_delete'),
             ]);
         }
     }

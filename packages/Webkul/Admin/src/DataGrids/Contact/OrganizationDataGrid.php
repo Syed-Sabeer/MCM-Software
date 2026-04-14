@@ -10,6 +10,24 @@ use Webkul\DataGrid\DataGrid;
 class OrganizationDataGrid extends DataGrid
 {
     /**
+     * Resolve route prefix from current route.
+     */
+    protected function getRoutePrefix(): string
+    {
+        $routeName = request()->route()?->getName() ?? '';
+
+        if (str_contains($routeName, 'admin.customers.')) {
+            return 'customers';
+        }
+
+        if (str_contains($routeName, 'admin.vendors.')) {
+            return 'vendors';
+        }
+
+        return 'contacts';
+    }
+
+    /**
      * Create datagrid instance.
      *
      * @return void
@@ -21,10 +39,11 @@ class OrganizationDataGrid extends DataGrid
      */
     public function prepareQueryBuilder(): Builder
     {
-        return DB::table('organizations')
+        $queryBuilder = DB::table('organizations')
             ->addSelect(
                 'organizations.id',
                 'organizations.name',
+                'organizations.type',
                 'organizations.address',
                 'organizations.created_at'
             );
@@ -33,9 +52,23 @@ class OrganizationDataGrid extends DataGrid
             $queryBuilder->whereIn('organizations.user_id', $userIds);
         }
 
-        $this->addFilter('id', 'organizations.id');
+        // Apply type filter if type is set in query parameter
+        if ($type = request('type')) {
+            $type = strtolower($type);
+            if (in_array($type, ['customer', 'vendor'])) {
+                $queryBuilder->where(function ($query) use ($type) {
+                    $query->whereRaw('LOWER(organizations.type) = ?', [$type])
+                        ->orWhereNull('organizations.type')
+                        ->orWhere('organizations.type', '');
+                });
+            }
+        }
 
+        $this->addFilter('id', 'organizations.id');
         $this->addFilter('organization', 'organizations.name');
+        $this->addFilter('type', 'organizations.type');
+
+        return $queryBuilder;
     }
 
     /**
@@ -90,13 +123,15 @@ class OrganizationDataGrid extends DataGrid
      */
     public function prepareActions(): void
     {
+        $routePrefix = $this->getRoutePrefix();
+
         if (bouncer()->hasPermission('contacts.organizations.view')) {
             $this->addAction([
                 'index'  => 'view',
                 'icon'   => 'icon-eye',
                 'title'  => trans('admin::app.contacts.organizations.index.datagrid.view'),
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.contacts.organizations.view', $row->id),
+                'url'    => fn ($row) => route("admin.{$routePrefix}.organizations.view", $row->id),
             ]);
         }
 
@@ -106,7 +141,7 @@ class OrganizationDataGrid extends DataGrid
                 'icon'   => 'icon-edit',
                 'title'  => trans('admin::app.contacts.organizations.index.datagrid.edit'),
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.contacts.organizations.edit', $row->id),
+                'url'    => fn ($row) => route("admin.{$routePrefix}.organizations.edit", $row->id),
             ]);
         }
 
@@ -116,7 +151,7 @@ class OrganizationDataGrid extends DataGrid
                 'icon'   => 'icon-delete',
                 'title'  => trans('admin::app.contacts.organizations.index.datagrid.delete'),
                 'method' => 'DELETE',
-                'url'    => fn ($row) => route('admin.contacts.organizations.delete', $row->id),
+                'url'    => fn ($row) => route("admin.{$routePrefix}.organizations.delete", $row->id),
             ]);
         }
     }
@@ -126,11 +161,13 @@ class OrganizationDataGrid extends DataGrid
      */
     public function prepareMassActions(): void
     {
+        $routePrefix = $this->getRoutePrefix();
+
         $this->addMassAction([
             'icon'   => 'icon-delete',
             'title'  => trans('admin::app.contacts.organizations.index.datagrid.delete'),
             'method' => 'PUT',
-            'url'    => route('admin.contacts.organizations.mass_delete'),
+            'url'    => route("admin.{$routePrefix}.organizations.mass_delete"),
         ]);
     }
 }

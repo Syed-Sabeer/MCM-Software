@@ -1,16 +1,35 @@
 
-<x-admin::layouts>
+@component('admin::components.layouts.index')
+    @php
+        $currentRouteName = request()->route()?->getName() ?? 'admin.contacts.organizations.store';
+        $routePrefix = str_contains($currentRouteName, 'admin.customers.')
+            ? 'customers'
+            : (str_contains($currentRouteName, 'admin.vendors.') ? 'vendors' : 'contacts');
+        $organizationLabel = $routePrefix === 'vendors' ? 'Vendor' : 'Company';
+    @endphp
+
     <!-- Page Title -->
-    <x-slot:title>
-        @lang('admin::app.contacts.organizations.create.title')
-    </x-slot>
+    @slot('title')
+        Create {{ $organizationLabel }}
+    @endslot
 
     {!! view_render_event('admin.organizations.create.form.before') !!}
 
-    <x-admin::form
-        :action="route('admin.contacts.organizations.store')"
+    @php
+        if ($routePrefix === 'customers') {
+            $storeRoute = 'admin.customers.organizations.store';
+        } elseif ($routePrefix === 'vendors') {
+            $storeRoute = 'admin.vendors.organizations.store';
+        } else {
+            $storeRoute = 'admin.contacts.organizations.store';
+        }
+    @endphp
+
+    <form
+        action="{{ route($storeRoute) }}"
         method="POST"
     >
+        @csrf
 
         <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
@@ -18,12 +37,12 @@
                     {!! view_render_event('admin.organizations.create.breadcrumbs.before') !!}
 
                     <!-- Breadcrumbs -->
-                    <x-admin::breadcrumbs name="contacts.organizations.create" />
+                    <x-admin::breadcrumbs :name="$routePrefix . '.organizations.create'" />
 
                     {!! view_render_event('admin.organizations.create.breadcrumbs.before') !!}
 
                     <div class="text-xl font-bold dark:text-gray-300">
-                        @lang('admin::app.contacts.organizations.create.title')
+                        Create {{ $organizationLabel }}
                     </div>
                 </div>
 
@@ -36,7 +55,7 @@
                             type="submit"
                             class="primary-button"
                         >
-                            @lang('admin::app.contacts.organizations.create.save-btn')
+                            Save {{ $organizationLabel }}
                         </button>
 
                         {!! view_render_event('admin.organizations.create.save_buttons.before') !!}
@@ -47,7 +66,7 @@
             <!-- Account Information -->
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
-                    Account Information
+                    {{ $organizationLabel }} Information
                 </p>
 
                 {!! view_render_event('admin.contacts.organizations.create.account_information.before') !!}
@@ -56,7 +75,7 @@
                     <!-- Account Name -->
                     <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label class="required">
-                            Account Name
+                            {{ $organizationLabel }} Name
                         </x-admin::form.control-group.label>
 
                         <x-admin::form.control-group.control
@@ -65,7 +84,7 @@
                             name="name"
                             rules="required|max:100"
                             :value="old('name')"
-                            label="Account Name"
+                            label="{{ $organizationLabel }} Name"
                         />
 
                         <x-admin::form.control-group.error control-name="name" />
@@ -139,20 +158,38 @@
                     <!-- Type -->
                     <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label>
-                            Type
+                            {{ $organizationLabel }} Type
                         </x-admin::form.control-group.label>
 
-                        @php($selectedType = strtolower((string) old('organization_type', old('type'))))
+                        @php
+                            // Detect route type from current route
+                            $detectRouteType = null;
+                            if ($routePrefix === 'customers') {
+                                $detectRouteType = 'customer';
+                            } elseif ($routePrefix === 'vendors') {
+                                $detectRouteType = 'vendor';
+                            }
+
+                            $selectedType = strtolower((string) old('organization_type', old('type') ?? $detectRouteType ?? ''));
+                        @endphp
 
                         <select
                             id="organization_type"
                             name="organization_type"
                             class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:ring-1 focus:ring-brandColor dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                            {{ $detectRouteType ? 'disabled' : '' }}
                         >
-                            <option value="">Select Organization Type</option>
+                            @unless($detectRouteType)
+                                <option value="">-- Select Type --</option>
+                            @endunless
                             <option value="customer" {{ $selectedType === 'customer' ? 'selected' : '' }}>Customer</option>
                             <option value="vendor" {{ $selectedType === 'vendor' ? 'selected' : '' }}>Vendor</option>
                         </select>
+
+                        <!-- Hidden input to ensure type is submitted when dropdown is disabled -->
+                        @if($detectRouteType)
+                            <input type="hidden" name="organization_type" value="{{ $detectRouteType }}" />
+                        @endif
 
                         <x-admin::form.control-group.error control-name="organization_type" />
                     </x-admin::form.control-group>
@@ -236,6 +273,13 @@
 
             <!-- Address Information -->
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                @php
+                    $addressRows = collect(old('addresses', []))
+                        ->filter(fn ($row) => is_array($row) && ! in_array(strtolower((string) ($row['type'] ?? 'other')), ['billing', 'shipping']))
+                        ->values()
+                        ->all();
+                @endphp
+
                 {!! view_render_event('admin.contacts.organizations.create.address_information.before') !!}
 
                 <!-- Billing Address -->
@@ -327,6 +371,8 @@
                                 type="checkbox"
                                 name="same_as_billing"
                                 id="same-as-billing"
+                                value="1"
+                                {{ old('same_as_billing') ? 'checked' : '' }}
                                 class="h-4 w-4 rounded border-gray-300 text-brandColor focus:ring-brandColor"
                                 onchange="window.toggleShippingAddress && window.toggleShippingAddress(this)"
                             >
@@ -419,10 +465,78 @@
                     </div>
                 </div>
 
+                <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
+                    <div class="mb-4 flex items-center justify-between">
+                        <p class="text-base font-semibold text-gray-800 dark:text-white">
+                            Additional Addresses
+                        </p>
+
+                        <button
+                            type="button"
+                            id="add-address-row"
+                            class="secondary-button"
+                            onclick="window.addOrganizationAddressRow && window.addOrganizationAddressRow()"
+                        >
+                            Add Address
+                        </button>
+                    </div>
+
+                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                        Add as many addresses as needed. Each address is stored in the format city, state, zip, country.
+                    </p>
+
+                    <div id="address-rows" class="flex flex-col gap-3">
+                        @foreach ($addressRows as $index => $row)
+                            <div class="address-row rounded-lg border border-gray-200 p-4 dark:border-gray-700" data-index="{{ $index }}">
+                                <div class="mb-4 flex items-center justify-between gap-3">
+                                    <p class="text-base font-semibold text-gray-800 dark:text-white">Additional Address</p>
+                                    <button type="button" class="remove-address-row secondary-button" onclick="window.removeOrganizationAddressRow && window.removeOrganizationAddressRow(this)">Remove</button>
+                                </div>
+
+                                <div class="grid gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Address Type</label>
+                                        <select name="addresses[{{ $index }}][type]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                                            <option value="billing" {{ (($row['type'] ?? 'other') === 'billing') ? 'selected' : '' }}>Billing</option>
+                                            <option value="shipping" {{ (($row['type'] ?? 'other') === 'shipping') ? 'selected' : '' }}>Shipping</option>
+                                            <option value="other" {{ (($row['type'] ?? 'other') === 'other') ? 'selected' : '' }}>Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="md:col-span-2">
+                                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Street</label>
+                                        <input type="text" name="addresses[{{ $index }}][street]" value="{{ $row['street'] ?? '' }}" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                                    </div>
+
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">City</label>
+                                        <input type="text" name="addresses[{{ $index }}][city]" value="{{ $row['city'] ?? '' }}" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                                    </div>
+
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">State</label>
+                                        <input type="text" name="addresses[{{ $index }}][state]" value="{{ $row['state'] ?? '' }}" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                                    </div>
+
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Zip</label>
+                                        <input type="text" name="addresses[{{ $index }}][postcode]" value="{{ $row['postcode'] ?? '' }}" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                                    </div>
+
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Country</label>
+                                        <input type="text" name="addresses[{{ $index }}][country]" value="{{ $row['country'] ?? '' }}" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
                 {!! view_render_event('admin.contacts.organizations.create.address_information.after') !!}
             </div>
         </div>
-    </x-admin::form>
+    </form>
 
     {!! view_render_event('admin.organizations.create.form.after') !!}
 
@@ -430,6 +544,7 @@
         window.toggleShippingAddress = (checkbox) => {
             const shippingContainer = document.getElementById('shipping-address-container');
             const shippingHeading = document.getElementById('shipping-address-heading');
+            const shippingFields = ['shipping_street', 'shipping_city', 'shipping_state', 'shipping_postcode', 'shipping_country'];
             const fieldMappings = {
                 'billing_street': 'shipping_street',
                 'billing_city': 'shipping_city',
@@ -448,6 +563,7 @@
                         shippingInput.setAttribute('readonly', 'readonly');
                     }
                 });
+
             };
 
             const syncOnBillingChange = () => {
@@ -474,6 +590,16 @@
                 });
             };
 
+            const clearShippingValues = () => {
+                shippingFields.forEach((shippingFieldId) => {
+                    const shippingInput = document.getElementById(shippingFieldId);
+
+                    if (shippingInput) {
+                        shippingInput.value = '';
+                    }
+                });
+            };
+
             if (!checkbox || !shippingContainer) {
                 return;
             }
@@ -481,19 +607,143 @@
             if (checkbox.checked) {
                 copyBillingToShipping();
                 shippingContainer.style.display = 'none';
+                if (shippingHeading) {
+                    shippingHeading.style.display = 'none';
+                }
             } else {
                 resetShippingReadonly();
                 shippingContainer.style.display = 'block';
+                if (shippingHeading) {
+                    shippingHeading.style.display = 'block';
+                }
+
+                if (! checkbox.dataset.userEditedShipping) {
+                    clearShippingValues();
+                }
             }
 
-            syncOnBillingChange();
+            if (! checkbox.dataset.synced) {
+                syncOnBillingChange();
+                checkbox.dataset.synced = '1';
+            }
         };
 
         const checkbox = document.getElementById('same-as-billing');
         const form = document.querySelector('form');
+        const addressRows = document.getElementById('address-rows');
+        const addAddressRowButton = document.getElementById('add-address-row');
+
+        const getNextAddressIndex = () => {
+            if (!addressRows) {
+                return 0;
+            }
+
+            const rows = Array.from(addressRows.querySelectorAll('.address-row'));
+
+            if (! rows.length) {
+                return 0;
+            }
+
+            return Math.max(...rows.map((row) => Number(row.dataset.index || 0))) + 1;
+        };
+
+        const createAddressRow = (index) => {
+            const row = document.createElement('div');
+            row.className = 'address-row rounded-lg border border-gray-200 p-4 dark:border-gray-700';
+            row.dataset.index = index;
+            row.innerHTML = `
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <p class="text-base font-semibold text-gray-800 dark:text-white">Additional Address</p>
+                    <button type="button" class="remove-address-row secondary-button" onclick="window.removeOrganizationAddressRow && window.removeOrganizationAddressRow(this)">Remove</button>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Address Type</label>
+                        <select name="addresses[${index}][type]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                            <option value="billing">Billing</option>
+                            <option value="shipping">Shipping</option>
+                            <option value="other" selected>Other</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Street</label>
+                        <input type="text" name="addresses[${index}][street]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">City</label>
+                        <input type="text" name="addresses[${index}][city]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">State</label>
+                        <input type="text" name="addresses[${index}][state]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Zip</label>
+                        <input type="text" name="addresses[${index}][postcode]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Country</label>
+                        <input type="text" name="addresses[${index}][country]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    </div>
+                </div>
+            `;
+
+            return row;
+        };
+
+        window.addOrganizationAddressRow = () => {
+            if (! addressRows) {
+                return;
+            }
+
+            const index = getNextAddressIndex();
+            addressRows.appendChild(createAddressRow(index));
+        };
+
+        window.removeOrganizationAddressRow = (button) => {
+            const row = button?.closest('.address-row');
+
+            if (row) {
+                row.remove();
+            }
+        };
+
+        if (addAddressRowButton && addressRows) {
+            const appendAddressRow = () => {
+                const index = getNextAddressIndex();
+                addressRows.appendChild(createAddressRow(index));
+            };
+
+            addAddressRowButton.addEventListener('click', appendAddressRow);
+            addAddressRowButton.onclick = appendAddressRow;
+
+            addressRows.addEventListener('click', (event) => {
+                const target = event.target.closest('.remove-address-row');
+
+                if (!target) {
+                    return;
+                }
+
+                const row = target.closest('.address-row');
+
+                if (row) {
+                    row.remove();
+                }
+            });
+        }
 
         if (checkbox) {
             window.toggleShippingAddress(checkbox);
+
+            ['shipping_street', 'shipping_city', 'shipping_state', 'shipping_postcode', 'shipping_country'].forEach((fieldId) => {
+                const field = document.getElementById(fieldId);
+
+                if (field) {
+                    field.addEventListener('input', () => {
+                        checkbox.dataset.userEditedShipping = '1';
+                    });
+                }
+            });
         }
 
         if (checkbox && form) {
@@ -504,4 +754,4 @@
             });
         }
     </script>
-</x-admin::layouts>
+@endcomponent

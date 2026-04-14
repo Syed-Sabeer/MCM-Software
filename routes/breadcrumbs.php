@@ -152,6 +152,114 @@ Breadcrumbs::for('contacts.organizations.view', function (BreadcrumbTrail $trail
     $trail->push('#'.$organization->id, route('admin.contacts.organizations.view', $organization->id));
 });
 
+// Dashboard > Customer
+Breadcrumbs::for('customers', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Customer', route('admin.customers.organizations.index'));
+});
+
+// Dashboard > Customer > Contacts
+Breadcrumbs::for('customers.persons', function (BreadcrumbTrail $trail) {
+    $trail->parent('customers');
+    $trail->push('Contacts', route('admin.customers.persons.index'));
+});
+
+// Dashboard > Customer > Contacts > Create
+Breadcrumbs::for('customers.persons.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('customers.persons');
+    $trail->push('Create Contact', route('admin.customers.persons.create'));
+});
+
+// Dashboard > Customer > Contacts > Edit
+Breadcrumbs::for('customers.persons.edit', function (BreadcrumbTrail $trail, $person) {
+    $trail->parent('customers.persons');
+    $trail->push('Edit Contact', route('admin.customers.persons.edit', $person->id));
+});
+
+// Dashboard > Customer > Contacts > View
+Breadcrumbs::for('customers.persons.view', function (BreadcrumbTrail $trail, $person) {
+    $trail->parent('customers.persons');
+    $trail->push('#'.$person->id, route('admin.customers.persons.view', $person->id));
+});
+
+// Dashboard > Customer > Companies
+Breadcrumbs::for('customers.organizations', function (BreadcrumbTrail $trail) {
+    $trail->parent('customers');
+    $trail->push('Companies', route('admin.customers.organizations.index'));
+});
+
+// Dashboard > Customer > Companies > Create
+Breadcrumbs::for('customers.organizations.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('customers.organizations');
+    $trail->push('Create Company', route('admin.customers.organizations.create'));
+});
+
+// Dashboard > Customer > Companies > Edit
+Breadcrumbs::for('customers.organizations.edit', function (BreadcrumbTrail $trail, $organization) {
+    $trail->parent('customers.organizations');
+    $trail->push('Edit Company', route('admin.customers.organizations.edit', $organization->id));
+});
+
+// Dashboard > Customer > Companies > View
+Breadcrumbs::for('customers.organizations.view', function (BreadcrumbTrail $trail, $organization) {
+    $trail->parent('customers.organizations');
+    $trail->push('#'.$organization->id, route('admin.customers.organizations.view', $organization->id));
+});
+
+// Dashboard > Vendor
+Breadcrumbs::for('vendors', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Vendor', route('admin.vendors.organizations.index'));
+});
+
+// Dashboard > Vendor > Contacts
+Breadcrumbs::for('vendors.persons', function (BreadcrumbTrail $trail) {
+    $trail->parent('vendors');
+    $trail->push('Contacts', route('admin.vendors.persons.index'));
+});
+
+// Dashboard > Vendor > Contacts > Create
+Breadcrumbs::for('vendors.persons.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('vendors.persons');
+    $trail->push('Create Contact', route('admin.vendors.persons.create'));
+});
+
+// Dashboard > Vendor > Contacts > Edit
+Breadcrumbs::for('vendors.persons.edit', function (BreadcrumbTrail $trail, $person) {
+    $trail->parent('vendors.persons');
+    $trail->push('Edit Contact', route('admin.vendors.persons.edit', $person->id));
+});
+
+// Dashboard > Vendor > Contacts > View
+Breadcrumbs::for('vendors.persons.view', function (BreadcrumbTrail $trail, $person) {
+    $trail->parent('vendors.persons');
+    $trail->push('#'.$person->id, route('admin.vendors.persons.view', $person->id));
+});
+
+// Dashboard > Vendor > Vendors
+Breadcrumbs::for('vendors.organizations', function (BreadcrumbTrail $trail) {
+    $trail->parent('vendors');
+    $trail->push('Vendors', route('admin.vendors.organizations.index'));
+});
+
+// Dashboard > Vendor > Vendors > Create
+Breadcrumbs::for('vendors.organizations.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('vendors.organizations');
+    $trail->push('Create Vendor', route('admin.vendors.organizations.create'));
+});
+
+// Dashboard > Vendor > Vendors > Edit
+Breadcrumbs::for('vendors.organizations.edit', function (BreadcrumbTrail $trail, $organization) {
+    $trail->parent('vendors.organizations');
+    $trail->push('Edit Vendor', route('admin.vendors.organizations.edit', $organization->id));
+});
+
+// Dashboard > Vendor > Vendors > View
+Breadcrumbs::for('vendors.organizations.view', function (BreadcrumbTrail $trail, $organization) {
+    $trail->parent('vendors.organizations');
+    $trail->push('#'.$organization->id, route('admin.vendors.organizations.view', $organization->id));
+});
+
 // Products
 Breadcrumbs::for('products', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');

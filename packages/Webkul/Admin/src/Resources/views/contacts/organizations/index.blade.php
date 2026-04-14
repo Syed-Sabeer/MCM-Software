@@ -1,7 +1,16 @@
 <x-admin::layouts>
+    @php
+        $currentRouteName = request()->route()?->getName() ?? 'admin.contacts.organizations.index';
+        $routePrefix = str_contains($currentRouteName, 'admin.customers.')
+            ? 'customers'
+            : (str_contains($currentRouteName, 'admin.vendors.') ? 'vendors' : 'contacts');
+        $organizationLabel = $routePrefix === 'vendors' ? 'Vendor' : 'Company';
+        $organizationPluralLabel = $routePrefix === 'vendors' ? 'Vendors' : 'Companies';
+    @endphp
+
     <!-- Page Title -->
     <x-slot:title>
-        @lang('admin::app.contacts.organizations.index.title')
+        {{ $organizationPluralLabel }}
     </x-slot>
 
     <div class="flex flex-col gap-4">
@@ -10,12 +19,12 @@
                 {!! view_render_event('admin.organizations.index.breadcrumbs.before') !!}
 
                 <!-- Breadcrumbs -->
-                <x-admin::breadcrumbs name="contacts.organizations" />
+                <x-admin::breadcrumbs :name="$routePrefix . '.organizations'" />
 
                 {!! view_render_event('admin.organizations.index.breadcrumbs.before') !!}
                 
                 <div class="text-xl font-bold dark:text-gray-300">
-                    @lang('admin::app.contacts.organizations.index.title')
+                    {{ $organizationPluralLabel }}
                 </div>
             </div>
 
@@ -26,10 +35,10 @@
                     @if (bouncer()->hasPermission('contacts.organizations.create'))
                         <!-- Create button for person -->
                         <a
-                            href="{{ route('admin.contacts.organizations.create') }}"
+                            href="{{ route('admin.' . $routePrefix . '.organizations.create') }}"
                             class="primary-button"
                         >
-                            @lang('admin::app.contacts.organizations.index.create-btn')
+                            Create {{ $organizationLabel }}
                         </a>
                     @endif
 
@@ -40,7 +49,7 @@
 
         {!! view_render_event('admin.organizations.datagrid.index.before') !!}
 
-        <x-admin::datagrid :src="route('admin.contacts.organizations.index')" >
+        <x-admin::datagrid :src="route('admin.' . $routePrefix . '.organizations.index')" >
             <!-- DataGrid Shimmer -->
             <x-admin::shimmer.datagrid />
         </x-admin::datagrid>

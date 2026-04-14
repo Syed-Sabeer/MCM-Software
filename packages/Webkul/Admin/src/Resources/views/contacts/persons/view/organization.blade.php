@@ -6,7 +6,7 @@
             @lang('admin::app.contacts.persons.view.about-organization')
 
             <a
-                href="{{ route('admin.contacts.organizations.edit', $person->organization->id) }}"
+                href="{{ route('admin.' . $routePrefix . '.organizations.edit', $person->organization->id) }}"
                 class="icon-edit rounded-md p-1 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
                 target="_blank"
             ></a>

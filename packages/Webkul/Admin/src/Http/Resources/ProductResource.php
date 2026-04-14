@@ -18,9 +18,11 @@ class ProductResource extends JsonResource
 
         $colors = $this->relationLoaded('colors')
             ? $this->colors->map(fn ($color) => [
-                'id'         => $color->id,
-                'name'       => $color->name,
-                'color_code' => $color->color_code,
+                'id'            => $color->id,
+                'name'          => $color->name,
+                'color_code'    => $color->color_code,
+                'cost_price'    => $color->cost_price,
+                'selling_price' => $color->selling_price,
             ])->values()
             : [];
 

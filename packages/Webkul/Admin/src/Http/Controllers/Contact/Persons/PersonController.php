@@ -29,10 +29,35 @@ class PersonController extends Controller
     }
 
     /**
+     * Get the expected organization type based on route prefix.
+     */
+    protected function getRouteType(): ?string
+    {
+        $routeName = request()->route()?->getName() ?? '';
+
+        if (str_contains($routeName, 'admin.customers.')) {
+            return 'customer';
+        }
+
+        if (str_contains($routeName, 'admin.vendors.')) {
+            return 'vendor';
+        }
+
+        return null;
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index()
     {
+        // Detect organization type from current route and inject into query for DataGrid filtering
+        if ($type = $this->getRouteType()) {
+            if (!request()->query('type')) {
+                request()->query->set('type', $type);
+            }
+        }
+
         if (request()->ajax()) {
             return datagrid(PersonDataGrid::class)->process();
         }
@@ -51,7 +76,9 @@ class PersonController extends Controller
             $organization = app(\Webkul\Contact\Repositories\OrganizationRepository::class)->find($organizationId);
         }
 
-        return view('admin::contacts.persons.create', compact('organization'));
+        $routeType = $this->getRouteType();
+
+        return view('admin::contacts.persons.create', compact('organization', 'routeType'));
     }
 
     /**
@@ -61,7 +88,13 @@ class PersonController extends Controller
     {
         Event::dispatch('contacts.person.create.before');
 
-        $person = $this->personRepository->create($request->all());
+        $data = $request->all();
+
+        if ($routeType = $this->getRouteType()) {
+            $data['type'] = $routeType;
+        }
+
+        $person = $this->personRepository->create($data);
 
         Event::dispatch('contacts.person.create.after', $person);
 
@@ -83,13 +116,32 @@ class PersonController extends Controller
                 ->with('success', $successMessage);
         }
 
+        // Redirect to appropriate route based on organization type
+        $routeName = request()->route()?->getName() ?? '';
         if ($organizationId) {
+            if (str_contains($routeName, 'admin.customers.')) {
+                return redirect()
+                    ->route('admin.customers.organizations.view', $organizationId)
+                    ->with('success', $successMessage);
+            } elseif (str_contains($routeName, 'admin.vendors.')) {
+                return redirect()
+                    ->route('admin.vendors.organizations.view', $organizationId)
+                    ->with('success', $successMessage);
+            }
+
             return redirect()
                 ->route('admin.contacts.organizations.view', $organizationId)
                 ->with('success', $successMessage);
         }
 
         session()->flash('success', $successMessage);
+
+        // Redirect to appropriate list based on route
+        if (str_contains($routeName, 'admin.customers.')) {
+            return redirect()->route('admin.customers.persons.index');
+        } elseif (str_contains($routeName, 'admin.vendors.')) {
+            return redirect()->route('admin.vendors.persons.index');
+        }
 
         return redirect()->route('admin.contacts.persons.index');
     }
@@ -111,7 +163,9 @@ class PersonController extends Controller
     {
         $person = $this->personRepository->findOrFail($id);
 
-        return view('admin::contacts.persons.edit', compact('person'));
+        $routeType = $this->getRouteType();
+
+        return view('admin::contacts.persons.edit', compact('person', 'routeType'));
     }
 
     /**
@@ -121,7 +175,13 @@ class PersonController extends Controller
     {
         Event::dispatch('contacts.person.update.before', $id);
 
-        $person = $this->personRepository->update($request->all(), $id);
+        $data = $request->all();
+
+        if ($routeType = $this->getRouteType()) {
+            $data['type'] = $routeType;
+        }
+
+        $person = $this->personRepository->update($data, $id);
 
         Event::dispatch('contacts.person.update.after', $person);
 
@@ -133,6 +193,16 @@ class PersonController extends Controller
         }
 
         session()->flash('success', trans('admin::app.contacts.persons.index.update-success'));
+
+        $routeName = request()->route()?->getName() ?? '';
+
+        if (str_contains($routeName, 'admin.customers.')) {
+            return redirect()->route('admin.customers.persons.index');
+        }
+
+        if (str_contains($routeName, 'admin.vendors.')) {
+            return redirect()->route('admin.vendors.persons.index');
+        }
 
         return redirect()->route('admin.contacts.persons.index');
     }

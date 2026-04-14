@@ -4,8 +4,12 @@
         'name' => $customer->name,
     ])->values();
 
-    $selectedCustomerId = (string) old('customer_organization_id', '');
+    $selectedCustomerId = (string) old('customer_organization_id', $duplicateDraft['customer_organization_id'] ?? '');
     $selectedCustomerName = $customers->firstWhere('id', (int) $selectedCustomerId)?->name ?? '';
+    $duplicateDraftJson = $duplicateDraft ?? null;
+    $initialColorRows = old('colors', $duplicateDraft['colors'] ?? []);
+    $initialConsumptions = old('consumptions', $duplicateDraft['consumptions'] ?? []);
+    $initialSections = old('production_sections', $duplicateDraft['production_sections'] ?? []);
 @endphp
 
 <x-admin::layouts>
@@ -14,6 +18,10 @@
     </x-slot>
 
     <x-admin::form :action="route('admin.products.store')" method="POST" enctype="multipart/form-data">
+        @if ($duplicateDraftJson)
+            <input type="hidden" name="duplicate_from" value="{{ request('duplicate_from') }}">
+        @endif
+
         <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
@@ -34,25 +42,25 @@
                         <div class="grid gap-4" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;">
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Item Code</label>
-                                <input type="text" name="sku" id="item_code" value="{{ old('sku') }}" required class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                <input type="text" name="sku" id="item_code" value="{{ old('sku', $duplicateDraft['sku'] ?? '') }}" required class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <x-admin::form.control-group.error control-name="sku" />
                             </div>
 
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Internal Code</label>
-                                <input type="text" name="internal_code" id="internal_code" value="{{ old('internal_code') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                <input type="text" name="internal_code" id="internal_code" value="{{ old('internal_code', $duplicateDraft['internal_code'] ?? '') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <x-admin::form.control-group.error control-name="internal_code" />
                             </div>
 
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Product Name</label>
-                                <input type="text" name="name" value="{{ old('name') }}" required class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                <input type="text" name="name" id="product_name" value="{{ old('name', $duplicateDraft['name'] ?? '') }}" required class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <x-admin::form.control-group.error control-name="name" />
                             </div>
 
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Size</label>
-                                <input type="text" name="size" value="{{ old('size') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                <input type="text" name="size" value="{{ old('size', $duplicateDraft['size'] ?? '') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <x-admin::form.control-group.error control-name="size" />
                             </div>
 
@@ -73,13 +81,13 @@
                             <div class="grid gap-4" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;">
                                 <div>
                                     <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Cost Price</label>
-                                    <input type="number" step="0.0001" min="0" name="cost_price" value="{{ old('cost_price') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                    <input type="number" step="0.0001" min="0" name="cost_price" value="{{ old('cost_price', $duplicateDraft['cost_price'] ?? '') }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                     <x-admin::form.control-group.error control-name="cost_price" />
                                 </div>
 
                                 <div>
                                     <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Selling Price</label>
-                                    <input type="number" step="0.0001" min="0" name="selling_price" value="{{ old('selling_price', old('price')) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                    <input type="number" step="0.0001" min="0" name="selling_price" value="{{ old('selling_price', old('price', $duplicateDraft['selling_price'] ?? $duplicateDraft['price'] ?? '')) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                     <x-admin::form.control-group.error control-name="selling_price" />
                                 </div>
                             </div>
@@ -121,9 +129,11 @@
                             <button type="button" id="add-color" class="secondary-button">Add Color</button>
                         </div>
 
-                        <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1fr) 88px 44px; gap: 0.5rem;">
+                        <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1fr) 88px 140px 140px 44px; gap: 0.5rem;">
                             <div>Color Name</div>
                             <div>Color</div>
+                            <div>Cost Price</div>
+                            <div>Selling Price</div>
                             <div></div>
                         </div>
 
@@ -161,6 +171,41 @@
             </div>
         </div>
     </x-admin::form>
+
+    @if ($duplicateDraftJson)
+        <x-admin::modal ref="productDuplicateModal" is-active="true">
+            <x-slot:header>
+                <p class="text-lg font-bold text-gray-800 dark:text-white">Duplicate Product</p>
+            </x-slot:header>
+
+            <x-slot:content>
+                <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                    Enter the new Item Code. Internal Code will mirror it in real time until you edit it manually. Product Name is prefilled and remains editable.
+                </p>
+
+                <div class="grid gap-4">
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Item Code</label>
+                        <input type="text" id="duplicate_modal_item_code" required class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    </div>
+
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Internal Code</label>
+                        <input type="text" id="duplicate_modal_internal_code" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    </div>
+
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Product Name</label>
+                        <input type="text" id="duplicate_modal_name" required class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    </div>
+                </div>
+            </x-slot:content>
+
+            <x-slot:footer>
+                <button type="button" id="apply_duplicate_modal" class="primary-button">Apply</button>
+            </x-slot:footer>
+        </x-admin::modal>
+    @endif
 
     @pushOnce('scripts')
         <script type="module">
@@ -312,9 +357,10 @@
                 var otherImagesContainer = document.getElementById('other-images-container');
                 var addOtherImageButton = document.getElementById('add-other-image');
 
-                var oldColors = @json(old('colors', []));
-                var oldConsumptions = @json(old('consumptions', []));
-                var oldSections = @json(old('production_sections', []));
+                var oldColors = @json($initialColorRows);
+                var oldConsumptions = @json($initialConsumptions);
+                var oldSections = @json($initialSections);
+                var duplicateDraft = @json($duplicateDraftJson);
                 var lastAutoInternalCode = internalCodeInput ? (internalCodeInput.value || '') : '';
 
                 function escapeHtml(value) {
@@ -345,10 +391,12 @@
                 function addColorRow(data) {
                     var index = colorsContainer.querySelectorAll('.color-row').length;
                     var colorCode = valueOf(data, 'color_code', '#000000');
+                    var costPrice = valueOf(data, 'cost_price', '');
+                    var sellingPrice = valueOf(data, 'selling_price', '');
                     var row = document.createElement('div');
                     row.className = 'color-row items-center rounded border border-gray-200 p-2 dark:border-gray-700';
                     row.style.display = 'grid';
-                    row.style.gridTemplateColumns = 'minmax(0, 1fr) 88px 44px';
+                    row.style.gridTemplateColumns = 'minmax(0, 1fr) 88px 140px 140px 44px';
                     row.style.gap = '0.5rem';
                     row.innerHTML = ''
                         + '<input type="text" name="colors[' + index + '][name]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Color Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
@@ -356,6 +404,8 @@
                         + '  <input type="text" name="colors[' + index + '][color_code]" class="color-code-input w-full rounded border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="#000000" value="' + escapeHtml(colorCode) + '">'
                         + '  <input type="color" class="color-picker h-[40px] w-[40px] cursor-pointer rounded border border-gray-200 p-0 dark:border-gray-700" value="' + escapeHtml(colorCode) + '">'
                         + '</div>'
+                        + '<input type="number" step="0.0001" min="0" name="colors[' + index + '][cost_price]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Cost Price" value="' + escapeHtml(costPrice) + '">'
+                        + '<input type="number" step="0.0001" min="0" name="colors[' + index + '][selling_price]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Selling Price" value="' + escapeHtml(sellingPrice) + '">'
                         + '<button type="button" class="remove-color inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove color">&times;</button>';
                     colorsContainer.appendChild(row);
                     refreshOtherImageColorOptions();
@@ -468,6 +518,8 @@
                         var fields = row.querySelectorAll('input');
                         if (fields[0]) fields[0].name = 'colors[' + index + '][name]';
                         if (fields[1]) fields[1].name = 'colors[' + index + '][color_code]';
+                        if (fields[3]) fields[3].name = 'colors[' + index + '][cost_price]';
+                        if (fields[4]) fields[4].name = 'colors[' + index + '][selling_price]';
                     });
 
                     refreshOtherImageColorOptions();
@@ -499,7 +551,9 @@
                         var fields = row.querySelectorAll('input');
                         var c0 = fields[0] ? fields[0].value.trim() : '';
                         var c1 = fields[1] ? fields[1].value.trim() : '';
-                        if (!c0 && !c1) row.remove();
+                        var c2 = fields[3] ? String(fields[3].value || '').trim() : '';
+                        var c3 = fields[4] ? String(fields[4].value || '').trim() : '';
+                        if (!c0 && !c1 && !c2 && !c3) row.remove();
                     });
 
                     consumptionsContainer.querySelectorAll('.consumption-row').forEach(function (row) {
@@ -542,6 +596,70 @@
                             lastAutoInternalCode = '';
                         }
                     });
+                }
+
+                if (duplicateDraft) {
+                    var duplicateModalItemCode = document.getElementById('duplicate_modal_item_code');
+                    var duplicateModalInternalCode = document.getElementById('duplicate_modal_internal_code');
+                    var duplicateModalName = document.getElementById('duplicate_modal_name');
+                    var duplicateModalApply = document.getElementById('apply_duplicate_modal');
+                    var productNameInput = document.getElementById('product_name');
+
+                    if (duplicateModalItemCode && duplicateModalInternalCode && duplicateModalName) {
+                        duplicateModalName.value = productNameInput ? productNameInput.value : '';
+                        duplicateModalItemCode.value = itemCodeInput ? itemCodeInput.value : '';
+                        duplicateModalInternalCode.value = internalCodeInput ? internalCodeInput.value : '';
+
+                        duplicateModalItemCode.addEventListener('input', function () {
+                            if (duplicateModalInternalCode.dataset.manual !== '1') {
+                                duplicateModalInternalCode.value = duplicateModalItemCode.value;
+                            }
+                        });
+
+                        duplicateModalInternalCode.addEventListener('input', function () {
+                            duplicateModalInternalCode.dataset.manual = '1';
+                        });
+
+                        if (duplicateModalApply) {
+                            duplicateModalApply.addEventListener('click', function () {
+                                duplicateModalItemCode.value = duplicateModalItemCode.value.trim();
+                                duplicateModalInternalCode.value = duplicateModalInternalCode.value.trim();
+                                duplicateModalName.value = duplicateModalName.value.trim();
+
+                                if (!duplicateModalItemCode.reportValidity()) {
+                                    return;
+                                }
+
+                                if (!duplicateModalName.reportValidity()) {
+                                    return;
+                                }
+
+                                if (itemCodeInput) itemCodeInput.value = duplicateModalItemCode.value;
+                                if (internalCodeInput) {
+                                    internalCodeInput.value = duplicateModalInternalCode.value;
+                                    lastAutoInternalCode = internalCodeInput.value;
+                                }
+                                if (productNameInput) productNameInput.value = duplicateModalName.value;
+
+                                if (itemCodeInput && !itemCodeInput.checkValidity()) {
+                                    itemCodeInput.reportValidity();
+                                    return;
+                                }
+
+                                if (productNameInput && !productNameInput.checkValidity()) {
+                                    productNameInput.reportValidity();
+                                    return;
+                                }
+
+                                var duplicateModalClose = duplicateModalApply.closest('.box-shadow')?.querySelector('.icon-cross-large');
+
+                                if (duplicateModalClose) {
+                                    duplicateModalClose.click();
+                                }
+                            });
+                        }
+
+                    }
                 }
 
                 if (addColorButton) {

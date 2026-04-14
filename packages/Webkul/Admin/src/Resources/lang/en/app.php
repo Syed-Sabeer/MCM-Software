@@ -14,9 +14,9 @@ return [
         'trash'           => 'Trash',
         'activities'      => 'Activities',
         'webhook'         => 'Webhook',
-        'contacts'        => 'Contacts',
-        'persons'         => 'Persons',
-        'organizations'   => 'Organizations',
+        'contacts'        => 'Customer',
+        'persons'         => 'Contacts',
+        'organizations'   => 'Companies',
         'products'        => 'Products',
         'settings'        => 'Settings',
         'groups'          => 'Groups',
@@ -645,15 +645,15 @@ return [
     'contacts' => [
         'persons' => [
             'index' => [
-                'title'                    => 'Persons',
-                'create-btn'               => 'Create Person',
-                'create-success'           => 'Person created successfully.',
-                'update-success'           => 'Person updated successfully.',
-                'all-delete-success'       => 'All selected persons were deleted successfully.',
-                'partial-delete-warning'   => 'Some persons were deleted successfully. Others could not be deleted because they are linked to leads.',
-                'none-delete-warning'      => 'None of the selected persons could be deleted because they are linked to leads.',
-                'no-selection'             => 'No persons were selected for deletion.',
-                'delete-failed'            => 'Failed to delete selected persons.',
+                'title'                    => 'Contacts',
+                'create-btn'               => 'Create Contact',
+                'create-success'           => 'Contact created successfully.',
+                'update-success'           => 'Contact updated successfully.',
+                'all-delete-success'       => 'All selected contacts were deleted successfully.',
+                'partial-delete-warning'   => 'Some contacts were deleted successfully. Others could not be deleted because they are linked to leads.',
+                'none-delete-warning'      => 'None of the selected contacts could be deleted because they are linked to leads.',
+                'no-selection'             => 'No contacts were selected for deletion.',
+                'delete-failed'            => 'Failed to delete selected contacts.',
 
                 'datagrid' => [
                     'contact-numbers'   => 'Contact Numbers',
@@ -792,12 +792,12 @@ return [
 
         'organizations' => [
             'index' => [
-                'title'          => 'Organizations',
-                'create-btn'     => 'Create Organization',
-                'create-success' => 'Organization created successfully.',
-                'update-success' => 'Organization updated successfully.',
-                'delete-success' => 'Organization deleted successfully.',
-                'delete-failed'  => 'Organization can not be deleted.',
+                'title'          => 'Companies',
+                'create-btn'     => 'Create Company',
+                'create-success' => 'Company created successfully.',
+                'update-success' => 'Company updated successfully.',
+                'delete-success' => 'Company deleted successfully.',
+                'delete-failed'  => 'Company can not be deleted.',
 
                 'datagrid' => [
                     'view'          => 'View',
@@ -805,26 +805,26 @@ return [
                     'edit'          => 'Edit',
                     'id'            => 'ID',
                     'name'          => 'Name',
-                    'persons-count' => 'Person Count',
+                    'persons-count' => 'Contact Count',
                 ],
             ],
 
             'create' => [
-                'title'    => 'Create Organization',
-                'save-btn' => 'Save Organization',
+                'title'    => 'Create Company',
+                'save-btn' => 'Save Company',
             ],
 
             'edit' => [
-                'title'    => 'Edit Organization',
-                'save-btn' => 'Save Organization',
+                'title'    => 'Edit Company',
+                'save-btn' => 'Save Company',
             ],
 
             'view' => [
-                'title'           => 'Organization: :name',
+                'title'           => 'Company: :name',
                 'new-contact-btn' => 'New Contact',
                 'edit-btn'        => 'Edit',
                 'delete-btn'      => 'Delete',
-                'delete-confirm'  => 'Are you sure you want to delete this organization?',
+                'delete-confirm'  => 'Are you sure you want to delete this company?',
                 'files-uploaded'  => 'Files uploaded successfully.',
                 'file-deleted'    => 'File deleted successfully.',
             ],

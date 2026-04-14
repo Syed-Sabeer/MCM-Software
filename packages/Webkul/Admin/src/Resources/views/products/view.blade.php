@@ -15,6 +15,10 @@
                     <a href="{{ route('admin.products.edit', $product->id) }}" class="primary-button">Edit</a>
                 @endif
 
+                @if (bouncer()->hasPermission('products.create'))
+                    <a href="{{ route('admin.products.create', ['duplicate_from' => $product->id]) }}" class="secondary-button">Duplicate</a>
+                @endif
+
                 <a href="{{ route('admin.products.index') }}" class="secondary-button">Back</a>
             </div>
         </div>
@@ -87,7 +91,17 @@
                                 class="h-4 w-4 rounded-full border border-gray-300 dark:border-gray-600"
                                 style="background-color: {{ $color->color_code ?: '#000000' }};"
                             ></span>
-                            <span class="text-gray-800 dark:text-gray-300">{{ $color->name ?: ($color->color_code ?: 'Color') }}</span>
+                            <span class="text-gray-800 dark:text-gray-300">
+                                {{ $color->name ?: ($color->color_code ?: 'Color') }}
+
+                                @if (! is_null($color->cost_price) || ! is_null($color->selling_price))
+                                    <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                                        Cost: {{ $color->cost_price !== null ? rtrim(rtrim((string) $color->cost_price, '0'), '.') : '—' }}
+                                        |
+                                        Sell: {{ $color->selling_price !== null ? rtrim(rtrim((string) $color->selling_price, '0'), '.') : '—' }}
+                                    </span>
+                                @endif
+                            </span>
                         </div>
                     @endforeach
                 </div>

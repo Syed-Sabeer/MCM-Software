@@ -148,8 +148,8 @@ class ProductDataGrid extends DataGrid
                 'index'  => 'duplicate',
                 'icon'   => 'icon-add',
                 'title'  => trans('admin::app.products.index.datagrid.duplicate'),
-                'method' => 'POST',
-                'url'    => fn ($row) => route('admin.products.duplicate', $row->id),
+                'method' => 'GET',
+                'url'    => fn ($row) => route('admin.products.create', ['duplicate_from' => $row->id]),
             ]);
         }
 
