@@ -475,7 +475,7 @@
                             type="button"
                             id="add-address-row"
                             class="secondary-button"
-                            onclick="window.addOrganizationAddressRow && window.addOrganizationAddressRow()"
+                            onclick="window.addAddressRow && window.addAddressRow()"
                         >
                             Add Address
                         </button>
@@ -485,12 +485,12 @@
                         Add as many addresses as needed. Each address is stored in the format city, state, zip, country.
                     </p>
 
-                    <div id="address-rows" class="flex flex-col gap-3">
+                    <div id="address-rows" class="flex flex-col gap-3" data-next-index="{{ count($addressRows) }}">
                         @foreach ($addressRows as $index => $row)
                             <div class="address-row rounded-lg border border-gray-200 p-4 dark:border-gray-700" data-index="{{ $index }}">
                                 <div class="mb-4 flex items-center justify-between gap-3">
                                     <p class="text-base font-semibold text-gray-800 dark:text-white">Additional Address</p>
-                                    <button type="button" class="remove-address-row secondary-button" onclick="window.removeOrganizationAddressRow && window.removeOrganizationAddressRow(this)">Remove</button>
+                                    <button type="button" class="remove-address-row secondary-button" onclick="this.closest('.address-row')?.remove()">Remove</button>
                                 </div>
 
                                 <div class="grid gap-4 md:grid-cols-2">
@@ -531,6 +531,51 @@
                             </div>
                         @endforeach
                     </div>
+
+                    <template id="address-row-template">
+                        <div class="address-row rounded-lg border border-gray-200 p-4 dark:border-gray-700" data-index="__INDEX__">
+                            <div class="mb-4 flex items-center justify-between gap-3">
+                                <p class="text-base font-semibold text-gray-800 dark:text-white">Additional Address</p>
+                                <button type="button" class="remove-address-row secondary-button" onclick="this.closest('.address-row')?.remove()">Remove</button>
+                            </div>
+
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Address Type</label>
+                                    <select name="addresses[__INDEX__][type]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                                        <option value="billing">Billing</option>
+                                        <option value="shipping">Shipping</option>
+                                        <option value="other" selected>Other</option>
+                                    </select>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Street</label>
+                                    <input type="text" name="addresses[__INDEX__][street]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                                </div>
+
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">City</label>
+                                    <input type="text" name="addresses[__INDEX__][city]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                                </div>
+
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">State</label>
+                                    <input type="text" name="addresses[__INDEX__][state]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                                </div>
+
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Zip</label>
+                                    <input type="text" name="addresses[__INDEX__][postcode]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                                </div>
+
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Country</label>
+                                    <input type="text" name="addresses[__INDEX__][country]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 {!! view_render_event('admin.contacts.organizations.create.address_information.after') !!}
@@ -630,10 +675,8 @@
 
         const checkbox = document.getElementById('same-as-billing');
         const form = document.querySelector('form');
-        const addressRows = document.getElementById('address-rows');
-        const addAddressRowButton = document.getElementById('add-address-row');
 
-        const getNextAddressIndex = () => {
+        const getNextAddressIndex = (addressRows) => {
             if (!addressRows) {
                 return 0;
             }
@@ -647,90 +690,63 @@
             return Math.max(...rows.map((row) => Number(row.dataset.index || 0))) + 1;
         };
 
-        const createAddressRow = (index) => {
-            const row = document.createElement('div');
-            row.className = 'address-row rounded-lg border border-gray-200 p-4 dark:border-gray-700';
-            row.dataset.index = index;
-            row.innerHTML = `
-                <div class="mb-4 flex items-center justify-between gap-3">
-                    <p class="text-base font-semibold text-gray-800 dark:text-white">Additional Address</p>
-                    <button type="button" class="remove-address-row secondary-button" onclick="window.removeOrganizationAddressRow && window.removeOrganizationAddressRow(this)">Remove</button>
-                </div>
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Address Type</label>
-                        <select name="addresses[${index}][type]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                            <option value="billing">Billing</option>
-                            <option value="shipping">Shipping</option>
-                            <option value="other" selected>Other</option>
-                        </select>
+        const buildAddressRowHtml = (index) => {
+            return `
+                <div class="address-row rounded-lg border border-gray-200 p-4 dark:border-gray-700" data-index="${index}">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <p class="text-base font-semibold text-gray-800 dark:text-white">Additional Address</p>
+                        <button type="button" class="remove-address-row secondary-button" onclick="this.closest('.address-row')?.remove()">Remove</button>
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Street</label>
-                        <input type="text" name="addresses[${index}][street]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
-                    </div>
-                    <div>
-                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">City</label>
-                        <input type="text" name="addresses[${index}][city]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
-                    </div>
-                    <div>
-                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">State</label>
-                        <input type="text" name="addresses[${index}][state]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
-                    </div>
-                    <div>
-                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Zip</label>
-                        <input type="text" name="addresses[${index}][postcode]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
-                    </div>
-                    <div>
-                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Country</label>
-                        <input type="text" name="addresses[${index}][country]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Address Type</label>
+                            <select name="addresses[${index}][type]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                                <option value="billing">Billing</option>
+                                <option value="shipping">Shipping</option>
+                                <option value="other" selected>Other</option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Street</label>
+                            <input type="text" name="addresses[${index}][street]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                        </div>
+
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">City</label>
+                            <input type="text" name="addresses[${index}][city]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                        </div>
+
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">State</label>
+                            <input type="text" name="addresses[${index}][state]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                        </div>
+
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Zip</label>
+                            <input type="text" name="addresses[${index}][postcode]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                        </div>
+
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Country</label>
+                            <input type="text" name="addresses[${index}][country]" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                        </div>
                     </div>
                 </div>
             `;
-
-            return row;
         };
 
-        window.addOrganizationAddressRow = () => {
+        window.addAddressRow = () => {
+            const addressRows = document.getElementById('address-rows');
+
             if (! addressRows) {
                 return;
             }
 
-            const index = getNextAddressIndex();
-            addressRows.appendChild(createAddressRow(index));
+            const index = getNextAddressIndex(addressRows);
+            addressRows.insertAdjacentHTML('beforeend', buildAddressRowHtml(index));
         };
-
-        window.removeOrganizationAddressRow = (button) => {
-            const row = button?.closest('.address-row');
-
-            if (row) {
-                row.remove();
-            }
-        };
-
-        if (addAddressRowButton && addressRows) {
-            const appendAddressRow = () => {
-                const index = getNextAddressIndex();
-                addressRows.appendChild(createAddressRow(index));
-            };
-
-            addAddressRowButton.addEventListener('click', appendAddressRow);
-            addAddressRowButton.onclick = appendAddressRow;
-
-            addressRows.addEventListener('click', (event) => {
-                const target = event.target.closest('.remove-address-row');
-
-                if (!target) {
-                    return;
-                }
-
-                const row = target.closest('.address-row');
-
-                if (row) {
-                    row.remove();
-                }
-            });
-        }
 
         if (checkbox) {
             window.toggleShippingAddress(checkbox);
