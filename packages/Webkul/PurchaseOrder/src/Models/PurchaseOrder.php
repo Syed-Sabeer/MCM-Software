@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Contact\Models\OrganizationProxy;
 use Webkul\Contact\Models\PersonProxy;
+use Webkul\Core\Traits\HasDocumentCharges;
 use Webkul\User\Models\UserProxy;
 
 class PurchaseOrder extends Model implements \Webkul\PurchaseOrder\Contracts\PurchaseOrder
 {
+    use HasDocumentCharges;
+
     protected $table = 'purchase_orders';
 
     protected $fillable = [

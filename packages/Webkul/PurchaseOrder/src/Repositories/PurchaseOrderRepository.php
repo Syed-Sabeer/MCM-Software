@@ -5,6 +5,7 @@ namespace Webkul\PurchaseOrder\Repositories;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Support\DocumentChargeManager;
 use Webkul\PurchaseOrder\Models\JobOrder;
 use Webkul\PurchaseOrder\Models\PurchaseOrder;
 use Webkul\PurchaseOrder\Models\VendorQuote;
@@ -13,6 +14,7 @@ class PurchaseOrderRepository extends Repository
 {
     public function __construct(
         protected PurchaseOrderItemRepository $purchaseOrderItemRepository,
+        protected DocumentChargeManager $documentChargeManager,
         Container $container
     ) {
         parent::__construct($container);
@@ -42,6 +44,7 @@ class PurchaseOrderRepository extends Repository
             'freight' => (float) ($vendorQuote->freight ?? 0),
             'expected_receive_date' => optional($vendorQuote->last_delivery_date ?: $vendorQuote->first_delivery_date)->toDateString(),
             'status' => 'draft',
+            'charges' => $this->documentChargeManager->extract($vendorQuote, 'vendor_quote'),
             'items' => $vendorQuote->items->map(fn ($item) => [
                 'requirement_id' => $item->requirement_id,
                 'item' => $item->material_name,
@@ -101,6 +104,7 @@ class PurchaseOrderRepository extends Repository
             $purchaseOrder = parent::create($data);
 
             $this->syncItems($purchaseOrder, $data);
+            $this->documentChargeManager->sync($purchaseOrder, $data['charges'] ?? []);
             $this->refreshReceiptStatus($purchaseOrder->id);
 
             return $purchaseOrder->fresh(['items', 'receipts', 'payables']);
@@ -117,6 +121,7 @@ class PurchaseOrderRepository extends Repository
             $purchaseOrder = parent::update($data, $id, $attribute);
 
             $this->syncItems($purchaseOrder, $data);
+            $this->documentChargeManager->sync($purchaseOrder, $data['charges'] ?? []);
             $this->refreshReceiptStatus($purchaseOrder->id);
 
             return $purchaseOrder->fresh(['items', 'receipts', 'payables']);
@@ -140,13 +145,15 @@ class PurchaseOrderRepository extends Repository
             }
         }
 
-        $salesTaxPercent = (float) ($data['sales_tax_percent'] ?? 0);
-        $taxAmount = $subTotal * ($salesTaxPercent / 100);
-        $freight = (float) ($data['freight'] ?? 0);
-        $grandTotal = $subTotal + $taxAmount + $freight;
+        $charges = $this->documentChargeManager->normalize($data['charges'] ?? [], $subTotal);
+        $chargeSummary = $this->documentChargeManager->summarize('purchase_order', $charges);
+        $grandTotal = $subTotal + ($chargeSummary['charge_total'] ?? 0);
 
         $data['sub_total'] = $subTotal;
-        $data['tax_amount'] = $taxAmount;
+        $data['charges'] = $charges;
+        $data['sales_tax_percent'] = $chargeSummary['sales_tax_percent'] ?? 0;
+        $data['tax_amount'] = $chargeSummary['tax_amount'] ?? 0;
+        $data['freight'] = $chargeSummary['freight'] ?? 0;
         $data['grand_total'] = $grandTotal;
 
         return $data;

@@ -1,4 +1,5 @@
 @php
+    $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
     $prefillItems = old('items', $vendorQuote?->items?->map(fn ($item) => [
         'requirement_id' => $item->requirement_id,
         'item' => $item->material_name,
@@ -18,6 +19,7 @@
         'unit' => $req->unit ?: 'PCS',
         'price' => 0,
     ])->toArray() ?? [['item' => '', 'ordered_quantity' => 1, 'unit' => 'PCS', 'price' => 0]]);
+    $initialPurchaseOrderCharges = collect(old('charges', $vendorQuote ? $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote') : []))->values()->all();
 @endphp
 <x-admin::layouts>
     <x-slot:title>Create Vendor Purchase Order</x-slot>
@@ -130,8 +132,9 @@
                 <div class="mt-4 flex justify-end">
                     <div class="document-form-summary-box is-wide grid gap-4 rounded-lg bg-gray-100 p-5 text-sm dark:bg-gray-950 dark:text-white" style="max-width: 100%;">
                         <div class="flex items-center justify-between gap-x-5"><span>Sub Total</span><input type="hidden" name="sub_total" id="po-subtotal-input" value="0"><p class="text-base font-semibold" id="po-subtotal">0.00</p></div>
-                        <div class="document-summary-line" style="display:grid;grid-template-columns:120px minmax(170px,1fr) 120px;align-items:center;gap:10px;"><span>Sales Tax (%)</span><div><input type="number" step="0.01" min="0" name="sales_tax_percent" id="po-sales-tax-percent" value="{{ old('sales_tax_percent', $vendorQuote?->sales_tax_percent ?: 0) }}" class="custom-input" oninput="window.calculatePoTotals()"></div><div class="text-right font-medium"><span id="po-sales-tax-amount">0.00</span></div></div>
-                        <div class="document-summary-line" style="display:grid;grid-template-columns:120px minmax(170px,1fr) 120px;align-items:center;gap:10px;"><span>Freight</span><div><input type="number" step="0.01" min="0" name="freight" id="po-freight" value="{{ old('freight', $vendorQuote?->freight ?: 0) }}" class="custom-input" oninput="window.calculatePoTotals()"></div><div class="text-right font-medium"><span id="po-freight-amount">0.00</span></div></div>
+                        <div id="po-charges-container" class="grid gap-2"></div>
+                        <div><button type="button" class="secondary-button" onclick="window.addPoCharge()">Add Charge</button></div>
+                        <div class="flex items-center justify-between gap-x-5"><span>Additional Charges</span><input type="hidden" name="tax_amount" id="po-tax-amount-input" value="0"><input type="hidden" name="freight" id="po-freight-input" value="0"><p class="text-base font-semibold" id="po-charges-total">0.00</p></div>
                         <div class="flex items-center justify-between gap-x-5 border-t border-gray-200 pt-3 text-base font-semibold dark:border-gray-800"><span>Grand Total</span><input type="hidden" name="grand_total" id="po-grand-total-input" value="0"><p id="po-grand-total">0.00</p></div>
                     </div>
                 </div>
@@ -154,6 +157,61 @@
 
     @pushOnce('scripts')
         <script>
+            window.poCharges = @json($initialPurchaseOrderCharges);
+
+            window.isTaxChargeName = function (name) {
+                const normalized = String(name || '').trim().toLowerCase();
+                return ['tax', 'tariff', 'tarrif', 'duty', 'vat', 'gst'].some((token) => normalized.includes(token));
+            };
+
+            window.poChargeAmount = function (charge, subtotal) {
+                const value = parseFloat(charge?.value || 0);
+
+                if ((charge?.type || 'value') === 'percentage') {
+                    return subtotal * (value / 100);
+                }
+
+                return value;
+            };
+
+            window.renderPoCharges = function () {
+                const container = document.getElementById('po-charges-container');
+                if (! container) return;
+                container.innerHTML = '';
+
+                window.poCharges.forEach((charge, index) => {
+                    const row = document.createElement('div');
+                    row.className = 'document-summary-line';
+                    row.style.cssText = 'display:grid;grid-template-columns:minmax(180px,1.2fr) 110px 110px 120px 36px;align-items:center;gap:10px;';
+                    row.innerHTML = `
+                        <div><input type="text" name="charges[${index}][name]" value="${charge.name ?? ''}" class="custom-input" placeholder="Charge name" oninput="window.updatePoCharge(${index}, 'name', this.value)"></div>
+                        <div><select name="charges[${index}][type]" class="custom-select" onchange="window.updatePoCharge(${index}, 'type', this.value)"><option value="percentage" ${(charge.type || 'value') === 'percentage' ? 'selected' : ''}>Percentage</option><option value="value" ${(charge.type || 'value') === 'value' ? 'selected' : ''}>Value</option></select></div>
+                        <div><input type="number" min="0" step="0.01" name="charges[${index}][value]" value="${charge.value ?? 0}" class="custom-input" oninput="window.updatePoCharge(${index}, 'value', this.value)"></div>
+                        <div class="text-right font-medium"><span id="po-charge-amount-${index}">0.00</span></div>
+                        <button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removePoCharge(${index})"><i class="icon-delete"></i></button>
+                    `;
+                    container.appendChild(row);
+                });
+            };
+
+            window.addPoCharge = function () {
+                window.poCharges.push({ name: '', type: 'percentage', value: 0 });
+                window.renderPoCharges();
+                window.calculatePoTotals();
+            };
+
+            window.updatePoCharge = function (index, field, value) {
+                if (! window.poCharges[index]) return;
+                window.poCharges[index][field] = value;
+                window.calculatePoTotals();
+            };
+
+            window.removePoCharge = function (index) {
+                window.poCharges.splice(index, 1);
+                window.renderPoCharges();
+                window.calculatePoTotals();
+            };
+
             window.calculatePoTotals = function () {
                 const rows = document.querySelectorAll('#purchase-order-items-table tbody tr');
                 let subtotal = 0;
@@ -165,20 +223,34 @@
                     const amountNode = row.querySelector('.item-amount');
                     if (amountNode) amountNode.textContent = amount.toFixed(2);
                 });
-                const salesTaxPercent = parseFloat(document.getElementById('po-sales-tax-percent')?.value || 0);
-                const salesTaxAmount = subtotal * (salesTaxPercent / 100);
-                const freight = parseFloat(document.getElementById('po-freight')?.value || 0);
-                const grandTotal = subtotal + salesTaxAmount + freight;
+
+                let taxCharges = 0;
+                let otherCharges = 0;
+
+                window.poCharges.forEach((charge, index) => {
+                    const amount = window.poChargeAmount(charge, subtotal);
+                    const amountNode = document.getElementById(`po-charge-amount-${index}`);
+                    if (amountNode) amountNode.textContent = amount.toFixed(2);
+                    if (window.isTaxChargeName(charge.name)) taxCharges += amount;
+                    else otherCharges += amount;
+                });
+
+                const chargeTotal = taxCharges + otherCharges;
+                const grandTotal = subtotal + chargeTotal;
                 document.getElementById('po-subtotal').textContent = subtotal.toFixed(2);
                 document.getElementById('po-subtotal-input').value = subtotal.toFixed(4);
-                document.getElementById('po-sales-tax-amount').textContent = salesTaxAmount.toFixed(2);
-                document.getElementById('po-freight-amount').textContent = freight.toFixed(2);
+                document.getElementById('po-tax-amount-input').value = taxCharges.toFixed(4);
+                document.getElementById('po-freight-input').value = otherCharges.toFixed(4);
+                document.getElementById('po-charges-total').textContent = chargeTotal.toFixed(2);
                 document.getElementById('po-grand-total').textContent = grandTotal.toFixed(2);
                 document.getElementById('po-grand-total-input').value = grandTotal.toFixed(4);
             };
             window.removePoRow = function (button) { const tbody = document.querySelector('#purchase-order-items-table tbody'); const row = button.closest('tr'); if (!tbody || !row) return; if (tbody.children.length <= 1) { row.querySelectorAll('input').forEach((input) => { if (input.type === 'hidden') input.value = ''; else if (input.type === 'number') input.value = input.name.includes('[ordered_quantity]') ? '1' : '0'; else input.value = input.name.includes('[unit]') ? 'PCS' : ''; }); const amount = row.querySelector('.item-amount'); if (amount) amount.textContent = '0.00'; window.calculatePoTotals(); return; } row.remove(); window.calculatePoTotals(); };
             window.addPoRow = function () { const tbody = document.querySelector('#purchase-order-items-table tbody'); const index = tbody.children.length; const expectedDate = document.querySelector('input[name="expected_receive_date"]')?.value || ''; tbody.insertAdjacentHTML('beforeend', `<tr><td class="py-2"><input type="hidden" name="items[${index}][requirement_id]" value=""><input type="text" name="items[${index}][item]" class="custom-input"><input type="hidden" name="items[${index}][material_name]" value=""></td><td class="py-2"><input type="number" step="0.0001" min="0.0001" name="items[${index}][ordered_quantity]" value="1" class="custom-input item-qty" oninput="window.calculatePoTotals()"></td><td class="py-2"><input type="text" name="items[${index}][unit]" value="PCS" class="custom-input"></td><td class="py-2"><input type="number" step="0.01" min="0" name="items[${index}][price]" value="0" class="custom-input item-price" oninput="window.calculatePoTotals()"></td><td class="py-2 text-right align-middle"><span class="item-amount">0.00</span></td><td class="py-2 text-center"><button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removePoRow(this)"><i class="icon-delete"></i></button></td><input type="hidden" name="items[${index}][received_quantity]" value="0"><input type="hidden" name="items[${index}][pending_quantity]" value="1"><input type="hidden" name="items[${index}][expected_receive_date]" value="${expectedDate}"></tr>`); window.calculatePoTotals(); };
-            document.addEventListener('DOMContentLoaded', window.calculatePoTotals);
+            document.addEventListener('DOMContentLoaded', () => {
+                window.renderPoCharges();
+                window.calculatePoTotals();
+            });
         </script>
     @endPushOnce
 

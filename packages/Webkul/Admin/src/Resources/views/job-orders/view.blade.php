@@ -42,6 +42,7 @@
                 <div><strong>Issue Date:</strong> {{ optional($jobOrder->issue_date)->format('Y-m-d') }}</div>
                 <div><strong>Required Delivery:</strong> {{ optional($jobOrder->required_delivery_date)->format('Y-m-d') ?: '-' }}</div>
             </div>
+
         </div>
 
         <div class="grid gap-4 md:grid-cols-2">
@@ -104,9 +105,16 @@
             </div>
 
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div class="mb-3 text-base font-semibold dark:text-white">Requirement Sheet</div>
+                <div class="mb-3 flex items-center justify-between gap-3">
+                    <div class="text-base font-semibold dark:text-white">Requirement Sheet</div>
 
-                <table class="w-full text-sm dark:text-white">
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('admin.job_orders.requirement_sheet.pdf', $jobOrder->id) }}" class="secondary-button">Export to PDF</a>
+                        <a href="{{ route('admin.job_orders.requirement_sheet.csv', $jobOrder->id) }}" class="secondary-button">Export to CSV</a>
+                    </div>
+                </div>
+
+                <table class="w-full text-sm dark:text-white" style="margin-top: 2%;">
                     <thead>
                         <tr class="border-b dark:border-gray-700">
                             <th class="py-2 text-left">Item</th>
@@ -145,9 +153,16 @@
 
         <div class="grid gap-4 md:grid-cols-2">
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div class="mb-3 text-base font-semibold dark:text-white">Job Cards</div>
+                <div class="mb-3 flex items-center justify-between gap-3">
+                    <div class="text-base font-semibold dark:text-white">Job Cards</div>
 
-                <table class="w-full text-sm dark:text-white">
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('admin.job_orders.job_card.pdf', $jobOrder->id) }}" class="secondary-button">Export to PDF</a>
+                        <a href="{{ route('admin.job_orders.job_card.csv', $jobOrder->id) }}" class="secondary-button">Export to CSV</a>
+                    </div>
+                </div>
+
+                <table class="w-full text-sm dark:text-white" style="margin-top: 2%;">
                     <thead>
                         <tr class="border-b dark:border-gray-700">
                             <th class="py-2 text-left">Item</th>

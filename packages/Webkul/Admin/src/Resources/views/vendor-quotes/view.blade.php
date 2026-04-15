@@ -2,7 +2,10 @@
     <x-slot:title>{{ $vendorQuote->vendor_quote_number }}</x-slot>
 
     @php
+        $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
         $formatQty = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+        $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
+            . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
         $companyName = core()->getConfigData('general.general.company_info.company_name');
         $companyAddress = core()->getConfigData('general.general.company_info.address');
         $companyPhone = core()->getConfigData('general.general.company_info.telephone');
@@ -10,6 +13,7 @@
         $companyEmail = core()->getConfigData('general.general.company_info.email');
 
         $vendor = $vendorQuote->organization;
+        $charges = $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote');
         $vendorLines = array_filter([
             $vendor?->name,
             $vendor?->billing_street ?: $vendor?->shipping_street,
@@ -130,8 +134,9 @@
                 <div class="mb-3 text-base font-semibold">Totals</div>
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between"><span>Sub Total</span><span>{{ number_format((float) $vendorQuote->subtotal, 2) }}</span></div>
-                    <div class="flex justify-between"><span>Sales Tax</span><span>{{ number_format((float) $vendorQuote->sales_tax_amount, 2) }}</span></div>
-                    <div class="flex justify-between"><span>Freight</span><span>{{ number_format((float) $vendorQuote->freight, 2) }}</span></div>
+                    @foreach ($charges as $charge)
+                        <div class="flex justify-between"><span>{{ $formatChargeLabel($charge) }}</span><span>{{ number_format((float) $charge['amount'], 2) }}</span></div>
+                    @endforeach
                     <div class="flex justify-between border-t pt-2 text-base font-bold"><span>Grand Total</span><span>{{ number_format((float) $vendorQuote->grand_total, 2) }}</span></div>
                 </div>
             </div>

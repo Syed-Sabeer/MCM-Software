@@ -7,11 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Contact\Models\OrganizationProxy;
 use Webkul\Contact\Models\PersonProxy;
+use Webkul\Core\Traits\HasDocumentCharges;
 use Webkul\Quote\Contracts\ProformaInvoice as ProformaInvoiceContract;
 use Webkul\User\Models\UserProxy;
 
 class ProformaInvoice extends Model implements ProformaInvoiceContract
 {
+    use HasDocumentCharges;
+
     protected $fillable = [
         'proforma_number',
         'quote_id',

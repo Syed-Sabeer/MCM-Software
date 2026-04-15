@@ -1,8 +1,9 @@
 @php
     use Webkul\Product\Models\Product;
+    $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
 
     $quoteModels = \Webkul\Quote\Models\Quote::query()
-        ->with(['items', 'organization', 'person', 'user'])
+        ->with(['items', 'organization', 'person', 'user', 'additionalCharges'])
         ->get();
 
     $productIds = $quoteModels->pluck('items')->flatten()->pluck('product_id')->filter()->map(fn ($id) => (int) $id)->unique()->values();
@@ -36,7 +37,7 @@
             ];
         });
 
-    $quotes = $quoteModels->map(function ($quoteRow) use ($productPayload) {
+    $quotes = $quoteModels->map(function ($quoteRow) use ($productPayload, $chargeManager) {
         return [
             'id' => $quoteRow->id,
             'quote_number' => $quoteRow->quote_number,
@@ -52,11 +53,10 @@
             'transit_time' => $quoteRow->transit_time,
             'etd' => optional($quoteRow->etd)->format('Y-m-d'),
             'eta' => optional($quoteRow->eta)->format('Y-m-d'),
-            'tariff_percent' => (float) ($quoteRow->tariff_percent ?? 0),
-            'freight_percent' => (float) ($quoteRow->freight_percent ?? 0),
-            'adjustment_amount' => (float) ($quoteRow->adjustment_amount ?? 0),
+            'charges' => $chargeManager->extract($quoteRow, 'quote'),
             'notes' => $quoteRow->notes,
             'terms' => $quoteRow->terms,
+            'payment_term' => $quoteRow->payment_term ?? '',
             'billing_address' => $quoteRow->billing_address ?: ['address' => ''],
             'shipping_address' => $quoteRow->shipping_address ?: ['address' => ''],
             'items' => $quoteRow->items->map(function ($item) use ($productPayload) {
@@ -118,9 +118,7 @@
         'transit_time' => $selectedQuote['transit_time'] ?? '',
         'etd' => $selectedQuote['etd'] ?? '',
         'eta' => $selectedQuote['eta'] ?? '',
-        'tariff_percent' => $selectedQuote['tariff_percent'] ?? 0,
-        'freight_percent' => $selectedQuote['freight_percent'] ?? 0,
-        'adjustment_amount' => $selectedQuote['adjustment_amount'] ?? 0,
+        'charges' => old('charges', $selectedQuote['charges'] ?? []),
         'notes' => $selectedQuote['notes'] ?? '',
         'terms' => $selectedQuote['terms'] ?? '',
         'payment_term' => $selectedQuote['payment_term'] ?? '',
@@ -175,7 +173,6 @@
                 <input type="hidden" name="organization_id" :value="form.organization_id || ''">
                 <input type="hidden" name="person_id" :value="form.person_id || ''">
                 <input type="hidden" name="sales_owner_id" :value="form.sales_owner_id || ''">
-                <input type="hidden" name="adjustment_amount" :value="form.adjustment_amount || 0">
                 <input type="hidden" name="billing_address[address]" :value="form.billing_address?.address || ''">
                 <input type="hidden" name="shipping_address[address]" :value="form.shipping_address?.address || ''">
 
@@ -264,7 +261,7 @@
                         <p class="text-sm text-gray-600 dark:text-white">Add Product Request for this proforma invoice.</p>
                     </div>
 
-                    <v-proforma-item-list :errors="errors" :organization-id="form.organization_id" :initial-products="form.items" :initial-tariff-percent="form.tariff_percent || 0" :initial-freight-percent="form.freight_percent || 0"></v-proforma-item-list>
+                    <v-proforma-item-list :errors="errors" :organization-id="form.organization_id" :initial-products="form.items" :initial-charges="form.charges || []"></v-proforma-item-list>
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2">
@@ -316,30 +313,39 @@
                             <p class="text-base font-semibold">@{{ formatPrice(subTotal) }}</p>
                         </div>
 
-                        <div class="document-summary-line" style="display: grid; grid-template-columns: 120px minmax(170px, 1fr) 120px; align-items: center; gap: 10px;">
-                            <span>Tarrifs (%)</span>
-                            <div class="flex items-center gap-2" style="white-space: nowrap;">
-                                <x-admin::form.control-group.control type="inline" ::name="'tariff_percent_display'" ::value="tariffPercent" ::errors="errors" label="Tarrifs" placeholder="Tarrifs" @on-change="(event) => tariffPercent = event.value" position="center" />
-                                <input type="hidden" name="tariff_percent" :value="tariffPercent">
+                        <template v-for="(charge, chargeIndex) in charges" :key="`charge-${chargeIndex}`">
+                            <div class="document-summary-line" style="display: grid; grid-template-columns: minmax(180px, 1.2fr) 110px 110px 120px 36px; align-items: center; gap: 10px;">
+                                <div>
+                                    <input type="text" v-model="charge.name" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="Charge name">
+                                    <input type="hidden" :name="`charges[${chargeIndex}][name]`" :value="charge.name">
+                                </div>
+                                <div>
+                                    <select v-model="charge.type" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800">
+                                        <option value="percentage">Percentage</option>
+                                        <option value="value">Value</option>
+                                    </select>
+                                    <input type="hidden" :name="`charges[${chargeIndex}][type]`" :value="charge.type">
+                                </div>
+                                <div>
+                                    <input type="number" min="0" step="0.01" v-model="charge.value" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="0.00">
+                                    <input type="hidden" :name="`charges[${chargeIndex}][value]`" :value="charge.value || 0">
+                                </div>
+                                <div class="text-right font-medium">@{{ formatPrice(chargeAmount(charge)) }}</div>
+                                <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-xl hover:bg-gray-200 dark:hover:bg-gray-800" @click="removeCharge(chargeIndex)">
+                                    <i class="icon-delete"></i>
+                                </button>
+                            </div>
+                        </template>
 
-                            </div>
-                            <div class="text-right font-medium">
-                                <input type="hidden" name="tax_amount" :value="tariffAmount">
-                                <p>@{{ formatPrice(tariffAmount) }}</p>
-                            </div>
+                        <div>
+                            <button type="button" class="secondary-button" @click="addCharge">Add Charge</button>
                         </div>
 
-                        <div class="document-summary-line" style="display: grid; grid-template-columns: 120px minmax(170px, 1fr) 120px; align-items: center; gap: 10px;">
-                            <span>Freight (%)</span>
-                            <div class="flex items-center gap-2" style="white-space: nowrap;">
-                                <x-admin::form.control-group.control type="inline" ::name="'freight_percent_display'" ::value="freightPercent" ::errors="errors" label="Freight" placeholder="Freight" @on-change="(event) => freightPercent = event.value" position="center" />
-                                <input type="hidden" name="freight_percent" :value="freightPercent">
-
-                            </div>
-                            <div class="text-right font-medium">
-                                <input type="hidden" name="adjustment_amount" :value="freightAmount">
-                                <p>@{{ formatPrice(freightAmount) }}</p>
-                            </div>
+                        <div class="flex w-full items-center justify-between gap-x-5">
+                            <span>Additional Charges ($)</span>
+                            <input type="hidden" name="tax_amount" :value="taxChargeTotal">
+                            <input type="hidden" name="adjustment_amount" :value="otherChargeTotal">
+                            <p class="text-base font-semibold">@{{ formatPrice(chargesTotal) }}</p>
                         </div>
 
                         <input type="hidden" name="discount_amount" value="0">
@@ -384,30 +390,20 @@
                 <input type="hidden" :name="`${inputName}[item_code]`" :value="product.item_code || ''">
                 <input type="hidden" :name="`${inputName}[unit]`" value="">
 
-                <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[qty]`" ::value="product.quantity" ::errors="errors" label="Quantity" placeholder="Quantity" @on-change="(event) => product.quantity = event.value" position="center" />
-                    </x-admin::form.control-group>
+                <x-admin::table.td class="!px-2 text-center">
+                    <input type="number" min="1" step="1" :name="`${inputName}[qty]`" v-model.number="product.quantity" class="custom-input text-center">
                 </x-admin::table.td>
 
-                <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[unit_price]`" ::value="product.price" ::errors="errors" label="Price" placeholder="Price" @on-change="(event) => product.price = event.value" position="center" ::value-label="formatPrice(product.price)" />
-                    </x-admin::form.control-group>
+                <x-admin::table.td class="!px-2 text-center">
+                    <input type="number" min="0" step="0.01" :name="`${inputName}[unit_price]`" v-model="product.price" class="custom-input text-center">
                 </x-admin::table.td>
 
-                <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[amount]`" ::value="amount" ::errors="errors" label="Amount" placeholder="Amount" :allowEdit="false" position="center" ::value-label="formatPrice(amount)" />
-                    </x-admin::form.control-group>
-                </x-admin::table.td>
+                <x-admin::table.td class="!px-2 text-center">@{{ formatPrice(amount) }}</x-admin::table.td>
 
-                <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
+                <x-admin::table.td class="!px-2 text-center">
                     <input type="hidden" :name="`${inputName}[discount_amount]`" value="0">
                     <input type="hidden" :name="`${inputName}[tax_amount]`" value="0">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[line_total]`" ::errors="errors" ::value="parseFloat(amount)" :allowEdit="false" position="center" ::value-label="formatPrice(parseFloat(amount))" />
-                    </x-admin::form.control-group>
+                    @{{ formatPrice(parseFloat(amount)) }}
                 </x-admin::table.td>
 
                 <x-admin::table.td v-if="$parent.products.length > 1" class="!px-2 ltr:text-right rtl:text-left">
@@ -439,9 +435,7 @@
                         this.form.transit_time = selected.transit_time || '';
                         this.form.etd = selected.etd || '';
                         this.form.eta = selected.eta || '';
-                        this.form.tariff_percent = selected.tariff_percent || 0;
-                        this.form.freight_percent = selected.freight_percent || 0;
-                        this.form.adjustment_amount = selected.adjustment_amount || 0;
+                        this.form.charges = (selected.charges || []).map(charge => ({ ...charge }));
                         this.form.notes = selected.notes || '';
                         this.form.terms = selected.terms || '';
                         this.form.billing_address = selected.billing_address || { address: '' };
@@ -453,11 +447,10 @@
 
             app.component('v-proforma-item-list', {
                 template: '#v-proforma-item-list-template',
-                props: ['errors', 'organizationId', 'initialProducts', 'initialTariffPercent', 'initialFreightPercent'],
+                props: ['errors', 'organizationId', 'initialProducts', 'initialCharges'],
                 data() {
                     return {
-                        tariffPercent: this.initialTariffPercent || 0,
-                        freightPercent: this.initialFreightPercent || 0,
+                        charges: this.initialCharges?.length ? this.initialCharges.map(charge => ({ ...charge })) : [],
                         products: this.initialProducts?.length
                             ? this.initialProducts.map(item => ({ ...item }))
                             : [{ id: null, product_id: null, name: '', item_code: '', quantity: 1, price: '0.00', discount_amount: '0.00', tax_amount: '0.00', available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '', cover_image_url: '' }],
@@ -472,28 +465,54 @@
                         },
                         deep: true,
                     },
-                    initialTariffPercent(value) {
-                        this.tariffPercent = value || 0;
-                    },
-                    initialFreightPercent(value) {
-                        this.freightPercent = value || 0;
+                    initialCharges(value) {
+                        this.charges = value?.length ? value.map(charge => ({ ...charge })) : [];
                     },
                 },
                 computed: {
                     subTotal() {
                         return this.products.reduce((t, p) => t + ((parseFloat(p.quantity) || 0) * (parseFloat(p.price) || 0)), 0);
                     },
-                    tariffAmount() {
-                        return this.subTotal * (parseFloat(this.tariffPercent || 0) / 100);
+                    chargesTotal() {
+                        return this.charges.reduce((total, charge) => total + this.chargeAmount(charge), 0);
                     },
-                    freightAmount() {
-                        return this.subTotal * (parseFloat(this.freightPercent || 0) / 100);
+                    taxChargeTotal() {
+                        return this.charges
+                            .filter(charge => this.isTaxCharge(charge.name))
+                            .reduce((total, charge) => total + this.chargeAmount(charge), 0);
+                    },
+                    otherChargeTotal() {
+                        return this.charges
+                            .filter(charge => ! this.isTaxCharge(charge.name))
+                            .reduce((total, charge) => total + this.chargeAmount(charge), 0);
                     },
                     grandTotal() {
-                        return this.subTotal + this.tariffAmount + this.freightAmount;
+                        return this.subTotal + this.chargesTotal;
                     },
                 },
                 methods: {
+                    blankCharge() {
+                        return { name: '', type: 'percentage', value: 0 };
+                    },
+                    addCharge() {
+                        this.charges.push(this.blankCharge());
+                    },
+                    removeCharge(index) {
+                        this.charges.splice(index, 1);
+                    },
+                    chargeAmount(charge) {
+                        const value = parseFloat(charge?.value || 0);
+
+                        if ((charge?.type || 'value') === 'percentage') {
+                            return this.subTotal * (value / 100);
+                        }
+
+                        return value;
+                    },
+                    isTaxCharge(name) {
+                        const normalized = String(name || '').trim().toLowerCase();
+                        return ['tax', 'tariff', 'tarrif', 'duty', 'vat', 'gst'].some(token => normalized.includes(token));
+                    },
                     addProduct() {
                         this.products.push({ id: null, product_id: null, name: '', item_code: '', quantity: 1, price: '0.00', discount_amount: '0.00', tax_amount: '0.00', available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', preview_image: '', cover_image_url: '' });
                     },
@@ -615,9 +634,6 @@
         </style>
     @endPushOnce
 </x-admin::layouts>
-
-
-
 
 
 

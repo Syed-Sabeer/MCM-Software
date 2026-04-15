@@ -1,6 +1,13 @@
 <x-admin::layouts>
     <x-slot:title>{{ $purchaseOrder->po_number }}</x-slot>
 
+    @php
+        $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
+        $charges = $chargeManager->extract($purchaseOrder->loadMissing('additionalCharges'), 'purchase_order');
+        $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
+            . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
+    @endphp
+
     <div class="flex flex-col gap-4">
         <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div class="flex items-start justify-between gap-4">
@@ -126,8 +133,9 @@
                 <div class="mb-3 text-base font-semibold dark:text-white">Totals</div>
                 <div class="space-y-2 text-sm dark:text-white">
                     <div class="flex items-center justify-between"><span>Sub Total</span><strong>{{ core()->formatBasePrice($purchaseOrder->sub_total ?: 0, 2) }}</strong></div>
-                    <div class="flex items-center justify-between"><span>Sales Tax</span><strong>{{ core()->formatBasePrice($purchaseOrder->tax_amount ?: 0, 2) }}</strong></div>
-                    <div class="flex items-center justify-between"><span>Freight</span><strong>{{ core()->formatBasePrice($purchaseOrder->freight ?: 0, 2) }}</strong></div>
+                    @foreach ($charges as $charge)
+                        <div class="flex items-center justify-between"><span>{{ $formatChargeLabel($charge) }}</span><strong>{{ core()->formatBasePrice($charge['amount'] ?: 0, 2) }}</strong></div>
+                    @endforeach
                     <div class="flex items-center justify-between border-t pt-2 text-base"><span>Grand Total</span><strong>{{ core()->formatBasePrice($purchaseOrder->grand_total ?: 0, 2) }}</strong></div>
                 </div>
             </div>

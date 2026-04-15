@@ -1,6 +1,8 @@
 @php
+    $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
     $organization = $proformaInvoice->organization;
     $salesPerson = $proformaInvoice->salesOwner;
+    $charges = $chargeManager->extract($proformaInvoice->loadMissing('additionalCharges'), 'proforma');
 
     $logo = core()->getConfigData('general.general.admin_logo.logo_image');
     $logoPath = $logo && file_exists(public_path('storage/' . $logo)) ? public_path('storage/' . $logo) : null;
@@ -43,6 +45,10 @@
     $shippingMethod = data_get($proformaInvoice, 'shipping_method') ?: '-';
     $productionTime = data_get($proformaInvoice, 'production_time') ?: '-';
     $transitTime = data_get($proformaInvoice, 'transit_time') ?: '-';
+    $remarks = trim((string) ($proformaInvoice->notes ?: ''));
+    $terms = trim((string) ($proformaInvoice->terms ?: ''));
+    $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
+        . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
     $shipDateRequired = optional($proformaInvoice->due_date)->format('Y-m-d') ?: '-';
     $etd = data_get($proformaInvoice, 'etd') ? \Carbon\Carbon::parse(data_get($proformaInvoice, 'etd'))->format('Y-m-d') : '-';
     $eta = data_get($proformaInvoice, 'eta') ? \Carbon\Carbon::parse(data_get($proformaInvoice, 'eta'))->format('Y-m-d') : '-';
@@ -208,17 +214,27 @@
 
     <table class="totals-table">
         <tr><td class="totals-label">Sub Total</td><td class="totals-value">{{ core()->formatBasePrice($proformaInvoice->subtotal ?: 0, 2) }}</td></tr>
-        <tr><td class="totals-label">Tarrifs</td><td class="totals-value">{{ core()->formatBasePrice($proformaInvoice->tax_amount ?: 0, 2) }}</td></tr>
-        <tr><td class="totals-label">Freight</td><td class="totals-value">{{ core()->formatBasePrice($proformaInvoice->adjustment_amount ?: 0, 2) }}</td></tr>
+        @foreach ($charges as $charge)
+            <tr><td class="totals-label">{{ $formatChargeLabel($charge) }}</td><td class="totals-value">{{ core()->formatBasePrice($charge['amount'] ?: 0, 2) }}</td></tr>
+        @endforeach
         <tr class="grand-row"><td class="totals-label">Grand Total</td><td class="totals-value">{{ core()->formatBasePrice($proformaInvoice->grand_total ?: 0, 2) }}</td></tr>
     </table>
 
-    <table class="notes-table">
-        <tr>
-            <td><div class="note-card"><div class="section-title">Remarks</div><div class="preline">{{ $proformaInvoice->notes ?: '-' }}</div></div></td>
-            <td><div class="note-card"><div class="section-title">Terms & Conditions</div><div class="preline">{{ $proformaInvoice->terms ?: '-' }}</div></div></td>
-        </tr>
-    </table>
+    @if ($remarks)
+        <table class="notes-table">
+            <tr>
+                <td><div class="note-card"><div class="section-title">Remarks</div><div class="preline">{{ $remarks }}</div></div></td>
+            </tr>
+        </table>
+    @endif
+
+    @if ($terms)
+        <table class="notes-table">
+            <tr>
+                <td><div class="note-card"><div class="section-title">Terms & Conditions</div><div class="preline">{{ $terms }}</div></div></td>
+            </tr>
+        </table>
+    @endif
 
     <table class="sign-table">
         <tr>

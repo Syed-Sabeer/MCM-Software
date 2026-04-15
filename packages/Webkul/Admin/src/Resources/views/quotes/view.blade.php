@@ -2,6 +2,7 @@
     <x-slot:title>Quote {{ $quote->quote_number }}</x-slot>
 
     @php
+        $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
         $organization = $quote->organization;
         $salesPerson = $quote->user;
 
@@ -32,10 +33,12 @@
 
         $formatQty = fn ($value) => number_format((float) $value, 0, '.', '');
         $formatAmount = fn ($value) => number_format((float) $value, 3, '.', ',');
+        $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
+            . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
 
         $itemsTotal = (float) ($quote->sub_total ?: 0);
-        $tariffAmount = (float) ($quote->tax_amount ?: 0);
-        $freightAmount = (float) ($quote->adjustment_amount ?: 0);
+        $charges = $chargeManager->extract($quote->loadMissing('additionalCharges'), 'quote');
+        $chargesTotal = collect($charges)->sum('amount');
         $grandTotal = (float) ($quote->grand_total ?: 0);
     @endphp
 
@@ -176,12 +179,14 @@
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <div class="mb-3 text-base font-semibold">Totals</div>
                 <div class="space-y-2 text-sm">
-                    <div class="flex justify-between"><span>Items Total</span><span>{{ $formatAmount($itemsTotal) }}</span></div>
-                    <div class="flex justify-between"><span>Tarrifs</span><span>{{ $formatAmount($tariffAmount) }}</span></div>
-                    <div class="flex justify-between"><span>Freight</span><span>{{ $formatAmount($freightAmount) }}</span></div>
-                    <div class="flex justify-between border-t pt-2 text-base font-bold"><span>Grand Total</span><span>{{ $formatAmount($grandTotal) }}</span></div>
+                        <div class="flex justify-between"><span>Items Total</span><span>{{ $formatAmount($itemsTotal) }}</span></div>
+                        @foreach ($charges as $charge)
+                            <div class="flex justify-between"><span>{{ $formatChargeLabel($charge) }}</span><span>{{ $formatAmount($charge['amount']) }}</span></div>
+                        @endforeach
+                        <div class="flex justify-between"><span>Additional Charges</span><span>{{ $formatAmount($chargesTotal) }}</span></div>
+                        <div class="flex justify-between border-t pt-2 text-base font-bold"><span>Grand Total</span><span>{{ $formatAmount($grandTotal) }}</span></div>
+                    </div>
                 </div>
-            </div>
 
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <div class="mb-3 text-base font-semibold">Linked Proformas</div>

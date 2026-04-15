@@ -1,5 +1,11 @@
 @php
+    $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
     $organization = $purchaseOrder->organization;
+    $charges = $chargeManager->extract($purchaseOrder->loadMissing('additionalCharges'), 'purchase_order');
+    $remarks = trim((string) ($purchaseOrder->notes ?: ''));
+    $terms = trim((string) ($purchaseOrder->terms ?: ''));
+    $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
+        . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
 
     $logo = core()->getConfigData('general.general.admin_logo.logo_image');
     $logoPath = $logo && file_exists(public_path('storage/' . $logo)) ? public_path('storage/' . $logo) : null;
@@ -145,22 +151,27 @@
 
     <table class="totals-table">
         <tr><td class="totals-label">Sub Total</td><td class="totals-value">{{ core()->formatBasePrice($purchaseOrder->sub_total ?: 0, 2) }}</td></tr>
-        @if ((float) ($purchaseOrder->tax_amount ?: 0) > 0)
-            <tr><td class="totals-label">Sales Tax</td><td class="totals-value">{{ core()->formatBasePrice($purchaseOrder->tax_amount ?: 0, 2) }}</td></tr>
-        @endif
-        @if ((float) ($purchaseOrder->freight ?: 0) > 0)
-            <tr><td class="totals-label">Freight</td><td class="totals-value">{{ core()->formatBasePrice($purchaseOrder->freight ?: 0, 2) }}</td></tr>
-        @endif
+        @foreach ($charges as $charge)
+            <tr><td class="totals-label">{{ $formatChargeLabel($charge) }}</td><td class="totals-value">{{ core()->formatBasePrice($charge['amount'] ?: 0, 2) }}</td></tr>
+        @endforeach
         <tr class="grand-row"><td class="totals-label">Grand Total</td><td class="totals-value">{{ core()->formatBasePrice($purchaseOrder->grand_total ?: 0, 2) }}</td></tr>
     </table>
 
-    <table class="notes-table">
-        <tr>
-            <td><div class="note-card"><div class="section-title">Remarks</div><div class="preline">{{ $purchaseOrder->notes ?: '-' }}</div></div></td>
-             <td><div class="note-card"><div class="section-title">Terms & Conditions</div><div class="preline">{{ $purchaseOrder->terms ?: '-' }}</div></div></td>
+    @if ($remarks)
+        <table class="notes-table">
+            <tr>
+                <td><div class="note-card"><div class="section-title">Remarks</div><div class="preline">{{ $remarks }}</div></div></td>
+            </tr>
+        </table>
+    @endif
 
-        </tr>
-    </table>
+    @if ($terms)
+        <table class="notes-table">
+            <tr>
+                <td><div class="note-card"><div class="section-title">Terms & Conditions</div><div class="preline">{{ $terms }}</div></div></td>
+            </tr>
+        </table>
+    @endif
 
     <table class="sign-table">
         <tr>

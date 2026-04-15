@@ -2,6 +2,7 @@
     <x-slot:title>Proforma {{ $proformaInvoice->proforma_number }}</x-slot>
 
     @php
+        $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
         $organization = $proformaInvoice->organization;
         $salesPerson = $proformaInvoice->salesOwner;
         $sourceQuote = $proformaInvoice->quote;
@@ -33,10 +34,12 @@
 
         $formatQty = fn ($value) => number_format((float) $value, 0, '.', '');
         $formatAmount = fn ($value) => number_format((float) $value, 3, '.', ',');
+        $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
+            . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
         $itemsTotal = (float) ($proformaInvoice->subtotal ?: 0);
-        $tariffAmount = (float) ($proformaInvoice->tax_amount ?: 0);
-        $freightAmount = (float) ($proformaInvoice->adjustment_amount ?: 0);
-        $subTotalWithCharges = $itemsTotal + $tariffAmount + $freightAmount;
+        $charges = $chargeManager->extract($proformaInvoice->loadMissing('additionalCharges'), 'proforma');
+        $chargesTotal = collect($charges)->sum('amount');
+        $subTotalWithCharges = $itemsTotal + $chargesTotal;
         $advanceReceived = (float) ($proformaInvoice->received_amount ?: 0);
         $remainingBalance = (float) ($proformaInvoice->remaining_amount ?: 0);
     @endphp
@@ -184,8 +187,9 @@
                     <div class="mb-3 text-base font-semibold">Totals</div>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between"><span>Items Total</span><span>{{ $formatAmount($itemsTotal) }}</span></div>
-                        <div class="flex justify-between"><span>Tarrifs</span><span>{{ $formatAmount($tariffAmount) }}</span></div>
-                        <div class="flex justify-between"><span>Freight</span><span>{{ $formatAmount($freightAmount) }}</span></div>
+                        @foreach ($charges as $charge)
+                            <div class="flex justify-between"><span>{{ $formatChargeLabel($charge) }}</span><span>{{ $formatAmount($charge['amount']) }}</span></div>
+                        @endforeach
                         <div class="flex justify-between"><span>Subtotal</span><span>{{ $formatAmount($subTotalWithCharges) }}</span></div>
                         <div class="flex justify-between"><span>Advance Received</span><span>{{ $formatAmount($advanceReceived) }}</span></div>
                         <div class="flex justify-between border-t pt-2 text-base font-bold"><span>Grand Total</span><span>{{ $formatAmount($remainingBalance) }}</span></div>
@@ -240,4 +244,3 @@
         </div>
     </div>
 </x-admin::layouts>
-

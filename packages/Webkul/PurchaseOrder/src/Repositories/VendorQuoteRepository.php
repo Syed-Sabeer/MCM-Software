@@ -5,13 +5,17 @@ namespace Webkul\PurchaseOrder\Repositories;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Support\DocumentChargeManager;
 use Webkul\PurchaseOrder\Models\JobOrder;
 use Webkul\PurchaseOrder\Models\VendorQuote;
 
 class VendorQuoteRepository extends Repository
 {
-    public function __construct(protected VendorQuoteItemRepository $vendorQuoteItemRepository, Container $container)
-    {
+    public function __construct(
+        protected VendorQuoteItemRepository $vendorQuoteItemRepository,
+        protected DocumentChargeManager $documentChargeManager,
+        Container $container
+    ) {
         parent::__construct($container);
     }
 
@@ -47,6 +51,7 @@ class VendorQuoteRepository extends Repository
             $data = $this->calculateTotals($data);
             $quote = parent::create($data);
             $this->syncItems($quote, $data['items'] ?? []);
+            $this->documentChargeManager->sync($quote, $data['charges'] ?? []);
             return $quote->fresh(['items', 'organization', 'jobOrder']);
         });
     }
@@ -57,6 +62,7 @@ class VendorQuoteRepository extends Repository
             $data = $this->calculateTotals($data);
             $quote = parent::update($data, $id, $attribute);
             $this->syncItems($quote, $data['items'] ?? []);
+            $this->documentChargeManager->sync($quote, $data['charges'] ?? []);
             return $quote->fresh(['items', 'organization', 'jobOrder']);
         });
     }
@@ -78,16 +84,16 @@ class VendorQuoteRepository extends Repository
             $subtotal += $lineTotal;
         }
 
-        $salesTaxPercent = (float) ($data['sales_tax_percent'] ?? 0);
-        $salesTaxAmount = $subtotal * ($salesTaxPercent / 100);
-        $freight = (float) ($data['freight'] ?? 0);
-        $grandTotal = $subtotal + $salesTaxAmount + $freight;
+        $charges = $this->documentChargeManager->normalize($data['charges'] ?? [], $subtotal);
+        $chargeSummary = $this->documentChargeManager->summarize('vendor_quote', $charges);
+        $grandTotal = $subtotal + ($chargeSummary['charge_total'] ?? 0);
 
         $data['items'] = $items;
+        $data['charges'] = $charges;
         $data['subtotal'] = $subtotal;
-        $data['sales_tax_percent'] = $salesTaxPercent;
-        $data['sales_tax_amount'] = $salesTaxAmount;
-        $data['freight'] = $freight;
+        $data['sales_tax_percent'] = $chargeSummary['sales_tax_percent'] ?? 0;
+        $data['sales_tax_amount'] = $chargeSummary['sales_tax_amount'] ?? 0;
+        $data['freight'] = $chargeSummary['freight'] ?? 0;
         $data['grand_total'] = $grandTotal;
 
         return $data;

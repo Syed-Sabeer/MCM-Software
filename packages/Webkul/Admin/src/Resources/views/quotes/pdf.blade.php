@@ -1,6 +1,8 @@
 @php
+    $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
     $organization = $quote->organization;
     $salesPerson = $quote->user;
+    $charges = $chargeManager->extract($quote->loadMissing('additionalCharges'), 'quote');
 
     $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?: '#0E90D9';
     $logo = core()->getConfigData('general.general.admin_logo.logo_image');
@@ -39,6 +41,10 @@
     $shippingMethod = data_get($quote, 'shipping_method') ?: '-';
     $productionTime = data_get($quote, 'production_time') ?: '-';
     $transitTime = data_get($quote, 'transit_time') ?: '-';
+    $remarks = trim((string) ($quote->description ?: $quote->notes ?: ''));
+    $terms = trim((string) ($quote->terms ?: ''));
+    $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
+        . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
     $etd = data_get($quote, 'etd')
     ? \Carbon\Carbon::parse(data_get($quote, 'etd'))->format('Y-m-d')
     : (optional($quote->expired_at)?->format('Y-m-d'));
@@ -208,17 +214,27 @@ $eta = data_get($quote, 'eta')
 
     <table class="totals-table">
         <tr><td class="totals-label">Sub Total</td><td class="totals-value">{{ core()->formatBasePrice($quote->sub_total ?: 0, 2) }}</td></tr>
-        <tr><td class="totals-label">Tarrifs</td><td class="totals-value">{{ core()->formatBasePrice($quote->tax_amount ?: 0, 2) }}</td></tr>
-        <tr><td class="totals-label">Freight</td><td class="totals-value">{{ core()->formatBasePrice($quote->adjustment_amount ?: 0, 2) }}</td></tr>
+        @foreach ($charges as $charge)
+            <tr><td class="totals-label">{{ $formatChargeLabel($charge) }}</td><td class="totals-value">{{ core()->formatBasePrice($charge['amount'] ?: 0, 2) }}</td></tr>
+        @endforeach
         <tr class="grand-row"><td class="totals-label">Grand Total</td><td class="totals-value">{{ core()->formatBasePrice($quote->grand_total ?: 0, 2) }}</td></tr>
     </table>
 
-    <table class="notes-table">
-        <tr>
-            <td><div class="note-card"><div class="section-title">Remarks</div><div class="preline">{{ $quote->description ?: $quote->notes ?: '-' }}</div></div></td>
-            <td><div class="note-card"><div class="section-title">Terms & Conditions</div><div class="preline">{{ $quote->terms ?: '-' }}</div></div></td>
-        </tr>
-    </table>
+    @if ($remarks)
+        <table class="notes-table">
+            <tr>
+                <td><div class="note-card"><div class="section-title">Remarks</div><div class="preline">{{ $remarks }}</div></div></td>
+            </tr>
+        </table>
+    @endif
+
+    @if ($terms)
+        <table class="notes-table">
+            <tr>
+                <td><div class="note-card"><div class="section-title">Terms & Conditions</div><div class="preline">{{ $terms }}</div></div></td>
+            </tr>
+        </table>
+    @endif
 
     <table class="sign-table">
         <tr>
@@ -230,4 +246,3 @@ $eta = data_get($quote, 'eta')
 </div>
 </body>
 </html>
-

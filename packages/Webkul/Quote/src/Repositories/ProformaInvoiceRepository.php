@@ -6,6 +6,7 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Support\DocumentChargeManager;
 use Webkul\Quote\Models\Quote;
 
 class ProformaInvoiceRepository extends Repository
@@ -13,6 +14,7 @@ class ProformaInvoiceRepository extends Repository
     public function __construct(
         protected ProformaInvoiceItemRepository $proformaInvoiceItemRepository,
         protected ProformaReceiptRepository $proformaReceiptRepository,
+        protected DocumentChargeManager $documentChargeManager,
         Container $container
     ) {
         parent::__construct($container);
@@ -37,6 +39,7 @@ class ProformaInvoiceRepository extends Repository
             $proforma = parent::create($data);
 
             $this->syncItems($proforma->id, $data['items'] ?? []);
+            $this->documentChargeManager->sync($proforma, $data['charges'] ?? []);
             $this->recalculateReceiptSummary($proforma->id);
 
             return $proforma->fresh(['items', 'receipts']);
@@ -54,6 +57,7 @@ class ProformaInvoiceRepository extends Repository
             $proforma = parent::update($data, $id, $attribute);
 
             $this->syncItems($id, $data['items'] ?? []);
+            $this->documentChargeManager->sync($proforma, $data['charges'] ?? []);
             $this->recalculateReceiptSummary($id);
 
             return $proforma->fresh(['items', 'receipts']);
@@ -103,6 +107,7 @@ class ProformaInvoiceRepository extends Repository
             'source_type'          => 'quote',
             'status'               => 'draft',
             'created_by'           => auth()->id(),
+            'charges'              => $this->documentChargeManager->extract($quote, 'quote'),
             'items'                => $items,
         ], $overrides);
 
@@ -218,18 +223,19 @@ class ProformaInvoiceRepository extends Repository
             $subTotal += $lineSubTotal;
         }
 
-        $tariffPercent = (float) ($data['tariff_percent'] ?? 0);
-        $freightPercent = (float) ($data['freight_percent'] ?? 0);
-        $taxAmount = $subTotal * ($tariffPercent / 100);
-        $adjustment = $subTotal * ($freightPercent / 100);
+        $charges = $this->documentChargeManager->normalize($data['charges'] ?? [], $subTotal);
+        $chargeSummary = $this->documentChargeManager->summarize('proforma', $charges);
         $discountAmount = 0;
-        $grandTotal = max($subTotal + $taxAmount + $adjustment, 0);
+        $grandTotal = max($subTotal + ($chargeSummary['charge_total'] ?? 0), 0);
 
         $data['items'] = $items;
+        $data['charges'] = $charges;
         $data['subtotal'] = $subTotal;
         $data['discount_amount'] = $discountAmount;
-        $data['tax_amount'] = $taxAmount;
-        $data['adjustment_amount'] = $adjustment;
+        $data['tax_amount'] = $chargeSummary['tax_amount'] ?? 0;
+        $data['adjustment_amount'] = $chargeSummary['adjustment_amount'] ?? 0;
+        $data['tariff_percent'] = $chargeSummary['tariff_percent'] ?? 0;
+        $data['freight_percent'] = $chargeSummary['freight_percent'] ?? 0;
         $data['grand_total'] = $grandTotal;
         $data['remaining_amount'] = $grandTotal;
 
@@ -286,4 +292,3 @@ class ProformaInvoiceRepository extends Repository
         }
     }
 }
-

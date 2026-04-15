@@ -4,18 +4,23 @@ namespace Webkul\Admin\Http\Controllers\PurchaseOrder;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Admin\DataGrids\PurchaseOrder\JobOrderDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\JobOrderRequest;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
+use Webkul\Core\Traits\PDFHandler;
 use Webkul\PurchaseOrder\Models\JobOrder;
 use Webkul\PurchaseOrder\Repositories\JobOrderRepository;
 use Webkul\Quote\Repositories\ProformaInvoiceRepository;
 
 class JobOrderController extends Controller
 {
+    use PDFHandler;
+
     public function __construct(
         protected JobOrderRepository $jobOrderRepository,
         protected ProformaInvoiceRepository $proformaInvoiceRepository
@@ -55,7 +60,7 @@ class JobOrderController extends Controller
 
     public function view(int $id): View
     {
-        $jobOrder = $this->jobOrderRepository->with(['organization', 'person', 'proformaInvoice', 'items.product', 'requirements', 'jobCards.jobOrderItem.product', 'jobCards.sections.items', 'vendorQuotes', 'purchaseOrders'])->findOrFail($id);
+        $jobOrder = $this->findJobOrderForExport($id);
 
         return view('admin::job-orders.view', compact('jobOrder'));
     }
@@ -97,5 +102,118 @@ class JobOrderController extends Controller
         }
 
         return response()->json(['message' => 'Job orders deleted successfully.']);
+    }
+
+    public function downloadJobCardPdf(int $id): Response|StreamedResponse
+    {
+        $jobOrder = $this->findJobOrderForExport($id);
+
+        return $this->downloadPDF(
+            view('admin::job-orders.job-card-pdf', compact('jobOrder'))->render(),
+            'Job_Card_' . ($jobOrder->job_order_number ?: $jobOrder->id)
+        );
+    }
+
+    public function downloadJobCardCsv(int $id): StreamedResponse
+    {
+        $jobOrder = $this->findJobOrderForExport($id);
+
+        return response()->streamDownload(function () use ($jobOrder) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, ['Job Order', 'Item', 'Section', 'Process', 'Requirement Qty', 'Unit']);
+
+            foreach ($jobOrder->jobCards as $jobCard) {
+                $itemCode = optional($jobCard->jobOrderItem)->display_code;
+                $itemLabel = $itemCode && $itemCode !== '-' ? $itemCode : ($jobCard->title ?: 'Job Card');
+
+                foreach ($jobCard->sections as $section) {
+                    if ($section->items->isEmpty()) {
+                        fputcsv($handle, [
+                            $jobOrder->job_order_number,
+                            $itemLabel,
+                            $section->section_name,
+                            '',
+                            '',
+                            '',
+                        ]);
+
+                        continue;
+                    }
+
+                    foreach ($section->items as $sectionItem) {
+                        fputcsv($handle, [
+                            $jobOrder->job_order_number,
+                            $itemLabel,
+                            $section->section_name,
+                            $sectionItem->name,
+                            $sectionItem->qty,
+                            $sectionItem->unit,
+                        ]);
+                    }
+                }
+            }
+
+            fclose($handle);
+        }, 'Job_Card_' . ($jobOrder->job_order_number ?: $jobOrder->id) . '.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function downloadRequirementSheetPdf(int $id): Response|StreamedResponse
+    {
+        $jobOrder = $this->findJobOrderForExport($id);
+
+        return $this->downloadPDF(
+            view('admin::job-orders.requirement-sheet-pdf', compact('jobOrder'))->render(),
+            'Requirement_Sheet_' . ($jobOrder->job_order_number ?: $jobOrder->id)
+        );
+    }
+
+    public function downloadRequirementSheetCsv(int $id): StreamedResponse
+    {
+        $jobOrder = $this->findJobOrderForExport($id);
+
+        return response()->streamDownload(function () use ($jobOrder) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, ['Job Order', 'Item', 'Material', 'Per Item Required', 'Required', 'Received', 'Balance', 'Unit', 'Status']);
+
+            foreach ($jobOrder->requirements as $requirement) {
+                $linkedItem = $jobOrder->items->firstWhere('id', $requirement->job_order_item_id);
+
+                fputcsv($handle, [
+                    $jobOrder->job_order_number,
+                    $linkedItem?->display_code ?: '',
+                    $requirement->material_name,
+                    $requirement->qty_per_unit,
+                    $requirement->required_qty,
+                    $requirement->received_qty,
+                    $requirement->balance_qty,
+                    $requirement->unit,
+                    $requirement->status,
+                ]);
+            }
+
+            fclose($handle);
+        }, 'Requirement_Sheet_' . ($jobOrder->job_order_number ?: $jobOrder->id) . '.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    protected function findJobOrderForExport(int $id): JobOrder
+    {
+        return $this->jobOrderRepository->with([
+            'organization',
+            'person',
+            'proformaInvoice',
+            'proformaInvoice.items',
+            'items.product',
+            'requirements',
+            'jobCards.jobOrderItem.product',
+            'jobCards.sections.items',
+            'vendorQuotes',
+            'purchaseOrders',
+        ])->findOrFail($id);
     }
 }

@@ -8,6 +8,7 @@ use Webkul\Contact\Models\Person;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Support\DocumentChargeManager;
 use Webkul\Quote\Contracts\Quote;
 
 class QuoteRepository extends Repository
@@ -38,6 +39,7 @@ class QuoteRepository extends Repository
         protected AttributeRepository $attributeRepository,
         protected AttributeValueRepository $attributeValueRepository,
         protected QuoteItemRepository $quoteItemRepository,
+        protected DocumentChargeManager $documentChargeManager,
         Container $container
     ) {
         parent::__construct($container);
@@ -73,6 +75,8 @@ class QuoteRepository extends Repository
                 'quote_id' => $quote->id,
             ]));
         }
+
+        $this->documentChargeManager->sync($quote, $data['charges'] ?? []);
 
         return $quote;
     }
@@ -139,6 +143,8 @@ class QuoteRepository extends Repository
             $this->quoteItemRepository->delete($itemId);
         }
 
+        $this->documentChargeManager->sync($quote, $data['charges'] ?? []);
+
         return $quote;
     }
 
@@ -170,7 +176,6 @@ class QuoteRepository extends Repository
         $normalizedItems = [];
         $subTotal = 0;
         $discountAmount = 0;
-        $taxAmount = 0;
 
         foreach ($items as $itemKey => $item) {
             if (! is_array($item)) {
@@ -207,23 +212,21 @@ class QuoteRepository extends Repository
 
             $subTotal = $this->roundMoney($subTotal + $lineSubTotal);
             $discountAmount += $lineDiscountAmount;
-            $taxAmount += $lineTaxAmount;
         }
 
-        $tariffPercent = $this->roundMoney((float) ($data['tariff_percent'] ?? 0));
-        $freightPercent = $this->roundMoney((float) ($data['freight_percent'] ?? 0));
-        $taxAmount = $this->roundMoney($subTotal * ($tariffPercent / 100));
-        $freightAmount = $this->roundMoney($subTotal * ($freightPercent / 100));
+        $charges = $this->documentChargeManager->normalize($data['charges'] ?? [], $subTotal);
+        $chargeSummary = $this->documentChargeManager->summarize('quote', $charges);
         $discountAmount = 0;
-        $grandTotal = $this->roundMoney(max($subTotal + $taxAmount + $freightAmount, 0));
+        $grandTotal = $this->roundMoney(max($subTotal + ($chargeSummary['charge_total'] ?? 0), 0));
 
         $data['items'] = $normalizedItems;
+        $data['charges'] = $charges;
         $data['sub_total'] = $subTotal;
         $data['discount_amount'] = $discountAmount;
-        $data['tax_amount'] = $taxAmount;
-        $data['adjustment_amount'] = $freightAmount;
-        $data['tariff_percent'] = $tariffPercent;
-        $data['freight_percent'] = $freightPercent;
+        $data['tax_amount'] = $chargeSummary['tax_amount'] ?? 0;
+        $data['adjustment_amount'] = $chargeSummary['adjustment_amount'] ?? 0;
+        $data['tariff_percent'] = $chargeSummary['tariff_percent'] ?? 0;
+        $data['freight_percent'] = $chargeSummary['freight_percent'] ?? 0;
         $data['grand_total'] = $grandTotal;
 
         return $data;

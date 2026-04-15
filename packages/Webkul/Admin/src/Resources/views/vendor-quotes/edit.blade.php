@@ -1,4 +1,5 @@
 @php
+    $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
     $companyName = core()->getConfigData('general.general.company_info.company_name');
     $companyAddress = core()->getConfigData('general.general.company_info.address');
     $companyPhone = core()->getConfigData('general.general.company_info.telephone');
@@ -13,6 +14,7 @@
         'unit' => $item->unit ?: optional($item->requirement)->unit ?: 'PCS',
         'unit_price' => $item->unit_price,
     ])->toArray());
+    $initialVendorQuoteCharges = collect(old('charges', $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote')))->values()->all();
 @endphp
 <x-admin::layouts>
     <x-slot:title>Edit Vendor Quote</x-slot>
@@ -95,8 +97,9 @@
                 <div class="mt-4 flex justify-end">
                     <div class="document-form-summary-box is-wide grid gap-4 rounded-lg bg-gray-100 p-5 text-sm dark:bg-gray-950 dark:text-white" style="max-width: 100%;">
                         <div class="flex items-center justify-between gap-x-5"><span>Sub Total</span><input type="hidden" name="subtotal" id="vendor-quote-subtotal-input" value="{{ old('subtotal', $vendorQuote->subtotal ?: 0) }}"><p class="text-base font-semibold" id="vendor-quote-subtotal">0.00</p></div>
-                        <div class="document-summary-line" style="display:grid;grid-template-columns:120px minmax(170px,1fr) 120px;align-items:center;gap:10px;"><span>Sales Tax (%)</span><div><input type="number" step="0.01" min="0" name="sales_tax_percent" id="vendor-quote-sales-tax-percent" value="{{ old('sales_tax_percent', $vendorQuote->sales_tax_percent ?: 0) }}" class="custom-input" oninput="window.calculateVendorQuoteTotals()"></div><div class="text-right font-medium"><input type="hidden" name="sales_tax_amount" id="vendor-quote-sales-tax-amount-input" value="{{ old('sales_tax_amount', $vendorQuote->sales_tax_amount ?: 0) }}"><span id="vendor-quote-sales-tax-amount">0.00</span></div></div>
-                        <div class="document-summary-line" style="display:grid;grid-template-columns:120px minmax(170px,1fr) 120px;align-items:center;gap:10px;"><span>Freight</span><div><input type="number" step="0.01" min="0" name="freight" id="vendor-quote-freight" value="{{ old('freight', $vendorQuote->freight ?: 0) }}" class="custom-input" oninput="window.calculateVendorQuoteTotals()"></div><div class="text-right font-medium"><span id="vendor-quote-freight-amount">0.00</span></div></div>
+                        <div id="vendor-quote-charges-container" class="grid gap-2"></div>
+                        <div><button type="button" class="secondary-button" onclick="window.addVendorQuoteCharge()">Add Charge</button></div>
+                        <div class="flex items-center justify-between gap-x-5"><span>Additional Charges</span><input type="hidden" name="sales_tax_amount" id="vendor-quote-sales-tax-amount-input" value="{{ old('sales_tax_amount', $vendorQuote->sales_tax_amount ?: 0) }}"><input type="hidden" name="freight" id="vendor-quote-freight-input" value="{{ old('freight', $vendorQuote->freight ?: 0) }}"><p class="text-base font-semibold" id="vendor-quote-charges-total">0.00</p></div>
                         <div class="flex items-center justify-between gap-x-5 border-t border-gray-200 pt-3 text-base font-semibold dark:border-gray-800"><span>Grand Total</span><input type="hidden" name="grand_total" id="vendor-quote-grand-total-input" value="{{ old('grand_total', $vendorQuote->grand_total ?: 0) }}"><p id="vendor-quote-grand-total">0.00</p></div>
                     </div>
                 </div>
@@ -122,6 +125,61 @@
 
     @push('scripts')
         <script>
+            window.vendorQuoteCharges = @json($initialVendorQuoteCharges);
+
+            window.isTaxChargeName = function (name) {
+                const normalized = String(name || '').trim().toLowerCase();
+                return ['tax', 'tariff', 'tarrif', 'duty', 'vat', 'gst'].some((token) => normalized.includes(token));
+            };
+
+            window.vendorQuoteChargeAmount = function (charge, subtotal) {
+                const value = parseFloat(charge?.value || 0);
+
+                if ((charge?.type || 'value') === 'percentage') {
+                    return subtotal * (value / 100);
+                }
+
+                return value;
+            };
+
+            window.renderVendorQuoteCharges = function () {
+                const container = document.getElementById('vendor-quote-charges-container');
+                if (! container) return;
+                container.innerHTML = '';
+
+                window.vendorQuoteCharges.forEach((charge, index) => {
+                    const row = document.createElement('div');
+                    row.className = 'document-summary-line';
+                    row.style.cssText = 'display:grid;grid-template-columns:minmax(180px,1.2fr) 110px 110px 120px 36px;align-items:center;gap:10px;';
+                    row.innerHTML = `
+                        <div><input type="text" name="charges[${index}][name]" value="${charge.name ?? ''}" class="custom-input" placeholder="Charge name" oninput="window.updateVendorQuoteCharge(${index}, 'name', this.value)"></div>
+                        <div><select name="charges[${index}][type]" class="custom-select" onchange="window.updateVendorQuoteCharge(${index}, 'type', this.value)"><option value="percentage" ${(charge.type || 'value') === 'percentage' ? 'selected' : ''}>Percentage</option><option value="value" ${(charge.type || 'value') === 'value' ? 'selected' : ''}>Value</option></select></div>
+                        <div><input type="number" min="0" step="0.01" name="charges[${index}][value]" value="${charge.value ?? 0}" class="custom-input" oninput="window.updateVendorQuoteCharge(${index}, 'value', this.value)"></div>
+                        <div class="text-right font-medium"><span id="vendor-quote-charge-amount-${index}">0.00</span></div>
+                        <button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removeVendorQuoteCharge(${index})"><i class="icon-delete"></i></button>
+                    `;
+                    container.appendChild(row);
+                });
+            };
+
+            window.addVendorQuoteCharge = function () {
+                window.vendorQuoteCharges.push({ name: '', type: 'percentage', value: 0 });
+                window.renderVendorQuoteCharges();
+                window.calculateVendorQuoteTotals();
+            };
+
+            window.updateVendorQuoteCharge = function (index, field, value) {
+                if (! window.vendorQuoteCharges[index]) return;
+                window.vendorQuoteCharges[index][field] = value;
+                window.calculateVendorQuoteTotals();
+            };
+
+            window.removeVendorQuoteCharge = function (index) {
+                window.vendorQuoteCharges.splice(index, 1);
+                window.renderVendorQuoteCharges();
+                window.calculateVendorQuoteTotals();
+            };
+
             window.calculateVendorQuoteTotals = function () {
                 const rows = document.querySelectorAll('#vendor-quote-items-table tbody tr');
                 let subtotal = 0;
@@ -133,21 +191,34 @@
                     const amountNode = row.querySelector('.item-amount');
                     if (amountNode) amountNode.textContent = amount.toFixed(2);
                 });
-                const salesTaxPercent = parseFloat(document.getElementById('vendor-quote-sales-tax-percent')?.value || 0);
-                const salesTaxAmount = subtotal * (salesTaxPercent / 100);
-                const freight = parseFloat(document.getElementById('vendor-quote-freight')?.value || 0);
-                const grandTotal = subtotal + salesTaxAmount + freight;
+
+                let taxCharges = 0;
+                let otherCharges = 0;
+
+                window.vendorQuoteCharges.forEach((charge, index) => {
+                    const amount = window.vendorQuoteChargeAmount(charge, subtotal);
+                    const amountNode = document.getElementById(`vendor-quote-charge-amount-${index}`);
+                    if (amountNode) amountNode.textContent = amount.toFixed(2);
+                    if (window.isTaxChargeName(charge.name)) taxCharges += amount;
+                    else otherCharges += amount;
+                });
+
+                const chargeTotal = taxCharges + otherCharges;
+                const grandTotal = subtotal + chargeTotal;
                 document.getElementById('vendor-quote-subtotal').textContent = subtotal.toFixed(2);
                 document.getElementById('vendor-quote-subtotal-input').value = subtotal.toFixed(4);
-                document.getElementById('vendor-quote-sales-tax-amount').textContent = salesTaxAmount.toFixed(2);
-                document.getElementById('vendor-quote-sales-tax-amount-input').value = salesTaxAmount.toFixed(4);
-                document.getElementById('vendor-quote-freight-amount').textContent = freight.toFixed(2);
+                document.getElementById('vendor-quote-sales-tax-amount-input').value = taxCharges.toFixed(4);
+                document.getElementById('vendor-quote-freight-input').value = otherCharges.toFixed(4);
+                document.getElementById('vendor-quote-charges-total').textContent = chargeTotal.toFixed(2);
                 document.getElementById('vendor-quote-grand-total').textContent = grandTotal.toFixed(2);
                 document.getElementById('vendor-quote-grand-total-input').value = grandTotal.toFixed(4);
             };
             window.removeVendorQuoteRow = function (button) { const tbody = document.querySelector('#vendor-quote-items-table tbody'); const row = button.closest('tr'); if (!tbody || !row) return; if (tbody.children.length <= 1) { row.querySelectorAll('input').forEach((input) => { if (input.type === 'hidden') input.value = ''; else if (input.type === 'number') input.value = input.name.includes('[quantity]') ? '1' : '0'; else input.value = input.name.includes('[unit]') ? 'PCS' : ''; }); const amount = row.querySelector('.item-amount'); if (amount) amount.textContent = '0.00'; window.calculateVendorQuoteTotals(); return; } row.remove(); window.calculateVendorQuoteTotals(); };
             window.addVendorQuoteRow = function () { const tbody = document.querySelector('#vendor-quote-items-table tbody'); const index = tbody.children.length; tbody.insertAdjacentHTML('beforeend', `<tr><td class="py-2"><input type="hidden" name="items[${index}][id]" value=""><input type="hidden" name="items[${index}][requirement_id]" value=""><input type="text" name="items[${index}][material_name]" class="custom-input"></td><td class="py-2"><input type="number" step="0.0001" min="0.0001" name="items[${index}][quantity]" value="1" class="custom-input item-qty" oninput="window.calculateVendorQuoteTotals()"></td><td class="py-2"><input type="text" name="items[${index}][unit]" value="PCS" class="custom-input"></td><td class="py-2"><input type="number" step="0.01" min="0" name="items[${index}][unit_price]" value="0" class="custom-input item-price" oninput="window.calculateVendorQuoteTotals()"></td><td class="py-2 text-right align-middle"><span class="item-amount">0.00</span></td><td class="py-2 text-center"><button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removeVendorQuoteRow(this)"><i class="icon-delete"></i></button></td></tr>`); window.calculateVendorQuoteTotals(); };
-            document.addEventListener('DOMContentLoaded', window.calculateVendorQuoteTotals);
+            document.addEventListener('DOMContentLoaded', () => {
+                window.renderVendorQuoteCharges();
+                window.calculateVendorQuoteTotals();
+            });
         </script>
     @endpush
 

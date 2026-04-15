@@ -18,6 +18,7 @@ use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\QuoteResource;
 use Webkul\Core\Traits\PDFHandler;
+use Webkul\Core\Support\DocumentChargeManager;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Quote\Repositories\ProformaInvoiceRepository;
 use Webkul\Quote\Repositories\QuoteRepository;
@@ -34,7 +35,8 @@ class QuoteController extends Controller
     public function __construct(
         protected QuoteRepository $quoteRepository,
         protected LeadRepository $leadRepository,
-        protected ProformaInvoiceRepository $proformaInvoiceRepository
+        protected ProformaInvoiceRepository $proformaInvoiceRepository,
+        protected DocumentChargeManager $documentChargeManager
     ) {
         request()->request->add(['entity_type' => 'quotes']);
     }
@@ -263,6 +265,7 @@ class QuoteController extends Controller
             $payload['subject'] = $payload['subject'].' (Copy)';
             $payload['status'] = 'draft';
             $payload['quote_number'] = null;
+            $payload['charges'] = $this->documentChargeManager->extract($quote, 'quote');
 
             $payload['items'] = $quote->items->map(function ($item) {
                 return [
@@ -339,8 +342,10 @@ class QuoteController extends Controller
             'etd'                    => ['nullable', 'date'],
             'eta'                    => ['nullable', 'date'],
             'expired_at'             => ['nullable', 'date'],
-            'tariff_percent'         => ['nullable', 'numeric', 'min:0'],
-            'freight_percent'        => ['nullable', 'numeric', 'min:0'],
+            'charges'                => ['nullable', 'array'],
+            'charges.*.name'         => ['required_with:charges.*.type,charges.*.value', 'string', 'max:255'],
+            'charges.*.type'         => ['required_with:charges.*.name,charges.*.value', 'in:percentage,value'],
+            'charges.*.value'        => ['required_with:charges.*.name,charges.*.type', 'numeric', 'min:0'],
             'items'                  => ['required', 'array', 'min:1'],
             'items.*.product_id'     => ['nullable', 'exists:products,id'],
             'items.*.item_name'      => ['nullable', 'string', 'max:255'],

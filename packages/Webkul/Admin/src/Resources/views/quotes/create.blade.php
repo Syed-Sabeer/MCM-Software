@@ -1,5 +1,6 @@
 @php
     $quote = app('\Webkul\Quote\Repositories\QuoteRepository')->getModel();
+    $initialQuoteCharges = collect(old('charges', []))->values()->all();
 
     $quote->fill([
         'quote_number' => \Webkul\Quote\Models\Quote::generateNextQuoteNumber(),
@@ -232,34 +233,39 @@
                             <p class="text-base font-semibold">@{{ $admin.formatPrice(subTotal) }}</p>
                         </div>
 
-                        <div class="document-summary-line" style="display: grid; grid-template-columns: 120px minmax(170px, 1fr) 120px; align-items: center; gap: 10px;">
-                            <span>Tarrifs (%)</span>
-                            <div class="flex items-center gap-2" style="white-space: nowrap;">
-                                <v-quote-summary-inline
-                                    name="tariff_percent"
-                                    v-model="tariffPercent"
-                                    placeholder="Tarrifs"
-                                ></v-quote-summary-inline>
+                        <template v-for="(charge, chargeIndex) in charges" :key="`charge-${chargeIndex}`">
+                            <div class="document-summary-line" style="display: grid; grid-template-columns: minmax(180px, 1.2fr) 110px 110px 120px 36px; align-items: center; gap: 10px;">
+                                <div>
+                                    <input type="text" v-model="charge.name" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="Charge name">
+                                    <input type="hidden" :name="`charges[${chargeIndex}][name]`" :value="charge.name">
+                                </div>
+                                <div>
+                                    <select v-model="charge.type" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800">
+                                        <option value="percentage">Percentage</option>
+                                        <option value="value">Value</option>
+                                    </select>
+                                    <input type="hidden" :name="`charges[${chargeIndex}][type]`" :value="charge.type">
+                                </div>
+                                <div>
+                                    <input type="number" min="0" step="0.01" v-model="charge.value" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="0.00">
+                                    <input type="hidden" :name="`charges[${chargeIndex}][value]`" :value="charge.value || 0">
+                                </div>
+                                <div class="text-right font-medium">@{{ $admin.formatPrice(chargeAmount(charge)) }}</div>
+                                <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-xl hover:bg-gray-200 dark:hover:bg-gray-800" @click="removeCharge(chargeIndex)">
+                                    <i class="icon-delete"></i>
+                                </button>
                             </div>
-                            <div class="text-right font-medium">
-                                <input type="hidden" name="tax_amount" :value="tariffAmount">
-                                <p>@{{ $admin.formatPrice(tariffAmount) }}</p>
-                            </div>
+                        </template>
+
+                        <div>
+                            <button type="button" class="secondary-button" @click="addCharge">Add Charge</button>
                         </div>
 
-                        <div class="document-summary-line" style="display: grid; grid-template-columns: 120px minmax(170px, 1fr) 120px; align-items: center; gap: 10px;">
-                            <span>Freight (%)</span>
-                            <div class="flex items-center gap-2" style="white-space: nowrap;">
-                                <v-quote-summary-inline
-                                    name="freight_percent"
-                                    v-model="freightPercent"
-                                    placeholder="Freight"
-                                ></v-quote-summary-inline>
-                            </div>
-                            <div class="text-right font-medium">
-                                <input type="hidden" name="adjustment_amount" :value="freightAmount">
-                                <p>@{{ $admin.formatPrice(freightAmount) }}</p>
-                            </div>
+                        <div class="flex w-full items-center justify-between gap-x-5">
+                            <span>Additional Charges ($)</span>
+                            <input type="hidden" name="tax_amount" :value="taxChargeTotal">
+                            <input type="hidden" name="adjustment_amount" :value="otherChargeTotal">
+                            <p class="text-base font-semibold">@{{ $admin.formatPrice(chargesTotal) }}</p>
                         </div>
 
                         <input type="hidden" name="discount_amount" value="0">
@@ -308,22 +314,30 @@
                 <input type="hidden" :name="`${inputName}[item_name]`" :value="product.name || ''">
                 <input type="hidden" :name="`${inputName}[item_code]`" :value="product.item_code || ''">
 
-                <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[quantity]`" ::value="product.quantity" ::errors="errors" :label="trans('admin::app.quotes.create.quantity')" :placeholder="trans('admin::app.quotes.create.quantity')" @on-change="(event) => product.quantity = event.value" position="center" />
-                    </x-admin::form.control-group>
+                <x-admin::table.td class="!px-2 text-center">
+                    <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        :name="`${inputName}[quantity]`"
+                        v-model.number="product.quantity"
+                        class="w-full rounded border border-gray-200 px-2 py-1 text-center text-sm dark:border-gray-700 dark:bg-gray-800"
+                    >
                 </x-admin::table.td>
 
-                <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[price]`" ::value="product.price" ::errors="errors" :label="trans('admin::app.quotes.create.price')" :placeholder="trans('admin::app.quotes.create.price')" @on-change="(event) => product.price = event.value" position="center" ::value-label="$admin.formatPrice(product.price)" />
-                    </x-admin::form.control-group>
+                <x-admin::table.td class="!px-2 text-center">
+                    <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        :name="`${inputName}[price]`"
+                        v-model="product.price"
+                        class="w-full rounded border border-gray-200 px-2 py-1 text-center text-sm dark:border-gray-700 dark:bg-gray-800"
+                    >
                 </x-admin::table.td>
 
-                <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.control type="inline" ::name="`${inputName}[total]`" ::value="product.price * product.quantity" ::errors="errors" :label="trans('admin::app.quotes.create.total')" :placeholder="trans('admin::app.quotes.create.total')" :allowEdit="false" position="center" ::value-label="$admin.formatPrice(product.price * product.quantity)" />
-                    </x-admin::form.control-group>
+                <x-admin::table.td class="!px-2 text-center">
+                    @{{ $admin.formatPrice(product.price * product.quantity) }}
                 </x-admin::table.td>
 
                 <input type="hidden" :name="`${inputName}[discount_amount]`" value="0">
@@ -338,116 +352,7 @@
             </x-admin::table.thead.tr>
         </script>
 
-        <script type="text/x-template" id="v-quote-summary-inline-template">
-            <div class="group w-full max-w-full hover:rounded-sm">
-                <input
-                    v-if="! isEditing"
-                    type="hidden"
-                    :name="name"
-                    :value="formattedValue"
-                >
-
-                <div
-                    v-if="! isEditing"
-                    class="flex rounded border border-transparent transition-all hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                    <div class="group relative !w-full pl-2.5 h-[34px] flex items-center justify-center">
-                        <span class="cursor-pointer rounded truncate">@{{ formattedValue }}</span>
-                    </div>
-
-                    <i
-                        @click="toggle"
-                        class="icon-edit cursor-pointer rounded p-0.5 text-2xl opacity-0 hover:bg-gray-200 group-hover:opacity-100 dark:hover:bg-gray-950 ltr:mr-1 rtl:ml-1"
-                    ></i>
-                </div>
-
-                <div v-else class="relative w-full">
-                    <input
-                        :name="name"
-                        v-model="draftValue"
-                        type="number"
-                        step="0.001"
-                        min="0"
-                        class="w-full rounded border border-gray-200 px-2.5 py-1.5 pr-16 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                        :placeholder="placeholder"
-                        ref="input"
-                    >
-
-                    <div class="absolute top-[6px] flex gap-0.5 ltr:right-2 rtl:left-2">
-                        <button type="button" class="flex items-center justify-center bg-green-100 p-1 hover:bg-green-200 ltr:rounded-l-md rtl:rounded-r-md" @click="save">
-                            <i class="icon-tick text-md cursor-pointer font-bold text-green-600 dark:!text-green-600"></i>
-                        </button>
-
-                        <button type="button" class="flex items-center justify-center bg-red-100 p-1 hover:bg-red-200 ltr:rounded-r-md rtl:rounded-l-md" @click="cancel">
-                            <i class="icon-cross-large text-md cursor-pointer font-bold text-red-600 dark:!text-red-600"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </script>
-
         <script type="module">
-            app.component('v-quote-summary-inline', {
-                template: '#v-quote-summary-inline-template',
-                props: {
-                    modelValue: {
-                        type: [Number, String],
-                        default: 0,
-                    },
-                    name: {
-                        type: String,
-                        required: true,
-                    },
-                    placeholder: {
-                        type: String,
-                        default: '',
-                    },
-                },
-                emits: ['update:modelValue'],
-                data() {
-                    return {
-                        isEditing: false,
-                        draftValue: this.modelValue,
-                        originalValue: this.modelValue,
-                    };
-                },
-                computed: {
-                    formattedValue() {
-                        const value = Number(this.modelValue || 0);
-
-                        return Number.isFinite(value) ? Number(value.toFixed(3)).toString() : '0';
-                    },
-                },
-                watch: {
-                    modelValue(newValue) {
-                        if (! this.isEditing) {
-                            this.draftValue = newValue;
-                            this.originalValue = newValue;
-                        }
-                    },
-                },
-                methods: {
-                    toggle() {
-                        this.originalValue = this.modelValue;
-                        this.draftValue = this.modelValue;
-                        this.isEditing = true;
-
-                        this.$nextTick(() => this.$refs.input?.focus());
-                    },
-                    save() {
-                        const normalized = Number(parseFloat(this.draftValue || 0).toFixed(3));
-
-                        this.$emit('update:modelValue', normalized);
-                        this.isEditing = false;
-                    },
-                    cancel() {
-                        this.draftValue = this.originalValue;
-                        this.$emit('update:modelValue', Number(parseFloat(this.originalValue || 0).toFixed(3)));
-                        this.isEditing = false;
-                    },
-                },
-            });
-
             app.component('v-quote', {
                 template: '#v-quote-template',
                 props: ['errors', 'customers'],
@@ -519,9 +424,7 @@
                 props: ['errors', 'organizationId'],
                 data() {
                     return {
-                        adjustmentAmount: 0,
-                        tariffPercent: '{{ old('tariff_percent', 0) }}',
-                        freightPercent: '{{ old('freight_percent', 0) }}',
+                        charges: @json($initialQuoteCharges),
                         products: [{ id: null, product_id: null, name: '', item_code: '', quantity: 1, price: 0, discount_amount: 0, tax_amount: 0, available_colors: [], color_images: {}, selected_color_id: '', selected_color_name: '', cover_image_url: '', preview_image: '' }],
                     }
                 },
@@ -536,17 +439,48 @@
                         this.products.forEach(product => total += parseFloat(product.price * product.quantity));
                         return Number(total.toFixed(3));
                     },
-                    tariffAmount() {
-                        return Number((this.subTotal * (parseFloat(this.tariffPercent || 0) / 100)).toFixed(3));
+                    chargesTotal() {
+                        return Number(this.charges.reduce((total, charge) => total + this.chargeAmount(charge), 0).toFixed(3));
                     },
-                    freightAmount() {
-                        return Number((this.subTotal * (parseFloat(this.freightPercent || 0) / 100)).toFixed(3));
+                    taxChargeTotal() {
+                        return Number(this.charges
+                            .filter(charge => this.isTaxCharge(charge.name))
+                            .reduce((total, charge) => total + this.chargeAmount(charge), 0)
+                            .toFixed(3));
+                    },
+                    otherChargeTotal() {
+                        return Number(this.charges
+                            .filter(charge => ! this.isTaxCharge(charge.name))
+                            .reduce((total, charge) => total + this.chargeAmount(charge), 0)
+                            .toFixed(3));
                     },
                     grandTotal() {
-                        return Number((this.subTotal + this.tariffAmount + this.freightAmount).toFixed(3));
+                        return Number((this.subTotal + this.chargesTotal).toFixed(3));
                     },
                 },
                 methods: {
+                    blankCharge() {
+                        return { name: '', type: 'percentage', value: 0 };
+                    },
+                    addCharge() {
+                        this.charges.push(this.blankCharge());
+                    },
+                    removeCharge(index) {
+                        this.charges.splice(index, 1);
+                    },
+                    chargeAmount(charge) {
+                        const value = parseFloat(charge?.value || 0);
+
+                        if ((charge?.type || 'value') === 'percentage') {
+                            return Number((this.subTotal * (value / 100)).toFixed(3));
+                        }
+
+                        return Number(value.toFixed(3));
+                    },
+                    isTaxCharge(name) {
+                        const normalized = String(name || '').trim().toLowerCase();
+                        return ['tax', 'tariff', 'tarrif', 'duty', 'vat', 'gst'].some(token => normalized.includes(token));
+                    },
                     normalizeColorImages(images) {
                         if (! images || typeof images !== 'object') {
                             return {};
@@ -825,9 +759,6 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
-
-
-
 
 
 
