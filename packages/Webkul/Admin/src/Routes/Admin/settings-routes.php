@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Settings\AttributeController;
 use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;
+use Webkul\Admin\Http\Controllers\Settings\ColorReferenceController;
 use Webkul\Admin\Http\Controllers\Settings\EmailTemplateController;
 use Webkul\Admin\Http\Controllers\Settings\GroupController;
 use Webkul\Admin\Http\Controllers\Settings\LocationController;
@@ -152,6 +153,15 @@ Route::prefix('settings')->group(function () {
         Route::delete('{id}', 'destroy')->name('admin.settings.tags.delete');
 
         Route::post('mass-destroy', 'massDestroy')->name('admin.settings.tags.mass_delete');
+    });
+
+    Route::controller(ColorReferenceController::class)->prefix('color-references')->group(function () {
+        Route::get('', 'index')->name('admin.settings.color_references.index');
+        Route::post('create', 'store')->name('admin.settings.color_references.store');
+        Route::get('edit/{id}', 'edit')->name('admin.settings.color_references.edit');
+        Route::put('edit/{id}', 'update')->name('admin.settings.color_references.update');
+        Route::delete('{id}', 'destroy')->name('admin.settings.color_references.delete');
+        Route::post('mass-destroy', 'massDestroy')->name('admin.settings.color_references.mass_delete');
     });
 
     /**

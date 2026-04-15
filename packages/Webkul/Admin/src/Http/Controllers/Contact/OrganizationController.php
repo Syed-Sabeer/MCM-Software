@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Contact\OrganizationDataGrid;
@@ -14,6 +15,11 @@ use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\OrganizationResource;
 use Webkul\Contact\Repositories\OrganizationRepository;
+use Webkul\PurchaseOrder\Models\JobOrder;
+use Webkul\PurchaseOrder\Models\PurchaseOrder;
+use Webkul\PurchaseOrder\Models\VendorQuote;
+use Webkul\Quote\Models\ProformaInvoice;
+use Webkul\Quote\Models\Quote;
 
 class OrganizationController extends Controller
 {
@@ -113,8 +119,111 @@ class OrganizationController extends Controller
     public function show(int $id): View
     {
         $organization = $this->organizationRepository->findOrFail($id);
+        $documentSections = $this->buildDocumentSections($organization, $this->getRouteType());
 
-        return view('admin::contacts.organizations.view', compact('organization'));
+        return view('admin::contacts.organizations.view', compact('organization', 'documentSections'));
+    }
+
+    protected function buildDocumentSections($organization, ?string $routeType): array
+    {
+        $normalizedType = strtolower((string) ($organization->type ?? ''));
+        $entityType = $routeType ?: (in_array($normalizedType, ['customer', 'vendor']) ? $normalizedType : null);
+
+        if ($entityType === 'vendor') {
+            return [
+                $this->makeDocumentSection(
+                    title: 'RFQs',
+                    emptyMessage: 'No RFQs found for this vendor yet.',
+                    count: VendorQuote::query()->where('organization_id', $organization->id)->count(),
+                    records: VendorQuote::query()->where('organization_id', $organization->id)->latest('issue_date')->latest('id')->take(3)->get(),
+                    itemUrl: fn ($record) => route('admin.vendor_quotes.view', $record->id),
+                    allUrl: route('admin.vendor_quotes.index', ['organization_id' => $organization->id]),
+                    titleValue: fn ($record) => $record->vendor_quote_number ?: ('RFQ-' . $record->id),
+                    metaValue: fn ($record) => collect([
+                        $record->issue_date?->format('Y-m-d'),
+                        $record->status ? Str::headline($record->status) : null,
+                    ])->filter()->implode(' | ')
+                ),
+                $this->makeDocumentSection(
+                    title: 'Purchase Orders',
+                    emptyMessage: 'No purchase orders found for this vendor yet.',
+                    count: PurchaseOrder::query()->where('organization_id', $organization->id)->count(),
+                    records: PurchaseOrder::query()->where('organization_id', $organization->id)->latest('created_at')->take(3)->get(),
+                    itemUrl: fn ($record) => route('admin.purchase_orders.view', $record->id),
+                    allUrl: route('admin.purchase_orders.index', ['organization_id' => $organization->id]),
+                    titleValue: fn ($record) => $record->po_number ?: ('PO-' . $record->id),
+                    metaValue: fn ($record) => collect([
+                        optional($record->created_at)->format('Y-m-d'),
+                        $record->status ? Str::headline($record->status) : null,
+                    ])->filter()->implode(' | ')
+                ),
+            ];
+        }
+
+        return [
+            $this->makeDocumentSection(
+                title: 'Quotes',
+                emptyMessage: 'No quotes found for this customer yet.',
+                count: Quote::query()->where('organization_id', $organization->id)->count(),
+                records: Quote::query()->where('organization_id', $organization->id)->latest('quote_date')->latest('id')->take(3)->get(),
+                itemUrl: fn ($record) => route('admin.quotes.view', $record->id),
+                allUrl: route('admin.quotes.index', ['organization_id' => $organization->id]),
+                titleValue: fn ($record) => $record->quote_number ?: ('Q' . $record->id),
+                metaValue: fn ($record) => collect([
+                    $record->quote_date?->format('Y-m-d'),
+                    $record->status ? Str::headline($record->status) : null,
+                ])->filter()->implode(' | ')
+            ),
+            $this->makeDocumentSection(
+                title: 'Proforma Invoices',
+                emptyMessage: 'No proforma invoices found for this customer yet.',
+                count: ProformaInvoice::query()->where('organization_id', $organization->id)->count(),
+                records: ProformaInvoice::query()->where('organization_id', $organization->id)->latest('issue_date')->latest('id')->take(3)->get(),
+                itemUrl: fn ($record) => route('admin.proforma_invoices.view', $record->id),
+                allUrl: route('admin.proforma_invoices.index', ['organization_id' => $organization->id]),
+                titleValue: fn ($record) => $record->proforma_number ?: ('PF-' . $record->id),
+                metaValue: fn ($record) => collect([
+                    $record->issue_date?->format('Y-m-d'),
+                    $record->status ? Str::headline($record->status) : null,
+                ])->filter()->implode(' | ')
+            ),
+            $this->makeDocumentSection(
+                title: 'Job Orders',
+                emptyMessage: 'No job orders found for this customer yet.',
+                count: JobOrder::query()->where('organization_id', $organization->id)->count(),
+                records: JobOrder::query()->where('organization_id', $organization->id)->latest('issue_date')->latest('id')->take(3)->get(),
+                itemUrl: fn ($record) => route('admin.job_orders.view', $record->id),
+                allUrl: route('admin.job_orders.index', ['organization_id' => $organization->id]),
+                titleValue: fn ($record) => $record->job_order_number ?: ('JO-' . $record->id),
+                metaValue: fn ($record) => collect([
+                    $record->issue_date?->format('Y-m-d'),
+                    $record->status ? Str::headline($record->status) : null,
+                ])->filter()->implode(' | ')
+            ),
+        ];
+    }
+
+    protected function makeDocumentSection(
+        string $title,
+        string $emptyMessage,
+        int $count,
+        $records,
+        callable $itemUrl,
+        string $allUrl,
+        callable $titleValue,
+        callable $metaValue
+    ): array {
+        return [
+            'title' => $title,
+            'empty_message' => $emptyMessage,
+            'count' => $count,
+            'all_url' => $allUrl,
+            'records' => $records->map(fn ($record) => [
+                'title' => $titleValue($record),
+                'meta' => $metaValue($record),
+                'url' => $itemUrl($record),
+            ]),
+        ];
     }
 
     /**

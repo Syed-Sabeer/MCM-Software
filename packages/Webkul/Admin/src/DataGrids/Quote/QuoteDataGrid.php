@@ -32,7 +32,12 @@ class QuoteDataGrid extends DataGrid
             $queryBuilder->whereIn('quotes.user_id', $userIds);
         }
 
+        if ($organizationId = request('organization_id')) {
+            $queryBuilder->where('quotes.organization_id', $organizationId);
+        }
+
         $this->addFilter('id', 'quotes.id');
+        $this->addFilter('organization_id', 'quotes.organization_id');
         $this->addFilter('quote_number', 'quotes.quote_number');
         $this->addFilter('status', 'quotes.status');
         $this->addFilter('user', 'quotes.user_id');

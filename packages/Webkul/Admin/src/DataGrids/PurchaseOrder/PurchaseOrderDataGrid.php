@@ -28,6 +28,11 @@ class PurchaseOrderDataGrid extends DataGrid
                 'job_orders.job_order_number'
             );
 
+        if ($organizationId = request('organization_id')) {
+            $queryBuilder->where('purchase_orders.organization_id', $organizationId);
+        }
+
+        $this->addFilter('organization_id', 'purchase_orders.organization_id');
         $this->addFilter('po_number', 'purchase_orders.po_number');
         $this->addFilter('vendor_name', 'organizations.name');
         $this->addFilter('job_order_number', 'job_orders.job_order_number');

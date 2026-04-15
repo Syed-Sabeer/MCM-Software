@@ -38,6 +38,8 @@ class Product extends Model implements ProductContract
         'category_id',
         'style',
         'size',
+        'weight',
+        'weight_unit',
         'cover_image',
         'additional_info',
         'shipping_info',
@@ -52,6 +54,7 @@ class Product extends Model implements ProductContract
         'price'              => 'decimal:4',
         'cost_price'         => 'decimal:4',
         'selling_price'      => 'decimal:4',
+        'weight'             => 'decimal:2',
     ];
 
     /**

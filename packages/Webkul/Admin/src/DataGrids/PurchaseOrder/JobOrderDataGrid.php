@@ -15,6 +15,11 @@ class JobOrderDataGrid extends DataGrid
             ->leftJoin('proforma_invoices', 'job_orders.proforma_invoice_id', '=', 'proforma_invoices.id')
             ->addSelect('job_orders.id', 'job_orders.job_order_number', 'job_orders.required_delivery_date', 'job_orders.status', 'organizations.id as organization_id', 'organizations.name as customer_name', 'proforma_invoices.id as proforma_invoice_id', 'proforma_invoices.proforma_number');
 
+        if ($organizationId = request('organization_id')) {
+            $queryBuilder->where('job_orders.organization_id', $organizationId);
+        }
+
+        $this->addFilter('organization_id', 'job_orders.organization_id');
         $this->addFilter('job_order_number', 'job_orders.job_order_number');
         $this->addFilter('customer_name', 'organizations.name');
         $this->addFilter('proforma_number', 'proforma_invoices.proforma_number');

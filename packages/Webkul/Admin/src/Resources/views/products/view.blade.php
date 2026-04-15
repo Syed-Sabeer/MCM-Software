@@ -55,6 +55,16 @@
                             <td class="py-2 pr-4 text-gray-500 dark:text-gray-400">Size</td>
                             <td class="py-2 font-medium text-gray-800 dark:text-white">{{ $product->size ?: '—' }}</td>
                         </tr>
+                        <tr>
+                            <td class="py-2 pr-4 text-gray-500 dark:text-gray-400">Weight</td>
+                            <td class="py-2 font-medium text-gray-800 dark:text-white">
+                                @if (! is_null($product->weight) && $product->weight !== '')
+                                    {{ number_format((float) $product->weight, 2, '.', '') }}{{ $product->weight_unit ? ' '.strtoupper((string) $product->weight_unit) : '' }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

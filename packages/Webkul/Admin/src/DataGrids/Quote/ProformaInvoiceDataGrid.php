@@ -31,6 +31,11 @@ class ProformaInvoiceDataGrid extends DataGrid
             $queryBuilder->whereIn('proforma_invoices.sales_owner_id', $userIds);
         }
 
+        if ($organizationId = request('organization_id')) {
+            $queryBuilder->where('proforma_invoices.organization_id', $organizationId);
+        }
+
+        $this->addFilter('organization_id', 'proforma_invoices.organization_id');
         $this->addFilter('proforma_number', 'proforma_invoices.proforma_number');
         $this->addFilter('organization_name', 'organizations.name');
         $this->addFilter('quote_number', 'quotes.quote_number');

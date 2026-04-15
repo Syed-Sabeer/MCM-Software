@@ -15,6 +15,7 @@ use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\ProductResource;
 use Webkul\Contact\Models\Organization;
+use Webkul\Product\Models\ColorReference;
 use Webkul\Product\Repositories\ProductRepository;
 
 class ProductController extends Controller
@@ -52,6 +53,7 @@ class ProductController extends Controller
             ->get(['id', 'name']);
 
         $duplicateDraft = null;
+        $colorReferences = ColorReference::query()->orderBy('name')->get(['name', 'code']);
 
         if (request()->filled('duplicate_from')) {
             $original = $this->productRepository->with([
@@ -67,7 +69,7 @@ class ProductController extends Controller
             $duplicateDraft = $this->buildDuplicateDraft($original);
         }
 
-        return view('admin::products.create', compact('customers', 'duplicateDraft'));
+        return view('admin::products.create', compact('customers', 'duplicateDraft', 'colorReferences'));
     }
 
     /**
@@ -137,7 +139,9 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('admin::products.edit', compact('product', 'inventories', 'customers'));
+        $colorReferences = ColorReference::query()->orderBy('name')->get(['name', 'code']);
+
+        return view('admin::products.edit', compact('product', 'inventories', 'customers', 'colorReferences'));
     }
 
     /**
@@ -474,6 +478,8 @@ class ProductController extends Controller
                 Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['customer', 'Customer'])),
             ],
             'size'                 => ['nullable', 'string', 'max:100'],
+            'weight'               => ['nullable', 'numeric', 'min:0'],
+            'weight_unit'          => ['nullable', 'in:gsm,oz'],
             'cost_price'           => ['nullable', 'numeric', 'min:0'],
             'selling_price'        => ['nullable', 'numeric', 'min:0'],
             'colors'               => ['nullable', 'array'],
@@ -703,6 +709,14 @@ class ProductController extends Controller
             ? $data['cost_price']
             : null;
 
+        $data['weight'] = isset($data['weight']) && $data['weight'] !== ''
+            ? number_format((float) $data['weight'], 2, '.', '')
+            : null;
+
+        $data['weight_unit'] = isset($data['weight_unit']) && $data['weight_unit'] !== ''
+            ? strtolower((string) $data['weight_unit'])
+            : null;
+
         $data['selling_price'] = isset($data['selling_price']) && $data['selling_price'] !== ''
             ? $data['selling_price']
             : null;
@@ -882,6 +896,8 @@ class ProductController extends Controller
             'category_id'              => $original->category_id,
             'style'                    => $original->style,
             'size'                     => $original->size,
+            'weight'                   => $original->weight,
+            'weight_unit'              => $original->weight_unit,
             'additional_info'          => $original->additional_info,
             'shipping_info'            => $original->shipping_info,
             'publish_on_website'       => false,

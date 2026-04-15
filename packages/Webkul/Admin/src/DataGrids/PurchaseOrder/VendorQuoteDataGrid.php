@@ -15,6 +15,11 @@ class VendorQuoteDataGrid extends DataGrid
             ->leftJoin('job_orders', 'vendor_quotes.job_order_id', '=', 'job_orders.id')
             ->addSelect('vendor_quotes.id', 'vendor_quotes.vendor_quote_number', 'vendor_quotes.issue_date', 'vendor_quotes.status', 'organizations.id as organization_id', 'organizations.name as vendor_name', 'job_orders.id as job_order_id', 'job_orders.job_order_number');
 
+        if ($organizationId = request('organization_id')) {
+            $queryBuilder->where('vendor_quotes.organization_id', $organizationId);
+        }
+
+        $this->addFilter('organization_id', 'vendor_quotes.organization_id');
         $this->addFilter('vendor_quote_number', 'vendor_quotes.vendor_quote_number');
         $this->addFilter('vendor_name', 'organizations.name');
         $this->addFilter('job_order_number', 'job_orders.job_order_number');

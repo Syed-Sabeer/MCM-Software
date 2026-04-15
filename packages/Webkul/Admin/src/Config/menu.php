@@ -58,13 +58,15 @@ return [
         'route'      => 'admin.job_orders.index',
         'sort'       => 1,
         'icon-class' => '',
-    ], [
-        'key'        => 'erp_operations.requirement_sheets',
-        'name'       => 'Requirement Sheets',
-        'route'      => 'admin.requirements.index',
-        'sort'       => 2,
-        'icon-class' => '',
-    ], [
+    ], 
+    // [
+    //     'key'        => 'erp_operations.requirement_sheets',
+    //     'name'       => 'Requirement Sheets',
+    //     'route'      => 'admin.requirements.index',
+    //     'sort'       => 2,
+    //     'icon-class' => '',
+    // ],
+     [
         'key'        => 'erp_operations.vendor_quotes',
         'name'       => 'Vendor Quotes / RFQs',
         'route'      => 'admin.vendor_quotes.index',
@@ -72,7 +74,7 @@ return [
         'icon-class' => '',
     ], [
         'key'        => 'erp_operations.purchase_orders',
-        'name'       => 'Vendor Purchase Orders',
+        'name'       => 'Vendor POs',
         'route'      => 'admin.purchase_orders.index',
         'sort'       => 4,
         'icon-class' => '',

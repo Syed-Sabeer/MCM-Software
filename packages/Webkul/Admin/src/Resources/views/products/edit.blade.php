@@ -41,6 +41,11 @@
                 'unit' => $item->unit,
             ])->toArray(),
         ])->toArray());
+
+        $colorReferenceOptions = $colorReferences->map(fn ($color) => [
+            'name' => $color->name,
+            'code' => $color->code,
+        ])->values();
     @endphp
 
     <x-admin::form :action="route('admin.products.update', $product->id)" method="PUT" enctype="multipart/form-data">
@@ -85,6 +90,22 @@
                                 <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Size</label>
                                 <input type="text" name="size" value="{{ old('size', $product->size) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                 <x-admin::form.control-group.error control-name="size" />
+                            </div>
+
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Weight</label>
+                                <input type="number" step="0.01" min="0" name="weight" value="{{ old('weight', $product->weight) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                <x-admin::form.control-group.error control-name="weight" />
+                            </div>
+
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Weight Unit</label>
+                                <select name="weight_unit" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                    <option value="">Select Unit</option>
+                                    <option value="gsm" @selected(old('weight_unit', $product->weight_unit) === 'gsm')>GSM</option>
+                                    <option value="oz" @selected(old('weight_unit', $product->weight_unit) === 'oz')>OZ</option>
+                                </select>
+                                <x-admin::form.control-group.error control-name="weight_unit" />
                             </div>
 
                             <div style="grid-column: 1 / -1;">
@@ -151,6 +172,12 @@
                             <p class="text-base font-semibold text-gray-800 dark:text-white">Color Variants</p>
                             <button type="button" id="add-color" class="secondary-button">Add Color</button>
                         </div>
+
+                        <datalist id="product-color-reference-options">
+                            @foreach ($colorReferenceOptions as $colorReference)
+                                <option value="{{ $colorReference['name'] }}">{{ $colorReference['code'] }}</option>
+                            @endforeach
+                        </datalist>
 
                         <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1fr) 88px 140px 140px 44px; gap: 0.5rem;">
                             <div>Color Name</div>
@@ -374,8 +401,18 @@
                 var oldConsumptions = @json($consumptionsData);
                 var oldSections = @json($productionSectionsData);
                 var existingOtherImages = @json($existingOtherImagesData);
+                var colorReferences = @json($colorReferenceOptions);
                 var deletedImageIds = [];
                 var lastAutoInternalCode = internalCodeInput ? (internalCodeInput.value || '') : '';
+                var colorReferenceMap = {};
+
+                colorReferences.forEach(function (reference) {
+                    if (!reference || !reference.name) {
+                        return;
+                    }
+
+                    colorReferenceMap[String(reference.name).trim().toLowerCase()] = reference.code || '';
+                });
 
                 function escapeHtml(value) {
                     return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -402,6 +439,75 @@
                     }
                 }
 
+                function normalizeColorCode(value) {
+                    var trimmed = String(value || '').trim();
+
+                    if (!trimmed) {
+                        return '';
+                    }
+
+                    return trimmed.charAt(0) === '#' ? trimmed : ('#' + trimmed);
+                }
+
+                function getColorReferenceCode(name) {
+                    return colorReferenceMap[String(name || '').trim().toLowerCase()] || '';
+                }
+
+                function bindColorRow(row) {
+                    if (!row) {
+                        return;
+                    }
+
+                    var nameInput = row.querySelector('.color-name-input');
+                    var colorCodeInput = row.querySelector('.color-code-input');
+                    var colorPicker = row.querySelector('.color-picker');
+
+                    if (!nameInput || !colorCodeInput || !colorPicker) {
+                        return;
+                    }
+
+                    function syncPickerFromCode() {
+                        var normalized = normalizeColorCode(colorCodeInput.value);
+
+                        if (/^#[0-9A-Fa-f]{6}$/.test(normalized)) {
+                            colorCodeInput.value = normalized;
+                            colorPicker.value = normalized;
+                        }
+                    }
+
+                    function applyReferenceColor() {
+                        var matchedCode = getColorReferenceCode(nameInput.value);
+
+                        if (!matchedCode) {
+                            refreshImageColorOptions();
+                            return;
+                        }
+
+                        var normalized = normalizeColorCode(matchedCode);
+
+                        if (/^#[0-9A-Fa-f]{6}$/.test(normalized)) {
+                            colorCodeInput.value = normalized;
+                            colorPicker.value = normalized;
+                        }
+
+                        refreshImageColorOptions();
+                    }
+
+                    nameInput.addEventListener('input', refreshImageColorOptions);
+                    nameInput.addEventListener('change', applyReferenceColor);
+                    nameInput.addEventListener('blur', applyReferenceColor);
+
+                    colorCodeInput.addEventListener('input', syncPickerFromCode);
+                    colorCodeInput.addEventListener('change', syncPickerFromCode);
+
+                    colorPicker.addEventListener('input', function () {
+                        colorCodeInput.value = colorPicker.value;
+                    });
+
+                    syncPickerFromCode();
+                    applyReferenceColor();
+                }
+
                 function addColorRow(data) {
                     var index = colorsContainer.querySelectorAll('.color-row').length;
                     var colorCode = valueOf(data, 'color_code', '#000000');
@@ -413,7 +519,7 @@
                     row.style.gridTemplateColumns = 'minmax(0, 1fr) 88px 140px 140px 44px';
                     row.style.gap = '0.5rem';
                     row.innerHTML = ''
-                        + '<input type="text" name="colors[' + index + '][name]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Color Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
+                        + '<input type="text" name="colors[' + index + '][name]" list="product-color-reference-options" class="color-name-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Color Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
                         + '<div class="flex items-center gap-2">'
                         + '  <input type="text" name="colors[' + index + '][color_code]" class="color-code-input w-full rounded border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="#000000" value="' + escapeHtml(colorCode) + '">'
                         + '  <input type="color" class="color-picker h-[40px] w-[40px] cursor-pointer rounded border border-gray-200 p-0 dark:border-gray-700" value="' + escapeHtml(colorCode) + '">'
@@ -422,6 +528,7 @@
                         + '<input type="number" step="0.0001" min="0" name="colors[' + index + '][selling_price]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Selling Price" value="' + escapeHtml(sellingPrice) + '">'
                         + '<button type="button" class="remove-color inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove color">&times;</button>';
                     colorsContainer.appendChild(row);
+                    bindColorRow(row);
                     refreshImageColorOptions();
                 }
 

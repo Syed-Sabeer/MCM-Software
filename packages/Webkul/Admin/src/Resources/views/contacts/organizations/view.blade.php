@@ -399,24 +399,7 @@
                 @endif
             </div>
 
-            <!-- Opportunities card -->
-            <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-                <div class="flex items-center justify-between gap-2">
-                    <p class="text-base font-bold text-gray-900 dark:text-white">
-                        Opportunities
-                    </p>
-
-                    <button type="button" class="inline-flex items-center gap-1 rounded bg-brandColor px-2.5 py-1 text-xs font-semibold text-white hover:bg-brandColor/90">
-                        + New
-                    </button>
-                </div>
-
-                <p class="rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                    No opportunities yet. Create one to track potential deals.
-                </p>
-            </div>
-
-            <!-- Cases card -->
+              <!-- Cases card -->
             @php
                 $casesQuery = \Webkul\Lead\Models\Lead::query()
                     ->with(['organization', 'person'])
@@ -625,6 +608,57 @@
                     </p>
                 @endif
             </div>
+
+            @foreach ($documentSections as $section)
+                <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="flex items-center justify-between gap-2">
+                        <p class="text-base font-bold text-gray-900 dark:text-white">
+                            {{ $section['title'] }}
+                            @if($section['count'])
+                                <span class="text-xs font-normal text-gray-500 dark:text-gray-400">({{ $section['count'] }})</span>
+                            @endif
+                        </p>
+                    </div>
+
+                    @if ($section['count'])
+                        <div class="flex flex-col gap-2.5 border-t border-gray-200 pt-3 dark:border-gray-700">
+                            @foreach ($section['records'] as $record)
+                                <a
+                                    href="{{ $record['url'] }}"
+                                    class="flex items-start gap-3 rounded-md p-2 transition hover:bg-gray-50 dark:hover:bg-gray-800"
+                                >
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-sm font-medium text-brandColor hover:underline">
+                                            {{ \Illuminate\Support\Str::limit($record['title'], 35) }}
+                                        </p>
+
+                                        @if ($record['meta'])
+                                            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                                {{ $record['meta'] }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
+                            <a
+                                href="{{ $section['all_url'] }}"
+                                class="text-xs font-semibold text-brandColor hover:underline"
+                            >
+                                View All {{ $section['title'] }}
+                            </a>
+                        </div>
+                    @else
+                        <p class="rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                            {{ $section['empty_message'] }}
+                        </p>
+                    @endif
+                </div>
+            @endforeach
+
+          
         </div>
     </div>
 </x-admin::layouts>
