@@ -170,15 +170,9 @@
                             @endforeach
                         </datalist>
 
-                        <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) 120px 120px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 0.5rem;">
-                            <div>Select Material</div>
-                            <div>Material Name</div>
-                            <div>Qty</div>
-                            <div>Unit</div>
-                            <div>Vendor</div>
-                            <div>Color</div>
-                            <div></div>
-                        </div>
+                        <p class="mb-2 px-1 text-xs text-gray-500 dark:text-gray-400">
+                            Select a material, then fill quantity, unit, vendors, and color details.
+                        </p>
 
                         <div id="consumptions-container" class="flex flex-col gap-2"></div>
                         <x-admin::form.control-group.error control-name="consumptions" />
@@ -437,6 +431,7 @@
                 var lastAutoInternalCode = internalCodeInput ? (internalCodeInput.value || '') : '';
                 var colorReferenceMap = {};
                 var materialReferenceMap = {};
+                var materialReferenceIdMap = {};
 
                 colorReferences.forEach(function (reference) {
                     if (!reference || !reference.name) {
@@ -452,6 +447,9 @@
                     }
 
                     materialReferenceMap[String(reference.name).trim().toLowerCase()] = reference;
+                    if (reference.id !== undefined && reference.id !== null) {
+                        materialReferenceIdMap[String(reference.id)] = reference;
+                    }
                 });
 
                 function escapeHtml(value) {
@@ -653,53 +651,111 @@
                 function addConsumptionRow(data) {
                     var index = consumptionsContainer.querySelectorAll('.consumption-row').length;
                     var row = document.createElement('div');
-                    var selectedVendorIds = Array.isArray(valueOf(data, 'vendor_ids', [])) ? valueOf(data, 'vendor_ids', []).map(Number) : [];
-                    var vendorOptionsMarkup = '<select multiple name="consumptions[' + index + '][vendor_ids][]" class="consumption-vendor-select rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">';
+                    var selectedVendorIds = Array.isArray(valueOf(data, 'vendor_ids', []))
+                        ? valueOf(data, 'vendor_ids', []).map(Number)
+                        : [];
+                    var selectedVendorIdsCsv = selectedVendorIds.join(',');
+                    var referenceName = valueOf(data, 'name', '');
+                    var initialReference = getMaterialReference(referenceName);
+                    var initialReferenceLabel = initialReference && initialReference.name ? initialReference.name : 'Select Material';
 
-                    vendorOptions.forEach(function (vendor) {
-                        var selected = selectedVendorIds.includes(Number(vendor.id)) ? ' selected' : '';
-                        vendorOptionsMarkup += '<option value="' + escapeHtml(vendor.id) + '"' + selected + '>' + escapeHtml(vendor.name) + '</option>';
-                    });
-
-                    vendorOptionsMarkup += '</select>';
-
-                    row.className = 'consumption-row rounded border border-gray-200 p-2 dark:border-gray-700';
-                    row.style.display = 'grid';
-                    row.style.gridTemplateColumns = 'minmax(0, 1.1fr) minmax(0, 1fr) 120px 120px minmax(0, 1fr) minmax(0, 1fr) 44px';
-                    row.style.gap = '0.5rem';
+                    row.className = 'consumption-row rounded border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40';
                     row.innerHTML = ''
                         + '<input type="hidden" name="consumptions[' + index + '][material_reference_id]" class="consumption-reference-id" value="' + escapeHtml(valueOf(data, 'material_reference_id', '')) + '">'
-                        + '<input type="text" list="product-material-reference-options" class="consumption-reference-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Search Material" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
-                        + '<input type="text" name="consumptions[' + index + '][name]" class="consumption-name-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Material Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
-                        + '<input type="number" step="0.0001" name="consumptions[' + index + '][qty]" class="consumption-qty-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
-                        + '<input type="text" name="consumptions[' + index + '][unit]" class="consumption-unit-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Unit" value="' + escapeHtml(valueOf(data, 'unit', '')) + '">'
-                        + '<div class="consumption-vendor-wrapper">' + vendorOptionsMarkup + '</div>'
-                        + '<div class="flex items-center gap-2"><input type="text" list="product-color-reference-options" name="consumptions[' + index + '][color_name]" class="consumption-color-name rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Color Name" value="' + escapeHtml(valueOf(data, 'color_name', '')) + '"><input type="text" name="consumptions[' + index + '][color_code]" class="consumption-color-code w-full rounded border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="#000000" value="' + escapeHtml(valueOf(data, 'color_code', '')) + '"><input type="color" class="consumption-color-picker h-[40px] w-[40px] cursor-pointer rounded border border-gray-200 p-0 dark:border-gray-700" value="' + escapeHtml(normalizeColorCode(valueOf(data, 'color_code', '#000000')) || '#000000') + '"></div>'
-                        + '<button type="button" class="remove-consumption inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove consumption">&times;</button>';
+                        + '<div class="mb-2 flex items-center justify-between">'
+                        + '  <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Material Row</p>'
+                        + '  <button type="button" class="remove-consumption inline-flex h-9 w-9 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove consumption">&times;</button>'
+                        + '</div>'
+                        + '<div class="mb-2 grid gap-2 md:grid-cols-2">'
+                        + '  <div class="consumption-reference-lookup rounded border border-gray-200 p-2 dark:border-gray-700">'
+                        + '    <button type="button" class="consumption-reference-toggle w-full rounded border border-gray-200 px-3 py-2 text-left text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">' + escapeHtml(initialReferenceLabel) + '</button>'
+                        + '    <div class="consumption-reference-panel mt-2">'
+                        + '      <input type="text" class="consumption-reference-search w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Search Material...">'
+                        + '      <div class="consumption-reference-options mt-2 max-h-36 overflow-y-auto rounded border border-gray-200 p-1 dark:border-gray-700"></div>'
+                        + '    </div>'
+                        + '  </div>'
+                        + '  <input type="text" name="consumptions[' + index + '][name]" class="consumption-name-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Material Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
+                        + '</div>'
+                        + '<div class="mb-2 grid gap-2 md:grid-cols-3">'
+                        + '  <input type="number" step="0.001" name="consumptions[' + index + '][qty]" class="consumption-qty-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
+                        + '  <input type="text" name="consumptions[' + index + '][unit]" class="consumption-unit-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Unit" value="' + escapeHtml(valueOf(data, 'unit', '')) + '">'
+                        + '  <div class="consumption-vendor-wrapper rounded border border-gray-200 p-2 dark:border-gray-700" data-selected-vendors="' + escapeHtml(selectedVendorIdsCsv) + '">'
+                        + '    <input type="text" class="consumption-vendor-search w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Search Vendors...">'
+                        + '    <div class="consumption-vendor-options mt-2 max-h-36 overflow-y-auto rounded border border-gray-200 p-1 dark:border-gray-700"></div>'
+                        + '    <div class="consumption-vendor-hidden"></div>'
+                        + '  </div>'
+                        + '</div>'
+                        + '<div class="grid gap-2 md:grid-cols-[minmax(0,1fr)_44px]">'
+                        + '  <div class="flex items-center gap-2">'
+                        + '    <input type="text" list="product-color-reference-options" name="consumptions[' + index + '][color_name]" class="consumption-color-name w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Color Name" value="' + escapeHtml(valueOf(data, 'color_name', '')) + '">'
+                        + '    <input type="hidden" name="consumptions[' + index + '][color_code]" class="consumption-color-code" value="' + escapeHtml(normalizeColorCode(valueOf(data, 'color_code', '')) || '') + '">'
+                        + '    <input type="color" class="consumption-color-picker h-[40px] w-[40px] cursor-pointer rounded border border-gray-200 p-0 dark:border-gray-700" value="' + escapeHtml(normalizeColorCode(valueOf(data, 'color_code', '#000000')) || '#000000') + '">'
+                        + '  </div>'
+                        + '  <div></div>'
+                        + '</div>'
+                        ;
                     consumptionsContainer.appendChild(row);
                     bindConsumptionRow(row);
                 }
 
+                function updateConsumptionVendorInputs(row, index) {
+                    var hiddenContainer = row.querySelector('.consumption-vendor-hidden');
+                    if (!hiddenContainer) {
+                        return;
+                    }
+
+                    var selected = Array.from(row.querySelectorAll('.consumption-vendor-option:checked')).map(function (checkbox) {
+                        return checkbox.value;
+                    });
+
+                    hiddenContainer.innerHTML = '';
+
+                    selected.forEach(function (vendorId) {
+                        hiddenContainer.innerHTML += '<input type="hidden" name="consumptions[' + index + '][vendor_ids][]" value="' + escapeHtml(vendorId) + '">';
+                    });
+                }
+
                 function bindConsumptionRow(row) {
-                    var referenceInput = row.querySelector('.consumption-reference-input');
+                    var referenceToggle = row.querySelector('.consumption-reference-toggle');
+                    var referenceSearch = row.querySelector('.consumption-reference-search');
+                    var referenceOptions = row.querySelector('.consumption-reference-options');
                     var referenceIdInput = row.querySelector('.consumption-reference-id');
                     var nameInput = row.querySelector('.consumption-name-input');
                     var qtyInput = row.querySelector('.consumption-qty-input');
                     var unitInput = row.querySelector('.consumption-unit-input');
-                    var vendorSelect = row.querySelector('.consumption-vendor-select');
+                    var vendorSearch = row.querySelector('.consumption-vendor-search');
+                    var vendorOptionsWrap = row.querySelector('.consumption-vendor-options');
+                    var vendorWrapper = row.querySelector('.consumption-vendor-wrapper');
                     var colorNameInput = row.querySelector('.consumption-color-name');
                     var colorCodeInput = row.querySelector('.consumption-color-code');
                     var colorPicker = row.querySelector('.consumption-color-picker');
 
-                    function applyReference() {
-                        var reference = getMaterialReference(referenceInput.value);
+                    function renderMaterialOptions(term) {
+                        var query = String(term || '').trim().toLowerCase();
+                        var filtered = materialReferences.filter(function (reference) {
+                            return !query || String(reference.name || '').toLowerCase().includes(query);
+                        }).slice(0, 8);
 
+                        referenceOptions.innerHTML = '';
+
+                        if (!filtered.length) {
+                            referenceOptions.innerHTML = '<p class="px-2 py-1 text-xs text-gray-500 dark:text-gray-400">No materials found.</p>';
+                            return;
+                        }
+
+                        filtered.forEach(function (reference) {
+                            referenceOptions.innerHTML += '<button type="button" class="consumption-reference-option block w-full rounded px-2 py-1 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800" data-id="' + escapeHtml(reference.id) + '">' + escapeHtml(reference.name) + ' <span class="text-xs text-gray-500">(' + escapeHtml(reference.unit || '-') + ')</span></button>';
+                        });
+                    }
+
+                    function applyReference(reference) {
                         if (!reference) {
                             return;
                         }
 
                         referenceIdInput.value = reference.id || '';
-                        nameInput.value = reference.name || referenceInput.value || '';
+                        referenceToggle.textContent = reference.name || 'Select Material';
+                        nameInput.value = reference.name || nameInput.value || '';
 
                         if (!qtyInput.value) {
                             qtyInput.value = reference.qty || '';
@@ -709,10 +765,9 @@
                             unitInput.value = reference.unit || '';
                         }
 
-                        if (vendorSelect && Array.isArray(reference.vendor_ids)) {
-                            Array.from(vendorSelect.options).forEach(function (option) {
-                                option.selected = reference.vendor_ids.map(Number).includes(Number(option.value));
-                            });
+                        if (Array.isArray(reference.vendor_ids)) {
+                            vendorWrapper.setAttribute('data-selected-vendors', reference.vendor_ids.join(','));
+                            renderVendorOptions(vendorSearch ? vendorSearch.value : '');
                         }
 
                         if (!colorNameInput.value && reference.color_name) {
@@ -723,6 +778,16 @@
                             colorCodeInput.value = normalizeColorCode(reference.color_code);
                             colorPicker.value = normalizeColorCode(reference.color_code);
                         }
+                    }
+
+                    function applyReferenceFromName() {
+                        var reference = getMaterialReference(nameInput.value);
+
+                        if (!reference) {
+                            return;
+                        }
+
+                        applyReference(reference);
                     }
 
                     function syncColorFromName() {
@@ -736,22 +801,83 @@
                         colorPicker.value = normalizeColorCode(matchedColorCode);
                     }
 
-                    referenceInput.addEventListener('change', applyReference);
-                    referenceInput.addEventListener('blur', applyReference);
+                    function renderVendorOptions(term) {
+                        var query = String(term || '').trim().toLowerCase();
+                        var selectedCsv = String(vendorWrapper.getAttribute('data-selected-vendors') || '');
+                        var selected = selectedCsv ? selectedCsv.split(',').map(function (id) { return String(id); }) : [];
+                        var filtered = vendorOptions.filter(function (vendor) {
+                            return !query || String(vendor.name || '').toLowerCase().includes(query);
+                        });
+
+                        vendorOptionsWrap.innerHTML = '';
+
+                        if (!filtered.length) {
+                            vendorOptionsWrap.innerHTML = '<p class="px-2 py-1 text-xs text-gray-500 dark:text-gray-400">No vendors found.</p>';
+                            return;
+                        }
+
+                        filtered.forEach(function (vendor) {
+                            var checked = selected.includes(String(vendor.id)) ? ' checked' : '';
+                            vendorOptionsWrap.innerHTML += '<label class="mb-1 flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"><input type="checkbox" class="consumption-vendor-option h-4 w-4" value="' + escapeHtml(vendor.id) + '"' + checked + '><span>' + escapeHtml(vendor.name) + '</span></label>';
+                        });
+                    }
+
+                    referenceToggle.addEventListener('click', function () {
+                        renderMaterialOptions(referenceSearch.value);
+                    });
+
+                    referenceSearch.addEventListener('input', function () {
+                        renderMaterialOptions(referenceSearch.value);
+                    });
+
+                    referenceOptions.addEventListener('click', function (event) {
+                        var option = event.target.closest('.consumption-reference-option');
+                        if (!option) {
+                            return;
+                        }
+
+                        var reference = materialReferenceIdMap[String(option.getAttribute('data-id'))] || null;
+                        applyReference(reference);
+                    });
+
+                    nameInput.addEventListener('change', applyReferenceFromName);
+                    nameInput.addEventListener('blur', applyReferenceFromName);
+
+                    if (vendorSearch) {
+                        vendorSearch.addEventListener('input', function () {
+                            renderVendorOptions(vendorSearch.value);
+                        });
+                    }
+
+                    vendorOptionsWrap.addEventListener('change', function () {
+                        var selected = Array.from(row.querySelectorAll('.consumption-vendor-option:checked')).map(function (checkbox) {
+                            return checkbox.value;
+                        });
+                        vendorWrapper.setAttribute('data-selected-vendors', selected.join(','));
+                        updateConsumptionVendorInputs(row, Array.prototype.indexOf.call(consumptionsContainer.querySelectorAll('.consumption-row'), row));
+                    });
+
                     colorNameInput.addEventListener('change', syncColorFromName);
                     colorNameInput.addEventListener('blur', syncColorFromName);
-                    colorCodeInput.addEventListener('input', function () {
-                        var normalized = normalizeColorCode(colorCodeInput.value);
-                        if (/^#[0-9A-Fa-f]{6}$/.test(normalized)) {
-                            colorCodeInput.value = normalized;
-                            colorPicker.value = normalized;
-                        }
-                    });
                     colorPicker.addEventListener('input', function () {
                         colorCodeInput.value = colorPicker.value;
                     });
 
-                    applyReference();
+                    renderMaterialOptions('');
+                    renderVendorOptions('');
+
+                    var existingReference = null;
+                    if (referenceIdInput.value && materialReferenceIdMap[String(referenceIdInput.value)]) {
+                        existingReference = materialReferenceIdMap[String(referenceIdInput.value)];
+                    } else {
+                        existingReference = getMaterialReference(nameInput.value);
+                    }
+
+                    if (existingReference) {
+                        applyReference(existingReference);
+                    }
+
+                    updateConsumptionVendorInputs(row, Array.prototype.indexOf.call(consumptionsContainer.querySelectorAll('.consumption-row'), row));
                     syncColorFromName();
                 }
 
@@ -811,7 +937,6 @@
                         var nameInput = row.querySelector('.consumption-name-input');
                         var qtyInput = row.querySelector('.consumption-qty-input');
                         var unitInput = row.querySelector('.consumption-unit-input');
-                        var vendorSelect = row.querySelector('.consumption-vendor-select');
                         var colorNameInput = row.querySelector('.consumption-color-name');
                         var colorCodeInput = row.querySelector('.consumption-color-code');
 
@@ -819,9 +944,7 @@
                         if (nameInput) nameInput.name = 'consumptions[' + index + '][name]';
                         if (qtyInput) qtyInput.name = 'consumptions[' + index + '][qty]';
                         if (unitInput) unitInput.name = 'consumptions[' + index + '][unit]';
-                        if (vendorSelect) {
-                            vendorSelect.name = 'consumptions[' + index + '][vendor_ids][]';
-                        }
+                        updateConsumptionVendorInputs(row, index);
                         if (colorNameInput) colorNameInput.name = 'consumptions[' + index + '][color_name]';
                         if (colorCodeInput) colorCodeInput.name = 'consumptions[' + index + '][color_code]';
                     });

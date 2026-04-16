@@ -12,6 +12,7 @@ use Webkul\Admin\DataGrids\PurchaseOrder\JobOrderDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\JobOrderRequest;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
+use Webkul\Contact\Models\Organization;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\PurchaseOrder\Models\JobOrder;
 use Webkul\PurchaseOrder\Repositories\JobOrderRepository;
@@ -61,8 +62,9 @@ class JobOrderController extends Controller
     public function view(int $id): View
     {
         $jobOrder = $this->findJobOrderForExport($id);
+        $requirementVendors = $this->resolveRequirementVendors($jobOrder);
 
-        return view('admin::job-orders.view', compact('jobOrder'));
+        return view('admin::job-orders.view', compact('jobOrder', 'requirementVendors'));
     }
 
     public function edit(int $id): View
@@ -163,9 +165,53 @@ class JobOrderController extends Controller
     public function downloadRequirementSheetPdf(int $id): Response|StreamedResponse
     {
         $jobOrder = $this->findJobOrderForExport($id);
+        $requirementVendors = $this->resolveRequirementVendors($jobOrder)->keyBy('id');
+
+        $scope = request('vendor_scope') === 'all' ? 'all' : 'single';
+        $selectedVendorId = (int) request('vendor_id', 0);
+
+        if ($scope === 'all') {
+            $vendorRequirementGroups = $requirementVendors->map(function ($vendor) use ($jobOrder) {
+                $requirements = $jobOrder->requirements->filter(function ($requirement) use ($vendor) {
+                    return in_array((int) $vendor->id, array_map('intval', (array) ($requirement->vendor_ids ?? [])), true);
+                })->values();
+
+                return [
+                    'vendor'       => $vendor,
+                    'requirements' => $requirements,
+                ];
+            })->filter(fn ($group) => $group['requirements']->isNotEmpty())->values();
+
+            if ($vendorRequirementGroups->isEmpty()) {
+                $vendorRequirementGroups = collect([[
+                    'vendor'       => null,
+                    'requirements' => collect(),
+                ]]);
+            }
+        } else {
+            if ($selectedVendorId <= 0 && $requirementVendors->isNotEmpty()) {
+                $selectedVendorId = (int) $requirementVendors->first()->id;
+            }
+
+            $selectedVendor = $selectedVendorId > 0 ? $requirementVendors->get($selectedVendorId) : null;
+            $requirements = $jobOrder->requirements
+                ->filter(function ($requirement) use ($selectedVendorId) {
+                    if ($selectedVendorId <= 0) {
+                        return true;
+                    }
+
+                    return in_array($selectedVendorId, array_map('intval', (array) ($requirement->vendor_ids ?? [])), true);
+                })
+                ->values();
+
+            $vendorRequirementGroups = collect([[
+                'vendor'       => $selectedVendor,
+                'requirements' => $requirements,
+            ]]);
+        }
 
         return $this->downloadPDF(
-            view('admin::job-orders.requirement-sheet-pdf', compact('jobOrder'))->render(),
+            view('admin::job-orders.requirement-sheet-pdf', compact('jobOrder', 'vendorRequirementGroups', 'scope'))->render(),
             'Requirement_Sheet_' . ($jobOrder->job_order_number ?: $jobOrder->id)
         );
     }
@@ -177,13 +223,14 @@ class JobOrderController extends Controller
         return response()->streamDownload(function () use ($jobOrder) {
             $handle = fopen('php://output', 'w');
 
-            fputcsv($handle, ['Job Order', 'Item', 'Material', 'Per Item Required', 'Required', 'Received', 'Balance', 'Unit', 'Status']);
+            fputcsv($handle, ['Job Order', 'Item', 'Material', 'Color', 'Per Item Required', 'Required', 'Received', 'Balance', 'Unit', 'Status']);
 
             foreach ($jobOrder->requirements as $requirement) {
                 fputcsv($handle, [
                     $jobOrder->job_order_number,
                     $requirement->item_codes ?: '',
                     $requirement->material_name,
+                    $requirement->color_name ?: $requirement->color_code ?: '',
                     $requirement->qty_per_unit,
                     $requirement->required_qty,
                     $requirement->received_qty,
@@ -213,5 +260,24 @@ class JobOrderController extends Controller
             'vendorQuotes',
             'purchaseOrders',
         ])->findOrFail($id);
+    }
+
+    protected function resolveRequirementVendors(JobOrder $jobOrder)
+    {
+        $vendorIds = $jobOrder->requirements
+            ->flatMap(fn ($requirement) => (array) ($requirement->vendor_ids ?? []))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($vendorIds->isEmpty()) {
+            return collect();
+        }
+
+        return Organization::query()
+            ->whereIn('id', $vendorIds->all())
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 }

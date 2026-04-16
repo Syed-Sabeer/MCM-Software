@@ -18,8 +18,6 @@ class MaterialReferenceDataGrid extends DataGrid
                 'material_references.name',
                 'material_references.qty',
                 'material_references.unit',
-                'material_references.color_name',
-                'material_references.color_code',
                 'material_references.created_at',
                 DB::raw("GROUP_CONCAT(DISTINCT organizations.name ORDER BY organizations.name SEPARATOR ', ') as vendor_names")
             )
@@ -28,8 +26,6 @@ class MaterialReferenceDataGrid extends DataGrid
                 'material_references.name',
                 'material_references.qty',
                 'material_references.unit',
-                'material_references.color_name',
-                'material_references.color_code',
                 'material_references.created_at'
             );
 
@@ -83,17 +79,6 @@ class MaterialReferenceDataGrid extends DataGrid
             'sortable'   => false,
             'filterable' => false,
             'closure'    => fn ($row) => $row->vendor_names ?: '-',
-        ]);
-
-        $this->addColumn([
-            'index'      => 'color_code',
-            'label'      => 'Color',
-            'type'       => 'string',
-            'sortable'   => false,
-            'filterable' => false,
-            'closure'    => fn ($row) => $row->color_code
-                ? '<div class="flex items-center gap-2"><span class="inline-block h-4 w-4 rounded-full border border-gray-300" style="background-color: '.e($row->color_code).'"></span><span>'.e($row->color_name ?: $row->color_code).'</span></div>'
-                : '-',
         ]);
 
         $this->addColumn([

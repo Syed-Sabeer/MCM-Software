@@ -147,8 +147,12 @@ class AttributeValueRepository extends Repository
      */
     public function sanitizeEmailAndPhone($data)
     {
+        if (! is_array($data)) {
+            return [];
+        }
+
         foreach ($data as $key => $row) {
-            if (is_null($row['value'])) {
+            if (! is_array($row) || ! array_key_exists('value', $row) || is_null($row['value'])) {
                 unset($data[$key]);
             }
         }
@@ -220,6 +224,15 @@ class AttributeValueRepository extends Repository
                 break;
 
             case 'address':
+                if (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    $value = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+                }
+
+                if (! is_array($value)) {
+                    $value = [];
+                }
+
                 if (
                     ! $value
                     || ! count(array_filter($value))

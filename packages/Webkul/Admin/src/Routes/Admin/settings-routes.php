@@ -5,6 +5,7 @@ use Webkul\Admin\Http\Controllers\Settings\AttributeController;
 use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;
 use Webkul\Admin\Http\Controllers\Settings\ColorReferenceController;
 use Webkul\Admin\Http\Controllers\Settings\MaterialReferenceController;
+use Webkul\Admin\Http\Controllers\Settings\UnitReferenceController;
 use Webkul\Admin\Http\Controllers\Settings\EmailTemplateController;
 use Webkul\Admin\Http\Controllers\Settings\GroupController;
 use Webkul\Admin\Http\Controllers\Settings\LocationController;
@@ -172,6 +173,15 @@ Route::prefix('settings')->group(function () {
         Route::put('edit/{id}', 'update')->name('admin.settings.material_references.update');
         Route::delete('{id}', 'destroy')->name('admin.settings.material_references.delete');
         Route::post('mass-destroy', 'massDestroy')->name('admin.settings.material_references.mass_delete');
+    });
+
+    Route::controller(UnitReferenceController::class)->prefix('units')->group(function () {
+        Route::get('', 'index')->name('admin.settings.units.index');
+        Route::post('create', 'store')->name('admin.settings.units.store');
+        Route::get('edit/{id}', 'edit')->name('admin.settings.units.edit');
+        Route::put('edit/{id}', 'update')->name('admin.settings.units.update');
+        Route::delete('{id}', 'destroy')->name('admin.settings.units.delete');
+        Route::post('mass-destroy', 'massDestroy')->name('admin.settings.units.mass_delete');
     });
 
     /**

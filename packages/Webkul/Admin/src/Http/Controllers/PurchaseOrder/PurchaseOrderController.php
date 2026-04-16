@@ -62,7 +62,7 @@ class PurchaseOrderController extends Controller
         }
 
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
-            ->whereIn('type', ['vendor', 'Vendor'])
+            ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -74,6 +74,10 @@ class PurchaseOrderController extends Controller
         Event::dispatch('purchase_order.create.before');
 
         $payload = $request->validated();
+        if (empty($payload['po_number']) || PurchaseOrder::where('po_number', $payload['po_number'])->exists()) {
+            $payload['po_number'] = PurchaseOrder::generateNextPoNumber();
+        }
+
         $payload['user_id'] = auth()->id();
 
         if ($request->hasFile('attachment')) {
@@ -86,6 +90,81 @@ class PurchaseOrderController extends Controller
             $this->vendorQuoteRepository->update(['status' => 'selected'], $vendorQuote->id);
         } elseif ($request->filled('job_order_id') && ! $request->filled('organization_id')) {
             $jobOrder = $this->jobOrderRepository->with('requirements')->findOrFail($request->input('job_order_id'));
+            $requirementsById = $jobOrder->requirements->keyBy('id');
+
+            $payload['items'] = collect($payload['items'] ?? [])->map(function ($item) use ($requirementsById, $payload) {
+                $vendorId = (int) ($item['vendor_id'] ?? 0);
+
+                if ($vendorId <= 0) {
+                    $requirementId = (int) ($item['requirement_id'] ?? 0);
+                    $requirement = $requirementsById->get($requirementId);
+
+                    if ($requirement) {
+                        $vendorId = (int) collect((array) ($requirement->vendor_ids ?? []))
+                            ->filter()
+                            ->map(fn ($id) => (int) $id)
+                            ->first();
+                    }
+                }
+
+                if ($vendorId <= 0 && ! empty($payload['organization_id'])) {
+                    $vendorId = (int) $payload['organization_id'];
+                }
+
+                $item['vendor_id'] = $vendorId > 0 ? $vendorId : null;
+
+                return $item;
+            })->values()->all();
+
+            $groupedItems = collect($payload['items'] ?? [])
+                ->groupBy(fn ($item) => (int) ($item['vendor_id'] ?? 0))
+                ->filter(fn ($items, $vendorId) => $vendorId > 0);
+
+            if ($groupedItems->count() > 1) {
+                $createdPurchaseOrders = [];
+
+                foreach ($groupedItems as $vendorId => $items) {
+                    $vendorPayload = $payload;
+                    $vendorPayload['po_number'] = PurchaseOrder::generateNextPoNumber();
+                    $vendorPayload['organization_id'] = (int) $vendorId;
+                    $vendorPayload['items'] = collect($items)->map(function ($item) {
+                        unset($item['vendor_id']);
+
+                        return $item;
+                    })->values()->all();
+
+                    // Charges entered on a combined draft should not be duplicated on each split PO.
+                    $vendorPayload['charges'] = [];
+
+                    $createdPurchaseOrders[] = $this->purchaseOrderRepository->create($vendorPayload);
+                }
+
+                foreach ($createdPurchaseOrders as $createdPurchaseOrder) {
+                    Event::dispatch('purchase_order.create.after', $createdPurchaseOrder);
+                }
+
+                session()->flash('success', 'Purchase orders created successfully for ' . count($createdPurchaseOrders) . ' vendors.');
+
+                return redirect()->route('admin.purchase_orders.index');
+            }
+
+            $singleVendorId = (int) $groupedItems->keys()->first();
+            if ($singleVendorId > 0) {
+                $payload['organization_id'] = $singleVendorId;
+            }
+
+            if ($singleVendorId <= 0 && empty($payload['organization_id'])) {
+                session()->flash('error', 'Please select at least one vendor in Vendor PO Items.');
+
+                return redirect()->back()->withInput();
+            }
+
+            $payload['items'] = collect($payload['items'] ?? [])->map(function ($item) {
+                unset($item['vendor_id']);
+
+                return $item;
+            })->all();
+
             $purchaseOrder = $this->purchaseOrderRepository->createFromJobOrder($jobOrder, $payload);
         } else {
             $purchaseOrder = $this->purchaseOrderRepository->create($payload);
@@ -109,7 +188,7 @@ class PurchaseOrderController extends Controller
     {
         $purchaseOrder = $this->purchaseOrderRepository->with(['items', 'organization', 'jobOrder', 'vendorQuote'])->findOrFail($id);
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
-            ->whereIn('type', ['vendor', 'Vendor'])
+            ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
             ->get(['id', 'name']);
 

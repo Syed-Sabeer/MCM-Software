@@ -55,9 +55,9 @@ class ProductController extends Controller
 
         $duplicateDraft = null;
         $colorReferences = ColorReference::query()->orderBy('name')->get(['name', 'code']);
-        $materialReferences = MaterialReference::with('vendors:id,name')->orderBy('name')->get();
+        $materialReferences = MaterialReference::with('vendors')->orderBy('name')->get();
         $vendors = Organization::query()
-            ->whereIn('type', ['vendor', 'Vendor'])
+            ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -146,9 +146,9 @@ class ProductController extends Controller
             ->get(['id', 'name']);
 
         $colorReferences = ColorReference::query()->orderBy('name')->get(['name', 'code']);
-        $materialReferences = MaterialReference::with('vendors:id,name')->orderBy('name')->get();
+        $materialReferences = MaterialReference::with('vendors')->orderBy('name')->get();
         $vendors = Organization::query()
-            ->whereIn('type', ['vendor', 'Vendor'])
+            ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
             ->get(['id', 'name']);
 

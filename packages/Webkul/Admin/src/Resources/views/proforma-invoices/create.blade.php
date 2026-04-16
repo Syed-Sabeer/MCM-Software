@@ -366,6 +366,7 @@
                     <div class="relative min-w-[380px]">
                         <v-proforma-product-lookup :src="src" :organization-id="organizationId" :selected-product="product" @on-selected="(product) => addProduct(product)"></v-proforma-product-lookup>
                         <input type="hidden" :name="`${inputName}[product_id]`" :value="product.product_id || ''">
+                        <input type="text" :name="`${inputName}[item_name]`" v-model="product.name" class="custom-input mt-2" placeholder="Product name">
                     </div>
                 </x-admin::table.td>
 
@@ -386,7 +387,6 @@
                     </x-admin::form.control-group>
                 </x-admin::table.td>
 
-                <input type="hidden" :name="`${inputName}[item_name]`" :value="product.name || ''">
                 <input type="hidden" :name="`${inputName}[item_code]`" :value="product.item_code || ''">
                 <input type="hidden" :name="`${inputName}[unit]`" value="">
 

@@ -10,8 +10,8 @@ use Webkul\Admin\DataGrids\Settings\MaterialReferenceDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Contact\Models\Organization;
-use Webkul\Product\Models\ColorReference;
 use Webkul\Product\Models\MaterialReference;
+use Webkul\Product\Models\UnitReference;
 
 class MaterialReferenceController extends Controller
 {
@@ -26,9 +26,11 @@ class MaterialReferenceController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $colorReferences = ColorReference::query()->orderBy('name')->get(['name', 'code']);
+        $units = UnitReference::query()
+            ->orderBy('name')
+            ->get(['name']);
 
-        return view('admin::settings.material-references.index', compact('vendors', 'colorReferences'));
+        return view('admin::settings.material-references.index', compact('vendors', 'units'));
     }
 
     public function store(): JsonResponse
@@ -43,14 +45,14 @@ class MaterialReferenceController extends Controller
         Event::dispatch('settings.material_reference.create.after', $materialReference);
 
         return response()->json([
-            'data' => $materialReference->load('vendors:id,name'),
+            'data' => $materialReference->load('vendors'),
             'message' => 'Material created successfully.',
         ]);
     }
 
     public function edit(int $id): JsonResponse
     {
-        $materialReference = MaterialReference::with('vendors:id,name')->findOrFail($id);
+        $materialReference = MaterialReference::with('vendors')->findOrFail($id);
 
         return response()->json([
             'data' => array_merge($materialReference->toArray(), [
@@ -72,7 +74,7 @@ class MaterialReferenceController extends Controller
         Event::dispatch('settings.material_reference.update.after', $materialReference);
 
         return response()->json([
-            'data' => $materialReference->fresh('vendors:id,name'),
+            'data' => $materialReference->fresh('vendors'),
             'message' => 'Material updated successfully.',
         ]);
     }
@@ -103,12 +105,10 @@ class MaterialReferenceController extends Controller
     {
         return request()->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('material_references', 'name')->ignore($id)],
-            'qty' => ['required', 'numeric', 'min:0'],
-            'unit' => ['required', 'string', 'max:100'],
+            'qty' => ['required', 'numeric', 'min:0', 'decimal:0,3'],
+            'unit' => ['required', 'string', 'max:100', Rule::exists('unit_references', 'name')],
             'vendor_ids' => ['nullable', 'array'],
             'vendor_ids.*' => ['integer', Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['vendor', 'Vendor']))],
-            'color_name' => ['nullable', 'string', 'max:100'],
-            'color_code' => ['nullable', 'string', 'max:20'],
         ]);
     }
 
@@ -116,10 +116,8 @@ class MaterialReferenceController extends Controller
     {
         return [
             'name' => trim((string) $data['name']),
-            'qty' => $data['qty'],
+            'qty' => round((float) $data['qty'], 3),
             'unit' => trim((string) $data['unit']),
-            'color_name' => trim((string) ($data['color_name'] ?? '')) ?: null,
-            'color_code' => strtoupper(trim((string) ($data['color_code'] ?? ''))) ?: null,
         ];
     }
 }

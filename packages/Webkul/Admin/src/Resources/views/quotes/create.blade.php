@@ -291,6 +291,7 @@
                             @on-selected="(product) => addProduct(product)"
                         ></v-quote-product-lookup>
                         <input type="hidden" :name="`${inputName}[product_id]`" :value="product.product_id || ''">
+                        <input type="text" :name="`${inputName}[item_name]`" v-model="product.name" class="mt-2 w-full rounded border border-gray-200 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="Product name">
                     </div>
                 </x-admin::table.td>
 
@@ -311,7 +312,6 @@
                     </x-admin::form.control-group>
                 </x-admin::table.td>
 
-                <input type="hidden" :name="`${inputName}[item_name]`" :value="product.name || ''">
                 <input type="hidden" :name="`${inputName}[item_code]`" :value="product.item_code || ''">
 
                 <x-admin::table.td class="!px-2 text-center">

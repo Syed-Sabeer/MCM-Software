@@ -41,12 +41,17 @@ class JobOrderRequirementRepository extends Repository
                     $orderedQty = (float) $jobOrderItem->qty;
                     $qtyPerUnit = (float) $consumption->qty;
                     $requiredQty = $qtyPerUnit * $orderedQty;
-                    $displayName = $this->formatMaterialName(
-                        (string) $consumption->name,
-                        $consumption->color_name,
-                        $consumption->color_code
-                    );
-                    $key = mb_strtolower(trim($displayName)) . '|' . mb_strtolower((string) $consumption->unit);
+                    $materialName = trim((string) $consumption->name);
+                    $colorName = trim((string) ($consumption->color_name ?: ''));
+                    $colorCode = trim((string) ($consumption->color_code ?: ''));
+                    $key = implode('|', [
+                        (string) ($consumption->material_reference_id ?: ''),
+                        mb_strtolower($materialName),
+                        mb_strtolower($colorName),
+                        mb_strtolower($colorCode),
+                        mb_strtolower((string) $consumption->unit),
+                        number_format($qtyPerUnit, 4, '.', ''),
+                    ]);
 
                     if (! isset($aggregatedRequirements[$key])) {
                         $aggregatedRequirements[$key] = [
@@ -55,21 +60,20 @@ class JobOrderRequirementRepository extends Repository
                             'product_id' => $jobOrderItem->product_id,
                             'item_codes' => [],
                             'material_reference_id' => $consumption->material_reference_id,
-                            'material_name' => $displayName,
+                            'material_name' => $materialName,
                             'unit' => $consumption->unit,
-                            'qty_per_unit' => 0,
+                            'qty_per_unit' => $qtyPerUnit,
                             'ordered_qty' => 0,
                             'required_qty' => 0,
                             'received_qty' => 0,
                             'balance_qty' => 0,
                             'vendor_ids' => [],
-                            'color_name' => $consumption->color_name,
-                            'color_code' => $consumption->color_code,
+                            'color_name' => $colorName !== '' ? $colorName : null,
+                            'color_code' => $colorCode !== '' ? $colorCode : null,
                             'status' => 'pending',
                         ];
                     }
 
-                    $aggregatedRequirements[$key]['qty_per_unit'] += $qtyPerUnit;
                     $aggregatedRequirements[$key]['ordered_qty'] += $orderedQty;
                     $aggregatedRequirements[$key]['required_qty'] += $requiredQty;
                     $aggregatedRequirements[$key]['balance_qty'] += $requiredQty;
@@ -103,18 +107,6 @@ class JobOrderRequirementRepository extends Repository
                 ]);
             }
         });
-    }
-
-    protected function formatMaterialName(string $name, ?string $colorName = null, ?string $colorCode = null): string
-    {
-        $name = trim($name);
-        $label = trim((string) ($colorName ?: $colorCode ?: ''));
-
-        if ($label === '') {
-            return $name;
-        }
-
-        return sprintf('%s (%s)', $name, $label);
     }
 
     public function applyReceivedQuantity(int $requirementId, float $receivedQty): void

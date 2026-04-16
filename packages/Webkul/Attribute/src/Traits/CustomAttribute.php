@@ -44,6 +44,12 @@ trait CustomAttribute
      */
     public function getAttribute($key)
     {
+        // Preserve native Eloquent relation access (e.g. belongsToMany "pivot")
+        // before applying dynamic attribute fallback.
+        if ($this->relationLoaded($key) || $this->isRelation($key)) {
+            return parent::getAttribute($key);
+        }
+
         if (! method_exists(static::class, $key) && ! isset($this->attributes[$key])) {
             if (isset($this->id)) {
                 $this->attributes[$key] = '';

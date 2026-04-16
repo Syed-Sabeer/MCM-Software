@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class PurchaseOrderRequest extends FormRequest
 {
@@ -31,15 +32,23 @@ class PurchaseOrderRequest extends FormRequest
     public function rules(): array
     {
         $id = $this->route('id');
+        $isJobOrderBased = $this->filled('job_order_id') && ! $this->filled('vendor_quote_id');
 
         return [
-            'po_number' => ['required', 'unique:purchase_orders,po_number,' . $id],
+            'po_number' => ['nullable', 'string', 'max:255'],
             'organization_id' => [
-                'required',
+                Rule::requiredIf(! $isJobOrderBased),
+                'nullable',
                 'exists:organizations,id',
-                function ($attribute, $value, $fail) {
+                function ($attribute, $value, $fail) use ($isJobOrderBased) {
+                    if ($isJobOrderBased && ! $value) {
+                        return;
+                    }
+
                     $type = DB::table('organizations')->where('id', $value)->value('type');
-                    if (! in_array($type, ['vendor', 'Vendor'], true)) {
+                    $normalized = mb_strtolower(trim((string) $type));
+
+                    if (! in_array($normalized, ['vendor', 'vendors'], true)) {
                         $fail('Selected organization must be a vendor.');
                     }
                 },
@@ -63,6 +72,13 @@ class PurchaseOrderRequest extends FormRequest
             'items.*.item' => ['required', 'string'],
             'items.*.ordered_quantity' => ['required', 'numeric', 'gt:0'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
+            'items.*.vendor_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('organizations', 'id')->where(function ($query) {
+                    $query->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')");
+                }),
+            ],
         ];
     }
 }

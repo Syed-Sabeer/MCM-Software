@@ -1,6 +1,6 @@
 @php
     $vendorOptions = $vendors->map(fn ($vendor) => ['id' => (int) $vendor->id, 'name' => $vendor->name])->values();
-    $colorOptions = $colorReferences->map(fn ($color) => ['name' => $color->name, 'code' => $color->code])->values();
+    $unitOptions = $units->map(fn ($unit) => ['name' => $unit->name])->values();
 @endphp
 
 <x-admin::layouts>
@@ -23,7 +23,7 @@
         <v-material-references
             ref="materialReferences"
             :vendors='@json($vendorOptions)'
-            :colors='@json($colorOptions)'
+            :units='@json($unitOptions)'
         >
             <x-admin::shimmer.datagrid />
         </v-material-references>
@@ -55,40 +55,83 @@
                                 <div class="grid gap-4 md:grid-cols-2">
                                     <x-admin::form.control-group>
                                         <x-admin::form.control-group.label class="required">Qty</x-admin::form.control-group.label>
-                                        <x-admin::form.control-group.control type="number" name="qty" rules="required|numeric|min:0" label="Qty" placeholder="Qty" />
+                                        <x-admin::form.control-group.control type="number" name="qty" step="0.001" rules="required|min_value:0" label="Qty" placeholder="Qty" />
                                         <x-admin::form.control-group.error control-name="qty" />
                                     </x-admin::form.control-group>
 
                                     <x-admin::form.control-group>
                                         <x-admin::form.control-group.label class="required">Unit</x-admin::form.control-group.label>
-                                        <x-admin::form.control-group.control type="text" name="unit" rules="required|max:100" label="Unit" placeholder="Unit" />
+                                        <select
+                                            name="unit"
+                                            class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                            v-model="selectedUnit"
+                                        >
+                                            <option value="">Select Unit</option>
+                                            <option v-for="unit in units" :value="unit.name">@{{ unit.name }}</option>
+                                        </select>
                                         <x-admin::form.control-group.error control-name="unit" />
                                     </x-admin::form.control-group>
                                 </div>
 
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label>Vendors</x-admin::form.control-group.label>
-                                    <select name="vendor_ids[]" multiple class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
-                                        <option v-for="vendor in vendors" :value="vendor.id" :selected="selectedVendorIds.includes(vendor.id)">
-                                            @{{ vendor.name }}
-                                        </option>
-                                    </select>
+                                    <div ref="vendorDropdown">
+                                        <button
+                                            type="button"
+                                            class="w-full rounded border border-gray-300 px-3 py-2 text-left text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                            @click="vendorDropdownOpen = !vendorDropdownOpen"
+                                        >
+                                            @{{ selectedVendorSummary }}
+                                        </button>
+
+                                        <div
+                                            v-if="vendorDropdownOpen"
+                                            class="mt-2 rounded border border-gray-300 bg-white p-2 dark:border-gray-700 dark:bg-gray-900"
+                                        >
+                                            <input
+                                                type="text"
+                                                v-model="vendorSearchTerm"
+                                                class="mb-2 w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                                placeholder="Search vendor..."
+                                            >
+
+                                            <div class="max-h-48 overflow-y-auto rounded border border-gray-300 p-2 dark:border-gray-700">
+                                                <label
+                                                    v-for="vendor in filteredVendors"
+                                                    :key="vendor.id"
+                                                    class="mb-1 flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        :value="vendor.id"
+                                                        v-model="selectedVendorIds"
+                                                        class="h-4 w-4"
+                                                    >
+                                                    <span>@{{ vendor.name }}</span>
+                                                </label>
+
+                                                <p v-if="! filteredVendors.length" class="px-2 py-1 text-xs text-gray-500 dark:text-gray-400">
+                                                    No vendors found.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="hidden">
+                                        <label
+                                            v-for="vendorId in selectedVendorIds"
+                                            :key="vendorId"
+                                        >
+                                            <input
+                                                type="hidden"
+                                                name="vendor_ids[]"
+                                                :value="vendorId"
+                                            >
+                                        </label>
+                                    </div>
                                     <x-admin::form.control-group.error control-name="vendor_ids" />
                                 </x-admin::form.control-group>
 
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>Color</x-admin::form.control-group.label>
-                                    <datalist id="material-reference-color-options">
-                                        <option v-for="color in colors" :value="color.name">@{{ color.code }}</option>
-                                    </datalist>
-
-                                    <div class="flex items-center gap-3">
-                                        <input type="text" name="color_name" list="material-reference-color-options" v-model="colorName" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" placeholder="Color Name" @change="applyColorReference" @blur="applyColorReference">
-                                        <input type="text" name="color_code" id="material-reference-color-code" v-model="colorCode" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" placeholder="#000000" @blur="normalizeColorCodeField">
-                                        <input type="color" :value="colorPickerValue" class="h-11 w-14 cursor-pointer rounded border border-gray-300 bg-white p-1 dark:border-gray-700 dark:bg-gray-900" @input="updateColorFromPicker">
-                                    </div>
-                                    <x-admin::form.control-group.error control-name="color_name" />
-                                </x-admin::form.control-group>
                             </x-slot>
 
                             <x-slot:footer>
@@ -109,63 +152,59 @@
         <script type="module">
             app.component('v-material-references', {
                 template: '#material-references-template',
-                props: ['vendors', 'colors'],
+                props: ['vendors', 'units'],
 
                 data() {
                     return {
                         isProcessing: false,
                         selectedRecord: false,
                         selectedVendorIds: [],
-                        colorName: '',
-                        colorCode: '',
+                        selectedUnit: '',
+                        vendorSearchTerm: '',
+                        vendorDropdownOpen: false,
                     };
                 },
 
                 computed: {
-                    colorPickerValue() {
-                        const normalized = this.normalizeColorCode(this.colorCode);
+                    filteredVendors() {
+                        const term = String(this.vendorSearchTerm || '').trim().toLowerCase();
 
-                        return /^#[0-9A-Fa-f]{6}$/.test(normalized) ? normalized : '#000000';
+                        if (! term) {
+                            return this.vendors.slice(0, 5);
+                        }
+
+                        return this.vendors.filter((vendor) => String(vendor.name || '').toLowerCase().includes(term));
+                    },
+
+                    selectedVendorSummary() {
+                        if (! this.selectedVendorIds.length) {
+                            return 'Select vendors';
+                        }
+
+                        const selectedNames = this.vendors
+                            .filter((vendor) => this.selectedVendorIds.includes(Number(vendor.id)))
+                            .map((vendor) => vendor.name);
+
+                        if (selectedNames.length <= 2) {
+                            return selectedNames.join(', ');
+                        }
+
+                        return `${selectedNames[0]}, ${selectedNames[1]} +${selectedNames.length - 2} more`;
                     },
                 },
 
                 methods: {
-                    normalizeColorCode(value) {
-                        const trimmed = String(value || '').trim();
-
-                        if (! trimmed) {
-                            return '';
-                        }
-
-                        return trimmed.startsWith('#') ? trimmed.toUpperCase() : `#${trimmed.toUpperCase()}`;
-                    },
-
-                    normalizeColorCodeField() {
-                        this.colorCode = this.normalizeColorCode(this.colorCode);
-                    },
-
-                    applyColorReference() {
-                        const match = this.colors.find((color) => String(color.name || '').toLowerCase() === String(this.colorName || '').trim().toLowerCase());
-
-                        if (match?.code) {
-                            this.colorCode = this.normalizeColorCode(match.code);
-                        }
-                    },
-
-                    updateColorFromPicker(event) {
-                        this.colorCode = event.target.value || '#000000';
-                    },
-
                     syncModalValues(values) {
                         this.$refs.modalForm.setValues(values);
                         this.selectedVendorIds = (values.vendor_ids || []).map((id) => Number(id));
-                        this.colorName = values.color_name || '';
-                        this.colorCode = this.normalizeColorCode(values.color_code || '');
+                        this.selectedUnit = values.unit || '';
                     },
 
                     openModal() {
                         this.selectedRecord = false;
-                        this.syncModalValues({ id: '', name: '', qty: '', unit: '', vendor_ids: [], color_name: '', color_code: '' });
+                        this.syncModalValues({ id: '', name: '', qty: '', unit: '', vendor_ids: [] });
+                        this.vendorSearchTerm = '';
+                        this.vendorDropdownOpen = false;
                         this.$refs.materialReferencesModal.open();
                     },
 
@@ -180,8 +219,7 @@
                     updateOrCreate(params, { resetForm, setErrors }) {
                         this.isProcessing = true;
                         params.vendor_ids = this.selectedVendorIds;
-                        params.color_name = this.colorName;
-                        params.color_code = this.normalizeColorCode(this.colorCode);
+                        params.unit = this.selectedUnit;
 
                         this.$axios.post(params.id ? `{{ route('admin.settings.material_references.update', '') }}/${params.id}` : "{{ route('admin.settings.material_references.store') }}", {
                             ...params,
@@ -192,8 +230,9 @@
                             this.$refs.datagrid.get();
                             resetForm();
                             this.selectedVendorIds = [];
-                            this.colorName = '';
-                            this.colorCode = '';
+                            this.selectedUnit = '';
+                            this.vendorSearchTerm = '';
+                            this.vendorDropdownOpen = false;
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
                         }).catch((error) => {
                             this.isProcessing = false;
@@ -206,8 +245,8 @@
 
                 mounted() {
                     this.$el.addEventListener('change', (event) => {
-                        if (event.target.name === 'vendor_ids[]') {
-                            this.selectedVendorIds = Array.from(event.target.selectedOptions).map((option) => Number(option.value));
+                        if (event.target.name === 'unit') {
+                            this.selectedUnit = event.target.value || '';
                         }
                     });
                 },

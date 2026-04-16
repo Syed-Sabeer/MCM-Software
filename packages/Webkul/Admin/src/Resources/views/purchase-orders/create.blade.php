@@ -9,6 +9,7 @@
         'pending_quantity' => $item->quantity,
         'unit' => $item->unit ?: optional($item->requirement)->unit ?: 'PCS',
         'price' => $item->unit_price,
+        'vendor_id' => $vendorQuote?->organization_id,
     ])->toArray() ?? $jobOrder?->requirements?->map(fn ($req) => [
         'requirement_id' => $req->id,
         'item' => $req->material_name,
@@ -18,8 +19,18 @@
         'pending_quantity' => $req->balance_qty,
         'unit' => $req->unit ?: 'PCS',
         'price' => 0,
+        'vendor_id' => collect((array) $req->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first(),
     ])->toArray() ?? [['item' => '', 'ordered_quantity' => 1, 'unit' => 'PCS', 'price' => 0]]);
     $initialPurchaseOrderCharges = collect(old('charges', $vendorQuote ? $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote') : []))->values()->all();
+    $vendorOptions = $vendors->map(fn ($vendor) => [
+        'id' => (int) $vendor->id,
+        'name' => (string) $vendor->name,
+    ])->values();
+    $requirementVendorMap = collect($jobOrder?->requirements ?? [])->mapWithKeys(function ($requirement) {
+        $ids = collect((array) $requirement->vendor_ids)->filter()->map(fn ($id) => (int) $id)->values()->all();
+
+        return [(int) $requirement->id => $ids];
+    });
 @endphp
 <x-admin::layouts>
     <x-slot:title>Create Vendor Purchase Order</x-slot>
@@ -60,16 +71,18 @@
                     </div>
                 </div>
 
-                <div class="mt-4 grid gap-4" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">Vendor</label>
-                        <select name="organization_id" class="custom-select">
-                            <option value="">Select vendor</option>
-                            @foreach ($vendors as $vendor)
-                                <option value="{{ $vendor->id }}" @selected(old('organization_id', $vendorQuote?->organization_id) == $vendor->id)>{{ $vendor->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                <div class="mt-4 grid gap-4" style="grid-template-columns: repeat({{ $jobOrder && ! $vendorQuote ? 2 : 3 }}, minmax(0, 1fr));">
+                    @if (! ($jobOrder && ! $vendorQuote))
+                        <div>
+                            <label class="mb-1 block text-sm font-medium">Vendor</label>
+                            <select name="organization_id" class="custom-select">
+                                <option value="">Select vendor</option>
+                                @foreach ($vendors as $vendor)
+                                    <option value="{{ $vendor->id }}" @selected(old('organization_id', $vendorQuote?->organization_id) == $vendor->id)>{{ $vendor->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
                     <div>
                         <label class="mb-1 block text-sm font-medium">First Delivery</label>
                         <input type="date" name="completion_date" value="{{ old('completion_date', optional($vendorQuote?->first_delivery_date)->toDateString()) }}" class="custom-input">
@@ -107,6 +120,7 @@
                             <th class="py-2 text-left">Material</th>
                             <th class="py-2 text-left">Ordered Qty</th>
                             <th class="py-2 text-left">Unit</th>
+                            <th class="py-2 text-left">Vendor</th>
                             <th class="py-2 text-left">Price</th>
                             <th class="py-2 text-left">Amount</th>
                             <th class="py-2 text-center">Action</th>
@@ -118,6 +132,14 @@
                                 <td class="py-2"><input type="hidden" name="items[{{ $index }}][requirement_id]" value="{{ $item['requirement_id'] ?? '' }}"><input type="text" name="items[{{ $index }}][item]" value="{{ $item['item'] ?? '' }}" class="custom-input"><input type="hidden" name="items[{{ $index }}][material_name]" value="{{ $item['material_name'] ?? $item['item'] ?? '' }}"></td>
                                 <td class="py-2"><input type="number" step="0.0001" min="0.0001" name="items[{{ $index }}][ordered_quantity]" value="{{ $item['ordered_quantity'] ?? 1 }}" class="custom-input item-qty" oninput="window.calculatePoTotals()"></td>
                                 <td class="py-2"><input type="text" name="items[{{ $index }}][unit]" value="{{ $item['unit'] ?? 'PCS' }}" class="custom-input"></td>
+                                <td class="py-2">
+                                    <select name="items[{{ $index }}][vendor_id]" class="custom-select item-vendor">
+                                        <option value="">Select vendor</option>
+                                        @foreach ($vendors as $vendor)
+                                            <option value="{{ $vendor->id }}" @selected((int) old('items.' . $index . '.vendor_id', $item['vendor_id'] ?? 0) === (int) $vendor->id)>{{ $vendor->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
                                 <td class="py-2"><input type="number" step="0.01" min="0" name="items[{{ $index }}][price]" value="{{ $item['price'] ?? 0 }}" class="custom-input item-price" oninput="window.calculatePoTotals()"></td>
                                 <td class="py-2 text-right align-middle"><span class="item-amount">0.00</span></td>
                                 <td class="py-2 text-center"><button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removePoRow(this)"><i class="icon-delete"></i></button></td>
@@ -158,6 +180,39 @@
     @pushOnce('scripts')
         <script>
             window.poCharges = @json($initialPurchaseOrderCharges);
+            window.poVendorOptions = @json($vendorOptions);
+            window.requirementVendorMap = @json($requirementVendorMap);
+
+            window.vendorOptionsHtml = function (requirementId, selectedVendorId) {
+                const reqId = Number(requirementId || 0);
+                const allowedIds = Array.isArray(window.requirementVendorMap?.[reqId]) ? window.requirementVendorMap[reqId].map((id) => Number(id)) : [];
+                const options = allowedIds.length
+                    ? window.poVendorOptions.filter((vendor) => allowedIds.includes(Number(vendor.id)))
+                    : window.poVendorOptions;
+
+                const selectedIdNum = Number(selectedVendorId || 0);
+                let html = '<option value="">Select vendor</option>';
+
+                options.forEach((vendor) => {
+                    const selectedAttr = selectedIdNum === Number(vendor.id) ? ' selected' : '';
+                    html += `<option value="${vendor.id}"${selectedAttr}>${vendor.name}</option>`;
+                });
+
+                return html;
+            };
+
+            window.syncRowVendor = function (row) {
+                if (!row) return;
+
+                const requirementInput = row.querySelector('input[name*="[requirement_id]"]');
+                const vendorSelect = row.querySelector('.item-vendor');
+
+                if (!vendorSelect) return;
+
+                const requirementId = Number(requirementInput?.value || 0);
+                const selectedVendorId = Number(vendorSelect.value || 0);
+                vendorSelect.innerHTML = window.vendorOptionsHtml(requirementId, selectedVendorId);
+            };
 
             window.isTaxChargeName = function (name) {
                 const normalized = String(name || '').trim().toLowerCase();
@@ -246,8 +301,9 @@
                 document.getElementById('po-grand-total-input').value = grandTotal.toFixed(4);
             };
             window.removePoRow = function (button) { const tbody = document.querySelector('#purchase-order-items-table tbody'); const row = button.closest('tr'); if (!tbody || !row) return; if (tbody.children.length <= 1) { row.querySelectorAll('input').forEach((input) => { if (input.type === 'hidden') input.value = ''; else if (input.type === 'number') input.value = input.name.includes('[ordered_quantity]') ? '1' : '0'; else input.value = input.name.includes('[unit]') ? 'PCS' : ''; }); const amount = row.querySelector('.item-amount'); if (amount) amount.textContent = '0.00'; window.calculatePoTotals(); return; } row.remove(); window.calculatePoTotals(); };
-            window.addPoRow = function () { const tbody = document.querySelector('#purchase-order-items-table tbody'); const index = tbody.children.length; const expectedDate = document.querySelector('input[name="expected_receive_date"]')?.value || ''; tbody.insertAdjacentHTML('beforeend', `<tr><td class="py-2"><input type="hidden" name="items[${index}][requirement_id]" value=""><input type="text" name="items[${index}][item]" class="custom-input"><input type="hidden" name="items[${index}][material_name]" value=""></td><td class="py-2"><input type="number" step="0.0001" min="0.0001" name="items[${index}][ordered_quantity]" value="1" class="custom-input item-qty" oninput="window.calculatePoTotals()"></td><td class="py-2"><input type="text" name="items[${index}][unit]" value="PCS" class="custom-input"></td><td class="py-2"><input type="number" step="0.01" min="0" name="items[${index}][price]" value="0" class="custom-input item-price" oninput="window.calculatePoTotals()"></td><td class="py-2 text-right align-middle"><span class="item-amount">0.00</span></td><td class="py-2 text-center"><button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removePoRow(this)"><i class="icon-delete"></i></button></td><input type="hidden" name="items[${index}][received_quantity]" value="0"><input type="hidden" name="items[${index}][pending_quantity]" value="1"><input type="hidden" name="items[${index}][expected_receive_date]" value="${expectedDate}"></tr>`); window.calculatePoTotals(); };
+            window.addPoRow = function () { const tbody = document.querySelector('#purchase-order-items-table tbody'); const index = tbody.children.length; const expectedDate = document.querySelector('input[name="expected_receive_date"]')?.value || ''; tbody.insertAdjacentHTML('beforeend', `<tr><td class="py-2"><input type="hidden" name="items[${index}][requirement_id]" value=""><input type="text" name="items[${index}][item]" class="custom-input"><input type="hidden" name="items[${index}][material_name]" value=""></td><td class="py-2"><input type="number" step="0.0001" min="0.0001" name="items[${index}][ordered_quantity]" value="1" class="custom-input item-qty" oninput="window.calculatePoTotals()"></td><td class="py-2"><input type="text" name="items[${index}][unit]" value="PCS" class="custom-input"></td><td class="py-2"><select name="items[${index}][vendor_id]" class="custom-select item-vendor">${window.vendorOptionsHtml(0, 0)}</select></td><td class="py-2"><input type="number" step="0.01" min="0" name="items[${index}][price]" value="0" class="custom-input item-price" oninput="window.calculatePoTotals()"></td><td class="py-2 text-right align-middle"><span class="item-amount">0.00</span></td><td class="py-2 text-center"><button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removePoRow(this)"><i class="icon-delete"></i></button></td><input type="hidden" name="items[${index}][received_quantity]" value="0"><input type="hidden" name="items[${index}][pending_quantity]" value="1"><input type="hidden" name="items[${index}][expected_receive_date]" value="${expectedDate}"></tr>`); window.calculatePoTotals(); };
             document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('#purchase-order-items-table tbody tr').forEach((row) => window.syncRowVendor(row));
                 window.renderPoCharges();
                 window.calculatePoTotals();
             });
