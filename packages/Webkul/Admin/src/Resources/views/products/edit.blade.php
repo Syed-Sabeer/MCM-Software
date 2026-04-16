@@ -28,9 +28,13 @@
         ])->toArray();
 
         $consumptionsData = old('consumptions', $product->consumptions->map(fn ($consumption) => [
+            'material_reference_id' => $consumption->material_reference_id,
             'name' => $consumption->name,
             'qty'  => $consumption->qty,
             'unit' => $consumption->unit,
+            'vendor_ids' => $consumption->vendor_ids ?? [],
+            'color_name' => $consumption->color_name,
+            'color_code' => $consumption->color_code,
         ])->toArray());
 
         $productionSectionsData = old('production_sections', $product->productionSections->map(fn ($section) => [
@@ -45,6 +49,22 @@
         $colorReferenceOptions = $colorReferences->map(fn ($color) => [
             'name' => $color->name,
             'code' => $color->code,
+        ])->values();
+
+        $materialReferenceOptions = $materialReferences->map(fn ($material) => [
+            'id' => $material->id,
+            'name' => $material->name,
+            'qty' => $material->qty,
+            'unit' => $material->unit,
+            'color_name' => $material->color_name,
+            'color_code' => $material->color_code,
+            'vendor_ids' => $material->vendors->pluck('id')->map(fn ($id) => (int) $id)->values(),
+            'vendor_names' => $material->vendors->pluck('name')->values(),
+        ])->values();
+
+        $vendorOptions = $vendors->map(fn ($vendor) => [
+            'id' => (int) $vendor->id,
+            'name' => $vendor->name,
         ])->values();
     @endphp
 
@@ -141,13 +161,22 @@
                     <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <div class="mb-3 flex items-center justify-between">
                             <p class="text-base font-semibold text-gray-800 dark:text-white">Material Consumption</p>
-                            <button type="button" id="add-consumption" class="secondary-button">Add Row</button>
+                            <button type="button" id="add-consumption" class="secondary-button">Add Material +</button>
                         </div>
 
-                        <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1fr) 120px 120px 40px; gap: 0.5rem;">
+                        <datalist id="product-material-reference-options">
+                            @foreach ($materialReferenceOptions as $materialReference)
+                                <option value="{{ $materialReference['name'] }}">{{ $materialReference['unit'] }}</option>
+                            @endforeach
+                        </datalist>
+
+                        <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) 120px 120px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 0.5rem;">
+                            <div>Select Material</div>
                             <div>Material Name</div>
                             <div>Qty</div>
                             <div>Unit</div>
+                            <div>Vendor</div>
+                            <div>Color</div>
                             <div></div>
                         </div>
 
@@ -402,9 +431,12 @@
                 var oldSections = @json($productionSectionsData);
                 var existingOtherImages = @json($existingOtherImagesData);
                 var colorReferences = @json($colorReferenceOptions);
+                var materialReferences = @json($materialReferenceOptions);
+                var vendorOptions = @json($vendorOptions);
                 var deletedImageIds = [];
                 var lastAutoInternalCode = internalCodeInput ? (internalCodeInput.value || '') : '';
                 var colorReferenceMap = {};
+                var materialReferenceMap = {};
 
                 colorReferences.forEach(function (reference) {
                     if (!reference || !reference.name) {
@@ -412,6 +444,14 @@
                     }
 
                     colorReferenceMap[String(reference.name).trim().toLowerCase()] = reference.code || '';
+                });
+
+                materialReferences.forEach(function (reference) {
+                    if (!reference || !reference.name) {
+                        return;
+                    }
+
+                    materialReferenceMap[String(reference.name).trim().toLowerCase()] = reference;
                 });
 
                 function escapeHtml(value) {
@@ -451,6 +491,10 @@
 
                 function getColorReferenceCode(name) {
                     return colorReferenceMap[String(name || '').trim().toLowerCase()] || '';
+                }
+
+                function getMaterialReference(name) {
+                    return materialReferenceMap[String(name || '').trim().toLowerCase()] || null;
                 }
 
                 function bindColorRow(row) {
@@ -609,16 +653,106 @@
                 function addConsumptionRow(data) {
                     var index = consumptionsContainer.querySelectorAll('.consumption-row').length;
                     var row = document.createElement('div');
+                    var selectedVendorIds = Array.isArray(valueOf(data, 'vendor_ids', [])) ? valueOf(data, 'vendor_ids', []).map(Number) : [];
+                    var vendorOptionsMarkup = '<select multiple name="consumptions[' + index + '][vendor_ids][]" class="consumption-vendor-select rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">';
+
+                    vendorOptions.forEach(function (vendor) {
+                        var selected = selectedVendorIds.includes(Number(vendor.id)) ? ' selected' : '';
+                        vendorOptionsMarkup += '<option value="' + escapeHtml(vendor.id) + '"' + selected + '>' + escapeHtml(vendor.name) + '</option>';
+                    });
+
+                    vendorOptionsMarkup += '</select>';
+
                     row.className = 'consumption-row rounded border border-gray-200 p-2 dark:border-gray-700';
                     row.style.display = 'grid';
-                    row.style.gridTemplateColumns = 'minmax(0, 1fr) 120px 120px 40px';
+                    row.style.gridTemplateColumns = 'minmax(0, 1.1fr) minmax(0, 1fr) 120px 120px minmax(0, 1fr) minmax(0, 1fr) 44px';
                     row.style.gap = '0.5rem';
                     row.innerHTML = ''
-                        + '<input type="text" name="consumptions[' + index + '][name]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Material Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
-                        + '<input type="number" step="0.0001" name="consumptions[' + index + '][qty]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
-                        + '<input type="text" name="consumptions[' + index + '][unit]" class="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Unit" value="' + escapeHtml(valueOf(data, 'unit', '')) + '">'
+                        + '<input type="hidden" name="consumptions[' + index + '][material_reference_id]" class="consumption-reference-id" value="' + escapeHtml(valueOf(data, 'material_reference_id', '')) + '">'
+                        + '<input type="text" list="product-material-reference-options" class="consumption-reference-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Search Material" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
+                        + '<input type="text" name="consumptions[' + index + '][name]" class="consumption-name-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Material Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
+                        + '<input type="number" step="0.0001" name="consumptions[' + index + '][qty]" class="consumption-qty-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
+                        + '<input type="text" name="consumptions[' + index + '][unit]" class="consumption-unit-input rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Unit" value="' + escapeHtml(valueOf(data, 'unit', '')) + '">'
+                        + '<div class="consumption-vendor-wrapper">' + vendorOptionsMarkup + '</div>'
+                        + '<div class="flex items-center gap-2"><input type="text" list="product-color-reference-options" name="consumptions[' + index + '][color_name]" class="consumption-color-name rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Color Name" value="' + escapeHtml(valueOf(data, 'color_name', '')) + '"><input type="text" name="consumptions[' + index + '][color_code]" class="consumption-color-code w-full rounded border border-gray-200 px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="#000000" value="' + escapeHtml(valueOf(data, 'color_code', '')) + '"><input type="color" class="consumption-color-picker h-[40px] w-[40px] cursor-pointer rounded border border-gray-200 p-0 dark:border-gray-700" value="' + escapeHtml(normalizeColorCode(valueOf(data, 'color_code', '#000000')) || '#000000') + '"></div>'
                         + '<button type="button" class="remove-consumption inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove consumption">&times;</button>';
                     consumptionsContainer.appendChild(row);
+                    bindConsumptionRow(row);
+                }
+
+                function bindConsumptionRow(row) {
+                    var referenceInput = row.querySelector('.consumption-reference-input');
+                    var referenceIdInput = row.querySelector('.consumption-reference-id');
+                    var nameInput = row.querySelector('.consumption-name-input');
+                    var qtyInput = row.querySelector('.consumption-qty-input');
+                    var unitInput = row.querySelector('.consumption-unit-input');
+                    var vendorSelect = row.querySelector('.consumption-vendor-select');
+                    var colorNameInput = row.querySelector('.consumption-color-name');
+                    var colorCodeInput = row.querySelector('.consumption-color-code');
+                    var colorPicker = row.querySelector('.consumption-color-picker');
+
+                    function applyReference() {
+                        var reference = getMaterialReference(referenceInput.value);
+
+                        if (!reference) {
+                            return;
+                        }
+
+                        referenceIdInput.value = reference.id || '';
+                        nameInput.value = reference.name || referenceInput.value || '';
+
+                        if (!qtyInput.value) {
+                            qtyInput.value = reference.qty || '';
+                        }
+
+                        if (!unitInput.value) {
+                            unitInput.value = reference.unit || '';
+                        }
+
+                        if (vendorSelect && Array.isArray(reference.vendor_ids)) {
+                            Array.from(vendorSelect.options).forEach(function (option) {
+                                option.selected = reference.vendor_ids.map(Number).includes(Number(option.value));
+                            });
+                        }
+
+                        if (!colorNameInput.value && reference.color_name) {
+                            colorNameInput.value = reference.color_name;
+                        }
+
+                        if (!colorCodeInput.value && reference.color_code) {
+                            colorCodeInput.value = normalizeColorCode(reference.color_code);
+                            colorPicker.value = normalizeColorCode(reference.color_code);
+                        }
+                    }
+
+                    function syncColorFromName() {
+                        var matchedColorCode = getColorReferenceCode(colorNameInput.value);
+
+                        if (!matchedColorCode) {
+                            return;
+                        }
+
+                        colorCodeInput.value = normalizeColorCode(matchedColorCode);
+                        colorPicker.value = normalizeColorCode(matchedColorCode);
+                    }
+
+                    referenceInput.addEventListener('change', applyReference);
+                    referenceInput.addEventListener('blur', applyReference);
+                    colorNameInput.addEventListener('change', syncColorFromName);
+                    colorNameInput.addEventListener('blur', syncColorFromName);
+                    colorCodeInput.addEventListener('input', function () {
+                        var normalized = normalizeColorCode(colorCodeInput.value);
+                        if (/^#[0-9A-Fa-f]{6}$/.test(normalized)) {
+                            colorCodeInput.value = normalized;
+                            colorPicker.value = normalized;
+                        }
+                    });
+                    colorPicker.addEventListener('input', function () {
+                        colorCodeInput.value = colorPicker.value;
+                    });
+
+                    applyReference();
+                    syncColorFromName();
                 }
 
                 function addSection(sectionData) {
@@ -673,10 +807,23 @@
                     });
 
                     consumptionsContainer.querySelectorAll('.consumption-row').forEach(function (row, index) {
-                        var fields = row.querySelectorAll('input');
-                        if (fields[0]) fields[0].name = 'consumptions[' + index + '][name]';
-                        if (fields[1]) fields[1].name = 'consumptions[' + index + '][qty]';
-                        if (fields[2]) fields[2].name = 'consumptions[' + index + '][unit]';
+                        var referenceIdInput = row.querySelector('.consumption-reference-id');
+                        var nameInput = row.querySelector('.consumption-name-input');
+                        var qtyInput = row.querySelector('.consumption-qty-input');
+                        var unitInput = row.querySelector('.consumption-unit-input');
+                        var vendorSelect = row.querySelector('.consumption-vendor-select');
+                        var colorNameInput = row.querySelector('.consumption-color-name');
+                        var colorCodeInput = row.querySelector('.consumption-color-code');
+
+                        if (referenceIdInput) referenceIdInput.name = 'consumptions[' + index + '][material_reference_id]';
+                        if (nameInput) nameInput.name = 'consumptions[' + index + '][name]';
+                        if (qtyInput) qtyInput.name = 'consumptions[' + index + '][qty]';
+                        if (unitInput) unitInput.name = 'consumptions[' + index + '][unit]';
+                        if (vendorSelect) {
+                            vendorSelect.name = 'consumptions[' + index + '][vendor_ids][]';
+                        }
+                        if (colorNameInput) colorNameInput.name = 'consumptions[' + index + '][color_name]';
+                        if (colorCodeInput) colorCodeInput.name = 'consumptions[' + index + '][color_code]';
                     });
 
                     sectionsContainer.querySelectorAll('.production-section').forEach(function (section, sectionIndex) {
@@ -707,10 +854,9 @@
                     });
 
                     consumptionsContainer.querySelectorAll('.consumption-row').forEach(function (row) {
-                        var fields = row.querySelectorAll('input');
-                        var v0 = fields[0] ? fields[0].value.trim() : '';
-                        var v1 = fields[1] ? String(fields[1].value || '').trim() : '';
-                        var v2 = fields[2] ? fields[2].value.trim() : '';
+                        var v0 = row.querySelector('.consumption-name-input') ? row.querySelector('.consumption-name-input').value.trim() : '';
+                        var v1 = row.querySelector('.consumption-qty-input') ? String(row.querySelector('.consumption-qty-input').value || '').trim() : '';
+                        var v2 = row.querySelector('.consumption-unit-input') ? row.querySelector('.consumption-unit-input').value.trim() : '';
                         if (!v0 && !v1 && !v2) row.remove();
                     });
 

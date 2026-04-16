@@ -435,17 +435,29 @@ class ProductRepository extends Repository
             $name = trim((string) ($consumption['name'] ?? ''));
             $unit = trim((string) ($consumption['unit'] ?? ''));
             $qty = $consumption['qty'] ?? null;
+            $colorName = trim((string) ($consumption['color_name'] ?? ''));
+            $colorCode = trim((string) ($consumption['color_code'] ?? ''));
+            $vendorIds = collect($consumption['vendor_ids'] ?? [])
+                ->filter(fn ($id) => $id !== null && $id !== '')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
 
             if ($name === '' || $unit === '' || $qty === null || $qty === '') {
                 continue;
             }
 
             ProductConsumption::create([
-                'product_id'  => $productId,
-                'name'        => $name,
-                'qty'         => $qty,
-                'unit'        => $unit,
-                'sort_order'  => $sortOrder,
+                'product_id'             => $productId,
+                'material_reference_id'  => ! empty($consumption['material_reference_id']) ? (int) $consumption['material_reference_id'] : null,
+                'name'                   => $name,
+                'qty'                    => $qty,
+                'unit'                   => $unit,
+                'vendor_ids'             => $vendorIds ?: null,
+                'color_name'             => $colorName !== '' ? $colorName : null,
+                'color_code'             => $colorCode !== '' ? strtoupper($colorCode) : null,
+                'sort_order'             => $sortOrder,
             ]);
         }
     }

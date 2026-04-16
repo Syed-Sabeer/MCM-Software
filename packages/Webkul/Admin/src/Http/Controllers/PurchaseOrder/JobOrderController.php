@@ -180,11 +180,9 @@ class JobOrderController extends Controller
             fputcsv($handle, ['Job Order', 'Item', 'Material', 'Per Item Required', 'Required', 'Received', 'Balance', 'Unit', 'Status']);
 
             foreach ($jobOrder->requirements as $requirement) {
-                $linkedItem = $jobOrder->items->firstWhere('id', $requirement->job_order_item_id);
-
                 fputcsv($handle, [
                     $jobOrder->job_order_number,
-                    $linkedItem?->display_code ?: '',
+                    $requirement->item_codes ?: '',
                     $requirement->material_name,
                     $requirement->qty_per_unit,
                     $requirement->required_qty,

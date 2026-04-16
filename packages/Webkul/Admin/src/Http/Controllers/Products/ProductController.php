@@ -16,6 +16,7 @@ use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\ProductResource;
 use Webkul\Contact\Models\Organization;
 use Webkul\Product\Models\ColorReference;
+use Webkul\Product\Models\MaterialReference;
 use Webkul\Product\Repositories\ProductRepository;
 
 class ProductController extends Controller
@@ -54,6 +55,11 @@ class ProductController extends Controller
 
         $duplicateDraft = null;
         $colorReferences = ColorReference::query()->orderBy('name')->get(['name', 'code']);
+        $materialReferences = MaterialReference::with('vendors:id,name')->orderBy('name')->get();
+        $vendors = Organization::query()
+            ->whereIn('type', ['vendor', 'Vendor'])
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         if (request()->filled('duplicate_from')) {
             $original = $this->productRepository->with([
@@ -69,7 +75,7 @@ class ProductController extends Controller
             $duplicateDraft = $this->buildDuplicateDraft($original);
         }
 
-        return view('admin::products.create', compact('customers', 'duplicateDraft', 'colorReferences'));
+        return view('admin::products.create', compact('customers', 'duplicateDraft', 'colorReferences', 'materialReferences', 'vendors'));
     }
 
     /**
@@ -140,8 +146,13 @@ class ProductController extends Controller
             ->get(['id', 'name']);
 
         $colorReferences = ColorReference::query()->orderBy('name')->get(['name', 'code']);
+        $materialReferences = MaterialReference::with('vendors:id,name')->orderBy('name')->get();
+        $vendors = Organization::query()
+            ->whereIn('type', ['vendor', 'Vendor'])
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        return view('admin::products.edit', compact('product', 'inventories', 'customers', 'colorReferences'));
+        return view('admin::products.edit', compact('product', 'inventories', 'customers', 'colorReferences', 'materialReferences', 'vendors'));
     }
 
     /**
@@ -398,9 +409,13 @@ class ProductController extends Controller
             $newData['pricing_charts'] = $pricingCharts;
 
             $newData['consumptions'] = $original->consumptions->map(fn ($consumption) => [
+                'material_reference_id' => $consumption->material_reference_id,
                 'name' => $consumption->name,
                 'qty'  => $consumption->qty,
                 'unit' => $consumption->unit,
+                'vendor_ids' => $consumption->vendor_ids ?? [],
+                'color_name' => $consumption->color_name,
+                'color_code' => $consumption->color_code,
             ])->toArray();
 
             $newData['production_sections'] = $original->productionSections->map(fn ($section) => [
@@ -488,9 +503,14 @@ class ProductController extends Controller
             'colors.*.cost_price'  => ['nullable', 'numeric', 'min:0'],
             'colors.*.selling_price' => ['nullable', 'numeric', 'min:0'],
             'consumptions'         => ['nullable', 'array'],
+            'consumptions.*.material_reference_id' => ['nullable', 'integer', 'exists:material_references,id'],
             'consumptions.*.name'  => ['required', 'string', 'max:255'],
             'consumptions.*.qty'   => ['required', 'numeric'],
             'consumptions.*.unit'  => ['required', 'string', 'max:100'],
+            'consumptions.*.vendor_ids' => ['nullable', 'array'],
+            'consumptions.*.vendor_ids.*' => ['integer', Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['vendor', 'Vendor']))],
+            'consumptions.*.color_name' => ['nullable', 'string', 'max:100'],
+            'consumptions.*.color_code' => ['nullable', 'string', 'max:20'],
             'production_sections'                          => ['nullable', 'array'],
             'production_sections.*.section_name'           => ['required', 'string', 'max:255'],
             'production_sections.*.items'                  => ['required', 'array', 'min:1'],
@@ -529,15 +549,27 @@ class ProductController extends Controller
             $name = trim((string) ($consumption['name'] ?? ''));
             $qty = $consumption['qty'] ?? null;
             $unit = trim((string) ($consumption['unit'] ?? ''));
+            $materialReferenceId = $consumption['material_reference_id'] ?? null;
+            $vendorIds = collect($consumption['vendor_ids'] ?? [])
+                ->filter(fn ($id) => $id !== null && $id !== '')
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all();
+            $colorName = trim((string) ($consumption['color_name'] ?? ''));
+            $colorCode = trim((string) ($consumption['color_code'] ?? ''));
 
             if ($name === '' && ($qty === null || $qty === '') && $unit === '') {
                 continue;
             }
 
             $consumptions[] = [
+                'material_reference_id' => $materialReferenceId ?: null,
                 'name' => $name,
                 'qty'  => $qty,
                 'unit' => $unit,
+                'vendor_ids' => $vendorIds,
+                'color_name' => $colorName,
+                'color_code' => $colorCode,
             ];
         }
 
@@ -821,15 +853,27 @@ class ProductController extends Controller
             $name = trim((string) ($consumption['name'] ?? ''));
             $unit = trim((string) ($consumption['unit'] ?? ''));
             $qty = $consumption['qty'] ?? null;
+            $materialReferenceId = $consumption['material_reference_id'] ?? null;
+            $vendorIds = collect($consumption['vendor_ids'] ?? [])
+                ->filter(fn ($id) => $id !== null && $id !== '')
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all();
+            $colorName = trim((string) ($consumption['color_name'] ?? ''));
+            $colorCode = trim((string) ($consumption['color_code'] ?? ''));
 
             if ($name === '' && ($qty === null || $qty === '') && $unit === '') {
                 continue;
             }
 
             $consumptions[] = [
+                'material_reference_id' => $materialReferenceId ?: null,
                 'name' => $name,
                 'qty'  => $qty,
                 'unit' => $unit,
+                'vendor_ids' => $vendorIds,
+                'color_name' => $colorName !== '' ? $colorName : null,
+                'color_code' => $colorCode !== '' ? strtoupper($colorCode) : null,
             ];
         }
         $data['consumptions'] = $consumptions;
@@ -925,9 +969,13 @@ class ProductController extends Controller
                 ];
             })->toArray(),
             'consumptions' => $original->consumptions->map(fn ($consumption) => [
+                'material_reference_id' => $consumption->material_reference_id,
                 'name' => $consumption->name,
                 'qty'  => $consumption->qty,
                 'unit' => $consumption->unit,
+                'vendor_ids' => $consumption->vendor_ids ?? [],
+                'color_name' => $consumption->color_name,
+                'color_code' => $consumption->color_code,
             ])->toArray(),
             'production_sections' => $original->productionSections->map(fn ($section) => [
                 'section_name' => $section->section_name,

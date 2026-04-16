@@ -60,11 +60,8 @@
         </thead>
         <tbody>
             @forelse ($jobOrder->requirements as $requirement)
-                @php
-                    $linkedItem = $jobOrder->items->firstWhere('id', $requirement->job_order_item_id);
-                @endphp
                 <tr>
-                    <td>{{ $linkedItem?->display_code ?: '-' }}</td>
+                    <td>{{ $requirement->item_codes ?: '-' }}</td>
                     <td>{{ $requirement->material_name ?: '-' }}</td>
                     <td>{{ $formatStageQty($requirement->qty_per_unit) }} {{ $requirement->unit }}</td>
                     <td>{{ $formatStageQty($requirement->required_qty) }} {{ $requirement->unit }}</td>

@@ -77,10 +77,12 @@
                 @else
                     <div class="flex flex-col gap-2">
                         @foreach ($product->consumptions as $consumption)
-                            <div class="grid grid-cols-3 gap-2 rounded border border-gray-200 p-2 text-sm dark:border-gray-700">
+                            <div class="grid grid-cols-5 gap-2 rounded border border-gray-200 p-2 text-sm dark:border-gray-700">
                                 <div class="font-medium text-gray-800 dark:text-white">{{ $consumption->name }}</div>
                                 <div class="text-gray-700 dark:text-gray-300">{{ rtrim(rtrim((string) $consumption->qty, '0'), '.') }}</div>
                                 <div class="text-gray-700 dark:text-gray-300">{{ $consumption->unit }}</div>
+                                <div class="text-gray-700 dark:text-gray-300">{{ collect($consumption->vendor_ids ?? [])->isNotEmpty() ? \Webkul\Contact\Models\Organization::query()->whereIn('id', $consumption->vendor_ids ?? [])->pluck('name')->implode(', ') : '-' }}</div>
+                                <div class="text-gray-700 dark:text-gray-300">{{ $consumption->color_name ?: ($consumption->color_code ?: '-') }}</div>
                             </div>
                         @endforeach
                     </div>

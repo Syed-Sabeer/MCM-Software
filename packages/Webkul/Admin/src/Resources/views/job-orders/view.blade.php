@@ -129,15 +129,7 @@
                         @foreach ($jobOrder->requirements as $requirement)
                             <tr class="border-b dark:border-gray-800">
                                 <td class="py-2">
-                                    @php
-                                        $linkedItem = $jobOrder->items->firstWhere('id', $requirement->job_order_item_id);
-                                    @endphp
-
-                                    @if ($linkedItem?->product_id)
-                                        <a class="text-brandColor" href="{{ route('admin.products.view', $linkedItem->product_id) }}">{{ $linkedItem->display_code ?: '-' }}</a>
-                                    @else
-                                        {{ $linkedItem?->display_code ?: '-' }}
-                                    @endif
+                                    {{ $requirement->item_codes ?: '-' }}
                                 </td>
                                 <td class="py-2">{{ $requirement->material_name }}</td>
                                 <td class="py-2">{{ $formatStageQty($requirement->qty_per_unit) }} {{ $requirement->unit }}</td>

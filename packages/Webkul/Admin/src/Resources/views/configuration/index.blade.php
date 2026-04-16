@@ -69,6 +69,25 @@
                         </p>
                     </div>
                 </a>
+
+                <a
+                    class="flex max-w-[360px] items-center gap-2 rounded-lg p-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                    href="{{ route('admin.settings.material_references.index') }}"
+                >
+                    <div class="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+                        <i class="icon-sales-orders text-3xl"></i>
+                    </div>
+
+                    <div class="grid">
+                        <p class="mb-1.5 text-base font-semibold text-gray-800 dark:text-white">
+                            Product Materials
+                        </p>
+
+                        <p class="text-xs text-gray-600 dark:text-gray-300">
+                            Define reusable materials, vendors, quantity, unit, and default color.
+                        </p>
+                    </div>
+                </a>
             </div>
         </div>
 

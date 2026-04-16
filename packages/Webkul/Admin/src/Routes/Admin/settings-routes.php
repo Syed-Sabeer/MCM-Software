@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Settings\AttributeController;
 use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;
 use Webkul\Admin\Http\Controllers\Settings\ColorReferenceController;
+use Webkul\Admin\Http\Controllers\Settings\MaterialReferenceController;
 use Webkul\Admin\Http\Controllers\Settings\EmailTemplateController;
 use Webkul\Admin\Http\Controllers\Settings\GroupController;
 use Webkul\Admin\Http\Controllers\Settings\LocationController;
@@ -162,6 +163,15 @@ Route::prefix('settings')->group(function () {
         Route::put('edit/{id}', 'update')->name('admin.settings.color_references.update');
         Route::delete('{id}', 'destroy')->name('admin.settings.color_references.delete');
         Route::post('mass-destroy', 'massDestroy')->name('admin.settings.color_references.mass_delete');
+    });
+
+    Route::controller(MaterialReferenceController::class)->prefix('material-references')->group(function () {
+        Route::get('', 'index')->name('admin.settings.material_references.index');
+        Route::post('create', 'store')->name('admin.settings.material_references.store');
+        Route::get('edit/{id}', 'edit')->name('admin.settings.material_references.edit');
+        Route::put('edit/{id}', 'update')->name('admin.settings.material_references.update');
+        Route::delete('{id}', 'destroy')->name('admin.settings.material_references.delete');
+        Route::post('mass-destroy', 'massDestroy')->name('admin.settings.material_references.mass_delete');
     });
 
     /**
