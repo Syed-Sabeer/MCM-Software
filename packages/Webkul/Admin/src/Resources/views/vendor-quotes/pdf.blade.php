@@ -17,27 +17,35 @@
         core()->getConfigData('general.general.company_info.cell') ? 'Cell: ' . core()->getConfigData('general.general.company_info.cell') : null,
         core()->getConfigData('general.general.company_info.email') ? 'Email: ' . core()->getConfigData('general.general.company_info.email') : null,
     ]);
+    $selectedBillingAddress = trim((string) data_get($vendorQuote->billing_address, 'address'));
+    $selectedShippingAddress = trim((string) data_get($vendorQuote->shipping_address, 'address'));
+    $addressLines = fn ($value) => collect(preg_split("/\r\n|\n|\r/", (string) $value))->map(fn ($line) => trim((string) $line))->filter()->values()->all();
 
     $vendorLines = array_filter([
         $organization?->name,
-        $organization?->billing_street ?: $organization?->shipping_street,
-        trim(implode(', ', array_filter([
-            $organization?->billing_city ?: $organization?->shipping_city,
-            $organization?->billing_state ?: $organization?->shipping_state,
-            $organization?->billing_postcode ?: $organization?->shipping_postcode,
-            $organization?->billing_country ?: $organization?->shipping_country,
-        ]))),
+        ...($selectedBillingAddress !== '' ? $addressLines($selectedBillingAddress) : [
+            $organization?->billing_street ?: $organization?->shipping_street,
+            trim(implode(', ', array_filter([
+                $organization?->billing_city ?: $organization?->shipping_city,
+                $organization?->billing_state ?: $organization?->shipping_state,
+                $organization?->billing_postcode ?: $organization?->shipping_postcode,
+                $organization?->billing_country ?: $organization?->shipping_country,
+            ]))),
+        ]),
         $organization?->phone ? 'Phone: ' . $organization->phone : null,
         $organization?->phone ? 'Cell: ' . $organization->phone : null,
         data_get($organization, 'email') ? 'Email: ' . data_get($organization, 'email') : null,
     ]);
 
     $shipToLines = array_filter([
-        $companyName,
-        core()->getConfigData('general.general.company_info.address'),
-        core()->getConfigData('general.general.company_info.telephone') ? 'Phone: ' . core()->getConfigData('general.general.company_info.telephone') : null,
-        core()->getConfigData('general.general.company_info.cell') ? 'Cell: ' . core()->getConfigData('general.general.company_info.cell') : null,
-        core()->getConfigData('general.general.company_info.email') ? 'Email: ' . core()->getConfigData('general.general.company_info.email') : null,
+        $organization?->name,
+        ...($selectedShippingAddress !== '' ? $addressLines($selectedShippingAddress) : [
+            $companyName,
+            core()->getConfigData('general.general.company_info.address'),
+            core()->getConfigData('general.general.company_info.telephone') ? 'Phone: ' . core()->getConfigData('general.general.company_info.telephone') : null,
+            core()->getConfigData('general.general.company_info.cell') ? 'Cell: ' . core()->getConfigData('general.general.company_info.cell') : null,
+            core()->getConfigData('general.general.company_info.email') ? 'Email: ' . core()->getConfigData('general.general.company_info.email') : null,
+        ]),
     ]);
 
     $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?: '#0E90D9';

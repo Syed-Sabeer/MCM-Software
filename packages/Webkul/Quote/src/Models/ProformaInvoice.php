@@ -76,15 +76,30 @@ class ProformaInvoice extends Model implements ProformaInvoiceContract
 
     public static function generateNextProformaNumber(): string
     {
-        $last = static::orderByRaw("CAST(SUBSTRING_INDEX(proforma_number, '-', -1) AS UNSIGNED) DESC")->first();
+        $last = static::whereNotNull('proforma_number')->orderByDesc('id')->first();
 
-        $next = 1;
-
-        if ($last && preg_match('/(\\d+)$/', (string) $last->proforma_number, $matches)) {
-            $next = ((int) $matches[1]) + 1;
+        if (! $last || ! preg_match('/(\d+)$/', (string) $last->proforma_number, $matches, PREG_OFFSET_CAPTURE)) {
+            return static::nextAvailableNumber('proforma_number', 'PF-', 1, 5);
         }
 
-        return 'PF-' . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+        $lastNumericPart = $matches[1][0];
+        $paddingLength = max(strlen($lastNumericPart), 1);
+        $numericOffset = $matches[1][1];
+        $prefix = substr((string) $last->proforma_number, 0, $numericOffset);
+        $next = ((int) $lastNumericPart) + 1;
+
+        return static::nextAvailableNumber('proforma_number', $prefix, $next, $paddingLength);
+    }
+
+    protected static function nextAvailableNumber(string $column, string $prefix, int $next, int $paddingLength): string
+    {
+        do {
+            $candidate = $prefix . str_pad((string) $next, $paddingLength, '0', STR_PAD_LEFT);
+            $exists = static::where($column, $candidate)->exists();
+            $next++;
+        } while ($exists);
+
+        return $candidate;
     }
 
     public function quote(): BelongsTo

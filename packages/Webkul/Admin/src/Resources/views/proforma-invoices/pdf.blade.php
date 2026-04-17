@@ -14,29 +14,36 @@
         core()->getConfigData('general.general.company_info.cell') ? 'Cell: ' . core()->getConfigData('general.general.company_info.cell') : null,
         core()->getConfigData('general.general.company_info.email') ? 'Email: ' . core()->getConfigData('general.general.company_info.email') : null,
     ]);
+    $selectedBillingAddress = trim((string) data_get($proformaInvoice->billing_address, 'address'));
+    $selectedShippingAddress = trim((string) data_get($proformaInvoice->shipping_address, 'address'));
+    $addressLines = fn ($value) => collect(preg_split("/\r\n|\n|\r/", (string) $value))->map(fn ($line) => trim((string) $line))->filter()->values()->all();
 
     $billToLines = array_filter([
         $organization?->name,
-        data_get($proformaInvoice->billing_address, 'address') ?: $organization?->billing_street ?: $organization?->shipping_street,
-        trim(implode(', ', array_filter([
-            $organization?->billing_city ?: $organization?->shipping_city,
-            $organization?->billing_state ?: $organization?->shipping_state,
-            $organization?->billing_postcode ?: $organization?->shipping_postcode,
-            $organization?->billing_country ?: $organization?->shipping_country,
-        ]))),
+        ...($selectedBillingAddress !== '' ? $addressLines($selectedBillingAddress) : [
+            $organization?->billing_street ?: $organization?->shipping_street,
+            trim(implode(', ', array_filter([
+                $organization?->billing_city ?: $organization?->shipping_city,
+                $organization?->billing_state ?: $organization?->shipping_state,
+                $organization?->billing_postcode ?: $organization?->shipping_postcode,
+                $organization?->billing_country ?: $organization?->shipping_country,
+            ]))),
+        ]),
         $organization?->phone ? 'Phone: ' . $organization->phone : null,
         data_get($organization, 'email') ? 'Email: ' . data_get($organization, 'email') : null,
     ]);
 
     $shipToLines = array_filter([
         $organization?->name,
-        data_get($proformaInvoice->shipping_address, 'address') ?: $organization?->shipping_street ?: $organization?->billing_street,
-        trim(implode(', ', array_filter([
-            $organization?->shipping_city ?: $organization?->billing_city,
-            $organization?->shipping_state ?: $organization?->billing_state,
-            $organization?->shipping_postcode ?: $organization?->billing_postcode,
-            $organization?->shipping_country ?: $organization?->billing_country,
-        ]))),
+        ...($selectedShippingAddress !== '' ? $addressLines($selectedShippingAddress) : [
+            $organization?->shipping_street ?: $organization?->billing_street,
+            trim(implode(', ', array_filter([
+                $organization?->shipping_city ?: $organization?->billing_city,
+                $organization?->shipping_state ?: $organization?->billing_state,
+                $organization?->shipping_postcode ?: $organization?->billing_postcode,
+                $organization?->shipping_country ?: $organization?->billing_country,
+            ]))),
+        ]),
         $organization?->phone ? 'Phone: ' . $organization->phone : null,
         data_get($organization, 'email') ? 'Email: ' . data_get($organization, 'email') : null,
     ]);

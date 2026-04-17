@@ -1,6 +1,9 @@
 @php
     $quote = app('\Webkul\Quote\Repositories\QuoteRepository')->getModel();
+    $addressManager = app(\Webkul\Core\Support\DocumentAddressManager::class);
     $initialQuoteCharges = collect(old('charges', []))->values()->all();
+    $initialBillingAddress = old('billing_address', ['key' => null, 'label' => null, 'type' => 'billing', 'address' => '']);
+    $initialShippingAddress = old('shipping_address', ['key' => null, 'label' => null, 'type' => 'shipping', 'address' => '']);
 
     $quote->fill([
         'quote_number' => \Webkul\Quote\Models\Quote::generateNextQuoteNumber(),
@@ -12,7 +15,14 @@
     $customerOrganizations = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
         ->whereIn('type', ['customer', 'Customer'])
         ->orderBy('name')
-        ->get(['id', 'name'])
+        ->get()
+        ->map(fn ($organization) => [
+            'id' => $organization->id,
+            'name' => $organization->name,
+            'address_options' => $addressManager->getOptions($organization),
+            'default_billing_address' => $addressManager->getDefaultAddress($organization, 'billing'),
+            'default_shipping_address' => $addressManager->getDefaultAddress($organization, 'shipping'),
+        ])
         ->values();
 @endphp
 
@@ -79,7 +89,12 @@
                 </button>
             </div>
 
-            <v-quote :errors="errors" :customers='@json($customerOrganizations)'>
+            <v-quote
+                :errors="errors"
+                :customers='@json($customerOrganizations)'
+                :initial-billing-address='@json($initialBillingAddress)'
+                :initial-shipping-address='@json($initialShippingAddress)'
+            >
                 <x-admin::shimmer.quotes />
             </v-quote>
         </div>
@@ -94,6 +109,15 @@
                 </div> --}}
 
                 <div class="quote-meta-stack">
+                    <input type="hidden" name="billing_address[key]" :value="billingAddress.key || ''">
+                    <input type="hidden" name="billing_address[label]" :value="billingAddress.label || ''">
+                    <input type="hidden" name="billing_address[type]" :value="billingAddress.type || ''">
+                    <input type="hidden" name="billing_address[address]" :value="billingAddress.address || ''">
+                    <input type="hidden" name="shipping_address[key]" :value="shippingAddress.key || ''">
+                    <input type="hidden" name="shipping_address[label]" :value="shippingAddress.label || ''">
+                    <input type="hidden" name="shipping_address[type]" :value="shippingAddress.type || ''">
+                    <input type="hidden" name="shipping_address[address]" :value="shippingAddress.address || ''">
+
                     <div class="document-form-row-3 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px;">
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label class="required">Quote #</x-admin::form.control-group.label>
@@ -161,6 +185,26 @@
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Transit Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="transit_time" value="{{ old('transit_time') }}" /><x-admin::form.control-group.error control-name="transit_time" /></x-admin::form.control-group>
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETD</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="etd" value="{{ old('etd') }}" /><x-admin::form.control-group.error control-name="etd" /></x-admin::form.control-group>
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETA</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="eta" value="{{ old('eta') }}" /><x-admin::form.control-group.error control-name="eta" /></x-admin::form.control-group>
+                    </div>
+
+                    <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; margin-top: 16px;">
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label>Bill To Address</x-admin::form.control-group.label>
+                            <select class="custom-select" v-model="billingAddress.key" @change="applyAddressSelection('billing', billingAddress.key)">
+                                <option value="">Select billing address</option>
+                                <option v-for="option in addressOptions" :key="`billing-${option.key}`" :value="option.key">@{{ option.label }}</option>
+                            </select>
+                            <div class="mt-2 whitespace-pre-line text-xs text-gray-500 dark:text-gray-400">@{{ billingAddress.address || 'No billing address available.' }}</div>
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label>Ship To Address</x-admin::form.control-group.label>
+                            <select class="custom-select" v-model="shippingAddress.key" @change="applyAddressSelection('shipping', shippingAddress.key)">
+                                <option value="">Select shipping address</option>
+                                <option v-for="option in addressOptions" :key="`shipping-${option.key}`" :value="option.key">@{{ option.label }}</option>
+                            </select>
+                            <div class="mt-2 whitespace-pre-line text-xs text-gray-500 dark:text-gray-400">@{{ shippingAddress.address || 'No shipping address available.' }}</div>
+                        </x-admin::form.control-group>
                     </div>
                 </div>
 
@@ -355,16 +399,24 @@
         <script type="module">
             app.component('v-quote', {
                 template: '#v-quote-template',
-                props: ['errors', 'customers'],
+                props: ['errors', 'customers', 'initialBillingAddress', 'initialShippingAddress'],
                 data() {
                     return {
                         customerName: '',
                         customerSearchTerm: '',
                         showCustomerLookup: false,
                         selectedOrganizationId: '{{ old('organization_id') }}',
+                        billingAddress: this.initialBillingAddress || { key: '', label: '', type: 'billing', address: '' },
+                        shippingAddress: this.initialShippingAddress || { key: '', label: '', type: 'shipping', address: '' },
                     }
                 },
                 computed: {
+                    selectedCustomer() {
+                        return this.customers.find(customer => String(customer.id) === String(this.selectedOrganizationId)) || null;
+                    },
+                    addressOptions() {
+                        return this.selectedCustomer?.address_options || [];
+                    },
                     filteredCustomers() {
                         const query = (this.customerSearchTerm || '').toLowerCase().trim();
 
@@ -386,6 +438,8 @@
                     selectCustomer(customer) {
                         this.customerName = customer?.name || '';
                         this.selectedOrganizationId = customer?.id ? String(customer.id) : '';
+                        this.billingAddress = { ...(customer?.default_billing_address || { key: '', label: '', type: 'billing', address: '' }) };
+                        this.shippingAddress = { ...(customer?.default_shipping_address || { key: '', label: '', type: 'shipping', address: '' }) };
                         this.customerSearchTerm = '';
                         this.showCustomerLookup = false;
                     },
@@ -393,6 +447,19 @@
                         this.customerName = '';
                         this.selectedOrganizationId = '';
                         this.customerSearchTerm = '';
+                        this.billingAddress = { key: '', label: '', type: 'billing', address: '' };
+                        this.shippingAddress = { key: '', label: '', type: 'shipping', address: '' };
+                    },
+                    applyAddressSelection(kind, key) {
+                        const option = this.addressOptions.find(address => String(address.key) === String(key));
+
+                        if (! option) {
+                            this[kind === 'billing' ? 'billingAddress' : 'shippingAddress'] = { key: '', label: '', type: kind, address: '' };
+
+                            return;
+                        }
+
+                        this[kind === 'billing' ? 'billingAddress' : 'shippingAddress'] = { ...option };
                     },
                     syncCustomerId() {
                         const exact = this.customers.find(customer => customer.name === this.customerName);
@@ -412,6 +479,14 @@
                     if (this.selectedOrganizationId) {
                         const selected = this.customers.find(customer => String(customer.id) === String(this.selectedOrganizationId));
                         this.customerName = selected ? selected.name : '';
+
+                        if ((! this.billingAddress?.address) && selected?.default_billing_address) {
+                            this.billingAddress = { ...selected.default_billing_address };
+                        }
+
+                        if ((! this.shippingAddress?.address) && selected?.default_shipping_address) {
+                            this.shippingAddress = { ...selected.default_shipping_address };
+                        }
                     }
                 },
                 beforeUnmount() {
@@ -759,7 +834,6 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
-
 
 
 

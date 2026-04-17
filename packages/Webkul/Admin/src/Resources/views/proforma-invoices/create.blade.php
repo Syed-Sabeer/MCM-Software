@@ -1,6 +1,7 @@
 @php
     use Webkul\Product\Models\Product;
     $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
+    $addressManager = app(\Webkul\Core\Support\DocumentAddressManager::class);
 
     $quoteModels = \Webkul\Quote\Models\Quote::query()
         ->with(['items', 'organization', 'person', 'user', 'additionalCharges'])
@@ -59,6 +60,9 @@
             'payment_term' => $quoteRow->payment_term ?? '',
             'billing_address' => $quoteRow->billing_address ?: ['address' => ''],
             'shipping_address' => $quoteRow->shipping_address ?: ['address' => ''],
+            'address_options' => $addressManager->getOptions($quoteRow->organization),
+            'default_billing_address' => $addressManager->getDefaultAddress($quoteRow->organization, 'billing'),
+            'default_shipping_address' => $addressManager->getDefaultAddress($quoteRow->organization, 'shipping'),
             'items' => $quoteRow->items->map(function ($item) use ($productPayload) {
                 $productMeta = $productPayload->get((int) ($item->product_id ?? 0), [
                     'cover_image_url' => null,
@@ -173,7 +177,13 @@
                 <input type="hidden" name="organization_id" :value="form.organization_id || ''">
                 <input type="hidden" name="person_id" :value="form.person_id || ''">
                 <input type="hidden" name="sales_owner_id" :value="form.sales_owner_id || ''">
+                <input type="hidden" name="billing_address[key]" :value="form.billing_address?.key || ''">
+                <input type="hidden" name="billing_address[label]" :value="form.billing_address?.label || ''">
+                <input type="hidden" name="billing_address[type]" :value="form.billing_address?.type || ''">
                 <input type="hidden" name="billing_address[address]" :value="form.billing_address?.address || ''">
+                <input type="hidden" name="shipping_address[key]" :value="form.shipping_address?.key || ''">
+                <input type="hidden" name="shipping_address[label]" :value="form.shipping_address?.label || ''">
+                <input type="hidden" name="shipping_address[type]" :value="form.shipping_address?.type || ''">
                 <input type="hidden" name="shipping_address[address]" :value="form.shipping_address?.address || ''">
 
                 <div class="mt-4 space-y-4">
@@ -251,6 +261,26 @@
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label>ETA</x-admin::form.control-group.label>
                             <x-admin::form.control-group.control type="date" name="eta" v-model="form.eta" />
+                        </x-admin::form.control-group>
+                    </div>
+
+                    <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; margin-top: 16px;">
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label>Bill To Address</x-admin::form.control-group.label>
+                            <select class="custom-select" v-model="form.billing_address.key" @change="applyAddressSelection('billing', form.billing_address.key)">
+                                <option value="">Select billing address</option>
+                                <option v-for="option in addressOptions" :key="`billing-${option.key}`" :value="option.key">@{{ option.label }}</option>
+                            </select>
+                            <div class="mt-2 whitespace-pre-line text-xs text-gray-500 dark:text-gray-400">@{{ form.billing_address?.address || 'No billing address available.' }}</div>
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label>Ship To Address</x-admin::form.control-group.label>
+                            <select class="custom-select" v-model="form.shipping_address.key" @change="applyAddressSelection('shipping', form.shipping_address.key)">
+                                <option value="">Select shipping address</option>
+                                <option v-for="option in addressOptions" :key="`shipping-${option.key}`" :value="option.key">@{{ option.label }}</option>
+                            </select>
+                            <div class="mt-2 whitespace-pre-line text-xs text-gray-500 dark:text-gray-400">@{{ form.shipping_address?.address || 'No shipping address available.' }}</div>
                         </x-admin::form.control-group>
                     </div>
                 </div>
@@ -419,6 +449,14 @@
                 template: '#v-proforma-template',
                 props: ['initialForm', 'quotes', 'errors'],
                 data() { return { form: this.initialForm }; },
+                computed: {
+                    selectedQuote() {
+                        return this.quotes.find(q => String(q.id) === String(this.form.quote_id)) || null;
+                    },
+                    addressOptions() {
+                        return this.selectedQuote?.address_options || [];
+                    },
+                },
                 methods: {
                     applyQuoteDetails() {
                         const selected = this.quotes.find(q => String(q.id) === String(this.form.quote_id));
@@ -438,9 +476,16 @@
                         this.form.charges = (selected.charges || []).map(charge => ({ ...charge }));
                         this.form.notes = selected.notes || '';
                         this.form.terms = selected.terms || '';
-                        this.form.billing_address = selected.billing_address || { address: '' };
-                        this.form.shipping_address = selected.shipping_address || { address: '' };
+                        this.form.billing_address = selected.billing_address || selected.default_billing_address || { address: '' };
+                        this.form.shipping_address = selected.shipping_address || selected.default_shipping_address || { address: '' };
                         this.form.items = (selected.items || []).map(item => ({ ...item }));
+                    },
+                    applyAddressSelection(kind, key) {
+                        const option = this.addressOptions.find(address => String(address.key) === String(key));
+
+                        this.form[kind === 'billing' ? 'billing_address' : 'shipping_address'] = option
+                            ? { ...option }
+                            : { key: '', label: '', type: kind, address: '' };
                     },
                 },
             });
@@ -634,7 +679,6 @@
         </style>
     @endPushOnce
 </x-admin::layouts>
-
 
 
 

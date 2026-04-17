@@ -14,18 +14,28 @@
 
         $vendor = $vendorQuote->organization;
         $charges = $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote');
+        $selectedBillingAddress = trim((string) data_get($vendorQuote->billing_address, 'address'));
+        $selectedShippingAddress = trim((string) data_get($vendorQuote->shipping_address, 'address'));
+        $addressLines = fn ($value) => collect(preg_split("/\r\n|\n|\r/", (string) $value))->map(fn ($line) => trim((string) $line))->filter()->values()->all();
         $vendorLines = array_filter([
             $vendor?->name,
-            $vendor?->billing_street ?: $vendor?->shipping_street,
-            trim(implode(', ', array_filter([
-                $vendor?->billing_city ?: $vendor?->shipping_city,
-                $vendor?->billing_state ?: $vendor?->shipping_state,
-                $vendor?->billing_postcode ?: $vendor?->shipping_postcode,
-                $vendor?->billing_country ?: $vendor?->shipping_country,
-            ]))),
+            ...($selectedBillingAddress !== '' ? $addressLines($selectedBillingAddress) : [
+                $vendor?->billing_street ?: $vendor?->shipping_street,
+                trim(implode(', ', array_filter([
+                    $vendor?->billing_city ?: $vendor?->shipping_city,
+                    $vendor?->billing_state ?: $vendor?->shipping_state,
+                    $vendor?->billing_postcode ?: $vendor?->shipping_postcode,
+                    $vendor?->billing_country ?: $vendor?->shipping_country,
+                ]))),
+            ]),
             $vendor?->phone ? 'Phone: ' . $vendor->phone : null,
             $vendor?->phone ? 'Cell: ' . $vendor->phone : null,
             data_get($vendor, 'email') ? 'Email: ' . data_get($vendor, 'email') : null,
+        ]);
+
+        $shipToLines = array_filter([
+            $vendor?->name,
+            ...($selectedShippingAddress !== '' ? $addressLines($selectedShippingAddress) : []),
         ]);
     @endphp
 
@@ -88,11 +98,16 @@
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <div class="mb-3 text-base font-semibold">Ship To</div>
                 <div class="space-y-1 text-sm">
-                    <div>{{ $companyName ?: 'Our Company' }}</div>
-                    @if ($companyAddress)<div>{{ $companyAddress }}</div>@endif
-                    @if ($companyPhone)<div>Phone: {{ $companyPhone }}</div>@endif
-                    @if ($companyCell)<div>Cell: {{ $companyCell }}</div>@endif
-                    @if ($companyEmail)<div>Email: {{ $companyEmail }}</div>@endif
+                    @forelse ($shipToLines as $line)
+                        @continue($vendor?->name && $line === $vendor->name)
+                        <div>{{ $line }}</div>
+                    @empty
+                        <div>{{ $companyName ?: 'Our Company' }}</div>
+                        @if ($companyAddress)<div>{{ $companyAddress }}</div>@endif
+                        @if ($companyPhone)<div>Phone: {{ $companyPhone }}</div>@endif
+                        @if ($companyCell)<div>Cell: {{ $companyCell }}</div>@endif
+                        @if ($companyEmail)<div>Email: {{ $companyEmail }}</div>@endif
+                    @endforelse
                 </div>
             </div>
         </div>

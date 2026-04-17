@@ -4,6 +4,9 @@
     @php
         $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
         $charges = $chargeManager->extract($purchaseOrder->loadMissing('additionalCharges'), 'purchase_order');
+        $selectedBillingAddress = trim((string) data_get($purchaseOrder->billing_address, 'address'));
+        $selectedShippingAddress = trim((string) data_get($purchaseOrder->shipping_address, 'address'));
+        $addressLines = fn ($value) => collect(preg_split("/\r\n|\n|\r/", (string) $value))->map(fn ($line) => trim((string) $line))->filter()->values()->all();
         $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
             . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
     @endphp
@@ -75,6 +78,28 @@
                 <div><strong>Created:</strong> {{ optional($purchaseOrder->created_at)->format('Y-m-d') }}</div>
                 <div><strong>Expected Receive:</strong> {{ optional($purchaseOrder->expected_receive_date)->format('Y-m-d') ?: '-' }}</div>
                 <div><strong>Last Delivery:</strong> {{ optional($purchaseOrder->last_delivery_date)->format('Y-m-d') ?: '-' }}</div>
+            </div>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2">
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="mb-3 text-base font-semibold">Vendor Address</div>
+                <div class="space-y-1 text-sm">
+                    <div>{{ optional($purchaseOrder->organization)->name ?: '-' }}</div>
+                    @foreach ($addressLines($selectedBillingAddress) as $line)
+                        <div>{{ $line }}</div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="mb-3 text-base font-semibold">Ship To Address</div>
+                <div class="space-y-1 text-sm">
+                    <div>{{ optional($purchaseOrder->organization)->name ?: '-' }}</div>
+                    @foreach ($addressLines($selectedShippingAddress) as $line)
+                        <div>{{ $line }}</div>
+                    @endforeach
+                </div>
             </div>
         </div>
 

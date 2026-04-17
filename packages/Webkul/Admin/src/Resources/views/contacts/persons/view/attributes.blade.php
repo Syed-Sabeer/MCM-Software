@@ -1,231 +1,179 @@
 {!! view_render_event('admin.contacts.persons.view.attributes.before', ['person' => $person]) !!}
 
-<div class="flex w-full flex-col gap-4 border-b border-gray-200 p-4 dark:border-gray-800">
-    <x-admin::accordion class="select-none !border-none">
-        <x-slot:header class="!p-0">
-            <h4 class="font-semibold dark:text-white">
-                @lang('admin::app.contacts.persons.view.about-person')
-            </h4>
-        </x-slot>
+@php
+    $readValue = function ($value) {
+        if (is_array($value)) {
+            return trim((string) ($value[0]['value'] ?? ''));
+        }
 
-        <x-slot:content class="mt-4 !px-0 !pb-0 space-y-6">
-            {!! view_render_event('admin.contacts.persons.view.attributes.form_controls.before', ['person' => $person]) !!}
+        return trim((string) $value);
+    };
 
-            <x-admin::form
-                v-slot="{ meta, errors, handleSubmit }"
-                as="div"
-                ref="modalForm"
-            >
-                <form @submit="handleSubmit($event, () => {})">
-                    <!-- ABOUT Section - all fields from create form -->
-                    <div>
-                        <h5 class="mb-3 text-sm font-semibold text-gray-800 dark:text-white">ABOUT</h5>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Salutation</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="salutation"
-                                    :value="json_encode($person->salutation ?? '')"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+    $typeLabels = [
+        'customer' => __('admin::app.contacts.persons.view.types.customer'),
+        'vendor'   => __('admin::app.contacts.persons.view.types.vendor'),
+        'employee' => __('admin::app.contacts.persons.view.types.employee'),
+        'partner'  => __('admin::app.contacts.persons.view.types.partner'),
+        'other'    => __('admin::app.contacts.persons.view.types.other'),
+    ];
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>@lang('admin::app.contacts.persons.view.type')</x-admin::form.control-group.label>
-                                @php
-                                    $typeLabels = [
-                                        'customer' => __('admin::app.contacts.persons.view.types.customer'),
-                                        'vendor' => __('admin::app.contacts.persons.view.types.vendor'),
-                                        'employee' => __('admin::app.contacts.persons.view.types.employee'),
-                                        'partner' => __('admin::app.contacts.persons.view.types.partner'),
-                                        'other' => __('admin::app.contacts.persons.view.types.other'),
-                                    ];
-                                    $typeColors = [
-                                        'customer' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-                                        'vendor' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-                                        'employee' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-                                        'partner' => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-                                        'other' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-                                    ];
-                                    $currentType = $person->type ?? 'customer';
-                                @endphp
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $typeColors[$currentType] ?? $typeColors['other'] }}">
-                                    {{ $typeLabels[$currentType] ?? ucfirst($currentType) }}
-                                </span>
-                            </x-admin::form.control-group>
+    $typeColors = [
+        'customer' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+        'vendor'   => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+        'employee' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+        'partner'  => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+        'other'    => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+    ];
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>First Name</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="first_name"
-                                    :value="json_encode($person->first_name ?? '')"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+    $currentType = strtolower((string) ($person->type ?? 'customer'));
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Last Name</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="last_name"
-                                    :value="json_encode($person->last_name ?? '')"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+    $ownerName = trim((string) optional($person->user)->name);
+    $primaryPhone = $readValue($person->phone);
+    $primaryEmail = $readValue($person->email);
+    $cellPhone = $readValue($person->cell_phone);
+    $directPhone = $readValue($person->direct_phone);
+    $secondaryEmail = $readValue($person->email_secondary);
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Title</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="title"
-                                    :value="json_encode($person->title ?? '')"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+    $mailingAddress = collect([
+        $person->mailing_street,
+        collect([
+            $person->mailing_city,
+            $person->mailing_state,
+            $person->mailing_postcode,
+            $person->mailing_country,
+        ])->filter(fn ($value) => filled(trim((string) $value)))->implode(', '),
+    ])->filter(fn ($value) => filled(trim((string) $value)))->values();
+@endphp
 
-                            <x-admin::form.control-group class="md:col-span-2">
-                                <x-admin::form.control-group.label>Description</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="description"
-                                    :value="json_encode($person->description ?? '')"
-                                    multiline="true"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+<div class="flex w-full flex-col gap-4 border-b border-gray-200 p-4 text-sm dark:border-gray-800">
+    <div class="flex flex-col gap-2">
+        <p class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            About
+        </p>
 
-                            {!! view_render_event('admin.contacts.persons.view.attributes.form_controls.attributes_view.before', ['person' => $person]) !!}
+        <div class="flex flex-col gap-3 dark:text-white">
+            @if ($person->salutation)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Salutation</p>
+                    <p>{{ $person->salutation }}</p>
+                </div>
+            @endif
 
-                            <x-admin::attributes.view
-                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                    'entity_type' => 'persons',
-                                    ['code', 'IN', ['job_title', 'user_id', 'organization_id']]
-                                ])"
-                                :entity="$person"
-                                :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                :allow-edit="true"
-                            />
+            <div>
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Type</p>
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $typeColors[$currentType] ?? $typeColors['other'] }}">
+                    {{ $typeLabels[$currentType] ?? ucfirst($currentType) }}
+                </span>
+            </div>
 
-                            {!! view_render_event('admin.contacts.persons.view.attributes.form_controls.attributes_view.after', ['person' => $person]) !!}
+            @if ($person->first_name || $person->last_name)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Full Name</p>
+                    <p>{{ trim(($person->first_name ?? '') . ' ' . ($person->last_name ?? '')) }}</p>
+                </div>
+            @endif
 
-                            @php
-                                $phoneVal = fn ($p) => is_array($p ?? null) ? ($p[0]['value'] ?? '') : ($p ?? '');
-                            @endphp
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Cell Phone</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="cell_phone"
-                                    :value="json_encode($phoneVal($person->cell_phone))"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+            @if ($person->title)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Title</p>
+                    <p>{{ $person->title }}</p>
+                </div>
+            @endif
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Direct Phone</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="direct_phone"
-                                    :value="json_encode($phoneVal($person->direct_phone))"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+            @if ($person->job_title)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Job Title</p>
+                    <p>{{ $person->job_title }}</p>
+                </div>
+            @endif
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Secondary Email</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="email_secondary"
-                                    :value="json_encode($phoneVal($person->email_secondary))"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+            @if ($ownerName)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Sales Owner</p>
+                    <p>{{ $ownerName }}</p>
+                </div>
+            @endif
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Birth Date</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.date
-                                    name="birth_date"
-                                    :value="json_encode(optional($person->birth_date)->format('Y-m-d') ?? '')"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
-                        </div>
-                    </div>
+            @if ($person->birth_date)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Birth Date</p>
+                    <p>{{ $person->birth_date->format('d M Y') }}</p>
+                </div>
+            @endif
 
-                    <!-- GET IN TOUCH Section -->
-                    <div class="border-t border-gray-200 pt-4 dark:border-gray-800">
-                        <h5 class="mb-3 text-sm font-semibold text-gray-800 dark:text-white">GET IN TOUCH</h5>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Phone</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="phone"
-                                    :value="json_encode($phoneVal($person->phone))"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+            @if ($person->description)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Description</p>
+                    <p class="whitespace-pre-line break-words">{{ $person->description }}</p>
+                </div>
+            @endif
+        </div>
+    </div>
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Email</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="email"
-                                    :value="json_encode($phoneVal($person->email))"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
-                        </div>
-                    </div>
+    <div class="border-t border-gray-200 pt-4 dark:border-gray-800">
+        <p class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            Get In Touch
+        </p>
 
-                    <!-- MAILING ADDRESS Section -->
-                    <div class="border-t border-gray-200 pt-4 dark:border-gray-800">
-                        <h5 class="mb-3 text-sm font-semibold text-gray-800 dark:text-white">MAILING ADDRESS</h5>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <x-admin::form.control-group class="md:col-span-2">
-                                <x-admin::form.control-group.label>Street</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="mailing_street"
-                                    :value="json_encode($person->mailing_street ?? '')"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+        <div class="mt-2 flex flex-col gap-3 dark:text-white">
+            @if ($primaryPhone)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Phone</p>
+                    <p>{{ $primaryPhone }}</p>
+                </div>
+            @endif
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>City</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="mailing_city"
-                                    :value="json_encode($person->mailing_city ?? '')"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+            @if ($cellPhone)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Cell Phone</p>
+                    <p>{{ $cellPhone }}</p>
+                </div>
+            @endif
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>State/Province</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="mailing_state"
-                                    :value="json_encode($person->mailing_state ?? '')"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+            @if ($directPhone)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Direct Phone</p>
+                    <p>{{ $directPhone }}</p>
+                </div>
+            @endif
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Postal Code</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="mailing_postcode"
-                                    :value="json_encode($person->mailing_postcode ?? '')"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
+            @if ($primaryEmail)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Email</p>
+                    <p class="break-all">{{ $primaryEmail }}</p>
+                </div>
+            @endif
 
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>Country</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.controls.inline.text
-                                    name="mailing_country"
-                                    :value="json_encode($person->mailing_country ?? '')"
-                                    :url="route('admin.' . $routePrefix . '.persons.update', $person->id)"
-                                />
-                            </x-admin::form.control-group>
-                        </div>
-                    </div>
-                </form>
-            </x-admin::form>
+            @if ($secondaryEmail)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Secondary Email</p>
+                    <p class="break-all">{{ $secondaryEmail }}</p>
+                </div>
+            @endif
 
-            {!! view_render_event('admin.contacts.persons.view.attributes.form_controls.after', ['person' => $person]) !!}
-        </x-slot>
-    </x-admin::accordion>
+            @if (! $primaryPhone && ! $cellPhone && ! $directPhone && ! $primaryEmail && ! $secondaryEmail)
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    No contact details added yet.
+                </p>
+            @endif
+        </div>
+    </div>
+
+    <div class="border-t border-gray-200 pt-4 dark:border-gray-800">
+        <p class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            Mailing Address
+        </p>
+
+        <div class="mt-2 flex flex-col gap-1 dark:text-white" style="max-width: 320px; word-wrap: break-word; word-break: break-word;">
+            @forelse ($mailingAddress as $line)
+                <span>{{ $line }}</span>
+            @empty
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    No mailing address added yet.
+                </p>
+            @endforelse
+        </div>
+    </div>
 </div>
 
 {!! view_render_event('admin.contacts.persons.view.attributes.after', ['person' => $person]) !!}

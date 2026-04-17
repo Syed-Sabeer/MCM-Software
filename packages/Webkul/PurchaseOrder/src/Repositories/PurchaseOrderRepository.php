@@ -4,6 +4,8 @@ namespace Webkul\PurchaseOrder\Repositories;
 
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
+use Webkul\Contact\Models\Organization;
+use Webkul\Core\Support\DocumentAddressManager;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Core\Support\DocumentChargeManager;
 use Webkul\PurchaseOrder\Models\JobOrder;
@@ -14,6 +16,7 @@ class PurchaseOrderRepository extends Repository
 {
     public function __construct(
         protected PurchaseOrderItemRepository $purchaseOrderItemRepository,
+        protected DocumentAddressManager $documentAddressManager,
         protected DocumentChargeManager $documentChargeManager,
         Container $container
     ) {
@@ -40,6 +43,8 @@ class PurchaseOrderRepository extends Repository
             'shipping_method' => $vendorQuote->shipping_method,
             'completion_date' => $vendorQuote->first_delivery_date?->toDateString(),
             'last_delivery_date' => $vendorQuote->last_delivery_date?->toDateString(),
+            'billing_address' => $vendorQuote->billing_address,
+            'shipping_address' => $vendorQuote->shipping_address,
             'sales_tax_percent' => (float) ($vendorQuote->sales_tax_percent ?? 0),
             'freight' => (float) ($vendorQuote->freight ?? 0),
             'expected_receive_date' => optional($vendorQuote->last_delivery_date ?: $vendorQuote->first_delivery_date)->toDateString(),
@@ -131,6 +136,9 @@ class PurchaseOrderRepository extends Repository
     protected function calculateTotals(array $data): array
     {
         $subTotal = 0;
+        $organization = ! empty($data['organization_id'])
+            ? Organization::find($data['organization_id'])
+            : null;
 
         if (! empty($data['items'])) {
             foreach ($data['items'] as $index => $item) {
@@ -150,6 +158,8 @@ class PurchaseOrderRepository extends Repository
         $grandTotal = $subTotal + ($chargeSummary['charge_total'] ?? 0);
 
         $data['sub_total'] = $subTotal;
+        $data['billing_address'] = $this->documentAddressManager->normalize($organization, $data['billing_address'] ?? null, 'billing');
+        $data['shipping_address'] = $this->documentAddressManager->normalize($organization, $data['shipping_address'] ?? null, 'shipping');
         $data['charges'] = $charges;
         $data['sales_tax_percent'] = $chargeSummary['sales_tax_percent'] ?? 0;
         $data['tax_amount'] = $chargeSummary['tax_amount'] ?? 0;
@@ -172,6 +182,8 @@ class PurchaseOrderRepository extends Repository
             'shipping_method',
             'notes',
             'terms',
+            'billing_address',
+            'shipping_address',
         ] as $field) {
             if (array_key_exists($field, $data) && $data[$field] === '') {
                 $data[$field] = null;

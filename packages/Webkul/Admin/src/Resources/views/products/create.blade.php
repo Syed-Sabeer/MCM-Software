@@ -141,7 +141,7 @@
                         </datalist>
 
                         <p class="mb-2 px-1 text-xs text-gray-500 dark:text-gray-400">
-                            Search and pick a material, then complete quantity, unit, vendor, and color in the 2-row layout.
+                            Search and pick a material, then complete material name, color, quantity, unit, and vendor in a single row.
                         </p>
 
                         <div id="consumptions-container" class="flex flex-col gap-3"></div>
@@ -598,54 +598,40 @@
                     });
                 }
 
-                function addConsumptionRow(data) {
+                                function addConsumptionRow(data) {
                     var index = consumptionsContainer.querySelectorAll('.consumption-row').length;
                     var row = document.createElement('div');
                     var selectedVendorIdsRaw = valueOf(data, 'vendor_ids', []);
                     var selectedVendorIds = Array.isArray(selectedVendorIdsRaw)
                         ? selectedVendorIdsRaw.map(function (id) { return String(id); }).filter(Boolean)
                         : [];
+                    var selectedVendorIdsCsv = selectedVendorIds.join(',');
                     var initialMaterialLabel = valueOf(data, 'name', '') || 'Click to select material';
 
                     row.className = 'consumption-row rounded-lg border border-gray-200 bg-gray-50 p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900/40';
-                    row.setAttribute('data-selected-vendors', selectedVendorIds.join(','));
+                    row.setAttribute('data-selected-vendors', selectedVendorIdsCsv);
                     row.innerHTML = ''
                         + '<input type="hidden" name="consumptions[' + index + '][material_reference_id]" class="consumption-reference-id" value="' + escapeHtml(valueOf(data, 'material_reference_id', '')) + '">'
-                        + '<div class="mb-3 flex items-center justify-between">'
-                        + '  <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Material ' + (index + 1) + '</p>'
-                        + '  <button type="button" class="remove-consumption inline-flex h-9 w-9 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove consumption">&times;</button>'
-                        + '</div>'
-                        + '<div class="grid gap-3 md:grid-cols-[minmax(0,1.7fr)_110px_130px]">'
+                        + '<div class="grid gap-3" style="display:grid;grid-template-columns:minmax(0,0.95fr) minmax(0,1.05fr);gap:0.75rem;">'
                         + '  <div class="min-w-0">'
                         + '    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Select Material</label>'
                         + '    <div class="consumption-reference-lookup relative">'
                         + '      <button type="button" class="consumption-reference-toggle flex w-full items-center justify-between rounded border border-gray-200 bg-white px-3 py-2 text-left text-sm hover:border-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">'
                         + '        <span class="consumption-reference-selected overflow-hidden text-ellipsis whitespace-nowrap" title="' + escapeHtml(initialMaterialLabel) + '">' + escapeHtml(initialMaterialLabel) + '</span>'
-                        + '        <span class="text-xs text-gray-500 dark:text-gray-400">▼</span>'
+                        + '        <span class="text-xs text-gray-500 dark:text-gray-400">v</span>'
                         + '      </button>'
                         + '      <div class="consumption-reference-popup absolute left-0 right-0 top-full z-10 mt-1 hidden rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">'
                         + '        <input type="text" class="consumption-reference-search w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" placeholder="Search material...">'
                         + '        <div class="consumption-reference-options mt-2 max-h-44 overflow-y-auto rounded border border-gray-200 p-1 dark:border-gray-700"></div>'
                         + '      </div>'
                         + '    </div>'
-                        + '    <input type="text" name="consumptions[' + index + '][name]" class="consumption-name-input mt-2 w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Material Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
                         + '  </div>'
-                        + '  <div>'
-                        + '    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Qty</label>'
-                        + '    <input type="number" step="0.001" name="consumptions[' + index + '][qty]" class="consumption-qty-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
-                        + '  </div>'
-                        + '  <div>'
-                        + '    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Unit</label>'
-                        + '    <input type="text" name="consumptions[' + index + '][unit]" class="consumption-unit-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Unit" value="' + escapeHtml(valueOf(data, 'unit', '')) + '">'
-                        + '  </div>'
-                        + '</div>'
-                        + '<div class="mt-3 grid gap-3 md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]">'
                         + '  <div class="min-w-0">'
                         + '    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Vendors</label>'
-                        + '    <div class="consumption-vendor-wrapper relative rounded border border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800" data-selected-vendors="' + escapeHtml(selectedVendorIds.join(',')) + '">'
+                        + '    <div class="consumption-vendor-wrapper relative rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800" data-selected-vendors="' + escapeHtml(selectedVendorIdsCsv) + '">'
                         + '      <button type="button" class="consumption-vendor-toggle flex w-full items-center justify-between rounded border border-gray-200 bg-white px-3 py-2 text-left text-sm hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" aria-expanded="false">'
                         + '        <span class="consumption-vendor-selected overflow-hidden text-ellipsis whitespace-nowrap">Select vendors</span>'
-                        + '        <span class="text-xs text-gray-500 dark:text-gray-400">▼</span>'
+                        + '        <span class="text-xs text-gray-500 dark:text-gray-400">v</span>'
                         + '      </button>'
                         + '      <div class="consumption-vendor-popup absolute left-0 right-0 top-full z-20 mt-1 hidden rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">'
                         + '        <input type="text" class="consumption-vendor-search w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" placeholder="Search vendors...">'
@@ -656,15 +642,28 @@
                         + '      <div class="consumption-vendor-hidden"></div>'
                         + '    </div>'
                         + '  </div>'
+                        + '</div>'
+                        + '<div class="mt-3 grid gap-3" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,0.65fr) 110px 110px 44px;gap:0.75rem;">'
                         + '  <div>'
-                        + '    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Color</label>'
+                        + '    <input type="text" name="consumptions[' + index + '][name]" class="consumption-name-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Material Name" value="' + escapeHtml(valueOf(data, 'name', '')) + '">'
+                        + '  </div>'
+                        + '  <div>'
                         + '    <div class="flex items-center gap-2">'
-                        + '      <input type="text" list="product-color-reference-options" name="consumptions[' + index + '][color_name]" class="consumption-color-name w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Color Name" value="' + escapeHtml(valueOf(data, 'color_name', '')) + '">'
+                        + '      <input type="text" list="product-color-reference-options" name="consumptions[' + index + '][color_name]" class="consumption-color-name w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Color" value="' + escapeHtml(valueOf(data, 'color_name', '')) + '">'
                         + '      <input type="hidden" name="consumptions[' + index + '][color_code]" class="consumption-color-code" value="' + escapeHtml(normalizeColorCode(valueOf(data, 'color_code', '')) || '') + '">'
                         + '      <input type="color" class="consumption-color-picker h-[40px] w-[40px] cursor-pointer rounded border border-gray-200 p-0 dark:border-gray-700" value="' + escapeHtml(normalizeColorCode(valueOf(data, 'color_code', '#000000')) || '#000000') + '">'
                         + '    </div>'
                         + '  </div>'
-                        ;
+                        + '  <div>'
+                        + '    <input type="number" step="0.001" name="consumptions[' + index + '][qty]" class="consumption-qty-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
+                        + '  </div>'
+                        + '  <div>'
+                        + '    <input type="text" name="consumptions[' + index + '][unit]" class="consumption-unit-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Unit" value="' + escapeHtml(valueOf(data, 'unit', '')) + '">'
+                        + '  </div>'
+                        + '  <div class="flex items-end">'
+                        + '    <button type="button" class="remove-consumption inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove consumption">&times;</button>'
+                        + '  </div>'
+                        + '</div>';
                     consumptionsContainer.appendChild(row);
                     bindConsumptionRow(row);
                 }

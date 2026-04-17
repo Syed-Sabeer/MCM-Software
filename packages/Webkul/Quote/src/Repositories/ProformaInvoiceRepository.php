@@ -5,6 +5,8 @@ namespace Webkul\Quote\Repositories;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Webkul\Contact\Models\Organization;
+use Webkul\Core\Support\DocumentAddressManager;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Core\Support\DocumentChargeManager;
 use Webkul\Quote\Models\Quote;
@@ -14,6 +16,7 @@ class ProformaInvoiceRepository extends Repository
     public function __construct(
         protected ProformaInvoiceItemRepository $proformaInvoiceItemRepository,
         protected ProformaReceiptRepository $proformaReceiptRepository,
+        protected DocumentAddressManager $documentAddressManager,
         protected DocumentChargeManager $documentChargeManager,
         Container $container
     ) {
@@ -204,6 +207,9 @@ class ProformaInvoiceRepository extends Repository
     {
         $subTotal = 0;
         $items = $data['items'] ?? [];
+        $organization = ! empty($data['organization_id'])
+            ? Organization::find($data['organization_id'])
+            : null;
 
         foreach ($items as $index => $item) {
             $qty = (float) ($item['qty'] ?? $item['quantity'] ?? 0);
@@ -229,6 +235,8 @@ class ProformaInvoiceRepository extends Repository
         $grandTotal = max($subTotal + ($chargeSummary['charge_total'] ?? 0), 0);
 
         $data['items'] = $items;
+        $data['billing_address'] = $this->documentAddressManager->normalize($organization, $data['billing_address'] ?? null, 'billing');
+        $data['shipping_address'] = $this->documentAddressManager->normalize($organization, $data['shipping_address'] ?? null, 'shipping');
         $data['charges'] = $charges;
         $data['subtotal'] = $subTotal;
         $data['discount_amount'] = $discountAmount;

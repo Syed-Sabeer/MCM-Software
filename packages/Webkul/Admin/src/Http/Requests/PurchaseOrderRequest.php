@@ -14,9 +14,9 @@ class PurchaseOrderRequest extends FormRequest
             'person_id' => $this->filled('person_id') ? $this->input('person_id') : null,
             'job_order_id' => $this->filled('job_order_id') ? $this->input('job_order_id') : null,
             'vendor_quote_id' => $this->filled('vendor_quote_id') ? $this->input('vendor_quote_id') : null,
-            'completion_date' => $this->filled('completion_date') ? $this->input('completion_date') : null,
-            'last_delivery_date' => $this->filled('last_delivery_date') ? $this->input('last_delivery_date') : null,
-            'expected_receive_date' => $this->filled('expected_receive_date') ? $this->input('expected_receive_date') : null,
+            'completion_date' => $this->sanitizeDateInput($this->input('completion_date')),
+            'last_delivery_date' => $this->sanitizeDateInput($this->input('last_delivery_date')),
+            'expected_receive_date' => $this->sanitizeDateInput($this->input('expected_receive_date')),
             'payment_term' => $this->filled('payment_term') ? $this->input('payment_term') : null,
             'shipping_method' => $this->filled('shipping_method') ? $this->input('shipping_method') : null,
             'notes' => $this->filled('notes') ? $this->input('notes') : null,
@@ -56,6 +56,16 @@ class PurchaseOrderRequest extends FormRequest
             'person_id' => ['nullable', 'exists:persons,id'],
             'job_order_id' => ['nullable', 'exists:job_orders,id'],
             'vendor_quote_id' => ['nullable', 'exists:vendor_quotes,id'],
+            'billing_address' => ['nullable', 'array'],
+            'billing_address.key' => ['nullable', 'string', 'max:100'],
+            'billing_address.label' => ['nullable', 'string', 'max:255'],
+            'billing_address.type' => ['nullable', 'string', 'max:100'],
+            'billing_address.address' => ['nullable', 'string'],
+            'shipping_address' => ['nullable', 'array'],
+            'shipping_address.key' => ['nullable', 'string', 'max:100'],
+            'shipping_address.label' => ['nullable', 'string', 'max:255'],
+            'shipping_address.type' => ['nullable', 'string', 'max:100'],
+            'shipping_address.address' => ['nullable', 'string'],
             'completion_date' => ['nullable', 'date'],
             'last_delivery_date' => ['nullable', 'date'],
             'expected_receive_date' => ['nullable', 'date'],
@@ -80,5 +90,38 @@ class PurchaseOrderRequest extends FormRequest
                 }),
             ],
         ];
+    }
+
+    protected function sanitizeDateInput($value): ?string
+    {
+        $value = is_string($value) ? trim($value) : $value;
+
+        if (empty($value)) {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        if (preg_match('/^-\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        if (preg_match('/^0{4}-0{2}-0{2}$/', $value)) {
+            return null;
+        }
+
+        try {
+            $date = new \DateTime($value);
+
+            if ((int) $date->format('Y') <= 1) {
+                return null;
+            }
+
+            return $date->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

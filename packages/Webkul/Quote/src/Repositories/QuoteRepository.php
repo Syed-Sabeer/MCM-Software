@@ -5,9 +5,11 @@ namespace Webkul\Quote\Repositories;
 use Illuminate\Container\Container;
 use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
+use Webkul\Contact\Models\Organization;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Support\DocumentAddressManager;
 use Webkul\Core\Support\DocumentChargeManager;
 use Webkul\Quote\Contracts\Quote;
 
@@ -39,6 +41,7 @@ class QuoteRepository extends Repository
         protected AttributeRepository $attributeRepository,
         protected AttributeValueRepository $attributeValueRepository,
         protected QuoteItemRepository $quoteItemRepository,
+        protected DocumentAddressManager $documentAddressManager,
         protected DocumentChargeManager $documentChargeManager,
         Container $container
     ) {
@@ -171,6 +174,13 @@ class QuoteRepository extends Repository
             $person = Person::find($data['person_id']);
             $data['organization_id'] = $person?->organization_id;
         }
+
+        $organization = ! empty($data['organization_id'])
+            ? Organization::find($data['organization_id'])
+            : null;
+
+        $data['billing_address'] = $this->documentAddressManager->normalize($organization, $data['billing_address'] ?? null, 'billing');
+        $data['shipping_address'] = $this->documentAddressManager->normalize($organization, $data['shipping_address'] ?? null, 'shipping');
 
         $items = $data['items'] ?? [];
         $normalizedItems = [];

@@ -1,5 +1,6 @@
 @php
     $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
+    $addressManager = app(\Webkul\Core\Support\DocumentAddressManager::class);
     $companyName = core()->getConfigData('general.general.company_info.company_name');
     $companyAddress = core()->getConfigData('general.general.company_info.address');
     $companyPhone = core()->getConfigData('general.general.company_info.telephone');
@@ -15,6 +16,13 @@
         'unit_price' => $item->unit_price,
     ])->toArray());
     $initialVendorQuoteCharges = collect(old('charges', $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote')))->values()->all();
+    $vendorAddressOptions = $vendors->mapWithKeys(fn ($vendor) => [
+        $vendor->id => [
+            'options' => $addressManager->getOptions($vendor),
+            'default_billing_address' => $addressManager->getDefaultAddress($vendor, 'billing'),
+            'default_shipping_address' => $addressManager->getDefaultAddress($vendor, 'shipping'),
+        ],
+    ]);
 @endphp
 <x-admin::layouts>
     <x-slot:title>Edit Vendor Quote</x-slot>
@@ -33,6 +41,14 @@
 
             <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <input type="hidden" name="job_order_id" value="{{ $vendorQuote->job_order_id }}">
+                <input type="hidden" name="billing_address[key]" id="vendor-quote-billing-key" value="{{ old('billing_address.key', data_get($vendorQuote->billing_address, 'key')) }}">
+                <input type="hidden" name="billing_address[label]" id="vendor-quote-billing-label" value="{{ old('billing_address.label', data_get($vendorQuote->billing_address, 'label')) }}">
+                <input type="hidden" name="billing_address[type]" id="vendor-quote-billing-type" value="{{ old('billing_address.type', data_get($vendorQuote->billing_address, 'type', 'billing')) }}">
+                <input type="hidden" name="billing_address[address]" id="vendor-quote-billing-address" value="{{ old('billing_address.address', data_get($vendorQuote->billing_address, 'address')) }}">
+                <input type="hidden" name="shipping_address[key]" id="vendor-quote-shipping-key" value="{{ old('shipping_address.key', data_get($vendorQuote->shipping_address, 'key')) }}">
+                <input type="hidden" name="shipping_address[label]" id="vendor-quote-shipping-label" value="{{ old('shipping_address.label', data_get($vendorQuote->shipping_address, 'label')) }}">
+                <input type="hidden" name="shipping_address[type]" id="vendor-quote-shipping-type" value="{{ old('shipping_address.type', data_get($vendorQuote->shipping_address, 'type', 'shipping')) }}">
+                <input type="hidden" name="shipping_address[address]" id="vendor-quote-shipping-address" value="{{ old('shipping_address.address', data_get($vendorQuote->shipping_address, 'address')) }}">
 
                 <div class="grid gap-4" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
                     <div><label class="mb-1 block text-sm font-medium">Vendor Quote #</label><input type="text" name="vendor_quote_number" value="{{ old('vendor_quote_number', $vendorQuote->vendor_quote_number) }}" class="custom-input"></div>
@@ -57,6 +73,19 @@
                 <div class="mt-4 grid gap-4" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
                     <div><label class="mb-1 block text-sm font-medium">First Delivery</label><input type="date" name="first_delivery_date" value="{{ old('first_delivery_date', optional($vendorQuote->first_delivery_date)->toDateString()) }}" class="custom-input"></div>
                     <div><label class="mb-1 block text-sm font-medium">Last Delivery</label><input type="date" name="last_delivery_date" value="{{ old('last_delivery_date', optional($vendorQuote->last_delivery_date)->toDateString()) }}" class="custom-input"></div>
+                </div>
+
+                <div class="mt-4 grid gap-4" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+                    <div>
+                        <label class="mb-1 block text-sm font-medium">Vendor Address</label>
+                        <select class="custom-select" id="vendor-quote-billing-select"></select>
+                        <div class="mt-2 whitespace-pre-line text-xs text-gray-500" id="vendor-quote-billing-preview">No address selected.</div>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium">Ship To Address</label>
+                        <select class="custom-select" id="vendor-quote-shipping-select"></select>
+                        <div class="mt-2 whitespace-pre-line text-xs text-gray-500" id="vendor-quote-shipping-preview">No address selected.</div>
+                    </div>
                 </div>
             </div>
 
@@ -126,6 +155,43 @@
     @push('scripts')
         <script>
             window.vendorQuoteCharges = @json($initialVendorQuoteCharges);
+            window.vendorQuoteAddressBook = @json($vendorAddressOptions);
+
+            window.syncVendorQuoteAddressField = function (prefix, option) {
+                document.getElementById(`vendor-quote-${prefix}-key`).value = option?.key || '';
+                document.getElementById(`vendor-quote-${prefix}-label`).value = option?.label || '';
+                document.getElementById(`vendor-quote-${prefix}-type`).value = option?.type || prefix;
+                document.getElementById(`vendor-quote-${prefix}-address`).value = option?.address || '';
+                const preview = document.getElementById(`vendor-quote-${prefix}-preview`);
+                if (preview) preview.textContent = option?.address || 'No address selected.';
+            };
+
+            window.populateVendorQuoteAddresses = function () {
+                const vendorId = document.getElementById('vendor-select')?.value || '';
+                const addressMeta = window.vendorQuoteAddressBook?.[vendorId] || { options: [], default_billing_address: null, default_shipping_address: null };
+                const billingSelect = document.getElementById('vendor-quote-billing-select');
+                const shippingSelect = document.getElementById('vendor-quote-shipping-select');
+                const billingKey = document.getElementById('vendor-quote-billing-key')?.value || '';
+                const shippingKey = document.getElementById('vendor-quote-shipping-key')?.value || '';
+
+                if (! billingSelect || ! shippingSelect) return;
+
+                const optionHtml = ['<option value="">Select address</option>'].concat(
+                    (addressMeta.options || []).map((option) => `<option value="${option.key}">${option.label}</option>`)
+                ).join('');
+
+                billingSelect.innerHTML = optionHtml;
+                shippingSelect.innerHTML = optionHtml;
+
+                const selectedBilling = (addressMeta.options || []).find((option) => String(option.key) === String(billingKey)) || addressMeta.default_billing_address;
+                const selectedShipping = (addressMeta.options || []).find((option) => String(option.key) === String(shippingKey)) || addressMeta.default_shipping_address;
+
+                billingSelect.value = selectedBilling?.key || '';
+                shippingSelect.value = selectedShipping?.key || '';
+
+                window.syncVendorQuoteAddressField('billing', selectedBilling);
+                window.syncVendorQuoteAddressField('shipping', selectedShipping);
+            };
 
             window.isTaxChargeName = function (name) {
                 const normalized = String(name || '').trim().toLowerCase();
@@ -216,6 +282,18 @@
             window.removeVendorQuoteRow = function (button) { const tbody = document.querySelector('#vendor-quote-items-table tbody'); const row = button.closest('tr'); if (!tbody || !row) return; if (tbody.children.length <= 1) { row.querySelectorAll('input').forEach((input) => { if (input.type === 'hidden') input.value = ''; else if (input.type === 'number') input.value = input.name.includes('[quantity]') ? '1' : '0'; else input.value = input.name.includes('[unit]') ? 'PCS' : ''; }); const amount = row.querySelector('.item-amount'); if (amount) amount.textContent = '0.00'; window.calculateVendorQuoteTotals(); return; } row.remove(); window.calculateVendorQuoteTotals(); };
             window.addVendorQuoteRow = function () { const tbody = document.querySelector('#vendor-quote-items-table tbody'); const index = tbody.children.length; tbody.insertAdjacentHTML('beforeend', `<tr><td class="py-2"><input type="hidden" name="items[${index}][id]" value=""><input type="hidden" name="items[${index}][requirement_id]" value=""><input type="text" name="items[${index}][material_name]" class="custom-input"></td><td class="py-2"><input type="number" step="0.0001" min="0.0001" name="items[${index}][quantity]" value="1" class="custom-input item-qty" oninput="window.calculateVendorQuoteTotals()"></td><td class="py-2"><input type="text" name="items[${index}][unit]" value="PCS" class="custom-input"></td><td class="py-2"><input type="number" step="0.01" min="0" name="items[${index}][unit_price]" value="0" class="custom-input item-price" oninput="window.calculateVendorQuoteTotals()"></td><td class="py-2 text-right align-middle"><span class="item-amount">0.00</span></td><td class="py-2 text-center"><button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removeVendorQuoteRow(this)"><i class="icon-delete"></i></button></td></tr>`); window.calculateVendorQuoteTotals(); };
             document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('vendor-select')?.addEventListener('change', window.populateVendorQuoteAddresses);
+                document.getElementById('vendor-quote-billing-select')?.addEventListener('change', function () {
+                    const vendorId = document.getElementById('vendor-select')?.value || '';
+                    const options = window.vendorQuoteAddressBook?.[vendorId]?.options || [];
+                    window.syncVendorQuoteAddressField('billing', options.find((option) => String(option.key) === String(this.value)));
+                });
+                document.getElementById('vendor-quote-shipping-select')?.addEventListener('change', function () {
+                    const vendorId = document.getElementById('vendor-select')?.value || '';
+                    const options = window.vendorQuoteAddressBook?.[vendorId]?.options || [];
+                    window.syncVendorQuoteAddressField('shipping', options.find((option) => String(option.key) === String(this.value)));
+                });
+                window.populateVendorQuoteAddresses();
                 window.renderVendorQuoteCharges();
                 window.calculateVendorQuoteTotals();
             });

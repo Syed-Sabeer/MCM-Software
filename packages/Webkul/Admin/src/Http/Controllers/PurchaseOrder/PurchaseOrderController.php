@@ -16,6 +16,7 @@ use Webkul\Admin\Http\Requests\PurchaseOrderRequest;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\PurchaseOrder\Models\PurchaseOrder;
 use Webkul\PurchaseOrder\Repositories\JobOrderRepository;
+use Webkul\PurchaseOrder\Repositories\JobOrderRequirementRepository;
 use Webkul\PurchaseOrder\Repositories\PurchaseOrderRepository;
 use Webkul\PurchaseOrder\Repositories\VendorQuoteRepository;
 
@@ -26,7 +27,8 @@ class PurchaseOrderController extends Controller
     public function __construct(
         protected PurchaseOrderRepository $purchaseOrderRepository,
         protected VendorQuoteRepository $vendorQuoteRepository,
-        protected JobOrderRepository $jobOrderRepository
+        protected JobOrderRepository $jobOrderRepository,
+        protected JobOrderRequirementRepository $jobOrderRequirementRepository
     ) {
     }
 
@@ -52,6 +54,7 @@ class PurchaseOrderController extends Controller
 
         if (request()->filled('job_order_id')) {
             $jobOrder = $this->jobOrderRepository->with(['requirements', 'organization'])->findOrFail(request('job_order_id'));
+            $jobOrder = $this->refreshJobOrderRequirementsIfNeeded($jobOrder->id);
 
             if ($selectedRequirementIds) {
                 $jobOrder->setRelation(
@@ -64,7 +67,7 @@ class PurchaseOrderController extends Controller
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
             ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get();
 
         return view('admin::purchase-orders.create', compact('nextPoNumber', 'vendorQuote', 'jobOrder', 'vendors'));
     }
@@ -89,7 +92,7 @@ class PurchaseOrderController extends Controller
             $purchaseOrder = $this->purchaseOrderRepository->createFromVendorQuote($vendorQuote, $payload);
             $this->vendorQuoteRepository->update(['status' => 'selected'], $vendorQuote->id);
         } elseif ($request->filled('job_order_id') && ! $request->filled('organization_id')) {
-            $jobOrder = $this->jobOrderRepository->with('requirements')->findOrFail($request->input('job_order_id'));
+            $jobOrder = $this->refreshJobOrderRequirementsIfNeeded((int) $request->input('job_order_id'));
             $requirementsById = $jobOrder->requirements->keyBy('id');
 
             $payload['items'] = collect($payload['items'] ?? [])->map(function ($item) use ($requirementsById, $payload) {
@@ -190,7 +193,7 @@ class PurchaseOrderController extends Controller
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
             ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get();
 
         return view('admin::purchase-orders.edit', compact('purchaseOrder', 'vendors'));
     }
@@ -251,5 +254,23 @@ class PurchaseOrderController extends Controller
             view('admin::purchase-orders.pdf', compact('purchaseOrder'))->render(),
             'PO_' . $purchaseOrder->po_number . '_' . $purchaseOrder->created_at->format('d-m-Y')
         );
+    }
+
+    protected function refreshJobOrderRequirementsIfNeeded(int $jobOrderId)
+    {
+        $jobOrder = $this->jobOrderRepository->with(['requirements', 'items.product.consumptions', 'organization'])->findOrFail($jobOrderId);
+
+        $requirementsNeedRefresh = $jobOrder->requirements->isEmpty()
+            || $jobOrder->requirements->contains(function ($requirement) {
+                return blank($requirement->item_codes);
+            });
+
+        if ($requirementsNeedRefresh) {
+            $this->jobOrderRequirementRepository->regenerateForJobOrder($jobOrder);
+
+            $jobOrder = $this->jobOrderRepository->with(['requirements', 'items.product.consumptions', 'organization'])->findOrFail($jobOrderId);
+        }
+
+        return $jobOrder;
     }
 }

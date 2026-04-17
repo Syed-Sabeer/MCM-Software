@@ -20,6 +20,8 @@ class VendorQuote extends Model implements VendorQuoteContract
         'job_order_id',
         'organization_id',
         'person_id',
+        'billing_address',
+        'shipping_address',
         'issue_date',
         'expected_response_date',
         'payment_term',
@@ -40,6 +42,8 @@ class VendorQuote extends Model implements VendorQuoteContract
 
     protected $casts = [
         'issue_date' => 'date',
+        'billing_address' => 'array',
+        'shipping_address' => 'array',
         'expected_response_date' => 'date',
         'first_delivery_date' => 'date',
         'last_delivery_date' => 'date',
@@ -63,13 +67,30 @@ class VendorQuote extends Model implements VendorQuoteContract
 
     public static function generateNextNumber(): string
     {
-        $last = static::orderByDesc('id')->first();
-        $next = 1;
-        if ($last && preg_match('/(\d+)$/', (string) $last->vendor_quote_number, $matches)) {
-            $next = ((int) $matches[1]) + 1;
+        $last = static::whereNotNull('vendor_quote_number')->orderByDesc('id')->first();
+
+        if (! $last || ! preg_match('/(\d+)$/', (string) $last->vendor_quote_number, $matches, PREG_OFFSET_CAPTURE)) {
+            return static::nextAvailableNumber('vendor_quote_number', 'VQ-', 1, 5);
         }
 
-        return 'VQ-' . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+        $lastNumericPart = $matches[1][0];
+        $paddingLength = max(strlen($lastNumericPart), 1);
+        $numericOffset = $matches[1][1];
+        $prefix = substr((string) $last->vendor_quote_number, 0, $numericOffset);
+        $next = ((int) $lastNumericPart) + 1;
+
+        return static::nextAvailableNumber('vendor_quote_number', $prefix, $next, $paddingLength);
+    }
+
+    protected static function nextAvailableNumber(string $column, string $prefix, int $next, int $paddingLength): string
+    {
+        do {
+            $candidate = $prefix . str_pad((string) $next, $paddingLength, '0', STR_PAD_LEFT);
+            $exists = static::where($column, $candidate)->exists();
+            $next++;
+        } while ($exists);
+
+        return $candidate;
     }
 
     public function jobOrder(): BelongsTo

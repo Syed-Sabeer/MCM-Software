@@ -4,6 +4,8 @@ namespace Webkul\PurchaseOrder\Repositories;
 
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
+use Webkul\Contact\Models\Organization;
+use Webkul\Core\Support\DocumentAddressManager;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Core\Support\DocumentChargeManager;
 use Webkul\PurchaseOrder\Models\JobOrder;
@@ -13,6 +15,7 @@ class VendorQuoteRepository extends Repository
 {
     public function __construct(
         protected VendorQuoteItemRepository $vendorQuoteItemRepository,
+        protected DocumentAddressManager $documentAddressManager,
         protected DocumentChargeManager $documentChargeManager,
         Container $container
     ) {
@@ -71,6 +74,9 @@ class VendorQuoteRepository extends Repository
     {
         $subtotal = 0;
         $items = $data['items'] ?? [];
+        $organization = ! empty($data['organization_id'])
+            ? Organization::find($data['organization_id'])
+            : null;
 
         foreach ($items as $index => $item) {
             $quantity = (float) ($item['quantity'] ?? 0);
@@ -89,6 +95,8 @@ class VendorQuoteRepository extends Repository
         $grandTotal = $subtotal + ($chargeSummary['charge_total'] ?? 0);
 
         $data['items'] = $items;
+        $data['billing_address'] = $this->documentAddressManager->normalize($organization, $data['billing_address'] ?? null, 'billing');
+        $data['shipping_address'] = $this->documentAddressManager->normalize($organization, $data['shipping_address'] ?? null, 'shipping');
         $data['charges'] = $charges;
         $data['subtotal'] = $subtotal;
         $data['sales_tax_percent'] = $chargeSummary['sales_tax_percent'] ?? 0;

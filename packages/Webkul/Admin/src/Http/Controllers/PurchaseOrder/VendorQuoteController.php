@@ -57,7 +57,7 @@ class VendorQuoteController extends Controller
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
             ->whereIn('type', ['vendor', 'Vendor'])
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get();
 
         return view('admin::vendor-quotes.create', compact('jobOrder', 'nextVendorQuoteNumber', 'vendors'));
     }
@@ -112,7 +112,7 @@ class VendorQuoteController extends Controller
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
             ->whereIn('type', ['vendor', 'Vendor'])
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get();
 
         return view('admin::vendor-quotes.edit', compact('vendorQuote', 'vendors'));
     }

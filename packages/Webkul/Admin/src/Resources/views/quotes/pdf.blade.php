@@ -3,6 +3,9 @@
     $organization = $quote->organization;
     $salesPerson = $quote->user;
     $charges = $chargeManager->extract($quote->loadMissing('additionalCharges'), 'quote');
+    $selectedBillingAddress = trim((string) data_get($quote->billing_address, 'address'));
+    $selectedShippingAddress = trim((string) data_get($quote->shipping_address, 'address'));
+    $addressLines = fn ($value) => collect(preg_split("/\r\n|\n|\r/", (string) $value))->map(fn ($line) => trim((string) $line))->filter()->values()->all();
 
     $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?: '#0E90D9';
     $logo = core()->getConfigData('general.general.admin_logo.logo_image');
@@ -17,24 +20,28 @@
 
     $billToLines = array_filter([
         $organization?->name,
-        $organization?->billing_street ?: $organization?->shipping_street,
-        trim(implode(', ', array_filter([
-            $organization?->billing_city ?: $organization?->shipping_city,
-            $organization?->billing_state ?: $organization?->shipping_state,
-            $organization?->billing_postcode ?: $organization?->shipping_postcode,
-            $organization?->billing_country ?: $organization?->shipping_country,
-        ]))),
+        ...($selectedBillingAddress !== '' ? $addressLines($selectedBillingAddress) : [
+            $organization?->billing_street ?: $organization?->shipping_street,
+            trim(implode(', ', array_filter([
+                $organization?->billing_city ?: $organization?->shipping_city,
+                $organization?->billing_state ?: $organization?->shipping_state,
+                $organization?->billing_postcode ?: $organization?->shipping_postcode,
+                $organization?->billing_country ?: $organization?->shipping_country,
+            ]))),
+        ]),
     ]);
 
     $shipToLines = array_filter([
         $organization?->name,
-        $organization?->shipping_street ?: $organization?->billing_street,
-        trim(implode(', ', array_filter([
-            $organization?->shipping_city ?: $organization?->billing_city,
-            $organization?->shipping_state ?: $organization?->billing_state,
-            $organization?->shipping_postcode ?: $organization?->billing_postcode,
-            $organization?->shipping_country ?: $organization?->billing_country,
-        ]))),
+        ...($selectedShippingAddress !== '' ? $addressLines($selectedShippingAddress) : [
+            $organization?->shipping_street ?: $organization?->billing_street,
+            trim(implode(', ', array_filter([
+                $organization?->shipping_city ?: $organization?->billing_city,
+                $organization?->shipping_state ?: $organization?->billing_state,
+                $organization?->shipping_postcode ?: $organization?->billing_postcode,
+                $organization?->shipping_country ?: $organization?->billing_country,
+            ]))),
+        ]),
     ]);
 
     $paymentTerms = data_get($quote, 'payment_terms') ?: data_get($quote, 'payment_term') ?: '-';

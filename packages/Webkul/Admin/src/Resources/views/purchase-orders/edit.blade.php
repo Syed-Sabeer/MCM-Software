@@ -1,5 +1,6 @@
 @php
     $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
+    $addressManager = app(\Webkul\Core\Support\DocumentAddressManager::class);
     $initialPurchaseOrderCharges = collect(old('charges', $chargeManager->extract($purchaseOrder->loadMissing('additionalCharges'), 'purchase_order')))->values()->all();
     $prefillItems = old('items', $purchaseOrder->items->map(fn ($item) => [
         'id' => $item->id,
@@ -13,6 +14,13 @@
         'price' => $item->price,
         'expected_receive_date' => optional($item->expected_receive_date)->toDateString(),
     ])->toArray());
+    $vendorAddressOptions = $vendors->mapWithKeys(fn ($vendor) => [
+        $vendor->id => [
+            'options' => $addressManager->getOptions($vendor),
+            'default_billing_address' => $addressManager->getDefaultAddress($vendor, 'billing'),
+            'default_shipping_address' => $addressManager->getDefaultAddress($vendor, 'shipping'),
+        ],
+    ]);
 @endphp
 
 <x-admin::layouts>
@@ -33,6 +41,14 @@
             <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <input type="hidden" name="vendor_quote_id" value="{{ $purchaseOrder->vendor_quote_id }}">
                 <input type="hidden" name="job_order_id" value="{{ $purchaseOrder->job_order_id }}">
+                <input type="hidden" name="billing_address[key]" id="po-billing-key" value="{{ old('billing_address.key', data_get($purchaseOrder->billing_address, 'key')) }}">
+                <input type="hidden" name="billing_address[label]" id="po-billing-label" value="{{ old('billing_address.label', data_get($purchaseOrder->billing_address, 'label')) }}">
+                <input type="hidden" name="billing_address[type]" id="po-billing-type" value="{{ old('billing_address.type', data_get($purchaseOrder->billing_address, 'type', 'billing')) }}">
+                <input type="hidden" name="billing_address[address]" id="po-billing-address" value="{{ old('billing_address.address', data_get($purchaseOrder->billing_address, 'address')) }}">
+                <input type="hidden" name="shipping_address[key]" id="po-shipping-key" value="{{ old('shipping_address.key', data_get($purchaseOrder->shipping_address, 'key')) }}">
+                <input type="hidden" name="shipping_address[label]" id="po-shipping-label" value="{{ old('shipping_address.label', data_get($purchaseOrder->shipping_address, 'label')) }}">
+                <input type="hidden" name="shipping_address[type]" id="po-shipping-type" value="{{ old('shipping_address.type', data_get($purchaseOrder->shipping_address, 'type', 'shipping')) }}">
+                <input type="hidden" name="shipping_address[address]" id="po-shipping-address" value="{{ old('shipping_address.address', data_get($purchaseOrder->shipping_address, 'address')) }}">
 
                 <div class="grid gap-4 md:grid-cols-3">
                     <div>
@@ -41,7 +57,7 @@
                     </div>
                     <div>
                         <label class="mb-1 block text-sm font-medium dark:text-white">Vendor</label>
-                        <select name="organization_id" class="custom-select">
+                        <select name="organization_id" class="custom-select" id="po-organization-select">
                             <option value="">Select vendor</option>
                             @foreach ($vendors as $vendor)
                                 <option value="{{ $vendor->id }}" @selected(old('organization_id', $purchaseOrder->organization_id) == $vendor->id)>{{ $vendor->name }}</option>
@@ -82,6 +98,19 @@
                     <div>
                         <label class="mb-1 block text-sm font-medium dark:text-white">Terms & Conditions</label>
                         <textarea name="terms" rows="3" class="custom-input">{{ old('terms', $purchaseOrder->terms) }}</textarea>
+                    </div>
+                </div>
+
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="mb-1 block text-sm font-medium dark:text-white">Vendor Address</label>
+                        <select class="custom-select" id="po-billing-select"></select>
+                        <div class="mt-2 whitespace-pre-line text-xs text-gray-500" id="po-billing-preview">No address selected.</div>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium dark:text-white">Ship To Address</label>
+                        <select class="custom-select" id="po-shipping-select"></select>
+                        <div class="mt-2 whitespace-pre-line text-xs text-gray-500" id="po-shipping-preview">No address selected.</div>
                     </div>
                 </div>
             </div>
@@ -169,6 +198,41 @@
     @pushOnce('scripts')
         <script>
             window.poCharges = @json($initialPurchaseOrderCharges);
+            window.poVendorAddressBook = @json($vendorAddressOptions);
+
+            window.syncPoAddressField = function (prefix, option) {
+                document.getElementById(`po-${prefix}-key`).value = option?.key || '';
+                document.getElementById(`po-${prefix}-label`).value = option?.label || '';
+                document.getElementById(`po-${prefix}-type`).value = option?.type || prefix;
+                document.getElementById(`po-${prefix}-address`).value = option?.address || '';
+                const preview = document.getElementById(`po-${prefix}-preview`);
+                if (preview) preview.textContent = option?.address || 'No address selected.';
+            };
+
+            window.populatePoAddressOptions = function () {
+                const vendorId = document.getElementById('po-organization-select')?.value || '';
+                const addressMeta = window.poVendorAddressBook?.[vendorId] || { options: [], default_billing_address: null, default_shipping_address: null };
+                const billingSelect = document.getElementById('po-billing-select');
+                const shippingSelect = document.getElementById('po-shipping-select');
+
+                if (! billingSelect || ! shippingSelect) return;
+
+                const optionHtml = ['<option value="">Select address</option>'].concat(
+                    (addressMeta.options || []).map((option) => `<option value="${option.key}">${option.label}</option>`)
+                ).join('');
+
+                billingSelect.innerHTML = optionHtml;
+                shippingSelect.innerHTML = optionHtml;
+
+                const selectedBilling = (addressMeta.options || []).find((option) => String(option.key) === String(document.getElementById('po-billing-key')?.value || '')) || addressMeta.default_billing_address;
+                const selectedShipping = (addressMeta.options || []).find((option) => String(option.key) === String(document.getElementById('po-shipping-key')?.value || '')) || addressMeta.default_shipping_address;
+
+                billingSelect.value = selectedBilling?.key || '';
+                shippingSelect.value = selectedShipping?.key || '';
+
+                window.syncPoAddressField('billing', selectedBilling);
+                window.syncPoAddressField('shipping', selectedShipping);
+            };
 
             window.isTaxChargeName = function (name) {
                 const normalized = String(name || '').trim().toLowerCase();
@@ -291,6 +355,18 @@
             };
 
             document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('po-organization-select')?.addEventListener('change', window.populatePoAddressOptions);
+                document.getElementById('po-billing-select')?.addEventListener('change', function () {
+                    const vendorId = document.getElementById('po-organization-select')?.value || '';
+                    const options = window.poVendorAddressBook?.[vendorId]?.options || [];
+                    window.syncPoAddressField('billing', options.find((option) => String(option.key) === String(this.value)));
+                });
+                document.getElementById('po-shipping-select')?.addEventListener('change', function () {
+                    const vendorId = document.getElementById('po-organization-select')?.value || '';
+                    const options = window.poVendorAddressBook?.[vendorId]?.options || [];
+                    window.syncPoAddressField('shipping', options.find((option) => String(option.key) === String(this.value)));
+                });
+                window.populatePoAddressOptions();
                 window.renderPoCharges();
                 window.calculatePoTotals();
             });

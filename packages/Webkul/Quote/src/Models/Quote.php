@@ -90,15 +90,28 @@ class Quote extends Model implements QuoteContract
     {
         $last = static::whereNotNull('quote_number')->orderByDesc('id')->first();
 
-        if (! $last || ! preg_match('/(\\d+)$/', (string) $last->quote_number, $matches)) {
-            return '000001';
+        if (! $last || ! preg_match('/(\d+)$/', (string) $last->quote_number, $matches, PREG_OFFSET_CAPTURE)) {
+            return static::nextAvailableNumber('quote_number', '', 1, 6);
         }
 
-        $lastNumericPart = $matches[1];
+        $lastNumericPart = $matches[1][0];
         $paddingLength = max(strlen($lastNumericPart), 1);
+        $numericOffset = $matches[1][1];
+        $prefix = substr((string) $last->quote_number, 0, $numericOffset);
         $next = ((int) $lastNumericPart) + 1;
 
-        return str_pad((string) $next, $paddingLength, '0', STR_PAD_LEFT);
+        return static::nextAvailableNumber('quote_number', $prefix, $next, $paddingLength);
+    }
+
+    protected static function nextAvailableNumber(string $column, string $prefix, int $next, int $paddingLength): string
+    {
+        do {
+            $candidate = $prefix . str_pad((string) $next, $paddingLength, '0', STR_PAD_LEFT);
+            $exists = static::where($column, $candidate)->exists();
+            $next++;
+        } while ($exists);
+
+        return $candidate;
     }
 
     /**
