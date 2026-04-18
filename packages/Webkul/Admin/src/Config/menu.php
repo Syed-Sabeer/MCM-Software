@@ -58,7 +58,7 @@ return [
         'route'      => 'admin.job_orders.index',
         'sort'       => 1,
         'icon-class' => '',
-    ], 
+    ],
     // [
     //     'key'        => 'erp_operations.requirement_sheets',
     //     'name'       => 'Requirement Sheets',
@@ -146,18 +146,18 @@ return [
     [
         'key'        => 'activities',
         'name'       => 'admin::app.layouts.activities',
-        'route'      => 'admin.activities.index',
+        'route'      => 'admin.activities.my_tasks',
         'sort'       => 7,
         'icon-class' => 'icon-activity',
     ], [
         'key'        => 'activities.list',
-        'name'       => 'All Activities',
-        'route'      => 'admin.activities.index',
+        'name'       => 'Tasks',
+        'route'      => 'admin.activities.my_tasks',
         'sort'       => 1,
         'icon-class' => '',
     ], [
         'key'        => 'activities.calendar',
-        'name'       => 'Calendar View',
+        'name'       => 'Events',
         'route'      => 'admin.activities.calendar',
         'sort'       => 2,
         'icon-class' => '',

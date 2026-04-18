@@ -95,7 +95,7 @@ Breadcrumbs::for('activities', function (BreadcrumbTrail $trail) {
 // Dashboard > Activities > Calendar
 Breadcrumbs::for('activities.calendar', function (BreadcrumbTrail $trail) {
     $trail->parent('activities');
-    $trail->push('Calendar', route('admin.activities.calendar'));
+    $trail->push('Events', route('admin.activities.calendar'));
 });
 
 // Dashboard > activities > Edit Activity

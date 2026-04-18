@@ -11,11 +11,8 @@
 </v-mega-search>
 
 @pushOnce('scripts')
-    <script
-        type="text/x-template"
-        id="v-mega-search-template"
-    >
-        <div class="relative flex w-[550px] max-w-[550px] items-center max-lg:w-[400px] ltr:ml-2.5 rtl:mr-2.5">
+    <script type="text/x-template" id="v-mega-search-template">
+        <div class="relative flex w-[620px] max-w-[620px] items-center max-lg:w-[420px] ltr:ml-2.5 rtl:mr-2.5">
             <i class="icon-search absolute top-2 flex items-center text-2xl ltr:left-3 rtl:right-3"></i>
 
             <input
@@ -23,324 +20,112 @@
                 class="peer block w-full rounded-3xl border bg-white px-10 py-1.5 leading-6 text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
                 :class="{'border-gray-400': isDropdownOpen}"
                 placeholder="@lang('admin::app.components.layouts.header.mega-search.title')"
-                v-model.lazy="searchTerm"
-                @click="searchTerm.length >= 2 ? isDropdownOpen = true : {}"
-                v-debounce="500"
+                v-model="searchTerm"
+                @focus="openIfReady"
             >
 
             <div
-                class="absolute top-10 z-10 w-full rounded-lg border bg-white shadow-[0px_0px_0px_0px_rgba(0,0,0,0.10),0px_1px_3px_0px_rgba(0,0,0,0.10),0px_5px_5px_0px_rgba(0,0,0,0.09),0px_12px_7px_0px_rgba(0,0,0,0.05),0px_22px_9px_0px_rgba(0,0,0,0.01),0px_34px_9px_0px_rgba(0,0,0,0.00)] dark:border-gray-800 dark:bg-gray-900"
+                class="absolute top-10 z-10 w-full overflow-hidden rounded-2xl border bg-white shadow-[0px_10px_30px_rgba(15,23,42,0.12)] dark:border-gray-800 dark:bg-gray-900"
                 v-if="isDropdownOpen"
             >
-                <!-- Search Tabs -->
-                <div class="flex overflow-x-auto border-b text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
-                    <div
-                        class="cursor-pointer p-4 hover:bg-gray-100 dark:hover:bg-gray-950"
-                        :class="{ 'border-b-2 border-brandColor': activeTab == tab.key }"
+                <div class="flex overflow-x-auto border-b bg-gray-50/80 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300">
+                    <button
+                        type="button"
+                        class="flex items-center gap-2 whitespace-nowrap px-4 py-3 transition hover:bg-white dark:hover:bg-gray-900"
+                        :class="{ 'border-b-2 border-brandColor bg-white text-gray-900 dark:bg-gray-900 dark:text-white': activeTab === tab.key }"
                         v-for="tab in tabs"
-                        @click="activeTab = tab.key; search();"
+                        :key="tab.key"
+                        @click="activeTab = tab.key"
                     >
-                        @{{ tab.title }}
-                    </div>
+                        <span>@{{ tab.title }}</span>
+                        <span class="rounded-full bg-gray-200 px-2 py-0.5 text-[11px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                            @{{ resultCount(tab.key) }}
+                        </span>
+                    </button>
                 </div>
 
-                <!-- Searched Results -->
-                <template v-if="activeTab == 'products'">
-                    <template v-if="isLoading">
-                        <x-admin::shimmer.header.mega-search.products />
-                    </template>
+                <div v-if="isLoading" class="grid gap-2 p-4">
+                    <div v-for="index in 6" :key="index" class="h-14 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800"></div>
+                </div>
 
-                    <template v-else>
-                        <div class="grid max-h-[400px] overflow-y-auto">
-                            <template v-for="product in searchedResults.products">
+                <template v-else>
+                    <div v-if="activeTab === 'all'" class="max-h-[470px] overflow-y-auto">
+                        <div v-if="allSections.length" class="divide-y divide-gray-100 dark:divide-gray-800">
+                            <section v-for="section in allSections" :key="section.key" class="p-2">
+                                <div class="px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
+                                    @{{ section.title }}
+                                </div>
+
                                 <a
-                                    :href="'{{ route('admin.products.view', ':id') }}'.replace(':id', product.id)"
-                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
+                                    v-for="item in section.items"
+                                    :key="`${section.key}-${item.id}`"
+                                    :href="item.url"
+                                    class="flex items-start justify-between gap-3 rounded-xl px-3 py-3 transition hover:bg-gray-50 dark:hover:bg-gray-950"
                                 >
-                                    <!-- Left Information -->
-                                    <div class="flex gap-2.5">
-                                        <!-- Details -->
-                                        <div class="grid place-content-start gap-1.5">
-                                            <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                                                @{{ product.name }}
-                                            </p>
-
-                                            <p class="text-gray-500">
-                                                @{{ "@lang(':sku')".replace(':sku', product.sku) }}
-                                            </p>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <span class="rounded-full bg-brandColor/10 px-2 py-0.5 text-[11px] font-semibold text-brandColor">
+                                                @{{ item.badge }}
+                                            </span>
+                                            <p class="truncate text-sm font-semibold text-gray-800 dark:text-white">@{{ item.title }}</p>
                                         </div>
+
+                                        <p v-if="item.subtitle" class="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">@{{ item.subtitle }}</p>
+                                        <p v-if="item.meta" class="mt-1 truncate text-xs text-gray-400 dark:text-gray-500">@{{ item.meta }}</p>
                                     </div>
 
-                                    <!-- Right Information -->
-                                    <div class="grid place-content-center gap-1 text-right">
-                                        <!-- Formatted Price -->
-                                        <p class="font-semibold text-gray-600 dark:text-gray-300">
-                                            @{{ $admin.formatPrice(product.price) }}
-                                        </p>
-                                    </div>
+                                    <i class="icon-arrow-right text-xl text-gray-300 dark:text-gray-600"></i>
                                 </a>
-                            </template>
-
+                            </section>
                         </div>
 
-                        <div class="flex border-t p-3 dark:border-gray-800">
-                            <template v-if="searchedResults.products.length">
-                                <a
-                                    :href="'{{ route('admin.products.index') }}?search=:query'.replace(':query', searchTerm)"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-
-                                    @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-products')`.replace(':query', searchTerm).replace(':count', searchedResults.products.length) }}
-                                </a>
-                            </template>
-
-                            <template v-else>
-                                <a
-                                    href="{{ route('admin.products.index') }}"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-products')
-                                </a>
-                            </template>
+                        <div v-else class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            No matching records found across the software.
                         </div>
-                    </template>
-                </template>
+                    </div>
 
-                <template v-if="activeTab == 'leads'">
-                    <template v-if="isLoading">
-                        <x-admin::shimmer.header.mega-search.leads />
-                    </template>
-
-                    <template v-else>
-                        <div class="grid max-h-[400px] overflow-y-auto">
-                            <template v-for="lead in searchedResults.leads">
-                                <a
-                                    :href="'{{ route('admin.leads.view', ':id') }}'.replace(':id', lead.id)"
-                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
-                                >
-                                    <!-- Left Information -->
-                                    <div class="flex gap-2.5">
-                                        <!-- Details -->
-                                        <div class="grid place-content-start gap-1.5">
-                                            <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                                                @{{ lead.title }}
-                                            </p>
-
-                                            <p class="text-gray-500">
-                                                @{{ lead.description }}
-                                            </p>
-                                        </div>
+                    <div v-else class="max-h-[470px] overflow-y-auto">
+                        <template v-if="displayResults.length">
+                            <a
+                                v-for="item in displayResults"
+                                :key="`${activeTab}-${item.id}`"
+                                :href="item.url"
+                                class="flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950"
+                            >
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="rounded-full bg-brandColor/10 px-2 py-0.5 text-[11px] font-semibold text-brandColor">
+                                            @{{ item.badge }}
+                                        </span>
+                                        <p class="truncate text-sm font-semibold text-gray-800 dark:text-white">@{{ item.title }}</p>
                                     </div>
 
-                                    <!-- Right Information -->
-                                    <div class="grid place-content-center gap-1 text-right">
-                                        <!-- Formatted Price -->
-                                        <p class="font-semibold text-gray-600 dark:text-gray-300">
-                                            @{{ $admin.formatPrice(lead.lead_value) }}
-                                        </p>
-                                    </div>
-                                </a>
-                            </template>
-                        </div>
+                                    <p v-if="item.subtitle" class="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">@{{ item.subtitle }}</p>
+                                    <p v-if="item.meta" class="mt-1 truncate text-xs text-gray-400 dark:text-gray-500">@{{ item.meta }}</p>
+                                </div>
 
-                        <div class="flex border-t p-3 dark:border-gray-800">
-                            <template v-if="searchedResults.leads.length">
-                                <a
-                                    :href="'{{ route('admin.leads.index') }}?search=:query'.replace(':query', searchTerm)"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-leads')`.replace(':query', searchTerm).replace(':count', searchedResults.leads.length) }}
-                                </a>
-                            </template>
-
-                            <template v-else>
-                                <a
-                                    href="{{ route('admin.leads.index') }}"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-leads')
-                                </a>
-                            </template>
-                        </div>
-                    </template>
-                </template>
-
-                <template v-if="activeTab == 'persons'">
-                    <template v-if="isLoading">
-                        <x-admin::shimmer.header.mega-search.persons />
-                    </template>
-
-                    <template v-else>
-                        <div class="grid max-h-[400px] overflow-y-auto">
-                            <template v-for="person in searchedResults.persons">
-                                <a
-                                    :href="'{{ route('admin.contacts.persons.view', ':id') }}'.replace(':id', person.id)"
-                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
-                                >
-                                    <!-- Left Information -->
-                                    <div class="flex gap-2.5">
-                                        <!-- Details -->
-                                        <div class="grid place-content-start gap-1.5">
-                                            <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                                                @{{ person.name }}
-                                            </p>
-
-                                            <p class="text-gray-500">
-                                                @{{ person.emails.map((item) => `${item.value}(${item.label})`).join(', ') }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </template>
-                        </div>
-
-                        <div class="flex border-t p-3 dark:border-gray-800">
-                            <template v-if="searchedResults.persons.length">
-                                <a
-                                    :href="'{{ route('admin.contacts.persons.index') }}?search=:query'.replace(':query', searchTerm)"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-contacts')`.replace(':query', searchTerm).replace(':count', searchedResults.persons.length) }}
-                                </a>
-                            </template>
-
-                            <template v-else>
-                                <a
-                                    href="{{ route('admin.contacts.persons.index') }}"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-contacts')
-                                </a>
-                            </template>
-                        </div>
-                    </template>
-                </template>
-
-                <template v-if="activeTab == 'quotes'">
-                    <template v-if="isLoading">
-                        <x-admin::shimmer.header.mega-search.quotes />
-                    </template>
-
-                    <template v-else>
-                        <div class="grid max-h-[400px] overflow-y-auto">
-                            <template v-for="quote in searchedResults.quotes">
-                                <a
-                                    :href="'{{ route('admin.quotes.view', ':id') }}'.replace(':id', quote.id)"
-                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
-                                >
-                                    <!-- Left Information -->
-                                    <div class="flex gap-2.5">
-                                        <!-- Details -->
-                                        <div class="grid place-content-start gap-1.5">
-                                            <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                                                @{{ quote.subject }}
-                                            </p>
-
-                                            <p class="text-gray-500">
-                                                @{{ quote.description }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </template>
-                        </div>
-
-                        <div class="flex border-t p-3 dark:border-gray-800">
-                            <template v-if="searchedResults.quotes.length">
-                                <a
-                                    :href="'{{ route('admin.quotes.index') }}?search=:query'.replace(':query', searchTerm)"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-quotes')`.replace(':query', searchTerm).replace(':count', searchedResults.quotes.length) }}
-                                </a>
-                            </template>
-
-                            <template v-else>
-                                <a
-                                    href="{{ route('admin.quotes.index') }}"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-quotes')
-                                </a>
-                            </template>
-                        </div>
-                    </template>
-                </template>
-
-                <template v-if="activeTab == 'settings'">
-                    <template v-if="isLoading">
-                        <x-admin::shimmer.header.mega-search.settings />
-                    </template>
-
-                    <template v-else>
-                        <div class="grid max-h-[400px] overflow-y-auto">
-                            <template v-for="setting in searchedResults.settings">
-                                <a
-                                    :href="setting.url"
-                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
-                                >
-                                    <!-- Left Information -->
-                                    <div class="flex gap-2.5">
-                                        <!-- Details -->
-                                        <div class="grid place-content-start gap-1.5">
-                                            <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                                                @{{ setting.name }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </template>
-                        </div>
-
-                        <template v-if="! searchedResults.settings.length">
-                            <div class="flex border-t p-3 dark:border-gray-800">
-                                <a
-                                    href="{{ route('admin.settings.index') }}"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-settings')
-                                </a>
-                            </div>
+                                <i class="icon-arrow-right text-xl text-gray-300 dark:text-gray-600"></i>
+                            </a>
                         </template>
-                    </template>
-                </template>
 
-                <template v-if="activeTab == 'configurations'">
-                    <template v-if="isLoading">
-                        <x-admin::shimmer.header.mega-search.configurations />
-                    </template>
-
-                    <template v-else>
-                        <div class="grid max-h-[400px] overflow-y-auto">
-                            <template v-for="configuration in searchedResults.configurations">
-                                <a
-                                    :href="configuration.url"
-                                    class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
-                                >
-                                    <!-- Left Information -->
-                                    <div class="flex gap-2.5">
-                                        <!-- Details -->
-                                        <div class="grid place-content-start gap-1.5">
-                                            <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                                                @{{ configuration.title }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </template>
+                        <div v-else class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            No matching results in this section.
                         </div>
+                    </div>
 
-                        <template v-if="! searchedResults.configurations.length">
-                            <div class="flex border-t p-3 dark:border-gray-800">
-                                <a
-                                    href="{{ route('admin.configuration.index') }}"
-                                    class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                >
-                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-configurations')
-                                </a>
-                            </div>
-                        </template>
-                    </template>
+                    <div class="flex items-center justify-between border-t bg-gray-50/70 px-4 py-3 text-xs dark:border-gray-800 dark:bg-gray-950">
+                        <span class="font-medium text-gray-500 dark:text-gray-400">
+                            @{{ footerText }}
+                        </span>
+
+                        <a
+                            v-if="footerUrl"
+                            :href="footerUrl"
+                            class="font-semibold text-brandColor transition hover:underline"
+                        >
+                            Open full section
+                        </a>
+                    </div>
                 </template>
             </div>
         </div>
@@ -351,215 +136,170 @@
             template: '#v-mega-search-template',
 
             data() {
-                return  {
-                    activeTab: 'leads',
-
+                return {
+                    activeTab: 'all',
                     isDropdownOpen: false,
-
-                    tabs: {
-                        leads: {
-                            key: 'leads',
-                            title: '@lang('admin::app.components.layouts.header.mega-search.tabs.leads')',
-                            is_active: true,
-                            endpoint: '{{ route('admin.leads.search') }}',
-                            query_params: [
-                                {
-                                    search: 'title',
-                                    searchFields: 'title:like',
-                                },
-                                {
-                                    search: 'user.name',
-                                    searchFields: 'user.name:like',
-                                },
-                                {
-                                    search: 'person.name',
-                                    searchFields: 'person.name:like',
-                                },
-                            ],
-                        },
-
-                        quotes: {
-                            key: 'quotes',
-                            title: '@lang('admin::app.components.layouts.header.mega-search.tabs.quotes')',
-                            is_active: false,
-                            endpoint: '{{ route('admin.quotes.search') }}',
-                            query_params: [
-                                {
-                                    search: 'subject',
-                                    searchFields: 'subject:like',
-                                },
-                                {
-                                    search: 'description',
-                                    searchFields: 'description:like',
-                                },
-                                {
-                                    search: 'user.name',
-                                    searchFields: 'user.name:like',
-                                },
-                                {
-                                    search: 'person.name',
-                                    searchFields: 'person.name:like',
-                                },
-                            ],
-                        },
-
-                        products: {
-                            key: 'products',
-                            title: '@lang('admin::app.components.layouts.header.mega-search.tabs.products')',
-                            is_active: false,
-                            endpoint: '{{ route('admin.products.search') }}',
-                            query_params: [
-                                {
-                                    search: 'name',
-                                    searchFields: 'name:like',
-                                },
-                                {
-                                    search: 'sku',
-                                    searchFields: 'sku:like',
-                                },
-                                {
-                                    search: 'description',
-                                    searchFields: 'description:like',
-                                },
-                            ],
-                        },
-
-                        persons: {
-                            key: 'persons',
-                            title: '@lang('admin::app.components.layouts.header.mega-search.tabs.persons')',
-                            is_active: false,
-                            endpoint: '{{ route('admin.contacts.persons.search') }}',
-                            query_params: [
-                                {
-                                    search: 'name',
-                                    searchFields: 'name:like',
-                                },
-                                {
-                                    search: 'job_title',
-                                    searchFields: 'job_title:like',
-                                },
-                                {
-                                    search: 'user.name',
-                                    searchFields: 'user.name:like',
-                                },
-                                {
-                                    search: 'organization.name',
-                                    searchFields: 'organization.name:like',
-                                },
-                            ],
-                        },
-
-                        settings: {
-                            key: 'settings',
-                            title: '@lang('Settings')',
-                            is_active: false,
-                            endpoint: '{{ route('admin.settings.search') }}',
-                            query: '',
-                        },
-
-                        configurations: {
-                            key: 'configurations',
-                            title: '@lang('Configurations')',
-                            is_active: false,
-                            endpoint: '{{ route('admin.configuration.search') }}',
-                            query: '',
-                        },
-                    },
-
                     isLoading: false,
-
                     searchTerm: '',
-
-                    searchedResults: {
-                        leads: [],
-                        quotes: [],
-                        products: [],
-                        persons: [],
-                        settings: [],
-                        configurations: [],
+                    searchTimeout: null,
+                    tabs: [
+                        { key: 'all', title: 'All' },
+                        { key: 'organizations', title: 'Companies' },
+                        { key: 'persons', title: 'Contacts' },
+                        { key: 'leads', title: 'Cases' },
+                        { key: 'products', title: 'Products' },
+                        { key: 'quotes', title: 'Quotes' },
+                        { key: 'proforma_invoices', title: 'Proformas' },
+                        { key: 'purchase_orders', title: 'POs' },
+                        { key: 'settings', title: 'Settings' },
+                        { key: 'configurations', title: 'Configuration' },
+                    ],
+                    searchedResults: this.emptyResults(),
+                    sectionTitles: {
+                        organizations: 'Companies',
+                        persons: 'Contacts',
+                        leads: 'Cases',
+                        products: 'Products',
+                        quotes: 'Quotes',
+                        proforma_invoices: 'Proformas',
+                        purchase_orders: 'Purchase Orders',
+                        settings: 'Settings',
+                        configurations: 'Configuration',
                     },
-
-                    params: {
-                        search: '',
-                        searchFields: '',
+                    exploreUrls: {
+                        organizations: '{{ route('admin.contacts.organizations.index') }}',
+                        persons: '{{ route('admin.contacts.persons.index') }}',
+                        leads: '{{ route('admin.leads.index') }}',
+                        products: '{{ route('admin.products.index') }}',
+                        quotes: '{{ route('admin.quotes.index') }}',
+                        proforma_invoices: '{{ route('admin.proforma_invoices.index') }}',
+                        purchase_orders: '{{ route('admin.purchase_orders.index') }}',
+                        settings: '{{ route('admin.settings.index') }}',
+                        configurations: '{{ route('admin.configuration.index') }}',
                     },
                 };
             },
 
-            watch: {
-                searchTerm: 'updateSearchParams',
+            computed: {
+                displayResults() {
+                    return this.searchedResults[this.activeTab] || [];
+                },
 
-                activeTab: 'updateSearchParams',
+                allSections() {
+                    return this.tabs
+                        .filter(tab => tab.key !== 'all')
+                        .map(tab => ({
+                            key: tab.key,
+                            title: tab.title,
+                            items: this.searchedResults[tab.key] || [],
+                        }))
+                        .filter(section => section.items.length);
+                },
+
+                footerText() {
+                    if (this.searchTerm.length < 2) {
+                        return 'Type at least 2 characters to search.';
+                    }
+
+                    if (this.activeTab === 'all') {
+                        return `${this.resultCount('all')} results across the software`;
+                    }
+
+                    return `${this.resultCount(this.activeTab)} result(s) in ${this.sectionTitles[this.activeTab] || 'this section'}`;
+                },
+
+                footerUrl() {
+                    if (this.activeTab === 'all') {
+                        return '';
+                    }
+
+                    const baseUrl = this.exploreUrls[this.activeTab] || '';
+
+                    if (!baseUrl) {
+                        return '';
+                    }
+
+                    return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}search=${encodeURIComponent(this.searchTerm)}`;
+                },
+            },
+
+            watch: {
+                searchTerm(newValue) {
+                    clearTimeout(this.searchTimeout);
+
+                    if (newValue.trim().length < 2) {
+                        this.searchedResults = this.emptyResults();
+                        this.isDropdownOpen = false;
+                        this.isLoading = false;
+
+                        return;
+                    }
+
+                    this.searchTimeout = setTimeout(() => {
+                        this.performSearch();
+                    }, 300);
+                },
             },
 
             created() {
                 window.addEventListener('click', this.handleFocusOut);
             },
 
-            beforeDestroy() {
+            beforeUnmount() {
                 window.removeEventListener('click', this.handleFocusOut);
+                clearTimeout(this.searchTimeout);
             },
 
             methods: {
-                search(endpoint = null) {
-                    if (! endpoint) {
-                        return;
+                emptyResults() {
+                    return {
+                        all: [],
+                        organizations: [],
+                        persons: [],
+                        leads: [],
+                        products: [],
+                        quotes: [],
+                        proforma_invoices: [],
+                        purchase_orders: [],
+                        settings: [],
+                        configurations: [],
+                    };
+                },
+
+                resultCount(key) {
+                    return (this.searchedResults[key] || []).length;
+                },
+
+                openIfReady() {
+                    if (this.searchTerm.trim().length >= 2) {
+                        this.isDropdownOpen = true;
                     }
+                },
 
-                    if (this.searchTerm.length <= 1) {
-                        this.searchedResults[this.activeTab] = [];
-
-                        this.isDropdownOpen = false;
-
-                        return;
-                    }
-
+                performSearch() {
+                    this.isLoading = true;
                     this.isDropdownOpen = true;
 
-                    this.$axios.get(endpoint, {
-                            params: {
-                                ...this.params,
-                            },
-                        })
-                        .then((response) => {
-                            this.searchedResults[this.activeTab] = response.data.data;
-                        })
-                        .catch((error) => {})
-                        .finally(() => this.isLoading = false);
+                    this.$axios.get('{{ route('admin.search.global') }}', {
+                        params: {
+                            query: this.searchTerm.trim(),
+                        },
+                    }).then((response) => {
+                        this.searchedResults = {
+                            ...this.emptyResults(),
+                            ...(response.data.data || {}),
+                        };
+                    }).catch(() => {
+                        this.searchedResults = this.emptyResults();
+                    }).finally(() => {
+                        this.isLoading = false;
+                    });
                 },
 
-                handleFocusOut(e) {
-                    if (! this.$el.contains(e.target)) {
+                handleFocusOut(event) {
+                    if (!this.$el.contains(event.target)) {
                         this.isDropdownOpen = false;
                     }
-                },
-
-                updateSearchParams() {
-                    const newTerm = this.searchTerm;
-
-                    this.params = {
-                        search: '',
-                        searchFields: '',
-                    };
-
-                    const tab = this.tabs[this.activeTab];
-
-                    if (
-                        tab.key === 'settings'
-                        || tab.key === 'configurations'
-                    ) {
-                        this.params = null;
-
-                        this.search(`${tab.endpoint}?query=${newTerm}`);
-
-                        return;
-                    }
-
-                    this.params.search += tab.query_params.map((param) => `${param.search}:${newTerm};`).join('');
-
-                    this.params.searchFields += tab.query_params.map((param) => `${param.searchFields};`).join('');
-
-                    this.search(tab.endpoint);
                 },
             },
         });

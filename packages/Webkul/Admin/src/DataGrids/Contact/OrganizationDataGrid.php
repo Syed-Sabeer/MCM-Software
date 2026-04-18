@@ -39,6 +39,8 @@ class OrganizationDataGrid extends DataGrid
      */
     public function prepareQueryBuilder(): Builder
     {
+        $routePrefix = $this->getRoutePrefix();
+
         $queryBuilder = DB::table('organizations')
             ->addSelect(
                 'organizations.id',
@@ -47,6 +49,15 @@ class OrganizationDataGrid extends DataGrid
                 'organizations.address',
                 'organizations.created_at'
             );
+
+        // Hide the configured software company from customer/vendor organization listing pages.
+        if (in_array($routePrefix, ['customers', 'vendors'], true)) {
+            $softwareCompanyName = trim((string) core()->getConfigData('general.general.company_info.company_name'));
+
+            if ($softwareCompanyName !== '') {
+                $queryBuilder->whereRaw('LOWER(organizations.name) != ?', [mb_strtolower($softwareCompanyName)]);
+            }
+        }
 
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $queryBuilder->whereIn('organizations.user_id', $userIds);
@@ -76,13 +87,17 @@ class OrganizationDataGrid extends DataGrid
      */
     public function prepareColumns(): void
     {
-        $this->addColumn([
-            'index'      => 'id',
-            'label'      => trans('admin::app.contacts.organizations.index.datagrid.id'),
-            'type'       => 'integer',
-            'filterable' => true,
-            'sortable'   => true,
-        ]);
+        $routePrefix = $this->getRoutePrefix();
+
+        if (! in_array($routePrefix, ['customers', 'vendors'], true)) {
+            $this->addColumn([
+                'index'      => 'id',
+                'label'      => trans('admin::app.contacts.organizations.index.datagrid.id'),
+                'type'       => 'integer',
+                'filterable' => true,
+                'sortable'   => true,
+            ]);
+        }
 
         $this->addColumn([
             'index'      => 'name',
@@ -90,6 +105,17 @@ class OrganizationDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => true,
             'filterable' => true,
+            'closure'    => function ($row) use ($routePrefix) {
+                $name = e($row->name ?? '');
+
+                if (! bouncer()->hasPermission('contacts.organizations.view')) {
+                    return $name;
+                }
+
+                $url = route("admin.{$routePrefix}.organizations.view", $row->id);
+
+                return "<a href=\"{$url}\" class=\"text-brandColor hover:underline\">{$name}</a>";
+            },
         ]);
 
         $this->addColumn([

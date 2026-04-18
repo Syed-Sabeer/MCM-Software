@@ -10,6 +10,8 @@ Route::controller(ActivityController::class)->prefix('activities')->group(functi
 
     Route::get('my-tasks', 'myTasks')->name('admin.activities.my_tasks');
 
+    Route::get('my-tasks/get', 'myTasksData')->name('admin.activities.my_tasks_data');
+
     Route::get('my-tasks/summary', 'myTasksSummary')->name('admin.activities.my_tasks_summary');
 
     Route::get('get', 'get')->name('admin.activities.get');

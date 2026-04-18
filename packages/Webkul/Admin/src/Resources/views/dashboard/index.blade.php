@@ -43,22 +43,40 @@
 
     @pushOnce('styles')
         <style>
+            :root {
+                --erp-page-bg: linear-gradient(180deg, #f5f9ff 0%, #f8fafc 38%, #f3f6fb 100%);
+                --erp-shell-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.98));
+                --erp-card-bg: rgba(255, 255, 255, 0.98);
+                --erp-card-border: rgba(226, 232, 240, 0.9);
+                --erp-muted-surface: rgba(248, 250, 252, 0.9);
+            }
+
+            .dark {
+                --erp-page-bg: linear-gradient(180deg, #020617 0%, #0f172a 45%, #111827 100%);
+                --erp-shell-bg: linear-gradient(180deg, rgba(2, 6, 23, 0.78), rgba(15, 23, 42, 0.92));
+                --erp-card-bg: rgba(17, 24, 39, 0.98);
+                --erp-card-border: rgba(51, 65, 85, 0.95);
+                --erp-muted-surface: rgba(15, 23, 42, 0.72);
+            }
+
+            #app {
+                background: var(--erp-page-bg);
+            }
+
             .erp-dashboard-card {
-                border: 1px solid rgba(226, 232, 240, 0.9);
+                border: 1px solid var(--erp-card-border);
                 border-radius: 14px;
-                background: rgba(255, 255, 255, 0.98);
+                background: var(--erp-card-bg);
                 box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
             }
 
             .dark .erp-dashboard-card {
-                border-color: rgba(51, 65, 85, 0.95);
-                background: rgba(17, 24, 39, 0.98);
                 box-shadow: 0 12px 30px rgba(2, 6, 23, 0.25);
             }
 
             .erp-period-pill {
                 border: 1px solid rgba(203, 213, 225, 1);
-                background: #fff;
+                /* background: #fff; */
             }
 
             .dark .erp-period-pill {
@@ -69,10 +87,10 @@
             .erp-stat-card {
                 position: relative;
                 overflow: hidden;
-                border: 1px solid rgba(226, 232, 240, 0.9);
+                border: 1px solid var(--erp-card-border);
                 border-radius: 14px;
                 background:
-                    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98)),
+                    linear-gradient(135deg, var(--erp-card-bg), var(--erp-muted-surface)),
                     radial-gradient(circle at top right, rgba(14, 144, 217, 0.08), transparent 55%);
                 box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
             }
@@ -91,8 +109,9 @@
             }
 
             .dark .erp-stat-card {
-                border-color: rgba(51, 65, 85, 0.95);
-                background: linear-gradient(180deg, rgba(17, 24, 39, 1), rgba(15, 23, 42, 1));
+                background:
+                    linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(15, 23, 42, 0.98)),
+                    radial-gradient(circle at top right, rgba(14, 144, 217, 0.12), transparent 56%);
             }
 
             .erp-card-title {
@@ -157,14 +176,13 @@
             }
 
             .erp-vertical-chart {
-                border: 1px solid rgba(226, 232, 240, 0.78);
+                border: 1px solid var(--erp-card-border);
                 border-radius: 12px;
-                background: rgba(248, 250, 252, 0.72);
+                background: var(--erp-muted-surface);
                 padding: 14px;
             }
 
             .dark .erp-vertical-chart {
-                border-color: rgba(51, 65, 85, 0.85);
                 background: rgba(2, 6, 23, 0.48);
             }
 
@@ -182,16 +200,17 @@
                 position: relative;
                 overflow: hidden;
                 border-radius: 18px;
+                border: 1px solid var(--erp-card-border);
                 background:
-                    radial-gradient(circle at top right, rgba(14, 144, 217, 0.1), transparent 45%),
-                    linear-gradient(180deg, #f8fbff 0%, #f8fafc 100%);
+                    radial-gradient(circle at top right, rgba(14, 144, 217, 0.12), transparent 46%),
+                    var(--erp-shell-bg);
                 padding: 14px;
             }
 
             .dark .erp-dashboard-shell {
                 background:
-                    radial-gradient(circle at top right, rgba(14, 144, 217, 0.14), transparent 45%),
-                    linear-gradient(180deg, rgba(2, 6, 23, 0.95), rgba(15, 23, 42, 0.95));
+                    radial-gradient(circle at top right, rgba(14, 144, 217, 0.16), transparent 45%),
+                    var(--erp-shell-bg);
             }
 
             .erp-stats-row {
@@ -229,10 +248,33 @@
                 background: #fff;
             }
 
+            .dashboard-weekdays {
+                display: grid;
+                grid-template-columns: repeat(7, minmax(0, 1fr));
+                gap: 4px;
+                border: 1px solid rgba(226, 232, 240, 0.95);
+                border-radius: 10px;
+                padding: 6px 8px;
+                background: linear-gradient(180deg, #f8fbff, #f8fafc);
+            }
+
+            .dashboard-weekdays span {
+                text-align: center;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.02em;
+                color: #334155;
+            }
+
             .dashboard-mini-calendar .vuecal__header,
             .dashboard-mini-calendar .vuecal__weekdays-headings,
             .dashboard-mini-calendar .vuecal__title-bar {
-                background: linear-gradient(90deg, #eef6ff, #f8fbff);
+                background:color-mix(in srgb, var(--brand-color) 12%, white);
+                color: var(--brand-color) !important;
+            }
+
+            .dashboard-mini-calendar .vuecal__weekdays-headings {
+                display: none;
             }
 
             .dashboard-mini-calendar .vuecal__weekday {
@@ -283,6 +325,15 @@
             .dark .dashboard-mini-calendar {
                 border-color: #334155;
                 background: #111827;
+            }
+
+            .dark .dashboard-weekdays {
+                border-color: #334155;
+                background: linear-gradient(180deg, #1f2937, #111827);
+            }
+
+            .dark .dashboard-weekdays span {
+                color: #f8fafc;
             }
 
             .dark .dashboard-mini-calendar .vuecal__header,
@@ -345,7 +396,7 @@
                             </div>
 
                             <span class="erp-stat-icon">
-                                <i class="icon-check text-xl"></i>
+                                <i class="icon-success text-xl"></i>
                             </span>
                         </div>
                     </a>
@@ -359,7 +410,7 @@
                             </div>
 
                             <span class="erp-stat-icon">
-                                <i class="icon-sales-person text-xl"></i>
+                                <i class="icon-stats-up text-xl"></i>
                             </span>
                         </div>
                     </a>
@@ -526,6 +577,16 @@
                                 <a :href="calendarPageUrl" class="text-xs font-semibold text-brandColor hover:underline">
                                     Open calendar
                                 </a>
+                            </div>
+
+                            <div class="dashboard-weekdays mb-2">
+                                <span>Mon</span>
+                                <span>Tue</span>
+                                <span>Wed</span>
+                                <span>Thurs</span>
+                                <span>Fri</span>
+                                <span>Sat</span>
+                                <span>Sun</span>
                             </div>
 
                             <v-vue-cal

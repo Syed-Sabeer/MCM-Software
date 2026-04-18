@@ -36,6 +36,11 @@ require 'contacts-routes.php';
 require 'activities-routes.php';
 
 /**
+ * Global search routes.
+ */
+require 'search-routes.php';
+
+/**
  * Quotes routes.
  */
 require 'quote-routes.php';

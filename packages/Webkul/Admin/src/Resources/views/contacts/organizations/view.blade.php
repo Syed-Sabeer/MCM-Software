@@ -12,12 +12,12 @@
     @php
         $activityTypes = [
             ['name' => 'all', 'label' => 'All'],
-            ['name' => 'note', 'label' => 'Comments'],
-            ['name' => 'call', 'label' => 'Calls'],
-            ['name' => 'meeting', 'label' => 'Events'],
-            ['name' => 'file', 'label' => 'Files'],
-            ['name' => 'email', 'label' => 'Emails'],
-            ['name' => 'task', 'label' => 'Tasks'],
+            ['name' => 'email', 'label' => 'Mail'],
+            ['name' => 'call', 'label' => 'Log a Call'],
+            ['name' => 'meeting', 'label' => 'Event'],
+            ['name' => 'note', 'label' => 'Comment'],
+            ['name' => 'file', 'label' => 'File'],
+            ['name' => 'task', 'label' => 'Task'],
             ['name' => 'system', 'label' => 'Change Log'],
         ];
     @endphp

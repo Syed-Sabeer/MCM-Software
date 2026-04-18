@@ -1967,10 +1967,10 @@ return [
         ],
 
         'edit' => [
-            'title'           => 'Edit Activity',
+            'title'           => 'Edit Event',
             'back-btn'        => 'Back',
-            'save-btn'        => 'Save Activity',
-            'type'            => 'Activity Type',
+            'save-btn'        => 'Save Event',
+            'type'            => 'Event Type',
             'call'            => 'Call',
             'meeting'         => 'Meeting',
             'lunch'           => 'Lunch',

@@ -281,7 +281,7 @@
                                                 <template v-if="activity.type != 'email'">
                                                     @if (bouncer()->hasPermission('activities.edit'))
                                                         <x-admin::dropdown.menu.item
-                                                            v-if="! activity.is_done && ['call', 'meeting'].includes(activity.type)"
+                                                            v-if="! activity.is_done && ['call', 'meeting', 'task'].includes(activity.type)"
                                                             @click="markAsDone(activity)"
                                                         >
                                                             <div class="flex items-center gap-2">
@@ -291,16 +291,16 @@
                                                             </div>
                                                         </x-admin::dropdown.menu.item>
 
-                                                        <x-admin::dropdown.menu.item v-if="['call', 'meeting'].includes(activity.type)">
-                                                            <a
+                                                        <x-admin::dropdown.menu.item v-if="activity.type != 'email' && activity.type != 'system'">
+                                                            <button
+                                                                type="button"
                                                                 class="flex items-center gap-2"
-                                                                :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)"
-                                                                target="_blank"
+                                                                @click="openTypeEditor(activity)"
                                                             >
                                                                 <span class="icon-edit text-2xl"></span>
 
                                                                 @lang('admin::app.components.activities.index.edit')
-                                                            </a>
+                                                            </button>
                                                         </x-admin::dropdown.menu.item>
                                                     @endif
 
@@ -323,9 +323,9 @@
                                                                 class="flex items-center gap-2"
                                                                 target="_blank"
                                                             >
-                                                                <span class="icon-eye text-2xl"></span>
+                                                                <span class="icon-edit text-2xl"></span>
 
-                                                                @lang('admin::app.components.activities.index.view')
+                                                                @lang('admin::app.components.activities.index.edit')
                                                             </a>
                                                         </x-admin::dropdown.menu.item>
                                                     @endif
@@ -674,6 +674,14 @@
                 }
 
                 this.$emitter.on('on-activity-added', (activity) => this.activities.unshift(activity));
+
+                this.$emitter.on('on-activity-updated', (updatedActivity) => {
+                    const index = this.activities.findIndex(activity => Number(activity.id) === Number(updatedActivity.id));
+
+                    if (index !== -1) {
+                        this.activities.splice(index, 1, updatedActivity);
+                    }
+                });
             },
 
             watch: {
@@ -778,6 +786,28 @@
                                 });
                         }
                     });
+                },
+
+                openTypeEditor(activity) {
+                    const eventNames = {
+                        call: 'open-log-call-activity',
+                        meeting: 'open-event-activity',
+                        note: 'open-note-activity',
+                        file: 'open-file-activity',
+                        task: 'open-task-activity',
+                    };
+
+                    const eventName = eventNames[activity.type];
+
+                    if (! eventName) {
+                        return;
+                    }
+
+                    window.dispatchEvent(new CustomEvent(eventName, {
+                        detail: {
+                            activity,
+                        },
+                    }));
                 },
             },
         });

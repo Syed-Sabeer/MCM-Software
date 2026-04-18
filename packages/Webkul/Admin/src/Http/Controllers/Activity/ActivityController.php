@@ -16,6 +16,7 @@ use Webkul\Activity\Repositories\FileRepository;
 use Webkul\Admin\Http\Resources\OrganizationResource;
 use Webkul\Admin\Http\Resources\PersonResource;
 use Webkul\Admin\DataGrids\Activity\ActivityDataGrid;
+use Webkul\Admin\DataGrids\Activity\TaskDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
@@ -64,28 +65,35 @@ class ActivityController extends Controller
     public function myTasks(): View
     {
         $userId = auth()->guard('user')->id();
-
-        $allTasks = $this->assignedTasksQuery($userId)
-            ->orderBy('activities.schedule_from', 'desc')
-            ->get();
-
         $today = now()->toDateString();
 
-        $upcomingTasks = $allTasks
-            ->where('is_done', 0)
-            ->filter(fn ($task) => ! empty($task->schedule_from) && substr((string) $task->schedule_from, 0, 10) >= $today)
-            ->values();
+        $allTasksCount = $this->assignedTasksQuery($userId)->get()->count();
 
-        $overdueTasks = $allTasks
-            ->where('is_done', 0)
-            ->filter(fn ($task) => ! empty($task->schedule_from) && substr((string) $task->schedule_from, 0, 10) < $today)
-            ->values();
+        $upcomingTasksCount = $this->assignedTasksQuery($userId)
+            ->where('activities.is_done', 0)
+            ->whereDate('activities.schedule_from', '>=', $today)
+            ->get()
+            ->count();
+
+        $overdueTasksCount = $this->assignedTasksQuery($userId)
+            ->where('activities.is_done', 0)
+            ->whereDate('activities.schedule_from', '<', $today)
+            ->get()
+            ->count();
 
         return view('admin::activities.my-tasks', [
-            'upcomingTasks' => $upcomingTasks,
-            'overdueTasks'  => $overdueTasks,
-            'allTasks'      => $allTasks,
+            'upcomingTasksCount' => $upcomingTasksCount,
+            'overdueTasksCount'  => $overdueTasksCount,
+            'allTasksCount'      => $allTasksCount,
         ]);
+    }
+
+    /**
+     * Get datagrid response for assigned tasks page.
+     */
+    public function myTasksData(): JsonResponse
+    {
+        return datagrid(TaskDataGrid::class)->process();
     }
 
     /**
@@ -106,11 +114,12 @@ class ActivityController extends Controller
             ->limit(5)
             ->get();
 
-        $badgeCount = (clone $query)->count();
+        $badgeCount = (clone $query)->get()->count();
 
         $overdueCount = $this->assignedTasksQuery($userId)
             ->where('activities.is_done', 0)
             ->whereDate('activities.schedule_from', '<', $today)
+            ->get()
             ->count();
 
         return response()->json([

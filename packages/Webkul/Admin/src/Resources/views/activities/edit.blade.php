@@ -21,94 +21,55 @@
 
                     <!-- Page Title -->
                     <div class="text-xl font-bold dark:text-gray-300">
-                        @lang('admin::app.activities.edit.title')
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-x-2.5">
-                    <!-- Create button for person -->
-                    <div class="flex items-center gap-x-2.5">
-                        {!! view_render_event('admin.activities.edit.save_button.before') !!}
-
-                        <!-- Save Button -->
-                        <button
-                            type="submit"
-                            class="primary-button"
-                        >
-                            @lang('admin::app.activities.edit.save-btn')
-                        </button>
-
-                        {!! view_render_event('admin.activities.edit.save_button.after') !!}
+                        Edit Event
                     </div>
                 </div>
             </div>
 
             <!-- Form Content -->
-            <div class="flex gap-2.5 max-xl:flex-wrap-reverse">
-                <!-- Left sub-component -->
-                <div class="box-shadow flex-1 gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-xl:flex-auto">
+            @php
+                $scheduleFrom = old('schedule_from') ?? $activity->schedule_from;
+                $scheduleTo = old('schedule_to') ?? $activity->schedule_to;
+
+                $scheduleFromDate = $scheduleFrom ? \Carbon\Carbon::parse($scheduleFrom)->format('Y-m-d') : '';
+                $scheduleFromTime = $scheduleFrom ? \Carbon\Carbon::parse($scheduleFrom)->format('H:i') : '';
+                $scheduleToDate = $scheduleTo ? \Carbon\Carbon::parse($scheduleTo)->format('Y-m-d') : '';
+                $scheduleToTime = $scheduleTo ? \Carbon\Carbon::parse($scheduleTo)->format('H:i') : '';
+            @endphp
+
+            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
+                    Edit Event
+                </p>
+
+                <div style="display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 1rem !important;">
                     {!! view_render_event('admin.activities.edit.form_controls.before') !!}
 
-                    <!-- Schedule Date -->
-                    <x-admin::form.control-group>
-                        <div class="flex gap-2 max-sm:flex-wrap">
-                            <div class="w-full">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.activities.edit.schedule_from')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::flat-picker.datetime class="!w-full" ::allow-input="true">
-                                    <input
-                                        name="schedule_from"
-                                        value="{{ old('schedule_from') ?? $activity->schedule_from }}"
-                                        class="flex w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                        placeholder="@lang('admin::app.activities.edit.schedule_from')"
-                                    />
-                                </x-admin::flat-picker.datetime>
-                            </div>
-
-                            <div class="w-full">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.activities.edit.schedule_to')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::flat-picker.datetime class="!w-full" ::allow-input="true">
-                                    <input
-                                        name="schedule_to"
-                                        value="{{ old('schedule_to') ?? $activity->schedule_to }}"
-                                        class="flex w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                        placeholder="@lang('admin::app.activities.edit.schedule_to')"
-                                    />
-                                </x-admin::flat-picker.datetime>
-                            </div>
-                        </div>
-                    </x-admin::form.control-group>
-
-                    <!-- Comment -->
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.activities.edit.comment')
+                    <!-- Title -->
+                    <x-admin::form.control-group style="margin: 0 !important;">
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.activities.edit.title')
                         </x-admin::form.control-group.label>
 
                         <x-admin::form.control-group.control
-                            type="textarea"
-                            name="comment"
-                            id="comment"
-                            :value="old('comment') ?? $activity->comment"
-                            :label="trans('admin::app.activities.edit.comment')"
-                            :placeholder="trans('admin::app.activities.edit.comment')"
+                            type="text"
+                            name="title"
+                            id="title"
+                            rules="required"
+                            :value="old('title') ?? $activity->title"
+                            :label="trans('admin::app.activities.edit.title')"
+                            :placeholder="trans('admin::app.activities.edit.title')"
                         />
 
-                        <x-admin::form.control-group.error control-name="comment" />
+                        <x-admin::form.control-group.error control-name="title" />
                     </x-admin::form.control-group>
 
                     <!-- Participants -->
-                    <x-admin::form.control-group>
+                    <x-admin::form.control-group style="margin: 0 !important;">
                         <x-admin::form.control-group.label>
                             @lang('admin::app.activities.edit.participants')
                         </x-admin::form.control-group.label>
 
-                        <!-- Participants Multi lookup Vue Component -->
                         <v-multi-lookup-component>
                             <div
                                 class="relative rounded border border-gray-200 px-2 py-1 hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:hover:border-gray-400 dark:focus:border-gray-400"
@@ -128,111 +89,113 @@
                             </div>
                         </v-multi-lookup-component>
                     </x-admin::form.control-group>
-
-                    <!-- Lead -->
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.activities.edit.lead')
-                        </x-admin::form.control-group.label>
-
-                        <x-admin::attributes.edit.lookup/>
-
-                        <!-- Lead Lookup Vue Component -->
-                        <v-lookup-component
-                            :attribute="{'code': 'lead_id', 'name': 'Lead', 'lookup_type': 'leads'}"
-                            :value='@json($lookUpEntityData)'
-                        >
-                            <x-admin::form.control-group.control
-                                type="text"
-                                placeholder="@lang('admin::app.common.start-typing')"
-                            />
-                        </v-lookup-component>
-                    </x-admin::form.control-group>
-
-                    {!! view_render_event('admin.activities.edit.form_controls.after') !!}
                 </div>
 
-                <!-- Right sub-component -->
-                <div class="w-[360px] max-w-full gap-2 max-xl:w-full">
-                    {!! view_render_event('admin.activities.edit.accordion.general.before') !!}
+                <div class="mt-4">
+                    <x-admin::form.control-group class="!mb-0">
+                        <x-admin::form.control-group.label class="required">
+                            Schedule
+                        </x-admin::form.control-group.label>
 
-                    <x-admin::accordion>
-                        <x-slot:header>
-                            <div class="flex items-center justify-between">
-                                <p class="p-2.5 text-base font-semibold text-gray-800 dark:text-white">
-                                    @lang('admin::app.activities.edit.general')
-                                </p>
+                        <input type="hidden" name="schedule_from" id="schedule_from" value="{{ $scheduleFrom }}">
+                        <input type="hidden" name="schedule_to" id="schedule_to" value="{{ $scheduleTo }}">
+
+                        <div style="display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 1rem !important;" class="max-lg:grid-cols-2 max-sm:grid-cols-1">
+                            <div>
+                                <x-admin::form.control-group.label class="required">
+                                    Start Date
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::flat-picker.date class="!w-full" ::allow-input="true">
+                                    <input
+                                        type="date"
+                                        id="schedule_from_date"
+                                        value="{{ $scheduleFromDate }}"
+                                        class="flex w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                                        placeholder="Start Date"
+                                    />
+                                </x-admin::flat-picker.date>
                             </div>
-                        </x-slot>
 
-                        <x-slot:content>
-                            <!-- Title -->
-                            <x-admin::form.control-group>
+                            <div>
                                 <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.activities.edit.title')
+                                    Start Time
                                 </x-admin::form.control-group.label>
 
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="title"
-                                    id="title"
-                                    rules="required"
-                                    :value="old('title') ?? $activity->title"
-                                    :label="trans('admin::app.activities.edit.title')"
-                                    :placeholder="trans('admin::app.activities.edit.title')"
+                                <input
+                                    type="time"
+                                    id="schedule_from_time"
+                                    value="{{ $scheduleFromTime }}"
+                                    class="flex w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
                                 />
+                            </div>
 
-                                <x-admin::form.control-group.error control-name="title" />
-                            </x-admin::form.control-group>
-
-                            <!-- Edit Type -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.activities.edit.type')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.control
-                                    type="select"
-                                    name="type"
-                                    id="type"
-                                    :value="old('type') ?? $activity->type"
-                                    rules="required"
-                                    :label="trans('admin::app.activities.edit.type')"
-                                    :placeholder="trans('admin::app.activities.edit.type')"
-                                >
-                                    <option value="call">
-                                        @lang('admin::app.activities.edit.call')
-                                    </option>
-
-                                    <option value="meeting">
-                                        @lang('admin::app.activities.edit.meeting')
-                                    </option>
-                                </x-admin::form.control-group.control>
-
-                                <x-admin::form.control-group.error control-name="type" />
-                            </x-admin::form.control-group>
-
-                            <!-- Location -->
-                            <x-admin::form.control-group class="!mb-0">
+                            <div>
                                 <x-admin::form.control-group.label>
-                                    @lang('admin::app.activities.edit.location')
+                                    End Date
                                 </x-admin::form.control-group.label>
 
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="location"
-                                    id="location"
-                                    :value="old('location') ?? $activity->location"
-                                    :label="trans('admin::app.activities.edit.location')"
-                                    :placeholder="trans('admin::app.activities.edit.location')"
+                                <x-admin::flat-picker.date class="!w-full" ::allow-input="true">
+                                    <input
+                                        type="date"
+                                        id="schedule_to_date"
+                                        value="{{ $scheduleToDate }}"
+                                        class="flex w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                                        placeholder="End Date"
+                                    />
+                                </x-admin::flat-picker.date>
+                            </div>
+
+                            <div>
+                                <x-admin::form.control-group.label>
+                                    End Time
+                                </x-admin::form.control-group.label>
+
+                                <input
+                                    type="time"
+                                    id="schedule_to_time"
+                                    value="{{ $scheduleToTime }}"
+                                    class="flex w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
                                 />
+                            </div>
+                        </div>
 
-                                <x-admin::form.control-group.error control-name="location" />
-                            </x-admin::form.control-group>
-                        </x-slot>
-                    </x-admin::accordion>
+                        <x-admin::form.control-group.error control-name="schedule_from" />
+                        <x-admin::form.control-group.error control-name="schedule_to" />
+                    </x-admin::form.control-group>
+                </div>
 
-                    {!! view_render_event('admin.activities.edit.accordion.general.after') !!}
+                <!-- Comment -->
+                <x-admin::form.control-group class="mt-4">
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.activities.edit.comment')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="textarea"
+                        name="comment"
+                        id="comment"
+                        :value="old('comment') ?? $activity->comment"
+                        :label="trans('admin::app.activities.edit.comment')"
+                        :placeholder="trans('admin::app.activities.edit.comment')"
+                    />
+
+                    <x-admin::form.control-group.error control-name="comment" />
+                </x-admin::form.control-group>
+
+                {!! view_render_event('admin.activities.edit.form_controls.after') !!}
+
+                <div class="mt-4 flex items-center justify-start gap-2.5">
+                    {!! view_render_event('admin.activities.edit.save_button.before') !!}
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Save Event
+                    </button>
+
+                    {!! view_render_event('admin.activities.edit.save_button.after') !!}
                 </div>
             </div>
         </div>
@@ -454,6 +417,46 @@
                     },
                 },
             });
+        </script>
+
+        <script>
+            (() => {
+                const combineDateTime = (dateValue, timeValue) => {
+                    if (! dateValue) {
+                        return '';
+                    }
+
+                    return `${dateValue} ${timeValue || '00:00'}:00`;
+                };
+
+                document.addEventListener('DOMContentLoaded', () => {
+                    const form = document.querySelector('form[action*="/activities/edit/"]');
+
+                    if (! form) {
+                        return;
+                    }
+
+                    form.addEventListener('submit', () => {
+                        const fromDate = document.getElementById('schedule_from_date')?.value || '';
+                        const fromTime = document.getElementById('schedule_from_time')?.value || '';
+                        const toDate = document.getElementById('schedule_to_date')?.value || '';
+                        const toTime = document.getElementById('schedule_to_time')?.value || '';
+
+                        const fromHidden = document.getElementById('schedule_from');
+                        const toHidden = document.getElementById('schedule_to');
+
+                        if (fromHidden) {
+                            fromHidden.value = combineDateTime(fromDate, fromTime);
+                        }
+
+                        if (toHidden) {
+                            toHidden.value = toDate
+                                ? combineDateTime(toDate, toTime)
+                                : combineDateTime(fromDate, fromTime);
+                        }
+                    });
+                });
+            })();
         </script>
     @endPushOnce
 </x-admin::layouts>

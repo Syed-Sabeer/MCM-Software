@@ -103,14 +103,18 @@ class PersonDataGrid extends DataGrid
      */
     public function prepareColumns(): void
     {
-        $this->addColumn([
-            'index'      => 'id',
-            'label'      => trans('admin::app.contacts.persons.index.datagrid.id'),
-            'type'       => 'integer',
-            'filterable' => true,
-            'sortable'   => true,
-            'searchable' => true,
-        ]);
+        $routePrefix = $this->getRoutePrefix();
+
+        if (! in_array($routePrefix, ['customers', 'employees'], true)) {
+            $this->addColumn([
+                'index'      => 'id',
+                'label'      => trans('admin::app.contacts.persons.index.datagrid.id'),
+                'type'       => 'integer',
+                'filterable' => true,
+                'sortable'   => true,
+                'searchable' => true,
+            ]);
+        }
 
         $this->addColumn([
             'index'      => 'person_name',

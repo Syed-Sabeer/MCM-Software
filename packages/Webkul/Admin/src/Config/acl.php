@@ -234,7 +234,7 @@ return [
     ], [
         'key'   => 'activities',
         'name'  => 'admin::app.acl.activities',
-        'route' => ['admin.activities.index', 'admin.activities.calendar', 'admin.activities.my_tasks', 'admin.activities.my_tasks_summary'],
+        'route' => ['admin.activities.index', 'admin.activities.calendar', 'admin.activities.my_tasks', 'admin.activities.my_tasks_data', 'admin.activities.my_tasks_summary'],
         'sort'  => 5,
     ], [
         'key'   => 'activities.create',

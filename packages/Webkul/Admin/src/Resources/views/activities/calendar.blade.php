@@ -1,22 +1,22 @@
 <x-admin::layouts>
     <x-slot:title>
-        Activities Calendar
+        Events
     </x-slot>
 
-    <div class="mb-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+    <div class="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <x-admin::breadcrumbs name="activities.calendar" />
-                <h1 class="mt-2 text-xl font-semibold text-gray-900 dark:text-white">Activities Calendar</h1>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Track all upcoming events and activities in one timeline.</p>
+                <h1 class="mt-2 text-xl font-semibold text-gray-900 dark:text-white">Events</h1>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Plan meetings and activities in a monthly event calendar.</p>
             </div>
 
             <a
-                href="{{ route('admin.activities.index', ['view-type' => 'table']) }}"
+                href="{{ route('admin.activities.my_tasks') }}"
                 class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-800"
             >
                 <span class="icon-list text-lg"></span>
-                All Activities
+                Tasks
             </a>
         </div>
     </div>
@@ -34,34 +34,45 @@
                             <button
                                 type="button"
                                 class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                                :class="calendarView === 'week' ? 'bg-brandColor text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'"
-                                @click="calendarView = 'week'"
+                                :class="calendarView === 'month' ? 'bg-brandColor text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'"
+                                @click="calendarView = 'month'"
                             >
-                                Week
+                                Monthly
                             </button>
 
                             <button
                                 type="button"
                                 class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                                :class="calendarView === 'month' ? 'bg-brandColor text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'"
-                                @click="calendarView = 'month'"
+                                :class="calendarView === 'week' ? 'bg-brandColor text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'"
+                                @click="calendarView = 'week'"
                             >
-                                Month
+                                Weekly
                             </button>
                         </div>
 
-                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                            Click an event to open details.
+                        <div class="rounded-lg bg-gray-100 px-2.5 py-1 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                            Click an event to open details
                         </div>
                     </div>
 
+                    <div class="calendar-weekdays mb-2">
+                        <span>Monday</span>
+                        <span>Tuesday</span>
+                        <span>Wednesday</span>
+                        <span>Thursday</span>
+                        <span>Friday</span>
+                        <span>Saturday</span>
+                        <span>Sunday</span>
+                    </div>
+
                     <v-vue-cal
+                        class="activities-theme-calendar"
                         hide-view-selector
                         :active-view="calendarView"
                         :watchRealTime="true"
                         :twelveHour="true"
                         :disable-views="calendarView === 'week' ? ['years', 'year', 'month', 'day'] : ['years', 'year', 'week', 'day']"
-                        style="height: calc(100vh - 270px); min-height: 500px;"
+                        style="height: calc(100vh - 270px); min-height: 540px;"
                         :class="{'vuecal--dark': theme === 'dark'}"
                         :events="events"
                         :time-format="'h:mm a'"
@@ -79,8 +90,17 @@
                         locale="{{ app()->getLocale() }}"
                     >
                         <template #event="{ event }">
-                            <div class="vuecal__event-content">
-                                <div class="truncate text-[12px] font-semibold">@{{ event.title }}</div>
+                            <div
+                                class="vuecal__event-content"
+                                v-tooltip="{
+                                    content: eventTooltip(event),
+                                    html: true,
+                                    placement: 'top',
+                                    trigger: 'hover',
+                                    delay: { show: 120, hide: 80 }
+                                }"
+                            >
+                                <div class="calendar-event-title">@{{ event.title }}</div>
                                 <div class="mt-0.5 text-[11px] opacity-90">@{{ formatTime(event.start) }}</div>
                             </div>
                         </template>
@@ -109,7 +129,7 @@
 
                         <template v-else>
                             <div class="rounded-lg border border-dashed border-gray-300 px-3 py-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                No upcoming activities.
+                                No upcoming events.
                             </div>
                         </template>
                     </div>
@@ -124,7 +144,7 @@
                 data() {
                     return {
                         events: [],
-                        calendarView: 'week',
+                        calendarView: 'month',
                         theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
                         editRouteTemplate: @json(route('admin.activities.edit', ['id' => '__id__'])),
                     };
@@ -219,6 +239,19 @@
                         });
                     },
 
+                    eventTooltip(event) {
+                        const title = event?.title || 'Untitled event';
+                        const description = event?.description ? `<div class='mt-1 text-xs text-gray-200'>${event.description}</div>` : '';
+
+                        return `
+                            <div class='min-w-[220px]'>
+                                <div class='text-sm font-semibold text-white'>${title}</div>
+                                <div class='mt-1 text-xs text-gray-300'>${this.formatDateTime(event?.start)} - ${this.formatDateTime(event?.end)}</div>
+                                ${description}
+                            </div>
+                        `;
+                    },
+
                     goToActivity(event) {
                         if (event?.id) {
                             window.location.href = this.eventEditUrl(event.id);
@@ -235,7 +268,57 @@
 
     @pushOnce('styles')
         <style>
-            .vuecal__event {
+            .activities-theme-calendar {
+                --calendar-accent: var(--color-brand-500, #0e90d9);
+            }
+
+            .calendar-weekdays {
+                display: grid;
+                grid-template-columns: repeat(7, minmax(0, 1fr));
+                gap: 4px;
+                border: 1px solid rgba(226, 232, 240, 0.95);
+                border-radius: 10px;
+                padding: 6px 8px;
+                background: linear-gradient(180deg, #f3f9ff, #f8fafc);
+            }
+
+            .calendar-weekdays span {
+                text-align: center;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.02em;
+                color: #334155;
+            }
+
+            .activities-theme-calendar {
+                border: 1px solid rgba(226, 232, 240, 0.95);
+                border-radius: 12px;
+                overflow: hidden;
+                background: #fff;
+            }
+
+            .activities-theme-calendar .vuecal__weekdays-headings {
+                display: none;
+            }
+
+            .activities-theme-calendar .vuecal__title-bar,
+            .activities-theme-calendar .vuecal__header {
+                background: linear-gradient(90deg, #e8f6ff, #f8fbff);
+                border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+            }
+
+            .activities-theme-calendar .vuecal__title,
+            .activities-theme-calendar .vuecal__arrow {
+                color: #0f172a !important;
+            }
+
+            .activities-theme-calendar .vuecal__cell-date {
+                font-size: 12px;
+                font-weight: 600;
+                color: #0f172a;
+            }
+
+            .activities-theme-calendar .vuecal__event {
                 border: 0;
                 border-radius: 10px;
                 padding: 4px 7px;
@@ -243,26 +326,63 @@
                 box-shadow: 0 7px 16px rgba(15, 23, 42, 0.16);
             }
 
-            .vuecal__event:hover {
+            .activities-theme-calendar .vuecal__event:hover {
                 transform: translateY(-1px);
                 box-shadow: 0 11px 20px rgba(15, 23, 42, 0.2);
             }
 
-            .vuecal__cell-more-events {
+            .calendar-event-title {
+                display: block;
+                width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                font-size: 12px;
+                font-weight: 700;
+                line-height: 1.2;
+            }
+
+            .activities-theme-calendar .vuecal__cell-more-events {
                 border-radius: 999px;
-                background: rgba(14, 144, 217, 0.1);
-                color: #0369a1;
+                background: color-mix(in srgb, var(--calendar-accent) 14%, white);
+                color: color-mix(in srgb, var(--calendar-accent) 72%, black);
                 font-size: 11px;
                 font-weight: 700;
                 padding: 3px 8px;
             }
 
-            .vuecal__cell-events-count {
+            .activities-theme-calendar .vuecal__cell-events-count {
                 border-radius: 999px;
-                background: rgba(14, 144, 217, 0.84);
+                background: var(--calendar-accent);
                 padding: 0 6px;
                 font-size: 11px;
                 color: #fff;
+            }
+
+            .dark .calendar-weekdays {
+                border-color: #334155;
+                background: linear-gradient(180deg, #1f2937, #111827);
+            }
+
+            .dark .calendar-weekdays span {
+                color: #f8fafc;
+            }
+
+            .dark .activities-theme-calendar {
+                border-color: #334155;
+                background: #111827;
+            }
+
+            .dark .activities-theme-calendar .vuecal__title-bar,
+            .dark .activities-theme-calendar .vuecal__header {
+                background: #1f2937;
+                border-bottom-color: #334155;
+            }
+
+            .dark .activities-theme-calendar .vuecal__title,
+            .dark .activities-theme-calendar .vuecal__arrow,
+            .dark .activities-theme-calendar .vuecal__cell-date {
+                color: #f8fafc !important;
             }
 
             .vuecal--dark {
