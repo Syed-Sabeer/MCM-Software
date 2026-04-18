@@ -229,8 +229,13 @@ class QuoteController extends Controller
     {
         $quote = $this->quoteRepository->findOrFail($id);
 
-        $allowed = ['draft', 'sent', 'approved', 'rejected', 'expired', 'cancelled'];
-        $status = request('status');
+        $payload = request()->validate([
+            'status' => ['required', 'in:open,closed'],
+            'notes'  => ['nullable', 'required_if:status,closed', 'string'],
+        ]);
+
+        $allowed = ['open', 'closed'];
+        $status = $payload['status'];
 
         if (! in_array($status, $allowed)) {
             abort(422, 'Invalid status.');
@@ -240,7 +245,8 @@ class QuoteController extends Controller
 
         $this->quoteRepository->update([
             'status' => $status,
-        ], $quote->id, ['status']);
+            'notes'  => $payload['notes'] ?? $quote->notes,
+        ], $quote->id, ['status', 'notes']);
 
         Event::dispatch('quote.status.update.after', [$quote->fresh(), $status]);
 
@@ -333,7 +339,9 @@ class QuoteController extends Controller
             'organization_id'        => ['required', 'exists:organizations,id'],
             'person_id'              => ['nullable', 'exists:persons,id'],
             'user_id'                => ['required', 'exists:users,id'],
+            'status'                 => ['required', 'in:open,closed'],
             'subject'                => ['nullable', 'string', 'max:255'],
+            'notes'                  => ['nullable', 'required_if:status,closed', 'string'],
             'payment_term'           => ['nullable', 'string', 'max:255'],
             'shipping_method'        => ['nullable', 'string', 'max:255'],
             'production_time'        => ['nullable', 'string', 'max:255'],

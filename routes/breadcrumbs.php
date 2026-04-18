@@ -92,6 +92,12 @@ Breadcrumbs::for('activities', function (BreadcrumbTrail $trail) {
     $trail->push(trans('admin::app.layouts.activities'), route('admin.activities.index'));
 });
 
+// Dashboard > Activities > Calendar
+Breadcrumbs::for('activities.calendar', function (BreadcrumbTrail $trail) {
+    $trail->parent('activities');
+    $trail->push('Calendar', route('admin.activities.calendar'));
+});
+
 // Dashboard > activities > Edit Activity
 Breadcrumbs::for('activities.edit', function (BreadcrumbTrail $trail, $activity) {
     $trail->parent('activities');
@@ -258,6 +264,36 @@ Breadcrumbs::for('vendors.organizations.edit', function (BreadcrumbTrail $trail,
 Breadcrumbs::for('vendors.organizations.view', function (BreadcrumbTrail $trail, $organization) {
     $trail->parent('vendors.organizations');
     $trail->push('#'.$organization->id, route('admin.vendors.organizations.view', $organization->id));
+});
+
+// Dashboard > Employees
+Breadcrumbs::for('employees', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Employees', route('admin.employees.persons.index'));
+});
+
+// Dashboard > Employees > Employees
+Breadcrumbs::for('employees.persons', function (BreadcrumbTrail $trail) {
+    $trail->parent('employees');
+    $trail->push('Employees', route('admin.employees.persons.index'));
+});
+
+// Dashboard > Employees > Employees > Create
+Breadcrumbs::for('employees.persons.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('employees.persons');
+    $trail->push('Create Employee', route('admin.employees.persons.create'));
+});
+
+// Dashboard > Employees > Employees > Edit
+Breadcrumbs::for('employees.persons.edit', function (BreadcrumbTrail $trail, $person) {
+    $trail->parent('employees.persons');
+    $trail->push('Edit Employee', route('admin.employees.persons.edit', $person->id));
+});
+
+// Dashboard > Employees > Employees > View
+Breadcrumbs::for('employees.persons.view', function (BreadcrumbTrail $trail, $person) {
+    $trail->parent('employees.persons');
+    $trail->push('#'.$person->id, route('admin.employees.persons.view', $person->id));
 });
 
 // Products

@@ -12,6 +12,7 @@ class DashboardController extends Controller
      * @var array
      */
     protected $typeFunctions = [
+        'erp-overview'         => 'getErpOverview',
         'over-all'             => 'getOverAllStats',
         'revenue-stats'        => 'getRevenueStats',
         'total-leads'          => 'getTotalLeadsStats',
@@ -49,7 +50,11 @@ class DashboardController extends Controller
      */
     public function stats()
     {
-        $stats = $this->dashboardHelper->{$this->typeFunctions[request()->query('type')]}();
+        $type = request()->query('type', 'erp-overview');
+
+        abort_unless(isset($this->typeFunctions[$type]), 404);
+
+        $stats = $this->dashboardHelper->{$this->typeFunctions[$type]}();
 
         return response()->json([
             'statistics' => $stats,

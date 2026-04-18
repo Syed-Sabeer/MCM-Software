@@ -103,6 +103,17 @@ class QuoteDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => true,
             'filterable' => true,
+            'closure'    => function ($row) {
+                $status = in_array(strtolower((string) $row->status), ['closed', 'approved', 'rejected', 'expired', 'cancelled'], true)
+                    ? 'Closed'
+                    : 'Open';
+
+                $classes = $status === 'Closed'
+                    ? 'bg-teal-100 text-teal-700'
+                    : 'bg-orange-100 text-orange-700';
+
+                return '<span class="rounded-full px-2.5 py-1 text-xs font-semibold '.$classes.'">'.$status.'</span>';
+            },
         ]);
 
         $this->addColumn([

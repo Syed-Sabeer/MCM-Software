@@ -19,6 +19,8 @@ class PersonResource extends JsonResource
         return [
             'id'              => $this->id,
             'name'            => $fullName !== '' ? $fullName : ($this->name ?? ''),
+            'email'           => $this->email ?: collect($this->emails ?? [])->pluck('value')->filter()->first(),
+            'organization_name' => $this->organization?->name,
             'emails'          => $this->emails,
             'contact_numbers' => $this->contact_numbers,
             'organization'    => new OrganizationResource($this->organization),

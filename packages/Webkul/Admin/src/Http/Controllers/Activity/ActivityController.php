@@ -4,19 +4,27 @@ namespace Webkul\Admin\Http\Controllers\Activity;
 
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Activity\Repositories\FileRepository;
+use Webkul\Admin\Http\Resources\OrganizationResource;
+use Webkul\Admin\Http\Resources\PersonResource;
 use Webkul\Admin\DataGrids\Activity\ActivityDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use Webkul\Admin\Http\Resources\UserResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Contact\Repositories\OrganizationRepository;
+use Webkul\Contact\Repositories\PersonRepository;
+use Webkul\User\Repositories\UserRepository;
 
 class ActivityController extends Controller
 {
@@ -29,6 +37,9 @@ class ActivityController extends Controller
         protected ActivityRepository $activityRepository,
         protected FileRepository $fileRepository,
         protected AttributeRepository $attributeRepository,
+        protected OrganizationRepository $organizationRepository,
+        protected PersonRepository $personRepository,
+        protected UserRepository $userRepository,
     ) {}
 
     /**
@@ -37,6 +48,109 @@ class ActivityController extends Controller
     public function index(): View
     {
         return view('admin::activities.index');
+    }
+
+    /**
+     * Display activities calendar page.
+     */
+    public function calendar(): View
+    {
+        return view('admin::activities.calendar');
+    }
+
+    /**
+     * Show assigned tasks page.
+     */
+    public function myTasks(): View
+    {
+        $userId = auth()->guard('user')->id();
+
+        $allTasks = $this->assignedTasksQuery($userId)
+            ->orderBy('activities.schedule_from', 'desc')
+            ->get();
+
+        $today = now()->toDateString();
+
+        $upcomingTasks = $allTasks
+            ->where('is_done', 0)
+            ->filter(fn ($task) => ! empty($task->schedule_from) && substr((string) $task->schedule_from, 0, 10) >= $today)
+            ->values();
+
+        $overdueTasks = $allTasks
+            ->where('is_done', 0)
+            ->filter(fn ($task) => ! empty($task->schedule_from) && substr((string) $task->schedule_from, 0, 10) < $today)
+            ->values();
+
+        return view('admin::activities.my-tasks', [
+            'upcomingTasks' => $upcomingTasks,
+            'overdueTasks'  => $overdueTasks,
+            'allTasks'      => $allTasks,
+        ]);
+    }
+
+    /**
+     * Get summary for floating task widget.
+     */
+    public function myTasksSummary(): JsonResponse
+    {
+        $userId = auth()->guard('user')->id();
+
+        $today = now()->toDateString();
+
+        $query = $this->assignedTasksQuery($userId)
+            ->where('activities.is_done', 0)
+            ->whereDate('activities.schedule_from', '>=', $today);
+
+        $tasks = (clone $query)
+            ->orderBy('activities.schedule_from')
+            ->limit(5)
+            ->get();
+
+        $badgeCount = (clone $query)->count();
+
+        $overdueCount = $this->assignedTasksQuery($userId)
+            ->where('activities.is_done', 0)
+            ->whereDate('activities.schedule_from', '<', $today)
+            ->count();
+
+        return response()->json([
+            'tasks' => $tasks,
+            'badge_count' => $badgeCount,
+            'overdue_count' => $overdueCount,
+            'view_all_url' => route('admin.activities.my_tasks'),
+        ]);
+    }
+
+    /**
+     * Assigned tasks base query for current user.
+     */
+    protected function assignedTasksQuery(int $userId)
+    {
+        return DB::table('activities')
+            ->leftJoin('activity_participants', 'activities.id', '=', 'activity_participants.activity_id')
+            ->select(
+                'activities.id',
+                'activities.title',
+                'activities.comment',
+                'activities.schedule_from',
+                'activities.schedule_to',
+                'activities.is_done',
+                'activities.created_at'
+            )
+            ->where('activities.type', 'task')
+            ->where(function ($query) use ($userId) {
+                $query->where('activities.user_id', $userId)
+                    ->orWhere('activity_participants.user_id', $userId);
+            })
+            ->groupBy(
+                'activities.id',
+                'activities.title',
+                'activities.comment',
+                'activities.schedule_from',
+                'activities.schedule_to',
+                'activities.is_done',
+                'activities.created_at'
+            );
     }
 
     /**
@@ -69,12 +183,20 @@ class ActivityController extends Controller
     public function store(): RedirectResponse|JsonResponse
     {
         $this->validate(request(), [
-            'type'          => 'required',
+            'type'          => 'required|in:call,meeting,note,file,task',
+            'title'         => 'required_unless:type,file|max:200',
             'comment'       => 'required_if:type,note',
-            'schedule_from' => 'required_unless:type,note,file,task',
-            'schedule_to'   => 'required_unless:type,note,file,task',
+            'schedule_from' => 'required_if:type,meeting,task',
+            'schedule_to'   => 'required_if:type,meeting',
             'file'          => 'required_if:type,file',
+            'organization_id' => 'required_if:type,meeting,task|nullable|exists:organizations,id',
         ]);
+
+        if (request('type') === 'task' && ! request()->filled('schedule_to') && request()->filled('schedule_from')) {
+            request()->merge([
+                'schedule_to' => request('schedule_from'),
+            ]);
+        }
 
         if (request('type') === 'meeting') {
             /**
@@ -104,15 +226,47 @@ class ActivityController extends Controller
 
         $payload = request()->all();
 
-        if (empty($payload['entity_type']) && empty($payload['entity_id']) && ! empty($payload['organization_id'])) {
-            $payload['entity_type'] = 'organizations';
-            $payload['entity_id'] = $payload['organization_id'];
+        if (empty($payload['entity_type']) && empty($payload['entity_id'])) {
+            if (! empty($payload['organization_id'])) {
+                $payload['entity_type'] = 'organizations';
+                $payload['entity_id'] = $payload['organization_id'];
+            } elseif (! empty($payload['person_id'])) {
+                $payload['entity_type'] = 'persons';
+                $payload['entity_id'] = $payload['person_id'];
+            } elseif (! empty($payload['lead_id'])) {
+                $payload['entity_type'] = 'leads';
+                $payload['entity_id'] = $payload['lead_id'];
+            }
         }
 
         $activity = $this->activityRepository->create(array_merge($payload, [
             'is_done' => request('type') == 'note' ? 1 : 0,
             'user_id' => auth()->guard('user')->user()->id,
         ]));
+
+        if (array_key_exists('lead_id', $payload)) {
+            $activity->leads()->sync(
+                ! empty($payload['lead_id'])
+                    ? [$payload['lead_id']]
+                    : []
+            );
+        }
+
+        if (array_key_exists('organization_id', $payload)) {
+            $activity->organizations()->sync(
+                ! empty($payload['organization_id'])
+                    ? [$payload['organization_id']]
+                    : []
+            );
+        }
+
+        if (array_key_exists('person_id', $payload)) {
+            $activity->persons()->sync(
+                ! empty($payload['person_id'])
+                    ? [$payload['person_id']]
+                    : []
+            );
+        }
 
         Event::dispatch('activity.create.after', $activity);
 
@@ -126,6 +280,81 @@ class ActivityController extends Controller
         session()->flash('success', trans('admin::app.activities.create-success'));
 
         return redirect()->back();
+    }
+
+    /**
+     * Search organizations for activity related-to selector.
+     */
+    public function searchOrganizations(): AnonymousResourceCollection
+    {
+        $query = trim((string) request()->input('query', ''));
+
+        $organizations = $this->organizationRepository
+            ->scopeQuery(function ($builder) use ($query) {
+                $builder = $builder->orderBy('name');
+
+                if ($query !== '') {
+                    $builder->where('name', 'like', '%'.$query.'%');
+                }
+
+                return $builder->limit(3);
+            })
+            ->all();
+
+        return OrganizationResource::collection($organizations);
+    }
+
+    /**
+     * Search contacts for activity contact selectors.
+     */
+    public function searchPersons(): AnonymousResourceCollection
+    {
+        $query = trim((string) request()->input('query', ''));
+
+        $persons = $this->personRepository
+            ->scopeQuery(function ($builder) use ($query) {
+                if ($query !== '') {
+                    $builder->where(function ($personQuery) use ($query) {
+                        $personQuery->whereRaw("LOWER(TRIM(CONCAT_WS(' ', first_name, last_name))) LIKE ?", ['%' . mb_strtolower($query) . '%'])
+                            ->orWhereRaw("LOWER(name) LIKE ?", ['%' . mb_strtolower($query) . '%'])
+                            ->orWhereRaw("LOWER(email) LIKE ?", ['%' . mb_strtolower($query) . '%']);
+                    });
+                }
+
+                return $builder->orderBy('first_name')->orderBy('last_name')->limit(3);
+            })
+            ->all();
+
+        return PersonResource::collection($persons);
+    }
+
+    /**
+     * Search assignable employee users.
+     */
+    public function searchEmployeeUsers(): AnonymousResourceCollection
+    {
+        $query = trim((string) request()->input('query', ''));
+
+        $users = $this->userRepository
+            ->scopeQuery(function ($builder) use ($query) {
+                $builder
+                    ->select('users.*')
+                    ->join('roles', 'roles.id', '=', 'users.role_id')
+                    ->where('users.status', 1)
+                    ->where('roles.description', 'like', '%Employee%');
+
+                if ($query !== '') {
+                    $builder->where(function ($userQuery) use ($query) {
+                        $userQuery->where('users.name', 'like', '%'.$query.'%')
+                            ->orWhere('users.email', 'like', '%'.$query.'%');
+                    });
+                }
+
+                return $builder->orderBy('users.name')->limit(3);
+            })
+            ->all();
+
+        return UserResource::collection($users);
     }
 
     /**

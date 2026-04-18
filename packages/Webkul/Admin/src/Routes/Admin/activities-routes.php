@@ -6,7 +6,19 @@ use Webkul\Admin\Http\Controllers\Activity\ActivityController;
 Route::controller(ActivityController::class)->prefix('activities')->group(function () {
     Route::get('', 'index')->name('admin.activities.index');
 
+    Route::get('calendar', 'calendar')->name('admin.activities.calendar');
+
+    Route::get('my-tasks', 'myTasks')->name('admin.activities.my_tasks');
+
+    Route::get('my-tasks/summary', 'myTasksSummary')->name('admin.activities.my_tasks_summary');
+
     Route::get('get', 'get')->name('admin.activities.get');
+
+    Route::get('search-organizations', 'searchOrganizations')->name('admin.activities.search_organizations');
+
+    Route::get('search-persons', 'searchPersons')->name('admin.activities.search_persons');
+
+    Route::get('search-employee-users', 'searchEmployeeUsers')->name('admin.activities.search_employee_users');
 
     Route::post('create', 'store')->name('admin.activities.store');
 

@@ -6,7 +6,11 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Contact\PersonDataGrid;
@@ -14,7 +18,11 @@ use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\PersonResource;
+use Webkul\Admin\Notifications\User\Create as UserCreatedNotification;
+use Webkul\Contact\Repositories\OrganizationRepository;
 use Webkul\Contact\Repositories\PersonRepository;
+use Webkul\User\Repositories\RoleRepository;
+use Webkul\User\Repositories\UserRepository;
 
 class PersonController extends Controller
 {
@@ -23,8 +31,12 @@ class PersonController extends Controller
      *
      * @return void
      */
-    public function __construct(protected PersonRepository $personRepository)
-    {
+    public function __construct(
+        protected PersonRepository $personRepository,
+        protected OrganizationRepository $organizationRepository,
+        protected RoleRepository $roleRepository,
+        protected UserRepository $userRepository
+    ) {
         request()->request->add(['entity_type' => 'persons']);
     }
 
@@ -35,6 +47,10 @@ class PersonController extends Controller
     {
         $routeName = request()->route()?->getName() ?? '';
 
+        if (str_contains($routeName, 'admin.employees.')) {
+            return 'employee';
+        }
+
         if (str_contains($routeName, 'admin.customers.')) {
             return 'customer';
         }
@@ -43,7 +59,205 @@ class PersonController extends Controller
             return 'vendor';
         }
 
-        return null;
+        $requestedType = strtolower((string) request()->query('type', request()->input('type')));
+
+        return in_array($requestedType, ['customer', 'vendor', 'employee'], true)
+            ? $requestedType
+            : null;
+    }
+
+    /**
+     * Resolve route prefix for redirects and view state.
+     */
+    protected function getRoutePrefix(): string
+    {
+        $routeName = request()->route()?->getName() ?? '';
+
+        if (str_contains($routeName, 'admin.employees.')) {
+            return 'employees';
+        }
+
+        if (str_contains($routeName, 'admin.customers.')) {
+            return 'customers';
+        }
+
+        if (str_contains($routeName, 'admin.vendors.')) {
+            return 'vendors';
+        }
+
+        return 'contacts';
+    }
+
+    /**
+     * Fetch roles available for employees.
+     */
+    protected function getEmployeeRoles()
+    {
+        return $this->roleRepository
+            ->scopeQuery(function ($query) {
+                return $query
+                    ->where('description', 'like', '%Employee%')
+                    ->orderBy('name');
+            })
+            ->all();
+    }
+
+    /**
+     * Determine whether the request is for an employee.
+     */
+    protected function isEmployeeContext(array $data = []): bool
+    {
+        return ($this->getRouteType() === 'employee')
+            || strtolower((string) ($data['type'] ?? '')) === 'employee';
+    }
+
+    /**
+     * Validate employee-specific fields.
+     */
+    protected function validateEmployeeFields(AttributeForm $request, ?int $personId = null): void
+    {
+        $roleIds = $this->getEmployeeRoles()->pluck('id')->all();
+        $linkedUserId = null;
+
+        if ($personId) {
+            $linkedUserId = $this->personRepository->findOrFail($personId)?->user_id;
+        }
+
+        $request->validate([
+            'full_name'         => ['required', 'string', 'max:150'],
+            'email'             => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->ignore($linkedUserId),
+            ],
+            'phone'             => ['nullable', 'string', 'max:50'],
+            'mailing_street'    => ['nullable', 'string', 'max:255'],
+            'mailing_city'      => ['nullable', 'string', 'max:100'],
+            'mailing_state'     => ['nullable', 'string', 'max:100'],
+            'mailing_postcode'  => ['nullable', 'string', 'max:30'],
+            'mailing_country'   => ['nullable', 'string', 'max:100'],
+            'birth_date'        => ['nullable', 'date'],
+            'role_id'           => ['required', 'integer', Rule::in($roleIds)],
+        ]);
+    }
+
+    /**
+     * Normalize person name payload.
+     */
+    protected function normalizeNameFields(array $data): array
+    {
+        $fullName = trim((string) ($data['full_name'] ?? ''));
+
+        if ($fullName !== '') {
+            $parts = preg_split('/\s+/', $fullName, 2) ?: [];
+
+            $data['name'] = $fullName;
+            $data['first_name'] = $parts[0] ?? $fullName;
+            $data['last_name'] = $parts[1] ?? '';
+        } else {
+            $firstName = trim((string) ($data['first_name'] ?? ''));
+            $lastName = trim((string) ($data['last_name'] ?? ''));
+            $data['name'] = trim($firstName.' '.$lastName);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Create or update the linked employee login user.
+     */
+    protected function syncEmployeeUser(array $data, ?int $existingUserId = null): array
+    {
+        $plainPassword = null;
+        $wasCreated = false;
+
+        $userPayload = [
+            'name'            => $data['name'],
+            'email'           => $data['email'],
+            'role_id'         => $data['role_id'],
+            'status'          => 1,
+            'view_permission' => 'global',
+        ];
+
+        if ($existingUserId) {
+            $user = $this->userRepository->update($userPayload, $existingUserId);
+        } else {
+            $plainPassword = Str::password(12);
+            $user = $this->userRepository->create(array_merge($userPayload, [
+                'password' => bcrypt($plainPassword),
+            ]));
+            $wasCreated = true;
+        }
+
+        return [$user, $plainPassword, $wasCreated];
+    }
+
+    /**
+     * Send employee credentials mail.
+     */
+    protected function sendEmployeeCredentials($user, ?string $plainPassword): void
+    {
+        if (! $plainPassword) {
+            return;
+        }
+
+        try {
+            Mail::queue(new UserCreatedNotification($user, $plainPassword));
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    /**
+     * Resolve or create the configured software company organization for employees.
+     */
+    protected function resolveEmployeeOrganizationId(): ?int
+    {
+        $companyName = trim((string) core()->getConfigData('general.general.company_info.company_name'));
+
+        if ($companyName === '') {
+            return null;
+        }
+
+        $organization = $this->organizationRepository->findOneWhere([
+            'name' => $companyName,
+        ]);
+
+        if (! $organization) {
+            $organization = $this->organizationRepository->create([
+                'entity_type'       => 'organizations',
+                'name'              => $companyName,
+                'phone'             => core()->getConfigData('general.general.company_info.telephone'),
+                'website'           => core()->getConfigData('general.general.company_info.website'),
+                'billing_street'    => core()->getConfigData('general.general.company_info.address'),
+                'billing_city'      => null,
+                'billing_state'     => null,
+                'billing_postcode'  => null,
+                'billing_country'   => null,
+                'description'       => 'Software company',
+            ]);
+        } else {
+            $updatePayload = [];
+
+            if (blank($organization->phone) && core()->getConfigData('general.general.company_info.telephone')) {
+                $updatePayload['phone'] = core()->getConfigData('general.general.company_info.telephone');
+            }
+
+            if (blank($organization->website) && core()->getConfigData('general.general.company_info.website')) {
+                $updatePayload['website'] = core()->getConfigData('general.general.company_info.website');
+            }
+
+            if (blank($organization->billing_street) && core()->getConfigData('general.general.company_info.address')) {
+                $updatePayload['billing_street'] = core()->getConfigData('general.general.company_info.address');
+            }
+
+            if (! empty($updatePayload)) {
+                $updatePayload['entity_type'] = 'organizations';
+                $organization = $this->organizationRepository->update($updatePayload, $organization->id);
+            }
+        }
+
+        return $organization?->id;
     }
 
     /**
@@ -77,8 +291,10 @@ class PersonController extends Controller
         }
 
         $routeType = $this->getRouteType();
+        $employeeRoles = $this->getEmployeeRoles();
+        $isEmployeeRoute = $routeType === 'employee';
 
-        return view('admin::contacts.persons.create', compact('organization', 'routeType'));
+        return view('admin::contacts.persons.create', compact('organization', 'routeType', 'employeeRoles', 'isEmployeeRoute'));
     }
 
     /**
@@ -94,7 +310,27 @@ class PersonController extends Controller
             $data['type'] = $routeType;
         }
 
-        $person = $this->personRepository->create($data);
+        if ($this->isEmployeeContext($data)) {
+            $this->validateEmployeeFields($request);
+            $data['organization_id'] = $this->resolveEmployeeOrganizationId();
+        }
+
+        $data = $this->normalizeNameFields($data);
+
+        $plainPassword = null;
+
+        $person = DB::transaction(function () use ($data, &$plainPassword) {
+            if ($this->isEmployeeContext($data)) {
+                [$user, $plainPassword] = $this->syncEmployeeUser($data);
+                $data['user_id'] = $user->id;
+            }
+
+            return $this->personRepository->create($data);
+        });
+
+        if ($this->isEmployeeContext($data)) {
+            $this->sendEmployeeCredentials($person->user, $plainPassword);
+        }
 
         Event::dispatch('contacts.person.create.after', $person);
 
@@ -110,8 +346,9 @@ class PersonController extends Controller
 
         if ($request->input('save_action') === 'new') {
             return redirect()
-                ->route('admin.contacts.persons.create', array_filter([
+                ->route('admin.'.$this->getRoutePrefix().'.persons.create', array_filter([
                     'organization_id' => $organizationId,
+                    'type'            => $routeType,
                 ]))
                 ->with('success', $successMessage);
         }
@@ -139,6 +376,8 @@ class PersonController extends Controller
         // Redirect to appropriate list based on route
         if (str_contains($routeName, 'admin.customers.')) {
             return redirect()->route('admin.customers.persons.index');
+        } elseif (str_contains($routeName, 'admin.employees.')) {
+            return redirect()->route('admin.employees.persons.index');
         } elseif (str_contains($routeName, 'admin.vendors.')) {
             return redirect()->route('admin.vendors.persons.index');
         }
@@ -151,7 +390,11 @@ class PersonController extends Controller
      */
     public function show(int $id): View
     {
-        $person = $this->personRepository->with('attribute_values')->findOrFail($id);
+        $person = $this->personRepository->with([
+            'attribute_values',
+            'organization',
+            'user.role',
+        ])->findOrFail($id);
 
         return view('admin::contacts.persons.view', compact('person'));
     }
@@ -164,8 +407,10 @@ class PersonController extends Controller
         $person = $this->personRepository->findOrFail($id);
 
         $routeType = $this->getRouteType();
+        $employeeRoles = $this->getEmployeeRoles();
+        $isEmployeeRoute = ($routeType === 'employee') || ($person->type === 'employee');
 
-        return view('admin::contacts.persons.edit', compact('person', 'routeType'));
+        return view('admin::contacts.persons.edit', compact('person', 'routeType', 'employeeRoles', 'isEmployeeRoute'));
     }
 
     /**
@@ -181,7 +426,29 @@ class PersonController extends Controller
             $data['type'] = $routeType;
         }
 
-        $person = $this->personRepository->update($data, $id);
+        $existingPerson = $this->personRepository->findOrFail($id);
+
+        if ($this->isEmployeeContext(array_merge($data, ['type' => $existingPerson->type]))) {
+            $this->validateEmployeeFields($request, $id);
+            $data['organization_id'] = $this->resolveEmployeeOrganizationId();
+        }
+
+        $data = $this->normalizeNameFields($data);
+
+        $plainPassword = null;
+
+        $person = DB::transaction(function () use ($data, $id, $existingPerson, &$plainPassword) {
+            if ($this->isEmployeeContext(array_merge($data, ['type' => $existingPerson->type]))) {
+                [$user, $plainPassword] = $this->syncEmployeeUser($data, $existingPerson->user_id);
+                $data['user_id'] = $user->id;
+            }
+
+            return $this->personRepository->update($data, $id);
+        });
+
+        if (($plainPassword !== null) && $this->isEmployeeContext(array_merge($data, ['type' => $existingPerson->type]))) {
+            $this->sendEmployeeCredentials($person->user, $plainPassword);
+        }
 
         Event::dispatch('contacts.person.update.after', $person);
 
@@ -198,6 +465,10 @@ class PersonController extends Controller
 
         if (str_contains($routeName, 'admin.customers.')) {
             return redirect()->route('admin.customers.persons.index');
+        }
+
+        if (str_contains($routeName, 'admin.employees.')) {
+            return redirect()->route('admin.employees.persons.index');
         }
 
         if (str_contains($routeName, 'admin.vendors.')) {

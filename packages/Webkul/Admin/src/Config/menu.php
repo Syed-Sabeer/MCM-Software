@@ -149,6 +149,18 @@ return [
         'route'      => 'admin.activities.index',
         'sort'       => 7,
         'icon-class' => 'icon-activity',
+    ], [
+        'key'        => 'activities.list',
+        'name'       => 'All Activities',
+        'route'      => 'admin.activities.index',
+        'sort'       => 1,
+        'icon-class' => '',
+    ], [
+        'key'        => 'activities.calendar',
+        'name'       => 'Calendar View',
+        'route'      => 'admin.activities.calendar',
+        'sort'       => 2,
+        'icon-class' => '',
     ],
 
     /**
@@ -168,7 +180,7 @@ return [
         'icon-class' => '',
     ], [
         'key'        => 'customers.companies',
-        'name'       => 'Company',
+        'name'       => 'Companies',
         'route'      => 'admin.customers.organizations.index',
         'sort'       => 2,
         'icon-class' => '',
@@ -191,10 +203,21 @@ return [
         'icon-class' => '',
     ], [
         'key'        => 'vendors.companies',
-        'name'       => 'Vendor',
+        'name'       => 'Companies',
         'route'      => 'admin.vendors.organizations.index',
         'sort'       => 2,
         'icon-class' => '',
+    ],
+
+    /**
+     * Employees.
+     */
+    [
+        'key'        => 'employees',
+        'name'       => 'Employees',
+        'route'      => 'admin.employees.persons.index',
+        'sort'       => 3.75,
+        'icon-class' => 'icon-user',
     ],
 
     /**

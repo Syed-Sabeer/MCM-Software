@@ -16,6 +16,10 @@ class PersonDataGrid extends DataGrid
     {
         $routeName = request()->route()?->getName() ?? '';
 
+        if (str_contains($routeName, 'admin.employees.')) {
+            return 'employees';
+        }
+
         if (str_contains($routeName, 'admin.customers.')) {
             return 'customers';
         }
@@ -81,6 +85,8 @@ class PersonDataGrid extends DataGrid
                     $query->where('organizations.type', 'vendor')
                           ->orWhereNull('persons.organization_id');
                 });
+            } elseif ($type === 'employee') {
+                $queryBuilder->where('persons.type', 'employee');
             }
         }
 

@@ -90,7 +90,7 @@
                 >
                     <div class="flex min-h-full items-center justify-center max-md:p-4">
                         <div
-                            class="box-shadow z-[999] w-full overflow-hidden rounded-lg bg-white dark:bg-gray-900 sm:absolute"
+                            class="box-shadow z-[999] w-full overflow-visible rounded-lg bg-white dark:bg-gray-900 sm:absolute"
                             :class="[finalPositionClass, sizeClass]"
                         >
                             <!-- Header Slot -->
@@ -103,7 +103,7 @@
 
                             <!-- Content Slot -->
                             <slot name="content"></slot>
-                            
+
                             <!-- Footer Slot -->
                             <slot name="footer"></slot>
                         </div>
@@ -159,8 +159,8 @@
                 },
 
                 finalPositionClass() {
-                    return this.isMobile 
-                        ? 'items-center justify-center' 
+                    return this.isMobile
+                        ? 'items-center justify-center'
                         : this.positionClass;
                 },
 
@@ -169,12 +169,13 @@
                         'normal': 'max-w-[525px]',
                         'medium': 'max-w-[768px]',
                         'large': 'max-w-[950px]',
+                        'xlarge': 'max-w-[1180px]',
                     }[this.size] || 'max-w-[525px]';
                 },
 
                 enterFromLeaveToClasses() {
                     const effectivePosition = this.isMobile ? 'center' : this.position;
-                    
+
                     return {
                         'center': '-translate-y-4 opacity-0',
                         'top-center': '-translate-y-4 opacity-0',
@@ -191,7 +192,7 @@
                 checkScreenSize() {
                     this.isMobile = window.innerWidth < 640;
                 },
-                
+
                 toggle() {
                     this.isOpen = ! this.isOpen;
 

@@ -104,3 +104,36 @@ $registerContactRoutes('customers');
 
 // Register routes for vendors
 $registerContactRoutes('vendors');
+
+// Register routes for employees
+Route::prefix('employees')->group(function () {
+    Route::controller(PersonController::class)->prefix('persons')->group(function () {
+        Route::get('', 'index')->name('admin.employees.persons.index');
+
+        Route::get('create', 'create')->name('admin.employees.persons.create');
+
+        Route::post('create', 'store')->name('admin.employees.persons.store');
+
+        Route::get('view/{id}', 'show')->name('admin.employees.persons.view');
+
+        Route::get('edit/{id}', 'edit')->name('admin.employees.persons.edit');
+
+        Route::put('edit/{id}', 'update')->name('admin.employees.persons.update');
+
+        Route::get('search', 'search')->name('admin.employees.persons.search');
+
+        Route::middleware(['throttle:100,60'])->delete('{id}', 'destroy')->name('admin.employees.persons.delete');
+
+        Route::post('mass-destroy', 'massDestroy')->name('admin.employees.persons.mass_delete');
+
+        Route::controller(TagController::class)->prefix('{id}/tags')->group(function () {
+            Route::post('', 'attach')->name('admin.employees.persons.tags.attach');
+
+            Route::delete('', 'detach')->name('admin.employees.persons.tags.detach');
+        });
+
+        Route::controller(PersonActivityController::class)->prefix('{id}/activities')->group(function () {
+            Route::get('', 'index')->name('admin.employees.persons.activities.index');
+        });
+    });
+});

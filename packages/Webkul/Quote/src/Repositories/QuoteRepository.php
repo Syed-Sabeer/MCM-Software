@@ -161,7 +161,7 @@ class QuoteRepository extends Repository
         }
 
         if (empty($data['status'])) {
-            $data['status'] = 'draft';
+            $data['status'] = 'open';
         }
 
         if (empty($data['subject'])) {

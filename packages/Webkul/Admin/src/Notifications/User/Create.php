@@ -10,7 +10,10 @@ class Create extends Mailable
      * @param  object  $user
      * @return void
      */
-    public function __construct(public $user) {}
+    public function __construct(
+        public $user,
+        public ?string $plainPassword = null
+    ) {}
 
     /**
      * Build the mail representation of the notification.
@@ -21,7 +24,10 @@ class Create extends Mailable
             ->to($this->user->email)
             ->subject(trans('admin::app.emails.common.user.create-subject'))
             ->view('admin::emails.users.create', [
-                'user_name' => $this->user->name,
+                'user_name'      => $this->user->name,
+                'user_email'     => $this->user->email,
+                'plain_password' => $this->plainPassword,
+                'login_url'      => route('admin.session.create'),
             ]);
     }
 }

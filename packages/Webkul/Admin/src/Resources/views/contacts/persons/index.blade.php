@@ -3,9 +3,13 @@
         $currentRouteName = request()->route()?->getName() ?? 'admin.contacts.persons.index';
         $routePrefix = str_contains($currentRouteName, 'admin.customers.')
             ? 'customers'
-            : (str_contains($currentRouteName, 'admin.vendors.') ? 'vendors' : 'contacts');
-        $contactLabel = 'Contact';
-        $contactPluralLabel = 'Contacts';
+            : (str_contains($currentRouteName, 'admin.vendors.')
+                ? 'vendors'
+                : (str_contains($currentRouteName, 'admin.employees.') ? 'employees' : 'contacts'));
+        $isEmployeeRoute = $routePrefix === 'employees';
+        $organizationRoutePrefix = $isEmployeeRoute ? 'contacts' : $routePrefix;
+        $contactLabel = $isEmployeeRoute ? 'Employee' : 'Contact';
+        $contactPluralLabel = $isEmployeeRoute ? 'Employees' : 'Contacts';
     @endphp
 
     <x-slot:title>
@@ -265,7 +269,7 @@
                             <!-- Organization -->
                             <a
                                 class="flex items-center text-brandColor hover:underline"
-                                :href="record.organization_id ? '{{ route('admin.' . $routePrefix . '.organizations.view', ':id') }}'.replace(':id', record.organization_id) : '#'"
+                                :href="record.organization_id ? '{{ route('admin.' . $organizationRoutePrefix . '.organizations.view', ':id') }}'.replace(':id', record.organization_id) : '#'"
                             >
                                 @{{ record.organization }}
                             </a>

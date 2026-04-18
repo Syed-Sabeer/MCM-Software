@@ -3,7 +3,21 @@
         $currentRouteName = request()->route()?->getName() ?? 'admin.contacts.persons.view';
         $routePrefix = str_contains($currentRouteName, 'admin.customers.')
             ? 'customers'
-            : (str_contains($currentRouteName, 'admin.vendors.') ? 'vendors' : 'contacts');
+            : (str_contains($currentRouteName, 'admin.vendors.')
+                ? 'vendors'
+                : (str_contains($currentRouteName, 'admin.employees.') ? 'employees' : 'contacts'));
+        $organizationRoutePrefix = $routePrefix === 'employees' ? 'contacts' : $routePrefix;
+
+        $activityTypes = [
+            ['name' => 'all', 'label' => 'All'],
+            ['name' => 'note', 'label' => 'Comments'],
+            ['name' => 'call', 'label' => 'Calls'],
+            ['name' => 'meeting', 'label' => 'Events'],
+            ['name' => 'file', 'label' => 'Files'],
+            ['name' => 'email', 'label' => 'Emails'],
+            ['name' => 'task', 'label' => 'Tasks'],
+            ['name' => 'system', 'label' => 'Change Log'],
+        ];
     @endphp
 
     <x-slot:title>
@@ -29,11 +43,11 @@
                 {!! view_render_event('admin.contact.persons.view.tags.before', ['person' => $person]) !!}
 
                 <!-- Tags -->
-                <x-admin::tags
-                    :attach-endpoint="route('admin.' . $routePrefix . '.persons.tags.attach', $person->id)"
-                    :detach-endpoint="route('admin.' . $routePrefix . '.persons.tags.detach', $person->id)"
-                    :added-tags="$person->tags"
-                />
+                    {{-- <x-admin::tags
+                        :attach-endpoint="route('admin.' . $routePrefix . '.persons.tags.attach', $person->id)"
+                        :detach-endpoint="route('admin.' . $routePrefix . '.persons.tags.detach', $person->id)"
+                        :added-tags="$person->tags"
+                    /> --}}
 
                 {!! view_render_event('admin.contact.persons.view.tags.after', ['person' => $person]) !!}
 
@@ -81,6 +95,12 @@
                         entity-control-name="person_id"
                     />
 
+                    <!-- Event Activity Action -->
+                    <x-admin::activities.actions.event
+                        :entity="$person"
+                        entity-control-name="person_id"
+                    />
+
                     <!-- Task Activity Action -->
                     <x-admin::activities.actions.task
                         :entity="$person"
@@ -104,8 +124,45 @@
         <div class="flex w-full flex-col gap-4 rounded-lg">
             {!! view_render_event('admin.contact.persons.view.right.before', ['person' => $person]) !!}
 
+            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                <div class="flex flex-col">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Contact
+                    </p>
+
+                    <p class="text-lg font-semibold dark:text-white">
+                        {{ $person->name }}
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <a
+                        href="{{ route('admin.' . $routePrefix . '.persons.edit', $person->id) }}"
+                        class="secondary-button"
+                    >
+                        Edit
+                    </a>
+
+                    <form
+                        method="POST"
+                        action="{{ route('admin.' . $routePrefix . '.persons.delete', $person->id) }}"
+                        onsubmit="return confirm('Are you sure you want to delete this contact?');"
+                    >
+                        @csrf
+                        @method('DELETE')
+
+                        <button type="submit" class="danger-button">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+
             <!-- Stages Navigation -->
-            <x-admin::activities :endpoint="route('admin.' . $routePrefix . '.persons.activities.index', $person->id)" />
+            <x-admin::activities
+                :endpoint="route('admin.' . $routePrefix . '.persons.activities.index', $person->id)"
+                :types="$activityTypes"
+            />
 
             {!! view_render_event('admin.contact.persons.view.right.after', ['person' => $person]) !!}
         </div>

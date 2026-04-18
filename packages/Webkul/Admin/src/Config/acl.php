@@ -2,7 +2,7 @@
 
 return [
     [
-        'route' => ['admin.quotes.edit', 'admin.quotes.update', 'admin.quotes.view'],
+        'key'   => 'dashboard',
         'name'  => 'admin::app.layouts.dashboard',
         'route' => 'admin.dashboard.index',
         'sort'  => 1,
@@ -234,7 +234,7 @@ return [
     ], [
         'key'   => 'activities',
         'name'  => 'admin::app.acl.activities',
-        'route' => 'admin.activities.index',
+        'route' => ['admin.activities.index', 'admin.activities.calendar', 'admin.activities.my_tasks', 'admin.activities.my_tasks_summary'],
         'sort'  => 5,
     ], [
         'key'   => 'activities.create',
@@ -301,6 +301,36 @@ return [
         'name'  => 'admin::app.acl.delete',
         'route' => ['admin.contacts.organizations.delete', 'admin.contacts.organizations.mass_delete'],
         'sort'  => 3,
+    ], [
+        'key'   => 'employees',
+        'name'  => 'Employees',
+        'route' => 'admin.employees.persons.index',
+        'sort'  => 3,
+    ], [
+        'key'   => 'employees.persons',
+        'name'  => 'Employees',
+        'route' => 'admin.employees.persons.index',
+        'sort'  => 1,
+    ], [
+        'key'   => 'employees.persons.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.employees.persons.create', 'admin.employees.persons.store'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'employees.persons.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.employees.persons.edit', 'admin.employees.persons.update'],
+        'sort'  => 3,
+    ], [
+        'key'   => 'employees.persons.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.employees.persons.delete', 'admin.employees.persons.mass_delete'],
+        'sort'  => 4,
+    ], [
+        'key'   => 'employees.persons.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => 'admin.employees.persons.view',
+        'sort'  => 5,
     ], [
         'key'   => 'products',
         'name'  => 'admin::app.acl.products',

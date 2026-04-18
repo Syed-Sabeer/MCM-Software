@@ -76,7 +76,10 @@
                 <div class="mb-3 text-base font-semibold">Document Summary</div>
                 <div class="grid gap-3 text-sm md:grid-cols-2">
                     <div><strong>Quote #:</strong> {{ $quote->quote_number ?: '-' }}</div>
-                    <div><strong>Status:</strong> {{ ucfirst((string) ($quote->status ?: 'draft')) }}</div>
+                    @php
+                        $displayStatus = in_array(strtolower((string) $quote->status), ['closed', 'approved', 'rejected', 'expired', 'cancelled'], true) ? 'Closed' : 'Open';
+                    @endphp
+                    <div><strong>Status:</strong> {{ $displayStatus }}</div>
                     <div><strong>Quote Date:</strong> {{ optional($quote->quote_date)->format('Y-m-d') ?: '-' }}</div>
                     <div><strong>Expiry Date:</strong> {{ optional($quote->expired_at)->format('Y-m-d') ?: '-' }}</div>
                     <div><strong>Sales Owner:</strong> {{ $salesPerson?->name ?: '-' }}</div>

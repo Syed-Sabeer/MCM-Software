@@ -152,7 +152,7 @@
                     }
                 },
 
-                save(params) {
+                save(params, { setErrors } = {}) {
                     this.isStoring = true;
 
                     this.$axios.post("{{ route('admin.activities.store') }}", params)
@@ -168,10 +168,20 @@
                         .catch (error => {
                             this.isStoring = false;
 
-                            if (error.response.status == 422) {
-                                setErrors(error.response.data.errors);
+                            if (error.response?.status == 422) {
+                                if (typeof setErrors === 'function') {
+                                    setErrors(error.response.data.errors || {});
+                                }
+
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: Object.values(error.response?.data?.errors || {}).flat()[0] || error.response?.data?.message || 'Validation failed',
+                                });
                             } else {
-                                this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: error.response?.data?.message || 'Failed to save comment',
+                                });
 
                                 this.$refs.noteActivityModal.close();
                             }

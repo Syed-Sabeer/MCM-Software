@@ -23,7 +23,7 @@
                 </p>
 
                 <a
-                    href="{{ route('admin.' . $routePrefix . '.organizations.view', $organization->id) }}"
+                    href="{{ route('admin.' . $organizationRoutePrefix . '.organizations.view', $organization->id) }}"
                     class="mt-1 inline-block text-base font-semibold text-brandColor hover:underline"
                 >
                     {{ $organization->name }}
@@ -31,7 +31,7 @@
             </div>
 
             <a
-                href="{{ route('admin.' . $routePrefix . '.organizations.edit', $organization->id) }}"
+                href="{{ route('admin.' . $organizationRoutePrefix . '.organizations.edit', $organization->id) }}"
                 class="secondary-button !px-3 !py-1.5 !text-xs"
                 target="_blank"
             >

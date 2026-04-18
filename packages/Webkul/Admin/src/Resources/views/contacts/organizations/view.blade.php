@@ -9,6 +9,19 @@
         $contactPluralLabel = 'Contacts';
     @endphp
 
+    @php
+        $activityTypes = [
+            ['name' => 'all', 'label' => 'All'],
+            ['name' => 'note', 'label' => 'Comments'],
+            ['name' => 'call', 'label' => 'Calls'],
+            ['name' => 'meeting', 'label' => 'Events'],
+            ['name' => 'file', 'label' => 'Files'],
+            ['name' => 'email', 'label' => 'Emails'],
+            ['name' => 'task', 'label' => 'Tasks'],
+            ['name' => 'system', 'label' => 'Change Log'],
+        ];
+    @endphp
+
     <x-slot:title>
         {{ $organizationLabel }}: {{ $organization->name }}
     </x-slot>
@@ -255,6 +268,11 @@
                         entity-control-name="organization_id"
                     />
 
+                    <x-admin::activities.actions.event
+                        :entity="$organization"
+                        entity-control-name="organization_id"
+                    />
+
                     <x-admin::activities.actions.note
                         :entity="$organization"
                         entity-control-name="organization_id"
@@ -287,6 +305,7 @@
             <!-- Activities Tabs Component -->
             <x-admin::activities
                 :endpoint="route('admin.' . $routePrefix . '.organizations.activities.index', $organization->id)"
+                :types="$activityTypes"
             />
 
             {!! view_render_event('admin.contacts.organizations.view.activities.after', ['organization' => $organization]) !!}

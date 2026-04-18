@@ -77,7 +77,7 @@ class Quote extends Model implements QuoteContract
             }
 
             if (empty($quote->status)) {
-                $quote->status = 'draft';
+                $quote->status = 'open';
             }
 
             if (empty($quote->quote_date)) {

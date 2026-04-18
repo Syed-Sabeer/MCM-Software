@@ -15,30 +15,30 @@
 
 <div>
     <button
-        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-violet-100 font-medium text-violet-800 transition-all hover:border-violet-300"
-        onclick="window.dispatchEvent(new Event('open-task-activity'))"
+        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-blue-100 font-medium text-blue-800 transition-all hover:border-blue-300"
+        onclick="window.dispatchEvent(new Event('open-event-activity'))"
     >
-        <span class="icon-tick text-2xl"></span>
-        Task
+        <span class="icon-calendar text-2xl"></span>
+        Event
     </button>
 
-    <v-task-activity
+    <v-event-activity
         :entity='@json($entity)'
         entity-control-name="{{ $entityControlName }}"
-    ></v-task-activity>
+    ></v-event-activity>
 </div>
 
 @pushOnce('scripts')
-    <script type="text/x-template" id="v-task-activity-template">
+    <script type="text/x-template" id="v-event-activity-template">
         <Teleport to="body">
-            <x-admin::modal ref="taskModal" position="bottom-right" size="medium">
+            <x-admin::modal ref="eventModal" position="bottom-right" size="medium">
                 <x-slot:header>
-                    <h3 class="text-base font-semibold dark:text-white">New Task</h3>
+                    <h3 class="text-base font-semibold dark:text-white">New Event</h3>
                 </x-slot>
 
                 <x-slot:content>
-                    <form ref="taskForm" class="grid gap-4 rounded-xl bg-violet-50/70 p-2 dark:bg-violet-950/20" @submit.prevent="save">
-                        <input type="hidden" name="type" value="task">
+                    <form ref="eventForm" class="grid gap-4 rounded-xl bg-blue-50/70 p-2 dark:bg-blue-950/20" @submit.prevent="save">
+                        <input type="hidden" name="type" value="meeting">
 
                         <input
                             v-if="shouldSendEntityBinding"
@@ -47,30 +47,52 @@
                             :value="entity?.id || ''"
                         >
 
-                        <input type="hidden" name="schedule_from" :value="normalizedDueDate">
-                        <input type="hidden" name="schedule_to" :value="normalizedDueDate">
+                        <input type="hidden" name="schedule_from" :value="scheduleFrom">
+                        <input type="hidden" name="schedule_to" :value="scheduleTo">
                         <input type="hidden" name="organization_id" :value="selectedOrganizationId">
                         <input type="hidden" name="user_id" :value="primaryAssignedUserId">
 
-                        <x-admin::form.control-group>
+                        <x-admin::form.control-group style="margin-bottom: 0 !important;">
                             <x-admin::form.control-group.label class="required">Subject</x-admin::form.control-group.label>
                             <input v-model="form.title" type="text" name="title" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" maxlength="200">
                         </x-admin::form.control-group>
 
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">Due Date</x-admin::form.control-group.label>
-                            <input v-model="form.due_date" type="date" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                        <x-admin::form.control-group style="margin-bottom: 0 !important;">
+                            <x-admin::form.control-group.label>Description</x-admin::form.control-group.label>
+                            <textarea v-model="form.comment" name="comment" rows="4" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"></textarea>
                         </x-admin::form.control-group>
 
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>Contacts</x-admin::form.control-group.label>
+                        <div class="grid grid-cols-4 gap-4">
+                            <x-admin::form.control-group style="margin-bottom: 0 !important;">
+                                <x-admin::form.control-group.label class="required">Start Date</x-admin::form.control-group.label>
+                                <input v-model="form.start_date" type="date" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group style="margin-bottom: 0 !important;">
+                                <x-admin::form.control-group.label class="required">Start Time</x-admin::form.control-group.label>
+                                <input v-model="form.start_time" type="time" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group style="margin-bottom: 0 !important;">
+                                <x-admin::form.control-group.label class="required">End Date</x-admin::form.control-group.label>
+                                <input v-model="form.end_date" type="date" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group style="margin-bottom: 0 !important;">
+                                <x-admin::form.control-group.label class="required">End Time</x-admin::form.control-group.label>
+                                <input v-model="form.end_time" type="time" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                            </x-admin::form.control-group>
+                        </div>
+
+                        <x-admin::form.control-group style="margin-bottom: 0 !important;">
+                            <x-admin::form.control-group.label>Name</x-admin::form.control-group.label>
                             <div class="relative" ref="contactsLookup">
-                                <div class="rounded-xl border border-violet-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                                <div class="rounded-xl border border-blue-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
                                     <div class="mb-2 flex flex-wrap gap-2" v-if="contacts.selected.length">
                                         <span
                                             v-for="contact in contacts.selected"
-                                            :key="`task-contact-${contact.id}`"
-                                            class="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-800 dark:bg-violet-900/50 dark:text-violet-200"
+                                            :key="`event-contact-${contact.id}`"
+                                            class="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
                                         >
                                             @{{ contact.name }}
                                             <button type="button" class="icon-cross-large text-sm" @click.stop="removeContact(contact.id)"></button>
@@ -98,9 +120,9 @@
                                         <template v-else-if="contacts.results.length">
                                             <button
                                                 v-for="person in contacts.results"
-                                                :key="`task-contact-option-${person.id}`"
+                                                :key="`event-contact-option-${person.id}`"
                                                 type="button"
-                                                class="flex w-full items-start justify-between rounded-lg px-3 py-2 text-left hover:bg-violet-50 dark:hover:bg-gray-900"
+                                                class="flex w-full items-start justify-between rounded-lg px-3 py-2 text-left hover:bg-blue-50 dark:hover:bg-gray-900"
                                                 @click="selectContact(person)"
                                             >
                                                 <span class="min-w-0">
@@ -118,7 +140,7 @@
 
                                 <input
                                     v-for="(contact, index) in contacts.selected"
-                                    :key="`task-contact-input-${contact.id}`"
+                                    :key="`event-contact-input-${contact.id}`"
                                     type="hidden"
                                     :name="`participants[persons][${index}]`"
                                     :value="contact.id"
@@ -127,12 +149,12 @@
                         </x-admin::form.control-group>
 
                         <div class="grid grid-cols-2 gap-4">
-                        <x-admin::form.control-group>
+                        <x-admin::form.control-group style="margin-bottom: 0 !important;">
                             <x-admin::form.control-group.label class="required">Related To</x-admin::form.control-group.label>
                             <div class="relative" ref="organizationLookup">
-                                <div class="rounded-xl border border-violet-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                                <div class="rounded-xl border border-blue-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
                                     <div v-if="organization.selected" class="mb-2">
-                                        <span class="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-800 dark:bg-violet-900/50 dark:text-violet-200">
+                                        <span class="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
                                             @{{ organization.selected.name }}
                                             <button type="button" class="icon-cross-large text-sm" @click.stop="clearOrganization"></button>
                                         </span>
@@ -159,9 +181,9 @@
                                         <template v-else-if="organization.results.length">
                                             <button
                                                 v-for="company in organization.results"
-                                                :key="`task-company-option-${company.id}`"
+                                                :key="`event-company-option-${company.id}`"
                                                 type="button"
-                                                class="flex w-full items-start justify-between rounded-lg px-3 py-2 text-left hover:bg-violet-50 dark:hover:bg-gray-900"
+                                                class="flex w-full items-start justify-between rounded-lg px-3 py-2 text-left hover:bg-blue-50 dark:hover:bg-gray-900"
                                                 @click="selectOrganization(company)"
                                             >
                                                 <span class="block text-sm font-medium text-gray-800 dark:text-white">@{{ company.name }}</span>
@@ -177,14 +199,14 @@
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">Assigned To</x-admin::form.control-group.label>
+                            <x-admin::form.control-group.label>Assigned To</x-admin::form.control-group.label>
                             <div class="relative" ref="assigneesLookup">
-                                <div class="rounded-xl border border-violet-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                                <div class="rounded-xl border border-blue-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
                                     <div class="mb-2 flex flex-wrap gap-2" v-if="assignees.selected.length">
                                         <span
                                             v-for="assignee in assignees.selected"
-                                            :key="`task-assignee-${assignee.id}`"
-                                            class="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-800 dark:bg-violet-900/50 dark:text-violet-200"
+                                            :key="`event-assignee-${assignee.id}`"
+                                            class="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
                                         >
                                             @{{ assignee.name }}
                                             <button type="button" class="icon-cross-large text-sm" @click.stop="removeAssignee(assignee.id)"></button>
@@ -212,9 +234,9 @@
                                         <template v-else-if="assignees.results.length">
                                             <button
                                                 v-for="user in assignees.results"
-                                                :key="`task-assignee-option-${user.id}`"
+                                                :key="`event-assignee-option-${user.id}`"
                                                 type="button"
-                                                class="flex w-full items-start justify-between rounded-lg px-3 py-2 text-left hover:bg-violet-50 dark:hover:bg-gray-900"
+                                                class="flex w-full items-start justify-between rounded-lg px-3 py-2 text-left hover:bg-blue-50 dark:hover:bg-gray-900"
                                                 @click="selectAssignee(user)"
                                             >
                                                 <span class="min-w-0">
@@ -232,7 +254,7 @@
 
                                 <input
                                     v-for="(assignee, index) in assignees.selected"
-                                    :key="`task-assignee-input-${assignee.id}`"
+                                    :key="`event-assignee-input-${assignee.id}`"
                                     type="hidden"
                                     :name="`participants[users][${index}]`"
                                     :value="assignee.id"
@@ -245,7 +267,7 @@
 
                 <x-slot:footer>
                     <button type="button" class="primary-button" @click="save" :disabled="isSaving">
-                        Save Task
+                        Save Event
                     </button>
                 </x-slot>
             </x-admin::modal>
@@ -253,8 +275,8 @@
     </script>
 
     <script type="module">
-        app.component('v-task-activity', {
-            template: '#v-task-activity-template',
+        app.component('v-event-activity', {
+            template: '#v-event-activity-template',
 
             props: ['entity', 'entityControlName'],
 
@@ -265,7 +287,11 @@
                     defaultAssignee: @json($defaultAssignee),
                     form: {
                         title: '',
-                        due_date: '',
+                        comment: '',
+                        start_date: '',
+                        start_time: '',
+                        end_date: '',
+                        end_time: '',
                     },
                     contacts: {
                         open: false,
@@ -292,12 +318,20 @@
             },
 
             computed: {
-                normalizedDueDate() {
-                    return this.form.due_date ? `${this.form.due_date} 00:00:00` : '';
-                },
-
                 shouldSendEntityBinding() {
                     return this.entityControlName && this.entityControlName !== 'organization_id';
+                },
+
+                scheduleFrom() {
+                    return this.form.start_date && this.form.start_time
+                        ? `${this.form.start_date} ${this.form.start_time}:00`
+                        : '';
+                },
+
+                scheduleTo() {
+                    return this.form.end_date && this.form.end_time
+                        ? `${this.form.end_date} ${this.form.end_time}:00`
+                        : '';
                 },
 
                 selectedOrganizationId() {
@@ -311,13 +345,17 @@
 
             methods: {
                 openModal() {
-                    this.$refs.taskModal.open();
+                    this.$refs.eventModal.open();
                 },
 
                 resetForm() {
                     this.form = {
                         title: '',
-                        due_date: '',
+                        comment: '',
+                        start_date: '',
+                        start_time: '',
+                        end_date: '',
+                        end_time: '',
                     };
 
                     this.contacts = {
@@ -481,7 +519,7 @@
                 },
 
                 save() {
-                    const payload = new FormData(this.$refs.taskForm);
+                    const payload = new FormData(this.$refs.eventForm);
 
                     this.isSaving = true;
 
@@ -490,14 +528,14 @@
                             this.isSaving = false;
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
                             this.$emitter.emit('on-activity-added', response.data.data);
-                            this.$refs.taskModal.close();
+                            this.$refs.eventModal.close();
                             this.resetForm();
                         })
                         .catch((error) => {
                             this.isSaving = false;
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
-                                message: error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat()[0] || 'Failed to create task',
+                                message: error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat()[0] || 'Failed to create event',
                             });
                         });
                 },
@@ -519,13 +557,13 @@
 
             mounted() {
                 this.resetForm();
-                this._openTaskListener = () => this.openModal();
-                window.addEventListener('open-task-activity', this._openTaskListener);
+                this._openEventListener = () => this.openModal();
+                window.addEventListener('open-event-activity', this._openEventListener);
                 window.addEventListener('click', this.handleOutsideClick);
             },
 
             beforeUnmount() {
-                window.removeEventListener('open-task-activity', this._openTaskListener);
+                window.removeEventListener('open-event-activity', this._openEventListener);
                 window.removeEventListener('click', this.handleOutsideClick);
             },
         });

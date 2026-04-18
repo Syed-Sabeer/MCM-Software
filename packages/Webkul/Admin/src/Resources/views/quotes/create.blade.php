@@ -8,7 +8,7 @@
     $quote->fill([
         'quote_number' => \Webkul\Quote\Models\Quote::generateNextQuoteNumber(),
         'quote_date'   => now()->toDateString(),
-        'status'       => 'approved',
+        'status'       => 'open',
         'user_id'      => auth()->id(),
     ]);
 
@@ -128,10 +128,11 @@
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
                             <select name="status" class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                                @foreach (['draft', 'sent', 'approved', 'rejected', 'expired', 'cancelled'] as $status)
-                                    <option value="{{ $status }}" @selected(old('status', 'approved') === $status)>{{ ucfirst($status) }}</option>
+                                @foreach (['open', 'closed'] as $status)
+                                    <option value="{{ $status }}" @selected(old('status', 'open') === $status)>{{ ucfirst($status) }}</option>
                                 @endforeach
                             </select>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Use `Closed` when a decision is done. Add notes before saving a closed quote.</p>
                             <x-admin::form.control-group.error control-name="status" />
                         </x-admin::form.control-group>
 
@@ -834,7 +835,6 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
-
 
 
 

@@ -94,6 +94,13 @@
                 </div>
             @endif
 
+            @if ($currentType === 'employee' && optional($person->user)->role)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Role</p>
+                    <p>{{ $person->user->role->name }}</p>
+                </div>
+            @endif
+
             @if ($person->birth_date)
                 <div>
                     <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Birth Date</p>

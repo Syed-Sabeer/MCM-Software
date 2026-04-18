@@ -153,7 +153,7 @@ $eta = data_get($quote, 'eta')
                     <tr><td class="meta-label">Quote #</td><td>{{ $quote->quote_number ?: ('Q' . $quote->id) }}</td></tr>
                     <tr><td class="meta-label">Quote Date</td><td>{{ $quote->quote_date ? core()->formatDate($quote->quote_date, 'Y-m-d') : core()->formatDate($quote->created_at, 'Y-m-d') }}</td></tr>
                     <tr><td class="meta-label">Sales Person</td><td>{{ $salesPerson?->name ?: '-' }}</td></tr>
-                    <tr><td class="meta-label">Status</td><td>{{ ucfirst($quote->status ?: 'draft') }}</td></tr>
+                    <tr><td class="meta-label">Status</td><td>{{ in_array(strtolower((string) $quote->status), ['closed', 'approved', 'rejected', 'expired', 'cancelled'], true) ? 'Closed' : 'Open' }}</td></tr>
                     <tr><td class="meta-label">Expiry Date</td><td>{{ $quote->expired_at ? core()->formatDate($quote->expired_at, 'Y-m-d') : '-' }}</td></tr>
                 </table>
             </td>

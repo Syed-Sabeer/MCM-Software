@@ -3,305 +3,261 @@
     'entityControlName' => null,
 ])
 
-<!-- Activity Button -->
 <div>
-    {!! view_render_event('admin.components.activities.actions.activity.create_btn.before') !!}
-
     <button
-        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-blue-200 font-medium text-blue-800 transition-all hover:border-blue-400"
-        onclick="window.dispatchEvent(new Event('open-activity-activity'))"
+        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-cyan-100 font-medium text-cyan-800 transition-all hover:border-cyan-300"
+        onclick="window.dispatchEvent(new Event('open-log-call-activity'))"
     >
-        <span class="icon-activity text-2xl dark:!text-blue-800"></span>
-
-        @lang('admin::app.components.activities.actions.activity.btn')
+        <span class="icon-call text-2xl"></span>
+        Log a Call
     </button>
 
-    {!! view_render_event('admin.components.activities.actions.activity.create_btn.after') !!}
-
-    {!! view_render_event('admin.components.activities.actions.activity.before') !!}
-
-    <!-- Note Action Vue Component -->
-    <v-activity
-        ref="actionComponent"
-        :entity="{{ json_encode($entity) }}"
+    <v-log-call-activity
+        :entity='@json($entity)'
         entity-control-name="{{ $entityControlName }}"
-    ></v-activity>
-
-    {!! view_render_event('admin.components.activities.actions.activity.after') !!}
+    ></v-log-call-activity>
 </div>
 
-
 @pushOnce('scripts')
-    <script type="text/x-template" id="v-activity-template">
+    <script type="text/x-template" id="v-log-call-activity-template">
         <Teleport to="body">
-            {!! view_render_event('admin.components.activities.actions.activity.form_controls.before') !!}
+            <x-admin::modal ref="callModal" position="bottom-right">
+                <x-slot:header>
+                    <h3 class="text-base font-semibold dark:text-white">Log a Call</h3>
+                </x-slot>
 
-            <x-admin::form
-                v-slot="{ meta, errors, handleSubmit }"
-                as="div"
-                ref="modalForm"
-            >
-                <form @submit="handleSubmit($event, save)">
-                    {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.before') !!}
+                <x-slot:content>
+                    <form ref="callForm" class="grid gap-4 rounded-xl bg-cyan-50/60 p-2 dark:bg-cyan-950/20" @submit.prevent="save">
+                        <input type="hidden" name="type" value="call">
 
-                    <x-admin::modal
-                        ref="activityModal"
-                        position="bottom-right"
-                    >
-                        <x-slot:header>
-                            {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.before') !!}
+                        <input
+                            v-if="entityControlName"
+                            type="hidden"
+                            :name="entityControlName"
+                            :value="entity?.id || ''"
+                        >
 
-                            <x-admin::dropdown>
-                                <x-slot:toggle>
-                                    <h3 class="flex cursor-pointer items-center gap-1 text-base font-semibold dark:text-white">
-                                        @lang('admin::app.components.activities.actions.activity.title') - @{{ selectedType.label }}
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label class="required">Subject</x-admin::form.control-group.label>
+                            <input v-model="form.title" type="text" name="title" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white" maxlength="200">
+                        </x-admin::form.control-group>
 
-                                        <span class="icon-down-arrow text-2xl"></span>
-                                    </h3>
-                                </x-slot>
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Comment</x-admin::form.control-group.label>
+                            <textarea v-model="form.comment" name="comment" rows="4" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"></textarea>
+                        </x-admin::form.control-group>
 
-                                <x-slot:menu>
-                                    {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.menu_item.before') !!}
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>Name</x-admin::form.control-group.label>
 
-                                    <x-admin::dropdown.menu.item
-                                        ::class="{ 'bg-gray-100 dark:bg-gray-950': selectedType.value === type.value }"
-                                        v-for="type in availableTypes"
-                                        @click="selectedType = type"
-                                    >
-                                        @{{ type.label }}
-                                    </x-admin::dropdown.menu.item>
+                            <div class="relative" ref="contactsLookup">
+                                <div class="rounded-xl border border-cyan-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                                    <div class="mb-2 flex flex-wrap gap-2" v-if="contacts.selected.length">
+                                        <span
+                                            v-for="contact in contacts.selected"
+                                            :key="`call-contact-${contact.id}`"
+                                            class="inline-flex items-center gap-2 rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200"
+                                        >
+                                            @{{ contact.name }}
 
-                                    {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.menu_item.after') !!}
-                                </x-slot>
-                            </x-admin::dropdown>
+                                            <button type="button" class="icon-cross-large text-sm" @click.stop="removeContact(contact.id)"></button>
+                                        </span>
+                                    </div>
 
-                            {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.header.dropdown.after') !!}
-                        </x-slot>
+                                    <div class="flex items-center gap-2">
+                                        <input
+                                            v-model="contacts.search"
+                                            type="text"
+                                            class="w-full border-0 bg-transparent px-1 py-1 text-sm text-gray-900 outline-none placeholder:text-gray-400 dark:text-white"
+                                            placeholder="Search contacts"
+                                            @focus="openLookup('contacts')"
+                                            @input="searchContacts"
+                                        >
 
-                        <x-slot:content>
-                            {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.before') !!}
+                                        <button type="button" class="text-xl text-gray-500" @click="toggleLookup('contacts')">
+                                            <span :class="contacts.open ? 'icon-up-arrow' : 'icon-down-arrow'"></span>
+                                        </button>
+                                    </div>
 
-                            <!-- Activity Type -->
-                            <x-admin::form.control-group.control
-                                type="hidden"
-                                name="type"
-                                v-model="selectedType.value"
-                            />
+                                    <div v-if="contacts.open" class="mt-3 max-h-[156px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-950">
+                                        <div v-if="contacts.loading" class="px-3 py-2 text-sm text-gray-500">Searching...</div>
 
-                            <!-- Id -->
-                            <x-admin::form.control-group.control
-                                type="hidden"
-                                ::name="entityControlName"
-                                ::value="entity.id"
-                            />
+                                        <template v-else-if="contacts.results.length">
+                                            <button
+                                                v-for="person in contacts.results"
+                                                :key="`call-contact-option-${person.id}`"
+                                                type="button"
+                                                class="flex w-full items-start justify-between rounded-lg px-3 py-2 text-left hover:bg-cyan-50 dark:hover:bg-gray-900"
+                                                @click="selectContact(person)"
+                                            >
+                                                <span class="min-w-0">
+                                                    <span class="block text-sm font-medium text-gray-800 dark:text-white">@{{ person.name }}</span>
+                                                    <span class="block text-xs text-gray-500">@{{ person.organization_name || person.email || 'Contact' }}</span>
+                                                </span>
+                                            </button>
+                                        </template>
 
-                            <!-- Title -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.components.activities.actions.activity.title-control')
-                                </x-admin::form.control-group.label>
+                                        <div v-else class="px-3 py-2 text-sm text-gray-500">
+                                            @{{ contacts.search.length < 1 ? 'Start typing to search contacts.' : 'No contacts found.' }}
+                                        </div>
+                                    </div>
+                                </div>
 
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="title"
-                                    rules="required|max:80"
-                                    :label="trans('admin::app.components.activities.actions.activity.title-control')"
-                                />
-
-                                <x-admin::form.control-group.error control-name="title" />
-                            </x-admin::form.control-group>
-
-                            <!-- Description -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.activity.description')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.control
-                                    type="textarea"
-                                    name="comment"
-                                    rules="max:500"
-                                />
-
-                                <x-admin::form.control-group.error control-name="comment" />
-                            </x-admin::form.control-group>
-
-                            <!-- Participants -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.activity.participants.title')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::activities.actions.activity.participants />
-                            </x-admin::form.control-group>
-
-                            <!-- Schedule Date -->
-                            <div class="flex gap-4">
-                                <!-- Started From -->
-                                <x-admin::form.control-group class="w-full">
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.components.activities.actions.activity.schedule-from')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.control
-                                        type="datetime"
-                                        name="schedule_from"
-                                        rules="required"
-                                        :label="trans('admin::app.components.activities.actions.activity.schedule-from')"
-                                    />
-
-                                    <x-admin::form.control-group.error control-name="schedule_from" />
-                                </x-admin::form.control-group>
-
-                                <!-- Started To -->
-                                <x-admin::form.control-group class="w-full">
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('admin::app.components.activities.actions.activity.schedule-to')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.control
-                                        type="datetime"
-                                        name="schedule_to"
-                                        rules="required"
-                                        :label="trans('admin::app.components.activities.actions.activity.schedule-to')"
-                                    />
-
-                                    <x-admin::form.control-group.error control-name="schedule_to" />
-                                </x-admin::form.control-group>
+                                <input
+                                    v-for="(contact, index) in contacts.selected"
+                                    :key="`call-contact-input-${contact.id}`"
+                                    type="hidden"
+                                    :name="`participants[persons][${index}]`"
+                                    :value="contact.id"
+                                >
                             </div>
+                        </x-admin::form.control-group>
+                    </form>
+                </x-slot>
 
-                            <!-- Location -->
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.activity.location')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="location"
-                                />
-                            </x-admin::form.control-group>
-
-                            {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.after') !!}
-                        </x-slot>
-
-                        <x-slot:footer>
-                            {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.footer.save_button.before') !!}
-
-                            <x-admin::button
-                                class="primary-button"
-                                :title="trans('admin::app.components.activities.actions.activity.save-btn')"
-                                ::loading="isStoring"
-                                ::disabled="isStoring"
-                            />
-
-                            {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.footer.save_button.after') !!}
-                        </x-slot>
-                    </x-admin::modal>
-
-                    {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.after') !!}
-                </form>
-            </x-admin::form>
-
-            {!! view_render_event('admin.components.activities.actions.activity.form_controls.after') !!}
+                <x-slot:footer>
+                    <button type="button" class="primary-button" @click="save" :disabled="isSaving">
+                        Save Call
+                    </button>
+                </x-slot>
+            </x-admin::modal>
         </Teleport>
     </script>
 
     <script type="module">
-        app.component('v-activity', {
-            template: '#v-activity-template',
+        app.component('v-log-call-activity', {
+            template: '#v-log-call-activity-template',
 
-            props: {
-                entity: {
-                    type: Object,
-                    required: true,
-                    default: () => {}
-                },
+            props: ['entity', 'entityControlName'],
 
-                entityControlName: {
-                    type: String,
-                    required: true,
-                    default: ''
-                }
-            },
-
-            data: function () {
+            data() {
                 return {
-                    isStoring: false,
-
-                    selectedType: {
-                        label: "{{ trans('admin::app.components.activities.actions.activity.call') }}",
-                        value: 'call'
+                    isSaving: false,
+                    searchRequestTimeout: null,
+                    form: {
+                        title: '',
+                        comment: '',
                     },
-
-                    availableTypes: [
-                        {
-                            label: "{{ trans('admin::app.components.activities.actions.activity.call') }}",
-                            value: 'call'
-                        }, {
-                            label: "{{ trans('admin::app.components.activities.actions.activity.meeting') }}",
-                            value: 'meeting'
-                        },
-                    ]
-                }
+                    contacts: {
+                        open: false,
+                        search: '',
+                        loading: false,
+                        results: [],
+                        selected: [],
+                    },
+                };
             },
 
             methods: {
-                openModal(type) {
-                    if (this.$refs.activityModal && typeof this.$refs.activityModal.open === 'function') {
-                        this.$refs.activityModal.open();
-                    } else {
-                        this.$nextTick(() => {
-                            if (this.$refs.activityModal && typeof this.$refs.activityModal.open === 'function') {
-                                this.$refs.activityModal.open();
-                            }
-                        });
+                openModal() {
+                    this.$refs.callModal.open();
+                },
+
+                resetForm() {
+                    this.form = {
+                        title: '',
+                        comment: '',
+                    };
+
+                    this.contacts = {
+                        open: false,
+                        search: '',
+                        loading: false,
+                        results: [],
+                        selected: [],
+                    };
+                },
+
+                toggleLookup(type) {
+                    this[type].open = !this[type].open;
+
+                    if (this[type].open && type === 'contacts') {
+                        this.searchContacts();
                     }
                 },
 
-            mounted() {
-                this._openActivityListener = () => this.openModal();
-                window.addEventListener('open-activity-activity', this._openActivityListener);
-            },
+                openLookup(type) {
+                    this[type].open = true;
 
-            beforeUnmount() {
-                window.removeEventListener('open-activity-activity', this._openActivityListener);
-            },
+                    if (type === 'contacts') {
+                        this.searchContacts();
+                    }
+                },
 
-                save(params) {
-                    this.isStoring = true;
+                searchContacts() {
+                    clearTimeout(this.searchRequestTimeout);
 
-                    this.$axios.post("{{ route('admin.activities.store') }}", params)
-                        .then (response => {
-                            this.isStoring = false;
+                    this.searchRequestTimeout = setTimeout(() => {
+                        this.contacts.loading = true;
 
-                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                        this.$axios.get('{{ route('admin.activities.search_persons') }}', {
+                            params: {
+                                query: this.contacts.search,
+                            },
+                        }).then((response) => {
+                            const selectedIds = this.contacts.selected.map(item => Number(item.id));
 
-                            this.$emitter.emit('on-activity-added', response.data.data);
-
-                            this.$refs.activityModal.close();
-                        })
-                        .catch (error => {
-                            this.isStoring = false;
-
-                            if (error.response.status == 422) {
-                                setErrors(error.response.data.errors);
-                            } else {
-                                this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
-
-                                this.$refs.activityModal.close();
-                            }
+                            this.contacts.results = (response.data.data || []).filter(item => !selectedIds.includes(Number(item.id)));
+                            this.contacts.loading = false;
+                        }).catch(() => {
+                            this.contacts.results = [];
+                            this.contacts.loading = false;
                         });
+                    }, 200);
+                },
+
+                selectContact(person) {
+                    if (this.contacts.selected.some(item => Number(item.id) === Number(person.id))) {
+                        return;
+                    }
+
+                    this.contacts.selected.push(person);
+                    this.contacts.search = '';
+                    this.contacts.results = this.contacts.results.filter(item => Number(item.id) !== Number(person.id));
+                },
+
+                removeContact(contactId) {
+                    this.contacts.selected = this.contacts.selected.filter(item => Number(item.id) !== Number(contactId));
+                },
+
+                save() {
+                    const payload = new FormData(this.$refs.callForm);
+
+                    this.isSaving = true;
+
+                    this.$axios.post('{{ route('admin.activities.store') }}', payload)
+                        .then((response) => {
+                            this.isSaving = false;
+                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                            this.$emitter.emit('on-activity-added', response.data.data);
+                            this.$refs.callModal.close();
+                            this.resetForm();
+                        })
+                        .catch((error) => {
+                            this.isSaving = false;
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat()[0] || 'Failed to log call',
+                            });
+                        });
+                },
+
+                handleOutsideClick(event) {
+                    if (!this.$refs.contactsLookup?.contains(event.target)) {
+                        this.contacts.open = false;
+                    }
                 },
             },
 
             mounted() {
-                this._openActivityListener = () => this.openModal();
-                window.addEventListener('open-activity-activity', this._openActivityListener);
+                this._openCallListener = () => this.openModal();
+                window.addEventListener('open-log-call-activity', this._openCallListener);
+                window.addEventListener('click', this.handleOutsideClick);
             },
 
             beforeUnmount() {
-                window.removeEventListener('open-activity-activity', this._openActivityListener);
+                window.removeEventListener('open-log-call-activity', this._openCallListener);
+                window.removeEventListener('click', this.handleOutsideClick);
             },
         });
     </script>
