@@ -29,7 +29,7 @@
 
                         <div
                             v-if="contact.showResults && contact.searchResults.length > 0"
-                            class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900"
+                            class="absolute z-10 mt-1 max-h-[156px] w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900"
                         >
                             <div
                                 v-for="person in contact.searchResults"
@@ -57,9 +57,9 @@
                         />
 
                         <input
-                            v-if="index === 0 && contact.organization_id && (contact.id || contact.name)"
+                            v-if="contact.organization_id && (contact.id || contact.name)"
                             type="hidden"
-                            name="person[organization_id]"
+                            :name="index === 0 ? 'person[organization_id]' : `person[${index}][organization_id]`"
                             :value="contact.organization_id"
                         />
                     </div>
@@ -164,7 +164,7 @@
                 searchPersons(index) {
                     const query = this.contacts[index].searchQuery;
 
-                    if (query.length < 2) {
+                    if (query.length < 1) {
                         this.contacts[index].searchResults = [];
                         return;
                     }
@@ -173,7 +173,8 @@
                             params: { query }
                         })
                         .then(response => {
-                            const allPersons = response.data.data || response.data || [];
+                            // Handle both JSON API format (response.data.data) and direct array format (response.data)
+                            const allPersons = Array.isArray(response.data) ? response.data : (response.data.data || []);
 
                             const lowerQuery = query.toLowerCase();
 
@@ -181,12 +182,13 @@
                                 .filter(person =>
                                     person.name && person.name.toLowerCase().includes(lowerQuery)
                                 )
-                                .slice(0, 10);
+                                .slice(0, 3);
 
                             this.contacts[index].showResults = true;
                         })
                         .catch(error => {
                             console.error('Failed to search persons:', error);
+                            this.contacts[index].searchResults = [];
                         });
                 },
 

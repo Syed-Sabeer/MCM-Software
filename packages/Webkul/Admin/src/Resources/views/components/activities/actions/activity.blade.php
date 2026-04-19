@@ -23,7 +23,7 @@
         <Teleport to="body">
             <x-admin::modal ref="callModal" position="bottom-right">
                 <x-slot:header>
-                    <h3 class="text-base font-semibold dark:text-white">Log a Call</h3>
+                    <h3 class="text-base font-semibold dark:text-white">@{{ editingActivityId ? 'Edit Log a Call' : 'Log a Call' }}</h3>
                 </x-slot>
 
                 <x-slot:content>
@@ -117,7 +117,7 @@
 
                 <x-slot:footer>
                     <button type="button" class="primary-button" @click="save" :disabled="isSaving">
-                        Save Call
+                        @{{ editingActivityId ? 'Save Changes' : 'Save Call' }}
                     </button>
                 </x-slot>
             </x-admin::modal>
@@ -133,6 +133,7 @@
             data() {
                 return {
                     isSaving: false,
+                    editingActivityId: null,
                     searchRequestTimeout: null,
                     form: {
                         title: '',
@@ -149,11 +150,19 @@
             },
 
             methods: {
-                openModal() {
+                openModal(activity = null) {
+                    this.resetForm();
+
+                    if (activity) {
+                        this.populateForEdit(activity);
+                    }
+
                     this.$refs.callModal.open();
                 },
 
                 resetForm() {
+                    this.editingActivityId = null;
+
                     this.form = {
                         title: '',
                         comment: '',
@@ -166,6 +175,17 @@
                         results: [],
                         selected: [],
                     };
+                },
+
+                populateForEdit(activity) {
+                    this.editingActivityId = activity.id;
+
+                    this.form.title = activity?.title || '';
+                    this.form.comment = activity?.comment || '';
+
+                    this.contacts.selected = (activity?.participants || [])
+                        .map((participant) => participant?.person)
+                        .filter((person) => person && person.id);
                 },
 
                 toggleLookup(type) {
@@ -223,13 +243,29 @@
                 save() {
                     const payload = new FormData(this.$refs.callForm);
 
+                    const isEditing = !! this.editingActivityId;
+
+                    if (isEditing) {
+                        payload.append('_method', 'PUT');
+                    }
+
+                    const requestUrl = isEditing
+                        ? "{{ route('admin.activities.update', '__id__') }}".replace('__id__', String(this.editingActivityId))
+                        : "{{ route('admin.activities.store') }}";
+
                     this.isSaving = true;
 
-                    this.$axios.post('{{ route('admin.activities.store') }}', payload)
+                    this.$axios.post(requestUrl, payload)
                         .then((response) => {
                             this.isSaving = false;
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-                            this.$emitter.emit('on-activity-added', response.data.data);
+
+                            if (isEditing) {
+                                this.$emitter.emit('on-activity-updated', response.data.data);
+                            } else {
+                                this.$emitter.emit('on-activity-added', response.data.data);
+                            }
+
                             this.$refs.callModal.close();
                             this.resetForm();
                         })
@@ -250,7 +286,7 @@
             },
 
             mounted() {
-                this._openCallListener = () => this.openModal();
+                this._openCallListener = (event) => this.openModal(event?.detail?.activity || null);
                 window.addEventListener('open-log-call-activity', this._openCallListener);
                 window.addEventListener('click', this.handleOutsideClick);
             },

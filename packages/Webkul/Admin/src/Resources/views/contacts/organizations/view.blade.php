@@ -677,7 +677,7 @@
                 </div>
             @endforeach
 
-          
+
         </div>
     </div>
 </x-admin::layouts>

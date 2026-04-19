@@ -16,10 +16,12 @@ class LeadResource extends JsonResource
     {
         return [
             'id'                   => $this->id,
+            'case_no'              => $this->case_no,
             'title'                => $this->title,
             'lead_value'           => $this->lead_value,
             'formatted_lead_value' => core()->formatBasePrice($this->lead_value),
             'status'               => $this->status,
+            'priority'             => $this->priority,
             'expected_close_date'  => $this->expected_close_date,
             'rotten_days'          => $this->rotten_days,
             'closed_at'            => $this->closed_at,

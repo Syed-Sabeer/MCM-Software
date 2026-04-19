@@ -144,21 +144,6 @@
                                                 </span>
                                             </div>
                                         </div>
-
-                                        <div
-                                            class="group relative"
-                                            v-if="element.rotten_days > 0"
-                                        >
-                                            <span class="icon-rotten cursor-default text-xl text-rose-600"></span>
-
-                                            <div class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
-                                                <span class="whitespace-no-wrap relative rounded-md bg-black px-4 py-2 text-xs leading-none text-white shadow-lg">
-                                                    @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', element.rotten_days) }}
-                                                </span>
-
-                                                <div class="absolute -right-1 top-2 h-3 w-3 rotate-45 bg-black"></div>
-                                            </div>
-                                        </div>
                                     </div>
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.after') !!}
@@ -173,6 +158,25 @@
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
 
                                     <div class="flex flex-wrap gap-1">
+                                        <!-- Case No -->
+                                        <div class="rounded-xl bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200" v-if="element.case_no">
+                                            @{{ element.case_no }}
+                                        </div>
+
+                                        <!-- Priority -->
+                                        <div
+                                            class="rounded-xl px-2 py-1 text-xs font-medium"
+                                            v-if="element.priority"
+                                            :class="{
+                                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': element.priority === 'urgent',
+                                                'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200': element.priority === 'high',
+                                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': element.priority === 'medium',
+                                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': element.priority === 'low',
+                                            }"
+                                        >
+                                            @{{ element.priority.charAt(0).toUpperCase() + element.priority.slice(1) }}
+                                        </div>
+
                                         <div
                                             class="flex items-center gap-1 rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white"
                                             v-if="element.user"
@@ -182,16 +186,8 @@
                                             @{{ element.user.name }}
                                         </div>
 
-                                        <div class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white">
-                                            @{{ element.formatted_lead_value }}
-                                        </div>
-
                                         <div class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white" v-if="element.source">
                                             @{{ element.source.name }}
-                                        </div>
-
-                                        <div class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white" v-if="element.type">
-                                            @{{ element.type.name }}
                                         </div>
 
                                         <!-- Tags -->

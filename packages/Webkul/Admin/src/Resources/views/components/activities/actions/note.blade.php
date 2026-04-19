@@ -40,7 +40,7 @@
                 as="div"
                 ref="modalForm"
             >
-                <form @submit="handleSubmit($event, save)">
+                <form ref="noteFormElement" @submit="handleSubmit($event, save)">
                     {!! view_render_event('admin.components.activities.actions.note.form_controls.modal.before') !!}
 
                     <x-admin::modal
@@ -51,7 +51,7 @@
                             {!! view_render_event('admin.components.activities.actions.note.form_controls.modal.header.title.before') !!}
 
                             <h3 class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.components.activities.actions.note.title')
+                                @{{ editingActivityId ? 'Edit Comment' : 'Add Comment' }}
                             </h3>
 
                             {!! view_render_event('admin.components.activities.actions.note.form_controls.modal.header.title.after') !!}
@@ -98,7 +98,7 @@
 
                             <x-admin::button
                                 class="primary-button"
-                                :title="trans('admin::app.components.activities.actions.note.save-btn')"
+                                ::title="editingActivityId ? 'Save Changes' : 'Save Comment'"
                                 ::loading="isStoring"
                                 ::disabled="isStoring"
                             />
@@ -136,11 +136,14 @@
             data: function () {
                 return {
                     isStoring: false,
+                    editingActivityId: null,
                 }
             },
 
             methods: {
-                openModal(type) {
+                openModal(activity = null) {
+                    this.editingActivityId = activity?.id || null;
+
                     if (this.$refs.noteActivityModal && typeof this.$refs.noteActivityModal.open === 'function') {
                         this.$refs.noteActivityModal.open();
                     } else {
@@ -150,18 +153,46 @@
                             }
                         });
                     }
+
+                    this.$nextTick(() => {
+                        const commentInput = this.$refs.noteFormElement?.querySelector('[name="comment"]');
+
+                        if (commentInput) {
+                            commentInput.value = activity?.comment || '';
+                            commentInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    });
                 },
 
                 save(params, { setErrors } = {}) {
+                    const isEditing = !! this.editingActivityId;
+
+                    const requestUrl = isEditing
+                        ? "{{ route('admin.activities.update', '__id__') }}".replace('__id__', String(this.editingActivityId))
+                        : "{{ route('admin.activities.store') }}";
+
+                    const payload = isEditing
+                        ? {
+                            ...params,
+                            _method: 'PUT',
+                        }
+                        : params;
+
                     this.isStoring = true;
 
-                    this.$axios.post("{{ route('admin.activities.store') }}", params)
+                    this.$axios.post(requestUrl, payload)
                         .then (response => {
                             this.isStoring = false;
 
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
 
-                            this.$emitter.emit('on-activity-added', response.data.data);
+                            if (isEditing) {
+                                this.$emitter.emit('on-activity-updated', response.data.data);
+                            } else {
+                                this.$emitter.emit('on-activity-added', response.data.data);
+                            }
+
+                            this.editingActivityId = null;
 
                             this.$refs.noteActivityModal.close();
                         })
@@ -190,7 +221,7 @@
             },
 
             mounted() {
-                this._openNoteListener = () => this.openModal();
+                this._openNoteListener = (event) => this.openModal(event?.detail?.activity || null);
                 window.addEventListener('open-note-activity', this._openNoteListener);
             },
 

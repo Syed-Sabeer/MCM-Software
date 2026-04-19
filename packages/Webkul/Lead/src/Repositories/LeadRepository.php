@@ -166,6 +166,15 @@ class LeadRepository extends Repository
             $data['expected_close_date'] = null;
         }
 
+        // Convert empty strings to NULL for optional foreign key fields
+        if (isset($data['lead_source_id']) && $data['lead_source_id'] === '') {
+            $data['lead_source_id'] = null;
+        }
+
+        if (isset($data['priority']) && $data['priority'] === '') {
+            $data['priority'] = null;
+        }
+
         $lead = parent::create(array_merge([
             'lead_pipeline_id'       => 1,
             'lead_pipeline_stage_id' => 1,

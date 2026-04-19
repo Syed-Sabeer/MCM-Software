@@ -146,14 +146,14 @@
 
                             <!-- Status (Pipeline Stage) -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
+                                <x-admin::form.control-group.label>
                                     Status
                                 </x-admin::form.control-group.label>
 
                                 <select
+                                    id="lead_pipeline_stage_id"
                                     name="lead_pipeline_stage_id"
                                     class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                    required
                                 >
                                     <option value="">Select Status</option>
                                     @foreach ($pipeline->stages as $stage)
@@ -203,33 +203,131 @@
                                 </select>
                             </x-admin::form.control-group>
 
-                            <!-- Case Owner -->
+                            <!-- Case Owner (Searchable Dropdown) -->
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label>
                                     Case Owner
                                 </x-admin::form.control-group.label>
 
-                                <input
-                                    type="text"
-                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                    value="{{ optional(auth()->user())->name }}"
-                                    disabled
-                                />
+                                <div class="relative" ref="caseOwnerLookup">
+                                    <div class="rounded-xl border border-blue-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                                        <div v-if="caseOwner.selected" class="mb-2">
+                                            <span class="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                                                @{{ caseOwner.selected.name }}
+                                                <button type="button" class="icon-cross-large text-sm" @click.stop="clearCaseOwner"></button>
+                                            </span>
+                                        </div>
 
-                                <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                v-model="caseOwner.search"
+                                                type="text"
+                                                class="w-full border-0 bg-transparent px-1 py-1 text-sm text-gray-900 outline-none placeholder:text-gray-400 dark:text-white"
+                                                placeholder="Search employees"
+                                                @focus="openLookup('caseOwner')"
+                                                @input="searchCaseOwners"
+                                            >
+
+                                            <button type="button" class="text-xl text-gray-500" @click="toggleLookup('caseOwner')">
+                                                <span :class="caseOwner.open ? 'icon-up-arrow' : 'icon-down-arrow'"></span>
+                                            </button>
+                                        </div>
+
+                                        <div v-if="caseOwner.open" class="mt-3 max-h-[156px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-950">
+                                            <div v-if="caseOwner.loading" class="px-3 py-2 text-sm text-gray-500">Searching...</div>
+
+                                            <template v-else-if="caseOwner.results.length">
+                                                <button
+                                                    v-for="user in caseOwner.results"
+                                                    :key="`case-owner-option-${user.id}`"
+                                                    type="button"
+                                                    class="flex w-full items-start justify-between rounded-lg px-3 py-2 text-left hover:bg-blue-50 dark:hover:bg-gray-900"
+                                                    @click="selectCaseOwner(user)"
+                                                >
+                                                    <span class="min-w-0">
+                                                        <span class="block text-sm font-medium text-gray-800 dark:text-white">@{{ user.name }}</span>
+                                                        <span class="block text-xs text-gray-500">@{{ user.email || 'Employee' }}</span>
+                                                    </span>
+                                                </button>
+                                            </template>
+
+                                            <div v-else class="px-3 py-2 text-sm text-gray-500">
+                                                @{{ caseOwner.search.length < 1 ? 'Start typing to search employees.' : 'No employees found.' }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <input
+                                        type="hidden"
+                                        id="user_id"
+                                        name="user_id"
+                                        :value="caseOwner.selected?.id || ''"
+                                    >
+                                </div>
+
+                                <x-admin::form.control-group.error control-name="user_id" />
                             </x-admin::form.control-group>
 
-                            <x-admin::form.control-group v-if="selectedOrganizationName">
+                            <!-- Organization (Searchable Dropdown) -->
+                            <x-admin::form.control-group>
                                 <x-admin::form.control-group.label>
                                     Organization
                                 </x-admin::form.control-group.label>
 
-                                <input
-                                    type="text"
-                                    class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                    :value="selectedOrganizationName"
-                                    disabled
-                                />
+                                <div class="relative" ref="organizationLookup">
+                                    <div class="rounded-xl border border-blue-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                                        <div v-if="organization.selected" class="mb-2">
+                                            <span class="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                                                @{{ organization.selected.name }}
+                                                <button type="button" class="icon-cross-large text-sm" @click.stop="clearOrganization"></button>
+                                            </span>
+                                        </div>
+
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                v-model="organization.search"
+                                                type="text"
+                                                class="w-full border-0 bg-transparent px-1 py-1 text-sm text-gray-900 outline-none placeholder:text-gray-400 dark:text-white"
+                                                placeholder="Search company"
+                                                @focus="openLookup('organization')"
+                                                @input="searchOrganizations"
+                                            >
+
+                                            <button type="button" class="text-xl text-gray-500" @click="toggleLookup('organization')">
+                                                <span :class="organization.open ? 'icon-up-arrow' : 'icon-down-arrow'"></span>
+                                            </button>
+                                        </div>
+
+                                        <div v-if="organization.open" class="mt-3 max-h-[156px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-950">
+                                            <div v-if="organization.loading" class="px-3 py-2 text-sm text-gray-500">Searching...</div>
+
+                                            <template v-else-if="organization.results.length">
+                                                <button
+                                                    v-for="company in organization.results"
+                                                    :key="`org-option-${company.id}`"
+                                                    type="button"
+                                                    class="flex w-full items-start justify-between rounded-lg px-3 py-2 text-left hover:bg-blue-50 dark:hover:bg-gray-900"
+                                                    @click="selectOrganization(company)"
+                                                >
+                                                    <span class="block text-sm font-medium text-gray-800 dark:text-white">@{{ company.name }}</span>
+                                                </button>
+                                            </template>
+
+                                            <div v-else class="px-3 py-2 text-sm text-gray-500">
+                                                @{{ organization.search.length < 1 ? 'Start typing to search companies.' : 'No companies found.' }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <input
+                                        type="hidden"
+                                        id="organization_id_select"
+                                        name="organization_id"
+                                        :value="organization.selected?.id || ''"
+                                    >
+                                </div>
+
+                                <x-admin::form.control-group.error control-name="organization_id" />
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.leads.create.case-information.attributes.after') !!}
@@ -359,10 +457,188 @@
                         ],
 
                         selectedOrganizationName: this.prefillOrganizationName || '',
+                        selectedOrganizationId: this.prefillOrganizationId || '',
+                        
+                        caseOwner: {
+                            selected: null,
+                            search: '',
+                            results: [],
+                            loading: false,
+                            open: false,
+                        },
+                        
+                        organization: {
+                            selected: null,
+                            search: '',
+                            results: [],
+                            loading: false,
+                            open: false,
+                        },
+                        
+                        searchRequestTimeout: null,
                     };
                 },
 
+                mounted() {
+                    // Initialize case owner with current auth user
+                    this.$axios.get('{{ route('admin.activities.search_employee_users') }}', {
+                        params: { query: '' }
+                    }).then(response => {
+                        const employees = response.data.data || [];
+                        const currentUser = employees.find(emp => Number(emp.id) === Number('{{ auth()->id() }}'));
+                        if (currentUser) {
+                            this.caseOwner.selected = currentUser;
+                        }
+                    });
+
+                    // Initialize organization if prefilled
+                    if (this.prefillOrganizationId) {
+                        this.$axios.get('{{ route('admin.contacts.organizations.fetch', ['id' => '__ID__']) }}'.replace('__ID__', this.prefillOrganizationId))
+                            .then(response => {
+                                if (response.data && response.data.id) {
+                                    this.organization.selected = {
+                                        id: response.data.id,
+                                        name: response.data.name
+                                    };
+                                }
+                            });
+                    }
+
+                    // Add form submission handler to auto-populate status if not selected
+                    const form = document.querySelector('form[action*="create"]');
+                    if (form) {
+                        form.addEventListener('submit', (e) => {
+                            const statusSelect = document.getElementById('lead_pipeline_stage_id');
+                            if (!statusSelect.value) {
+                                const firstOption = statusSelect.querySelector('option:not([value=""])');
+                                if (firstOption) {
+                                    statusSelect.value = firstOption.value;
+                                }
+                            }
+                        });
+                    }
+                },
+
                 methods: {
+                    /**
+                     * Toggle lookup dropdown.
+                     */
+                    toggleLookup(type) {
+                        this[type].open = !this[type].open;
+                        if (this[type].open) {
+                            this.dispatchSearch(type);
+                        }
+                    },
+
+                    /**
+                     * Open lookup dropdown.
+                     */
+                    openLookup(type) {
+                        this[type].open = true;
+                        this.dispatchSearch(type);
+                    },
+
+                    /**
+                     * Dispatch search based on type.
+                     */
+                    dispatchSearch(type) {
+                        if (type === 'caseOwner') {
+                            this.searchCaseOwners();
+                        }
+                        if (type === 'organization') {
+                            this.searchOrganizations();
+                        }
+                    },
+
+                    /**
+                     * Run search with debounce.
+                     */
+                    runSearch(callback) {
+                        clearTimeout(this.searchRequestTimeout);
+                        this.searchRequestTimeout = setTimeout(callback, 200);
+                    },
+
+                    /**
+                     * Search case owners (employees).
+                     */
+                    searchCaseOwners() {
+                        this.runSearch(() => {
+                            this.caseOwner.loading = true;
+
+                            this.$axios.get('{{ route('admin.activities.search_employee_users') }}', {
+                                params: {
+                                    query: this.caseOwner.search,
+                                },
+                            }).then((response) => {
+                                const selectedId = this.caseOwner.selected?.id;
+                                this.caseOwner.results = (response.data.data || [])
+                                    .filter(item => !selectedId || Number(item.id) !== Number(selectedId));
+                                this.caseOwner.loading = false;
+                            }).catch(() => {
+                                this.caseOwner.results = [];
+                                this.caseOwner.loading = false;
+                            });
+                        });
+                    },
+
+                    /**
+                     * Search organizations.
+                     */
+                    searchOrganizations() {
+                        this.runSearch(() => {
+                            this.organization.loading = true;
+
+                            this.$axios.get('{{ route('admin.activities.search_organizations') }}', {
+                                params: {
+                                    query: this.organization.search,
+                                },
+                            }).then((response) => {
+                                const selectedId = this.organization.selected?.id;
+                                const results = response.data.data || [];
+                                this.organization.results = results
+                                    .filter(item => !selectedId || Number(item.id) !== Number(selectedId));
+                                this.organization.loading = false;
+                            }).catch(() => {
+                                this.organization.results = [];
+                                this.organization.loading = false;
+                            });
+                        });
+                    },
+
+                    /**
+                     * Select case owner.
+                     */
+                    selectCaseOwner(user) {
+                        this.caseOwner.selected = user;
+                        this.caseOwner.search = '';
+                        this.caseOwner.results = [];
+                        this.caseOwner.open = false;
+                    },
+
+                    /**
+                     * Clear case owner.
+                     */
+                    clearCaseOwner() {
+                        this.caseOwner.selected = null;
+                    },
+
+                    /**
+                     * Select organization.
+                     */
+                    selectOrganization(company) {
+                        this.organization.selected = company;
+                        this.organization.search = '';
+                        this.organization.results = [];
+                        this.organization.open = false;
+                    },
+
+                    /**
+                     * Clear organization.
+                     */
+                    clearOrganization() {
+                        this.organization.selected = null;
+                    },
+
                     /**
                      * Handle organization selection from contact component.
                      *
@@ -373,6 +649,10 @@
                     handleOrganizationSelected(organization) {
                         if (organization && organization.name) {
                             this.selectedOrganizationName = organization.name;
+                            if (organization.id) {
+                                this.selectedOrganizationId = organization.id;
+                                this.organization.selected = organization;
+                            }
                         }
                     },
 

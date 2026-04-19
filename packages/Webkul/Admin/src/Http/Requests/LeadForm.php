@@ -142,6 +142,11 @@ class LeadForm extends FormRequest
             Rule::unique('leads', 'case_no')->ignore($this->route('id')),
         ];
 
+        // Make lead_source_id and priority optional
+        $this->rules['lead_source_id'] = 'nullable';
+        $this->rules['priority'] = 'nullable';
+        $this->rules['lead_pipeline_stage_id'] = 'nullable';
+
         return [
             ...$this->rules,
             'products'              => 'array',

@@ -40,7 +40,7 @@
                 as="div"
                 ref="modalForm"
             >
-                <form @submit="handleSubmit($event, save)">
+                <form ref="fileFormElement" @submit="handleSubmit($event, save)">
                     {!! view_render_event('admin.components.activities.actions.file.form_controls.modal.before') !!}
 
                     <x-admin::modal
@@ -51,7 +51,7 @@
                             {!! view_render_event('admin.components.activities.actions.file.form_controls.modal.header.title.before') !!}
 
                             <h3 class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.components.activities.actions.file.title')
+                                @{{ editingActivityId ? 'Edit File' : 'Add File' }}
                             </h3>
 
                             {!! view_render_event('admin.components.activities.actions.file.form_controls.modal.header.title.after') !!}
@@ -134,7 +134,7 @@
                                     type="file"
                                     id="file"
                                     name="file"
-                                    rules="required"
+                                    ::rules="editingActivityId ? '' : 'required'"
                                     :label="trans('admin::app.components.activities.actions.file.file')"
                                 />
 
@@ -149,7 +149,7 @@
 
                             <x-admin::button
                                 class="primary-button"
-                                :title="trans('admin::app.components.activities.actions.file.save-btn')"
+                                ::title="editingActivityId ? 'Save Changes' : 'Save File'"
                                 ::loading="isStoring"
                                 ::disabled="isStoring"
                             />
@@ -187,6 +187,7 @@
             data: function () {
                 return {
                     isStoring: false,
+                    editingActivityId: null,
                 }
             },
 
@@ -205,7 +206,9 @@
             },
 
             methods: {
-                openModal(type) {
+                openModal(activity = null) {
+                    this.editingActivityId = activity?.id || null;
+
                     if (this.$refs.fileActivityModal && typeof this.$refs.fileActivityModal.open === 'function') {
                         this.$refs.fileActivityModal.open();
                     } else {
@@ -215,19 +218,53 @@
                             }
                         });
                     }
+
+                    this.$nextTick(() => {
+                        const formElement = this.$refs.fileFormElement;
+
+                        if (! formElement) {
+                            return;
+                        }
+
+                        const titleInput = formElement.querySelector('[name="title"]');
+                        const commentInput = formElement.querySelector('[name="comment"]');
+                        const nameInput = formElement.querySelector('[name="name"]');
+
+                        if (titleInput) {
+                            titleInput.value = activity?.title || '';
+                            titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+
+                        if (commentInput) {
+                            commentInput.value = activity?.comment || '';
+                            commentInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+
+                        if (nameInput) {
+                            nameInput.value = activity?.files?.[0]?.name || '';
+                            nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    });
                 },
 
                 save(params, { setErrors }) {
                     this.isStoring = true;
+
+                    const isEditing = !! this.editingActivityId;
+
+                    const requestUrl = isEditing
+                        ? "{{ route('admin.activities.update', '__id__') }}".replace('__id__', String(this.editingActivityId))
+                        : "{{ route('admin.activities.store') }}";
 
                     // Explicitly add entity type and id to the params
                     const payload = {
                         ...params,
                         entity_type: this.entityType,
                         entity_id: this.entityId,
+                        ...(isEditing ? { _method: 'PUT' } : {}),
                     };
 
-                    this.$axios.post("{{ route('admin.activities.store') }}", payload, {
+                    this.$axios.post(requestUrl, payload, {
                             headers: {
                                 'Content-Type': 'multipart/form-data',
                             }
@@ -237,7 +274,13 @@
 
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
 
-                            this.$emitter.emit('on-activity-added', response.data.data);
+                            if (isEditing) {
+                                this.$emitter.emit('on-activity-updated', response.data.data);
+                            } else {
+                                this.$emitter.emit('on-activity-added', response.data.data);
+                            }
+
+                            this.editingActivityId = null;
 
                             this.$refs.fileActivityModal.close();
                         })
@@ -255,7 +298,7 @@
                 },
             },
             mounted() {
-                this._openFileListener = () => this.openModal();
+                this._openFileListener = (event) => this.openModal(event?.detail?.activity || null);
                 window.addEventListener('open-file-activity', this._openFileListener);
             },
 

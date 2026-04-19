@@ -33,7 +33,7 @@
         <Teleport to="body">
             <x-admin::modal ref="eventModal" position="bottom-right" size="medium">
                 <x-slot:header>
-                    <h3 class="text-base font-semibold dark:text-white">New Event</h3>
+                    <h3 class="text-base font-semibold dark:text-white">@{{ editingActivityId ? 'Edit Event' : 'New Event' }}</h3>
                 </x-slot>
 
                 <x-slot:content>
@@ -267,7 +267,7 @@
 
                 <x-slot:footer>
                     <button type="button" class="primary-button" @click="save" :disabled="isSaving">
-                        Save Event
+                        @{{ editingActivityId ? 'Save Changes' : 'Save Event' }}
                     </button>
                 </x-slot>
             </x-admin::modal>
@@ -283,6 +283,7 @@
             data() {
                 return {
                     isSaving: false,
+                    editingActivityId: null,
                     searchRequestTimeout: null,
                     defaultAssignee: @json($defaultAssignee),
                     form: {
@@ -344,11 +345,19 @@
             },
 
             methods: {
-                openModal() {
+                openModal(activity = null) {
+                    this.resetForm();
+
+                    if (activity) {
+                        this.populateForEdit(activity);
+                    }
+
                     this.$refs.eventModal.open();
                 },
 
                 resetForm() {
+                    this.editingActivityId = null;
+
                     this.form = {
                         title: '',
                         comment: '',
@@ -385,6 +394,32 @@
                         results: [],
                         selected: this.defaultAssignee ? [{ ...this.defaultAssignee }] : [],
                     };
+                },
+
+                populateForEdit(activity) {
+                    this.editingActivityId = activity.id;
+
+                    const scheduleFrom = activity?.schedule_from ? new Date(activity.schedule_from) : null;
+                    const scheduleTo = activity?.schedule_to ? new Date(activity.schedule_to) : null;
+
+                    this.form.title = activity?.title || '';
+                    this.form.comment = activity?.comment || '';
+                    this.form.start_date = scheduleFrom && !Number.isNaN(scheduleFrom.getTime()) ? scheduleFrom.toISOString().slice(0, 10) : '';
+                    this.form.start_time = scheduleFrom && !Number.isNaN(scheduleFrom.getTime()) ? scheduleFrom.toTimeString().slice(0, 5) : '';
+                    this.form.end_date = scheduleTo && !Number.isNaN(scheduleTo.getTime()) ? scheduleTo.toISOString().slice(0, 10) : this.form.start_date;
+                    this.form.end_time = scheduleTo && !Number.isNaN(scheduleTo.getTime()) ? scheduleTo.toTimeString().slice(0, 5) : this.form.start_time;
+
+                    this.contacts.selected = (activity?.participants || [])
+                        .map((participant) => participant?.person)
+                        .filter((person) => person && person.id);
+
+                    this.assignees.selected = (activity?.participants || [])
+                        .map((participant) => participant?.user)
+                        .filter((user) => user && user.id);
+
+                    if (! this.assignees.selected.length && this.defaultAssignee) {
+                        this.assignees.selected = [{ ...this.defaultAssignee }];
+                    }
                 },
 
                 toggleLookup(type) {
@@ -521,13 +556,29 @@
                 save() {
                     const payload = new FormData(this.$refs.eventForm);
 
+                    const isEditing = !! this.editingActivityId;
+
+                    if (isEditing) {
+                        payload.append('_method', 'PUT');
+                    }
+
+                    const requestUrl = isEditing
+                        ? "{{ route('admin.activities.update', '__id__') }}".replace('__id__', String(this.editingActivityId))
+                        : "{{ route('admin.activities.store') }}";
+
                     this.isSaving = true;
 
-                    this.$axios.post('{{ route('admin.activities.store') }}', payload)
+                    this.$axios.post(requestUrl, payload)
                         .then((response) => {
                             this.isSaving = false;
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-                            this.$emitter.emit('on-activity-added', response.data.data);
+
+                            if (isEditing) {
+                                this.$emitter.emit('on-activity-updated', response.data.data);
+                            } else {
+                                this.$emitter.emit('on-activity-added', response.data.data);
+                            }
+
                             this.$refs.eventModal.close();
                             this.resetForm();
                         })
@@ -557,7 +608,7 @@
 
             mounted() {
                 this.resetForm();
-                this._openEventListener = () => this.openModal();
+                this._openEventListener = (event) => this.openModal(event?.detail?.activity || null);
                 window.addEventListener('open-event-activity', this._openEventListener);
                 window.addEventListener('click', this.handleOutsideClick);
             },

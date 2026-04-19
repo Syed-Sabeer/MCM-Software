@@ -33,7 +33,7 @@
         <Teleport to="body">
             <x-admin::modal ref="taskModal" position="bottom-right" size="medium">
                 <x-slot:header>
-                    <h3 class="text-base font-semibold dark:text-white">New Task</h3>
+                    <h3 class="text-base font-semibold dark:text-white">@{{ editingActivityId ? 'Edit Task' : 'New Task' }}</h3>
                 </x-slot>
 
                 <x-slot:content>
@@ -245,7 +245,7 @@
 
                 <x-slot:footer>
                     <button type="button" class="primary-button" @click="save" :disabled="isSaving">
-                        Save Task
+                        @{{ editingActivityId ? 'Save Changes' : 'Save Task' }}
                     </button>
                 </x-slot>
             </x-admin::modal>
@@ -261,6 +261,7 @@
             data() {
                 return {
                     isSaving: false,
+                    editingActivityId: null,
                     searchRequestTimeout: null,
                     defaultAssignee: @json($defaultAssignee),
                     form: {
@@ -310,11 +311,19 @@
             },
 
             methods: {
-                openModal() {
+                openModal(activity = null) {
+                    this.resetForm();
+
+                    if (activity) {
+                        this.populateForEdit(activity);
+                    }
+
                     this.$refs.taskModal.open();
                 },
 
                 resetForm() {
+                    this.editingActivityId = null;
+
                     this.form = {
                         title: '',
                         due_date: '',
@@ -347,6 +356,27 @@
                         results: [],
                         selected: this.defaultAssignee ? [{ ...this.defaultAssignee }] : [],
                     };
+                },
+
+                populateForEdit(activity) {
+                    this.editingActivityId = activity.id;
+
+                    const dueDate = activity?.schedule_from ? new Date(activity.schedule_from) : null;
+
+                    this.form.title = activity?.title || '';
+                    this.form.due_date = dueDate && !Number.isNaN(dueDate.getTime()) ? dueDate.toISOString().slice(0, 10) : '';
+
+                    this.contacts.selected = (activity?.participants || [])
+                        .map((participant) => participant?.person)
+                        .filter((person) => person && person.id);
+
+                    this.assignees.selected = (activity?.participants || [])
+                        .map((participant) => participant?.user)
+                        .filter((user) => user && user.id);
+
+                    if (! this.assignees.selected.length && this.defaultAssignee) {
+                        this.assignees.selected = [{ ...this.defaultAssignee }];
+                    }
                 },
 
                 toggleLookup(type) {
@@ -483,13 +513,29 @@
                 save() {
                     const payload = new FormData(this.$refs.taskForm);
 
+                    const isEditing = !! this.editingActivityId;
+
+                    if (isEditing) {
+                        payload.append('_method', 'PUT');
+                    }
+
+                    const requestUrl = isEditing
+                        ? "{{ route('admin.activities.update', '__id__') }}".replace('__id__', String(this.editingActivityId))
+                        : "{{ route('admin.activities.store') }}";
+
                     this.isSaving = true;
 
-                    this.$axios.post('{{ route('admin.activities.store') }}', payload)
+                    this.$axios.post(requestUrl, payload)
                         .then((response) => {
                             this.isSaving = false;
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-                            this.$emitter.emit('on-activity-added', response.data.data);
+
+                            if (isEditing) {
+                                this.$emitter.emit('on-activity-updated', response.data.data);
+                            } else {
+                                this.$emitter.emit('on-activity-added', response.data.data);
+                            }
+
                             this.$refs.taskModal.close();
                             this.resetForm();
                         })
@@ -519,7 +565,7 @@
 
             mounted() {
                 this.resetForm();
-                this._openTaskListener = () => this.openModal();
+                this._openTaskListener = (event) => this.openModal(event?.detail?.activity || null);
                 window.addEventListener('open-task-activity', this._openTaskListener);
                 window.addEventListener('click', this.handleOutsideClick);
             },
