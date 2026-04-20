@@ -25,6 +25,7 @@ use Webkul\Admin\Http\Resources\UserResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Repositories\OrganizationRepository;
 use Webkul\Contact\Repositories\PersonRepository;
+use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Repositories\UserRepository;
 
 class ActivityController extends Controller
@@ -40,6 +41,7 @@ class ActivityController extends Controller
         protected AttributeRepository $attributeRepository,
         protected OrganizationRepository $organizationRepository,
         protected PersonRepository $personRepository,
+        protected LeadRepository $leadRepository,
         protected UserRepository $userRepository,
     ) {}
 
@@ -372,12 +374,23 @@ class ActivityController extends Controller
     public function edit(int $id): View
     {
         $activity = $this->activityRepository->findOrFail($id);
+        $activity->load(['participants.user', 'participants.person']);
+
+        $activityEntity = null;
+
+        if ($activity->entity_type === 'organizations' && $activity->entity_id) {
+            $activityEntity = $this->organizationRepository->find($activity->entity_id);
+        } elseif ($activity->entity_type === 'persons' && $activity->entity_id) {
+            $activityEntity = $this->personRepository->find($activity->entity_id);
+        } elseif ($activity->entity_type === 'leads' && $activity->entity_id) {
+            $activityEntity = $this->leadRepository->find($activity->entity_id);
+        }
 
         $leadId = old('lead_id') ?? optional($activity->leads()->first())->id;
 
         $lookUpEntityData = $this->attributeRepository->getLookUpEntity('leads', $leadId);
 
-        return view('admin::activities.edit', compact('activity', 'lookUpEntityData'));
+        return view('admin::activities.edit', compact('activity', 'activityEntity', 'lookUpEntityData'));
     }
 
     /**

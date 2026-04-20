@@ -312,7 +312,7 @@
         </div>
 
         <!-- Right Panel: Actions & Related Lists -->
-        <div class="flex min-w-[320px] max-w-[340px] flex-col gap-4">
+        <div class="flex min-w-[320px] max-w-[340px] flex-col gap-4" style="width: 30% !important;">
             <!-- Header actions similar to Salesforce: New Contact, Edit, Delete -->
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col">

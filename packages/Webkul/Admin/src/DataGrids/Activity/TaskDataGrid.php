@@ -107,7 +107,15 @@ class TaskDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
-            'closure'    => fn ($row) => $row->schedule_from ? core()->formatDate($row->schedule_from) : '-',
+            'closure'    => function ($row) {
+                $dueDate = trim((string) ($row->schedule_from ?? ''));
+
+                if ($dueDate === '' || $dueDate === '-' || strtotime($dueDate) === false) {
+                    return '-';
+                }
+
+                return core()->formatDate($dueDate);
+            },
         ]);
 
         $this->addColumn([
@@ -127,7 +135,9 @@ class TaskDataGrid extends DataGrid
                     return "<span class='rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>Done</span>";
                 }
 
-                if (! empty($row->schedule_from) && now()->gt(\Carbon\Carbon::parse($row->schedule_from))) {
+                $dueDate = trim((string) ($row->schedule_from ?? ''));
+
+                if ($dueDate !== '' && $dueDate !== '-' && strtotime($dueDate) !== false && now()->gt(\Carbon\Carbon::parse($dueDate))) {
                     return "<span class='rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'>Overdue</span>";
                 }
 
@@ -160,6 +170,16 @@ class TaskDataGrid extends DataGrid
                 'url'    => fn ($row) => route('admin.activities.edit', $row->id),
             ]);
         }
+
+        if (bouncer()->hasPermission('activities.delete')) {
+            $this->addAction([
+                'index'  => 'delete',
+                'icon'   => 'icon-delete',
+                'title'  => trans('admin::app.activities.index.datagrid.delete'),
+                'method' => 'DELETE',
+                'url'    => fn ($row) => route('admin.activities.delete', $row->id),
+            ]);
+        }
     }
 
     /**
@@ -167,6 +187,15 @@ class TaskDataGrid extends DataGrid
      */
     public function prepareMassActions(): void
     {
+        if (bouncer()->hasPermission('activities.delete')) {
+            $this->addMassAction([
+                'icon'   => 'icon-delete',
+                'title'  => trans('admin::app.activities.index.datagrid.mass-delete'),
+                'method' => 'POST',
+                'url'    => route('admin.activities.mass_delete'),
+            ]);
+        }
+
         if (bouncer()->hasPermission('activities.edit')) {
             $this->addMassAction([
                 'title'   => trans('admin::app.activities.index.datagrid.mass-update'),

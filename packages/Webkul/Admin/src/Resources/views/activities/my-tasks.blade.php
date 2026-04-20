@@ -28,20 +28,59 @@
             </div>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-3">
-            <div class="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-4 shadow-sm dark:border-blue-900/40 dark:from-gray-900 dark:to-gray-900">
-                <div class="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">Total Tasks</div>
-                <div class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ $allTasksCount }}</div>
+        <div class="grid grid-cols-3 gap-4">
+            <div class="group relative overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brandColor/40 hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
+                <div class="absolute inset-x-0 top-0 h-1 bg-brandColor"></div>
+
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Tasks</div>
+                        <div class="mt-2 text-3xl font-bold leading-none text-gray-900 dark:text-white">{{ $allTasksCount }}</div>
+                    </div>
+
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brandColor/10 text-brandColor dark:bg-brandColor/15">
+                        <span class="icon-calendar text-xl"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 h-px w-full bg-gray-100 dark:bg-gray-800"></div>
+                <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">All assigned tasks in one place.</div>
             </div>
 
-            <div class="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-4 shadow-sm dark:border-emerald-900/40 dark:from-gray-900 dark:to-gray-900">
-                <div class="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Upcoming Open</div>
-                <div class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ $upcomingTasksCount }}</div>
+            <div class="group relative overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-400/40 hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
+                <div class="absolute inset-x-0 top-0 h-1 bg-emerald-500"></div>
+
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Upcoming Open</div>
+                        <div class="mt-2 text-3xl font-bold leading-none text-gray-900 dark:text-white">{{ $upcomingTasksCount }}</div>
+                    </div>
+
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                        <span class="icon-check text-xl"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 h-px w-full bg-gray-100 dark:bg-gray-800"></div>
+                <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">Tasks due today or later.</div>
             </div>
 
-            <div class="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4 shadow-sm dark:border-amber-900/40 dark:from-gray-900 dark:to-gray-900">
-                <div class="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">Overdue Open</div>
-                <div class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ $overdueTasksCount }}</div>
+            <div class="group relative overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-400/40 hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
+                <div class="absolute inset-x-0 top-0 h-1 bg-amber-500"></div>
+
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Overdue Open</div>
+                        <div class="mt-2 text-3xl font-bold leading-none text-gray-900 dark:text-white">{{ $overdueTasksCount }}</div>
+                    </div>
+
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                        <span class="icon-warning text-xl"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 h-px w-full bg-gray-100 dark:bg-gray-800"></div>
+                <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">Tasks that need attention now.</div>
             </div>
         </div>
 
