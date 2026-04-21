@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Controllers\Activity;
 
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\DB;
@@ -195,7 +196,7 @@ class ActivityController extends Controller
     {
         $this->validate(request(), [
             'type'          => 'required|in:call,meeting,note,file,task',
-            'title'         => 'required_unless:type,file|max:200',
+            'title'         => 'required_unless:type,file,note|max:200',
             'comment'       => 'required_if:type,note',
             'schedule_from' => 'required_if:type,meeting,task',
             'schedule_to'   => 'required_if:type,meeting',
@@ -235,7 +236,15 @@ class ActivityController extends Controller
 
         Event::dispatch('activity.create.before');
 
-        $payload = request()->all();
+        $payload = request()->except('file');
+
+        if (request()->hasFile('file')) {
+            $uploadedFile = request()->file('file');
+
+            if ($uploadedFile instanceof UploadedFile && $uploadedFile->isValid() && $uploadedFile->getRealPath()) {
+                $payload['file'] = $uploadedFile;
+            }
+        }
 
         if (empty($payload['entity_type']) && empty($payload['entity_id'])) {
             if (! empty($payload['organization_id'])) {
@@ -374,7 +383,7 @@ class ActivityController extends Controller
     public function edit(int $id): View
     {
         $activity = $this->activityRepository->findOrFail($id);
-        $activity->load(['participants.user', 'participants.person']);
+        $activity->load(['participants.user', 'participants.person', 'files', 'organizations', 'persons', 'leads']);
 
         $activityEntity = null;
 
@@ -389,8 +398,45 @@ class ActivityController extends Controller
         $leadId = old('lead_id') ?? optional($activity->leads()->first())->id;
 
         $lookUpEntityData = $this->attributeRepository->getLookUpEntity('leads', $leadId);
+        $entityControlName = match ($activity->entity_type) {
+            'organizations' => 'organization_id',
+            'persons'       => 'person_id',
+            'leads'         => 'lead_id',
+            default         => null,
+        };
+        $organizations = $this->organizationRepository
+            ->scopeQuery(fn ($query) => $query->orderBy('name'))
+            ->all();
 
-        return view('admin::activities.edit', compact('activity', 'activityEntity', 'lookUpEntityData'));
+        $persons = $this->personRepository
+            ->scopeQuery(fn ($query) => $query->orderBy('first_name')->orderBy('last_name'))
+            ->all();
+
+        $leads = $this->leadRepository
+            ->scopeQuery(fn ($query) => $query->orderBy('title'))
+            ->all();
+
+        $employeeUsers = $this->userRepository
+            ->scopeQuery(function ($query) {
+                return $query
+                    ->select('users.*')
+                    ->join('roles', 'roles.id', '=', 'users.role_id')
+                    ->where('users.status', 1)
+                    ->where('roles.description', 'like', '%Employee%')
+                    ->orderBy('users.name');
+            })
+            ->all();
+
+        return view('admin::activities.edit', compact(
+            'activity',
+            'activityEntity',
+            'lookUpEntityData',
+            'entityControlName',
+            'organizations',
+            'persons',
+            'leads',
+            'employeeUsers'
+        ));
     }
 
     /**
@@ -400,7 +446,28 @@ class ActivityController extends Controller
     {
         Event::dispatch('activity.update.before', $id);
 
-        $data = request()->all();
+        $data = request()->except('file');
+
+        if (request()->hasFile('file')) {
+            $uploadedFile = request()->file('file');
+
+            if ($uploadedFile instanceof UploadedFile && $uploadedFile->isValid() && $uploadedFile->getRealPath()) {
+                $data['file'] = $uploadedFile;
+            }
+        }
+
+        if (empty($data['entity_type']) && empty($data['entity_id'])) {
+            if (! empty($data['organization_id'])) {
+                $data['entity_type'] = 'organizations';
+                $data['entity_id'] = $data['organization_id'];
+            } elseif (! empty($data['person_id'])) {
+                $data['entity_type'] = 'persons';
+                $data['entity_id'] = $data['person_id'];
+            } elseif (! empty($data['lead_id'])) {
+                $data['entity_type'] = 'leads';
+                $data['entity_id'] = $data['lead_id'];
+            }
+        }
 
         $activity = $this->activityRepository->update($data, $id);
 
@@ -417,6 +484,22 @@ class ActivityController extends Controller
             );
         }
 
+        if (isset($data['organization_id'])) {
+            $activity->organizations()->sync(
+                ! empty($data['organization_id'])
+                    ? [$data['organization_id']]
+                    : []
+            );
+        }
+
+        if (isset($data['person_id'])) {
+            $activity->persons()->sync(
+                ! empty($data['person_id'])
+                    ? [$data['person_id']]
+                    : []
+            );
+        }
+
         Event::dispatch('activity.update.after', $activity);
 
         if (request()->ajax()) {
@@ -428,7 +511,7 @@ class ActivityController extends Controller
 
         session()->flash('success', trans('admin::app.activities.update-success'));
 
-        return redirect()->route('admin.activities.index');
+        return redirect()->route('admin.activities.edit', $activity->id);
     }
 
     /**

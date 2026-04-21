@@ -25,6 +25,15 @@
                     <span class="icon-calendar text-lg"></span>
                     Events
                 </a>
+
+                <button
+                    type="button"
+                    class="primary-button"
+                    onclick="window.dispatchEvent(new Event('open-task-activity'))"
+                >
+                    <span class="icon-add text-lg"></span>
+                    New Task
+                </button>
             </div>
         </div>
 
@@ -88,6 +97,10 @@
             <x-admin::datagrid :src="route('admin.activities.my_tasks_data')">
                 <x-admin::shimmer.datagrid />
             </x-admin::datagrid>
+        </div>
+
+        <div class="hidden">
+            <x-admin::activities.actions.task :entity="(object) []" entity-control-name="" />
         </div>
     </div>
 </x-admin::layouts>

@@ -130,12 +130,11 @@
                                     @lang('admin::app.components.activities.actions.file.file')
                                 </x-admin::form.control-group.label>
 
-                                <x-admin::form.control-group.control
-                                    type="file"
+                                <input
                                     id="file"
                                     name="file"
-                                    ::rules="editingActivityId ? '' : 'required'"
-                                    :label="trans('admin::app.components.activities.actions.file.file')"
+                                    type="file"
+                                    class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-brandColor file:px-3 file:py-2 file:text-white dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                                 />
 
                                 <x-admin::form.control-group.error control-name="file" />
@@ -188,26 +187,38 @@
                 return {
                     isStoring: false,
                     editingActivityId: null,
+                    currentEntityType: null,
+                    currentEntityId: null,
                 }
             },
 
             computed: {
                 entityType() {
-                    // Determine entity type based on the entity object
+                    if (this.currentEntityType) {
+                        return this.currentEntityType;
+                    }
+
                     if (this.entity && this.entity.billing_street !== undefined) {
                         return 'organizations';
                     }
+
+                    if (this.entity && (this.entity.lead_pipeline_id !== undefined || this.entity.lead_pipeline_stage_id !== undefined)) {
+                        return 'leads';
+                    }
+
                     return 'persons';
                 },
 
                 entityId() {
-                    return this.entity?.id || null;
+                    return this.currentEntityId || this.entity?.id || null;
                 },
             },
 
             methods: {
                 openModal(activity = null) {
                     this.editingActivityId = activity?.id || null;
+                    this.currentEntityType = activity?.entity_type || null;
+                    this.currentEntityId = activity?.entity_id || this.entity?.id || null;
 
                     if (this.$refs.fileActivityModal && typeof this.$refs.fileActivityModal.open === 'function') {
                         this.$refs.fileActivityModal.open();
@@ -229,6 +240,7 @@
                         const titleInput = formElement.querySelector('[name="title"]');
                         const commentInput = formElement.querySelector('[name="comment"]');
                         const nameInput = formElement.querySelector('[name="name"]');
+                        const fileInput = formElement.querySelector('[name="file"]');
 
                         if (titleInput) {
                             titleInput.value = activity?.title || '';
@@ -244,10 +256,14 @@
                             nameInput.value = activity?.files?.[0]?.name || '';
                             nameInput.dispatchEvent(new Event('input', { bubbles: true }));
                         }
+
+                        if (fileInput) {
+                            fileInput.value = '';
+                        }
                     });
                 },
 
-                save(params, { setErrors }) {
+                save(params, { setErrors } = {}) {
                     this.isStoring = true;
 
                     const isEditing = !! this.editingActivityId;
@@ -256,13 +272,14 @@
                         ? "{{ route('admin.activities.update', '__id__') }}".replace('__id__', String(this.editingActivityId))
                         : "{{ route('admin.activities.store') }}";
 
-                    // Explicitly add entity type and id to the params
-                    const payload = {
-                        ...params,
-                        entity_type: this.entityType,
-                        entity_id: this.entityId,
-                        ...(isEditing ? { _method: 'PUT' } : {}),
-                    };
+                    const payload = new FormData(this.$refs.fileFormElement);
+
+                    payload.set('entity_type', this.entityType || '');
+                    payload.set('entity_id', this.entityId || '');
+
+                    if (isEditing) {
+                        payload.set('_method', 'PUT');
+                    }
 
                     this.$axios.post(requestUrl, payload, {
                             headers: {
@@ -287,10 +304,20 @@
                         .catch (error => {
                             this.isStoring = false;
 
-                            if (error.response.status == 422) {
-                                setErrors(error.response.data.errors);
+                            if (error.response?.status == 422) {
+                                if (typeof setErrors === 'function') {
+                                    setErrors(error.response.data.errors || {});
+                                }
+
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: Object.values(error.response?.data?.errors || {}).flat()[0] || error.response?.data?.message || 'Validation failed',
+                                });
                             } else {
-                                this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: error.response?.data?.message || 'Failed to save file',
+                                });
 
                                 this.$refs.fileActivityModal.close();
                             }

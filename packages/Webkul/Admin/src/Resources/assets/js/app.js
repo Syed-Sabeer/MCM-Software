@@ -31,6 +31,17 @@ window.app = createApp({
     methods: {
         onSubmit() {},
 
+        handleSidebarItemClick(menuKey, hasChildren, event) {
+            if (!hasChildren) {
+                return;
+            }
+
+            event.preventDefault();
+
+            this.hoveringMenu = this.hoveringMenu === menuKey ? '' : menuKey;
+            this.isMenuActive = this.hoveringMenu !== '';
+        },
+
         onInvalidSubmit({ values, errors, results }) {
             setTimeout(() => {
                 const errorKeys = Object.entries(errors)
@@ -94,6 +105,7 @@ window.app = createApp({
                 !sidebar.contains(event.target)
             ) {
                 this.isMenuActive = false;
+                this.hoveringMenu = '';
 
                 const parentElement = sidebar.parentElement;
 

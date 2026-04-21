@@ -3,6 +3,7 @@
 namespace Webkul\Activity\Repositories;
 
 use Illuminate\Container\Container;
+use Illuminate\Support\Facades\Storage;
 use Webkul\Core\Eloquent\Repository;
 
 class ActivityRepository extends Repository
@@ -75,6 +76,32 @@ class ActivityRepository extends Repository
     public function update(array $data, $id, $attribute = 'id')
     {
         $activity = parent::update($data, $id);
+
+        if (isset($data['file']) || array_key_exists('name', $data)) {
+            $existingFile = $activity->files()->first();
+
+            if (isset($data['file'])) {
+                if ($existingFile?->path) {
+                    Storage::delete($existingFile->path);
+                }
+
+                $fileData = [
+                    'name'        => $data['name'] ?? $data['file']->getClientOriginalName(),
+                    'path'        => $data['file']->store('activities/'.$activity->id),
+                    'activity_id' => $activity->id,
+                ];
+
+                if ($existingFile) {
+                    $existingFile->update($fileData);
+                } else {
+                    $this->fileRepository->create($fileData);
+                }
+            } elseif ($existingFile && array_key_exists('name', $data) && ! empty($data['name'])) {
+                $existingFile->update([
+                    'name' => $data['name'],
+                ]);
+            }
+        }
 
         if (isset($data['participants'])) {
             $activity->participants()->delete();
