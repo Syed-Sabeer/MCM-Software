@@ -82,18 +82,8 @@ window.app = createApp({
 
         },
 
-        handleMouseLeave(event) {
-            if (this.isMenuActive) {
-                return;
-            }
-
-            const parentElement = event.currentTarget.parentElement;
-
-            if (parentElement.classList.contains('sidebar-not-collapsed')) {
-                parentElement.classList.remove('sidebar-not-collapsed');
-
-                parentElement.classList.add('sidebar-collapsed');
-            }
+        handleMouseLeave() {
+            // Keep desktop sidebar permanently expanded.
         },
 
         handleFocusOut(event) {
@@ -107,10 +97,10 @@ window.app = createApp({
 
                 const parentElement = sidebar.parentElement;
 
-                if (parentElement.classList.contains('sidebar-not-collapsed')) {
-                    parentElement.classList.remove('sidebar-not-collapsed');
+                if (parentElement.classList.contains('sidebar-collapsed')) {
+                    parentElement.classList.remove('sidebar-collapsed');
 
-                    parentElement.classList.add('sidebar-collapsed');
+                    parentElement.classList.add('sidebar-not-collapsed');
                 }
             }
         },

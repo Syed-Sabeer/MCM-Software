@@ -83,6 +83,17 @@
     <style>
         :root {
             --brand-color: {{ $brandColor }};
+            --admin-sidebar-width: 200px;
+        }
+
+        @media (min-width: 1024px) {
+            html[dir='ltr'] .admin-main-content {
+                margin-left: var(--admin-sidebar-width);
+            }
+
+            html[dir='rtl'] .admin-main-content {
+                margin-right: var(--admin-sidebar-width);
+            }
         }
 
         {!! core()->getConfigData('general.content.custom_scripts.custom_css') !!}
@@ -110,15 +121,15 @@
         <x-admin::layouts.header />
 
         <div
-            class="group/container sidebar-collapsed flex gap-4"
+            class="group/container sidebar-not-collapsed flex gap-4"
             ref="appLayout"
         >
             <!-- Page Sidebar Blade Component -->
             <x-admin::layouts.sidebar.desktop />
 
-            <div class="flex min-h-[calc(100vh-62px)] max-w-full flex-1 flex-col bg-gray-100 pt-3 transition-all duration-300 dark:bg-gray-950">
+            <div class="admin-main-content flex min-h-[calc(100vh-62px)] max-w-full flex-1 flex-col bg-gray-100 pt-3 transition-all duration-300 dark:bg-gray-950">
                 <!-- Page Content Blade Component -->
-                <div class="px-4 pb-6 ltr:lg:pl-[85px] rtl:lg:pr-[85px]">
+                <div class="px-4 pb-6">
                     {{ $slot }}
                 </div>
 
