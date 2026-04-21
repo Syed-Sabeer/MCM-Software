@@ -34,9 +34,9 @@
                     Edit {{ $activityLabel }}
                 </div>
 
-                <p class="text-sm text-gray-600 dark:text-gray-300">
+                {{-- <p class="text-sm text-gray-600 dark:text-gray-300">
                     Activity #{{ $activity->id }} uses the same field layout as your company activity forms.
-                </p>
+                </p> --}}
             </div>
         </div>
 
@@ -102,9 +102,9 @@
                             <p class="text-base font-semibold text-gray-900 dark:text-white">
                                 @{{ typeLabel }} Details
                             </p>
-                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                            {{-- <p class="text-sm text-gray-600 dark:text-gray-300">
                                 Type: @{{ activity.type }}
-                            </p>
+                            </p> --}}
                         </div>
 
                         <button type="submit" class="primary-button">
