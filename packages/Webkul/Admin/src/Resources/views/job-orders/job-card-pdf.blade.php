@@ -58,10 +58,7 @@
         </thead>
         <tbody>
             @forelse ($jobOrder->jobCards as $jobCard)
-                @php
-                    $itemCode = optional($jobCard->jobOrderItem)->display_code;
-                    $itemLabel = $itemCode && $itemCode !== '-' ? $itemCode : ($jobCard->title ?: 'Job Card');
-                @endphp
+                @php($itemLabel = $jobCard->display_item_label)
                 @foreach ($jobCard->sections as $section)
                     @forelse ($section->items as $sectionItem)
                         <tr>

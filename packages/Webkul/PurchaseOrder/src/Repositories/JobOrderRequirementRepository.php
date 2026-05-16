@@ -24,8 +24,23 @@ class JobOrderRequirementRepository extends Repository
     public function regenerateForJobOrder(JobOrder $jobOrder): void
     {
         DB::transaction(function () use ($jobOrder) {
+            $existingByKey = $jobOrder->requirements()
+                ->get()
+                ->mapWithKeys(function ($requirement) {
+                    $key = implode('|', [
+                        (string) ($requirement->material_reference_id ?: ''),
+                        mb_strtolower(trim((string) ($requirement->material_name ?: ''))),
+                        mb_strtolower(trim((string) ($requirement->color_name ?: ''))),
+                        mb_strtolower(trim((string) ($requirement->color_code ?: ''))),
+                        mb_strtolower(trim((string) ($requirement->unit ?: ''))),
+                        number_format((float) $requirement->qty_per_unit, 4, '.', ''),
+                    ]);
+
+                    return [$key => (float) $requirement->received_qty];
+                });
+
             $jobOrder->requirements()->delete();
-            $jobOrder->loadMissing('items');
+            $jobOrder->loadMissing('items.proformaInvoiceItem');
 
             $sortOrder = 0;
             $aggregatedRequirements = [];
@@ -36,6 +51,7 @@ class JobOrderRequirementRepository extends Repository
                 }
 
                 $product = Product::with('consumptions')->find($jobOrderItem->product_id);
+                $itemColorName = trim((string) ($jobOrderItem->color_variant_name ?: ''));
 
                 foreach ($product?->consumptions ?? [] as $consumption) {
                     $orderedQty = (float) $jobOrderItem->qty;
@@ -43,6 +59,9 @@ class JobOrderRequirementRepository extends Repository
                     $requiredQty = $qtyPerUnit * $orderedQty;
                     $materialName = trim((string) $consumption->name);
                     $colorName = trim((string) ($consumption->color_name ?: ''));
+                    if ($colorName === '' && $itemColorName !== '') {
+                        $colorName = $itemColorName;
+                    }
                     $colorCode = trim((string) ($consumption->color_code ?: ''));
                     $key = implode('|', [
                         (string) ($consumption->material_reference_id ?: ''),
@@ -54,6 +73,8 @@ class JobOrderRequirementRepository extends Repository
                     ]);
 
                     if (! isset($aggregatedRequirements[$key])) {
+                        $existingReceivedQty = (float) ($existingByKey[$key] ?? 0);
+
                         $aggregatedRequirements[$key] = [
                             'job_order_id' => $jobOrder->id,
                             'job_order_item_id' => $jobOrderItem->id,
@@ -65,7 +86,7 @@ class JobOrderRequirementRepository extends Repository
                             'qty_per_unit' => $qtyPerUnit,
                             'ordered_qty' => 0,
                             'required_qty' => 0,
-                            'received_qty' => 0,
+                            'received_qty' => $existingReceivedQty,
                             'balance_qty' => 0,
                             'vendor_ids' => [],
                             'color_name' => $colorName !== '' ? $colorName : null,
@@ -86,6 +107,13 @@ class JobOrderRequirementRepository extends Repository
             }
 
             foreach ($aggregatedRequirements as $requirement) {
+                $requiredQty = (float) $requirement['required_qty'];
+                $receivedQty = min((float) $requirement['received_qty'], $requiredQty);
+                $balanceQty = max($requiredQty - $receivedQty, 0);
+                $status = $balanceQty <= 0
+                    ? 'fulfilled'
+                    : ($receivedQty > 0 ? 'partial' : 'pending');
+
                 $this->create([
                     'job_order_id' => $requirement['job_order_id'],
                     'job_order_item_id' => $requirement['job_order_item_id'],
@@ -96,13 +124,13 @@ class JobOrderRequirementRepository extends Repository
                     'unit' => $requirement['unit'],
                     'qty_per_unit' => $requirement['qty_per_unit'],
                     'ordered_qty' => $requirement['ordered_qty'],
-                    'required_qty' => $requirement['required_qty'],
-                    'received_qty' => 0,
-                    'balance_qty' => $requirement['balance_qty'],
+                    'required_qty' => $requiredQty,
+                    'received_qty' => $receivedQty,
+                    'balance_qty' => $balanceQty,
                     'vendor_ids' => $requirement['vendor_ids'] ?: null,
                     'color_name' => $requirement['color_name'],
                     'color_code' => $requirement['color_code'],
-                    'status' => 'pending',
+                    'status' => $status,
                     'sort_order' => $sortOrder++,
                 ]);
             }

@@ -38,7 +38,7 @@
             ];
         });
 
-    $quotes = $quoteModels->map(function ($quoteRow) use ($productPayload, $chargeManager) {
+    $quotes = $quoteModels->map(function ($quoteRow) use ($productPayload, $chargeManager, $addressManager) {
         return [
             'id' => $quoteRow->id,
             'quote_number' => $quoteRow->quote_number,
@@ -266,7 +266,7 @@
 
                     <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; margin-top: 16px;">
                         <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.label>Bill To Address</x-admin::form.control-group.label>
+                            <x-admin::form.control-group.label><b>Bill To Address</b></x-admin::form.control-group.label>
                             <select class="custom-select" v-model="form.billing_address.key" @change="applyAddressSelection('billing', form.billing_address.key)">
                                 <option value="">Select billing address</option>
                                 <option v-for="option in addressOptions" :key="`billing-${option.key}`" :value="option.key">@{{ option.label }}</option>
@@ -275,7 +275,7 @@
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.label>Ship To Address</x-admin::form.control-group.label>
+                            <x-admin::form.control-group.label><b>Ship To Address</b></x-admin::form.control-group.label>
                             <select class="custom-select" v-model="form.shipping_address.key" @change="applyAddressSelection('shipping', form.shipping_address.key)">
                                 <option value="">Select shipping address</option>
                                 <option v-for="option in addressOptions" :key="`shipping-${option.key}`" :value="option.key">@{{ option.label }}</option>

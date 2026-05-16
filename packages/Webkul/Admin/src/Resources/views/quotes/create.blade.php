@@ -2,8 +2,9 @@
     $quote = app('\Webkul\Quote\Repositories\QuoteRepository')->getModel();
     $addressManager = app(\Webkul\Core\Support\DocumentAddressManager::class);
     $initialQuoteCharges = collect(old('charges', []))->values()->all();
-    $initialBillingAddress = old('billing_address', ['key' => null, 'label' => null, 'type' => 'billing', 'address' => '']);
-    $initialShippingAddress = old('shipping_address', ['key' => null, 'label' => null, 'type' => 'shipping', 'address' => '']);
+    $initialBillingAddress = old('billing_address', ['key' => null, 'label' => null, 'type' => 'billing', 'address' => '', 'street' => null, 'city' => null, 'state' => null, 'postcode' => null, 'country' => null]);
+    $initialShippingAddress = old('shipping_address', ['key' => null, 'label' => null, 'type' => 'shipping', 'address' => '', 'street' => null, 'city' => null, 'state' => null, 'postcode' => null, 'country' => null]);
+    $selectedCustomerId = old('organization_id', $lead?->organization_id ?? null);
 
     $quote->fill([
         'quote_number' => \Webkul\Quote\Models\Quote::generateNextQuoteNumber(),
@@ -92,6 +93,7 @@
             <v-quote
                 :errors="errors"
                 :customers='@json($customerOrganizations)'
+                :initial-customer-id='@json($selectedCustomerId)'
                 :initial-billing-address='@json($initialBillingAddress)'
                 :initial-shipping-address='@json($initialShippingAddress)'
             >
@@ -113,10 +115,20 @@
                     <input type="hidden" name="billing_address[label]" :value="billingAddress.label || ''">
                     <input type="hidden" name="billing_address[type]" :value="billingAddress.type || ''">
                     <input type="hidden" name="billing_address[address]" :value="billingAddress.address || ''">
+                    <input type="hidden" name="billing_address[street]" :value="billingAddress.street || ''">
+                    <input type="hidden" name="billing_address[city]" :value="billingAddress.city || ''">
+                    <input type="hidden" name="billing_address[state]" :value="billingAddress.state || ''">
+                    <input type="hidden" name="billing_address[postcode]" :value="billingAddress.postcode || ''">
+                    <input type="hidden" name="billing_address[country]" :value="billingAddress.country || ''">
                     <input type="hidden" name="shipping_address[key]" :value="shippingAddress.key || ''">
                     <input type="hidden" name="shipping_address[label]" :value="shippingAddress.label || ''">
                     <input type="hidden" name="shipping_address[type]" :value="shippingAddress.type || ''">
                     <input type="hidden" name="shipping_address[address]" :value="shippingAddress.address || ''">
+                    <input type="hidden" name="shipping_address[street]" :value="shippingAddress.street || ''">
+                    <input type="hidden" name="shipping_address[city]" :value="shippingAddress.city || ''">
+                    <input type="hidden" name="shipping_address[state]" :value="shippingAddress.state || ''">
+                    <input type="hidden" name="shipping_address[postcode]" :value="shippingAddress.postcode || ''">
+                    <input type="hidden" name="shipping_address[country]" :value="shippingAddress.country || ''">
 
                     <div class="document-form-row-3 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px;">
                         <x-admin::form.control-group class="!mb-0">
@@ -190,19 +202,19 @@
 
                     <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; margin-top: 16px;">
                         <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.label>Bill To Address</x-admin::form.control-group.label>
+                            <x-admin::form.control-group.label><b>Bill To Address</b></x-admin::form.control-group.label>
                             <select class="custom-select" v-model="billingAddress.key" @change="applyAddressSelection('billing', billingAddress.key)">
                                 <option value="">Select billing address</option>
-                                <option v-for="option in addressOptions" :key="`billing-${option.key}`" :value="option.key">@{{ option.label }}</option>
+                                <option v-for="option in addressOptions" :key="'billing-' + option.key" :value="option.key">@{{ option.label }}</option>
                             </select>
                             <div class="mt-2 whitespace-pre-line text-xs text-gray-500 dark:text-gray-400">@{{ billingAddress.address || 'No billing address available.' }}</div>
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.label>Ship To Address</x-admin::form.control-group.label>
+                            <x-admin::form.control-group.label><b>Ship To Address</b></x-admin::form.control-group.label>
                             <select class="custom-select" v-model="shippingAddress.key" @change="applyAddressSelection('shipping', shippingAddress.key)">
                                 <option value="">Select shipping address</option>
-                                <option v-for="option in addressOptions" :key="`shipping-${option.key}`" :value="option.key">@{{ option.label }}</option>
+                                <option v-for="option in addressOptions" :key="'shipping-' + option.key" :value="option.key">@{{ option.label }}</option>
                             </select>
                             <div class="mt-2 whitespace-pre-line text-xs text-gray-500 dark:text-gray-400">@{{ shippingAddress.address || 'No shipping address available.' }}</div>
                         </x-admin::form.control-group>
@@ -278,22 +290,22 @@
                             <p class="text-base font-semibold">@{{ $admin.formatPrice(subTotal) }}</p>
                         </div>
 
-                        <template v-for="(charge, chargeIndex) in charges" :key="`charge-${chargeIndex}`">
+                        <template v-for="(charge, chargeIndex) in charges" :key="'charge-' + chargeIndex">
                             <div class="document-summary-line" style="display: grid; grid-template-columns: minmax(180px, 1.2fr) 110px 110px 120px 36px; align-items: center; gap: 10px;">
                                 <div>
                                     <input type="text" v-model="charge.name" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="Charge name">
-                                    <input type="hidden" :name="`charges[${chargeIndex}][name]`" :value="charge.name">
+                                    <input type="hidden" :name="'charges[' + chargeIndex + '][name]'" :value="charge.name">
                                 </div>
                                 <div>
                                     <select v-model="charge.type" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800">
                                         <option value="percentage">Percentage</option>
                                         <option value="value">Value</option>
                                     </select>
-                                    <input type="hidden" :name="`charges[${chargeIndex}][type]`" :value="charge.type">
+                                    <input type="hidden" :name="'charges[' + chargeIndex + '][type]'" :value="charge.type">
                                 </div>
                                 <div>
                                     <input type="number" min="0" step="0.01" v-model="charge.value" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="0.00">
-                                    <input type="hidden" :name="`charges[${chargeIndex}][value]`" :value="charge.value || 0">
+                                    <input type="hidden" :name="'charges[' + chargeIndex + '][value]'" :value="charge.value || 0">
                                 </div>
                                 <div class="text-right font-medium">@{{ $admin.formatPrice(chargeAmount(charge)) }}</div>
                                 <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-xl hover:bg-gray-200 dark:hover:bg-gray-800" @click="removeCharge(chargeIndex)">
@@ -335,13 +347,13 @@
                             :selected-product="product"
                             @on-selected="(product) => addProduct(product)"
                         ></v-quote-product-lookup>
-                        <input type="hidden" :name="`${inputName}[product_id]`" :value="product.product_id || ''">
-                        <input type="text" :name="`${inputName}[item_name]`" v-model="product.name" class="mt-2 w-full rounded border border-gray-200 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="Product name">
+                        <input type="hidden" :name="inputName + '[product_id]'" :value="product.product_id || ''">
+                        <input type="text" :name="inputName + '[item_name]'" v-model="product.name" class="mt-2 w-full rounded border border-gray-200 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="Product name">
                     </div>
                 </x-admin::table.td>
 
                 <x-admin::table.td class="!px-2">
-                    <input type="hidden" :name="`${inputName}[preview_image]`" :value="product.preview_image || ''">
+                    <input type="hidden" :name="inputName + '[preview_image]'" :value="product.preview_image || ''">
                     <img v-if="product.preview_image" :key="product.preview_image" :src="product.preview_image" class="mx-auto h-12 w-12 rounded object-cover border border-gray-200" alt="preview">
                     <span v-else class="text-xs text-gray-500">No image</span>
                 </x-admin::table.td>
@@ -352,19 +364,19 @@
                             <option value="">No Color</option>
                             <option v-for="color in (product.available_colors || [])" :key="color.id" :value="String(color.id)">@{{ color.name }}</option>
                         </select>
-                        <input type="hidden" :name="`${inputName}[color_variant_id]`" :value="product.selected_color_id || ''">
-                        <input type="hidden" :name="`${inputName}[color_variant_name]`" :value="product.selected_color_name || ''">
+                        <input type="hidden" :name="inputName + '[color_variant_id]'" :value="product.selected_color_id || ''">
+                        <input type="hidden" :name="inputName + '[color_variant_name]'" :value="product.selected_color_name || ''">
                     </x-admin::form.control-group>
                 </x-admin::table.td>
 
-                <input type="hidden" :name="`${inputName}[item_code]`" :value="product.item_code || ''">
+                <input type="hidden" :name="inputName + '[item_code]'" :value="product.item_code || ''">
 
                 <x-admin::table.td class="!px-2 text-center">
                     <input
                         type="number"
                         min="1"
                         step="1"
-                        :name="`${inputName}[quantity]`"
+                        :name="inputName + '[quantity]'"
                         v-model.number="product.quantity"
                         class="w-full rounded border border-gray-200 px-2 py-1 text-center text-sm dark:border-gray-700 dark:bg-gray-800"
                     >
@@ -375,7 +387,7 @@
                         type="number"
                         min="0"
                         step="0.01"
-                        :name="`${inputName}[price]`"
+                        :name="inputName + '[price]'"
                         v-model="product.price"
                         class="w-full rounded border border-gray-200 px-2 py-1 text-center text-sm dark:border-gray-700 dark:bg-gray-800"
                     >
@@ -385,9 +397,9 @@
                     @{{ $admin.formatPrice(product.price * product.quantity) }}
                 </x-admin::table.td>
 
-                <input type="hidden" :name="`${inputName}[discount_amount]`" value="0">
-                <input type="hidden" :name="`${inputName}[tax_amount]`" value="0">
-                <input type="hidden" :name="`${inputName}[final_total]`" :value="parseFloat(product.price * product.quantity)">
+                <input type="hidden" :name="inputName + '[discount_amount]'" value="0">
+                <input type="hidden" :name="inputName + '[tax_amount]'" value="0">
+                <input type="hidden" :name="inputName + '[final_total]'" :value="parseFloat(product.price * product.quantity)">
 
                 <x-admin::table.td v-if="$parent.products.length > 1" class="!px-2 ltr:text-right rtl:text-left">
                     <x-admin::form.control-group class="!mb-0">
@@ -400,13 +412,15 @@
         <script type="module">
             app.component('v-quote', {
                 template: '#v-quote-template',
-                props: ['errors', 'customers', 'initialBillingAddress', 'initialShippingAddress'],
+                props: ['errors', 'customers', 'initialCustomerId', 'initialBillingAddress', 'initialShippingAddress'],
                 data() {
+                    const initialCustomerId = this.initialCustomerId || '';
+
                     return {
                         customerName: '',
                         customerSearchTerm: '',
                         showCustomerLookup: false,
-                        selectedOrganizationId: '{{ old('organization_id') }}',
+                        selectedOrganizationId: initialCustomerId ? String(initialCustomerId) : '',
                         billingAddress: this.initialBillingAddress || { key: '', label: '', type: 'billing', address: '' },
                         shippingAddress: this.initialShippingAddress || { key: '', label: '', type: 'shipping', address: '' },
                     }
@@ -439,8 +453,9 @@
                     selectCustomer(customer) {
                         this.customerName = customer?.name || '';
                         this.selectedOrganizationId = customer?.id ? String(customer.id) : '';
-                        this.billingAddress = { ...(customer?.default_billing_address || { key: '', label: '', type: 'billing', address: '' }) };
-                        this.shippingAddress = { ...(customer?.default_shipping_address || { key: '', label: '', type: 'shipping', address: '' }) };
+
+                        this.billingAddress = { ...(customer?.default_billing_address || { key: '', label: '', type: 'billing', address: '', street: '', city: '', state: '', postcode: '', country: '' }) };
+                        this.shippingAddress = { ...(customer?.default_shipping_address || { key: '', label: '', type: 'shipping', address: '', street: '', city: '', state: '', postcode: '', country: '' }) };
                         this.customerSearchTerm = '';
                         this.showCustomerLookup = false;
                     },
@@ -448,14 +463,14 @@
                         this.customerName = '';
                         this.selectedOrganizationId = '';
                         this.customerSearchTerm = '';
-                        this.billingAddress = { key: '', label: '', type: 'billing', address: '' };
-                        this.shippingAddress = { key: '', label: '', type: 'shipping', address: '' };
+                        this.billingAddress = { key: '', label: '', type: 'billing', address: '', street: '', city: '', state: '', postcode: '', country: '' };
+                        this.shippingAddress = { key: '', label: '', type: 'shipping', address: '', street: '', city: '', state: '', postcode: '', country: '' };
                     },
                     applyAddressSelection(kind, key) {
                         const option = this.addressOptions.find(address => String(address.key) === String(key));
 
                         if (! option) {
-                            this[kind === 'billing' ? 'billingAddress' : 'shippingAddress'] = { key: '', label: '', type: kind, address: '' };
+                            this[kind === 'billing' ? 'billingAddress' : 'shippingAddress'] = { key: '', label: '', type: kind, address: '', street: '', city: '', state: '', postcode: '', country: '' };
 
                             return;
                         }
@@ -481,7 +496,7 @@
                         const selected = this.customers.find(customer => String(customer.id) === String(this.selectedOrganizationId));
                         this.customerName = selected ? selected.name : '';
 
-                        if ((! this.billingAddress?.address) && selected?.default_billing_address) {
+                            if ((! this.billingAddress?.address) && selected?.default_billing_address) {
                             this.billingAddress = { ...selected.default_billing_address };
                         }
 

@@ -31,6 +31,7 @@ class VendorQuoteRepository extends Repository
     {
         $payload = array_merge([
             'job_order_id' => $jobOrder->id,
+            'organization_id' => $jobOrder->organization_id,
             'issue_date' => now()->toDateString(),
             'status' => 'draft',
             'created_by' => auth()->id(),
@@ -79,11 +80,16 @@ class VendorQuoteRepository extends Repository
             : null;
 
         foreach ($items as $index => $item) {
-            $quantity = (float) ($item['quantity'] ?? 0);
-            $unitPrice = (float) ($item['unit_price'] ?? 0);
+            $materialName = trim((string) ($item['item'] ?? $item['material_name'] ?? ''));
+            $quantity = (float) ($item['ordered_quantity'] ?? $item['quantity'] ?? 0);
+            $unitPrice = (float) ($item['price'] ?? $item['unit_price'] ?? 0);
             $lineTotal = $quantity * $unitPrice;
 
+            $items[$index]['material_name'] = $materialName;
+            $items[$index]['item'] = $materialName;
+            $items[$index]['ordered_quantity'] = $quantity;
             $items[$index]['quantity'] = $quantity;
+            $items[$index]['price'] = $unitPrice;
             $items[$index]['unit_price'] = $unitPrice;
             $items[$index]['total'] = $lineTotal;
 
@@ -113,19 +119,20 @@ class VendorQuoteRepository extends Repository
         $savedIds = [];
 
         foreach ($items as $index => $item) {
-            $quantity = (float) ($item['quantity'] ?? 0);
-            $unitPrice = (float) ($item['unit_price'] ?? 0);
+            $materialName = trim((string) ($item['item'] ?? $item['material_name'] ?? ''));
+            $quantity = (float) ($item['ordered_quantity'] ?? $item['quantity'] ?? 0);
+            $unitPrice = (float) ($item['price'] ?? $item['unit_price'] ?? 0);
             $payload = [
                 'vendor_quote_id' => $vendorQuote->id,
                 'requirement_id' => $item['requirement_id'] ?? null,
-                'material_name' => $item['material_name'] ?? '',
+                'material_name' => $materialName,
                 'description' => $item['description'] ?? null,
                 'quantity' => $quantity,
                 'unit' => $item['unit'] ?? null,
                 'unit_price' => $unitPrice,
                 'total' => $quantity * $unitPrice,
                 'vendor_lead_time' => null,
-                'expected_receive_date' => null,
+                'expected_receive_date' => $item['expected_receive_date'] ?? null,
                 'sort_order' => $index,
             ];
 

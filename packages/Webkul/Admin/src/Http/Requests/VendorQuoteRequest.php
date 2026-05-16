@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -18,9 +19,13 @@ class VendorQuoteRequest extends FormRequest
         return [
             'job_order_id' => ['nullable', 'exists:job_orders,id'],
             'organization_id' => [
-                'required',
+                'nullable',
                 'exists:organizations,id',
                 function ($attribute, $value, $fail) {
+                    if (! $value) {
+                        return;
+                    }
+
                     $type = DB::table('organizations')->where('id', $value)->value('type');
                     if (! in_array($type, ['vendor', 'Vendor'], true)) {
                         $fail('Selected organization must be a vendor.');
@@ -52,10 +57,33 @@ class VendorQuoteRequest extends FormRequest
             'charges.*.value' => ['required_with:charges.*.name,charges.*.type', 'numeric', 'min:0'],
             'status' => ['required', Rule::in(['draft', 'requested', 'received', 'selected', 'rejected', 'cancelled'])],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.material_name' => ['required', 'string'],
-            'items.*.quantity' => ['required', 'numeric', 'gt:0'],
+            'items.*.material_name' => ['nullable', 'string'],
+            'items.*.item' => ['nullable', 'string'],
+            'items.*.quantity' => ['nullable', 'numeric', 'gt:0'],
+            'items.*.ordered_quantity' => ['nullable', 'numeric', 'gt:0'],
             'items.*.unit' => ['nullable', 'string', 'max:100'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
+            'items.*.price' => ['nullable', 'numeric', 'min:0'],
+            'items.*.vendor_id' => ['nullable', 'exists:organizations,id'],
+            'items.*.requirement_id' => ['nullable', 'exists:job_order_requirements,id'],
+            'items.*.id' => ['nullable', 'integer'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $organizationId = $this->input('organization_id');
+            $lineVendorIds = collect($this->input('items', []))
+                ->pluck('vendor_id')
+                ->filter()
+                ->values();
+
+            if ($organizationId || $lineVendorIds->isNotEmpty()) {
+                return;
+            }
+
+            $validator->errors()->add('organization_id', 'Please select a vendor or assign at least one line vendor.');
+        });
     }
 }

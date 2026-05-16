@@ -115,6 +115,12 @@
 
     $selectedCustomerId = old('organization_id', $quote->organization_id);
     $initialQuoteCharges = collect(old('charges', $chargeManager->extract($quote->loadMissing('additionalCharges'), 'quote')))->values()->all();
+
+    $initialBillingAddress = old('billing_address', $quote->billing_address ?: ['key' => null, 'label' => null, 'type' => 'billing', 'address' => '']);
+    $initialShippingAddress = old('shipping_address', $quote->shipping_address ?: ['key' => null, 'label' => null, 'type' => 'shipping', 'address' => '']);
+
+    $initialBillingAddress = old('billing_address', $quote->billing_address ?: ['key' => null, 'label' => null, 'type' => 'billing', 'address' => '']);
+    $initialShippingAddress = old('shipping_address', $quote->shipping_address ?: ['key' => null, 'label' => null, 'type' => 'shipping', 'address' => '']);
 @endphp
 
 <x-admin::layouts>
@@ -186,8 +192,8 @@
                 :customers='@json($customerOrganizations)'
                 :initial-products='@json($quoteItems)'
                 initial-customer-id="{{ $selectedCustomerId }}"
-                :initial-billing-address='@json(old('billing_address', $quote->billing_address ?: ['key' => null, 'label' => null, 'type' => 'billing', 'address' => '']))'
-                :initial-shipping-address='@json(old('shipping_address', $quote->shipping_address ?: ['key' => null, 'label' => null, 'type' => 'shipping', 'address' => '']))'
+                :initial-billing-address='@json($initialBillingAddress)'
+                :initial-shipping-address='@json($initialShippingAddress)'
             >
                 <x-admin::shimmer.quotes />
             </v-quote>
@@ -295,19 +301,19 @@
 
                     <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; margin-top: 16px;">
                         <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.label>Bill To Address</x-admin::form.control-group.label>
+                            <x-admin::form.control-group.label><b>Bill To Address</b></x-admin::form.control-group.label>
                             <select class="custom-select" v-model="billingAddress.key" @change="applyAddressSelection('billing', billingAddress.key)">
                                 <option value="">Select billing address</option>
-                                <option v-for="option in addressOptions" :key="`billing-${option.key}`" :value="option.key">@{{ option.label }}</option>
+                                <option v-for="option in addressOptions" :key="'billing-' + option.key" :value="option.key">@{{ option.label }}</option>
                             </select>
                             <div class="mt-2 whitespace-pre-line text-xs text-gray-500 dark:text-gray-400">@{{ billingAddress.address || 'No billing address available.' }}</div>
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.label>Ship To Address</x-admin::form.control-group.label>
+                            <x-admin::form.control-group.label><b>Ship To Address</b></x-admin::form.control-group.label>
                             <select class="custom-select" v-model="shippingAddress.key" @change="applyAddressSelection('shipping', shippingAddress.key)">
                                 <option value="">Select shipping address</option>
-                                <option v-for="option in addressOptions" :key="`shipping-${option.key}`" :value="option.key">@{{ option.label }}</option>
+                                <option v-for="option in addressOptions" :key="'shipping-' + option.key" :value="option.key">@{{ option.label }}</option>
                             </select>
                             <div class="mt-2 whitespace-pre-line text-xs text-gray-500 dark:text-gray-400">@{{ shippingAddress.address || 'No shipping address available.' }}</div>
                         </x-admin::form.control-group>
@@ -383,22 +389,22 @@
                             <p class="text-base font-semibold">@{{ $admin.formatPrice(subTotal) }}</p>
                         </div>
 
-                        <template v-for="(charge, chargeIndex) in charges" :key="`charge-${chargeIndex}`">
+                        <template v-for="(charge, chargeIndex) in charges" :key="'charge-' + chargeIndex">
                             <div class="document-summary-line" style="display: grid; grid-template-columns: minmax(180px, 1.2fr) 110px 110px 120px 36px; align-items: center; gap: 10px;">
                                 <div>
                                     <input type="text" v-model="charge.name" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="Charge name">
-                                    <input type="hidden" :name="`charges[${chargeIndex}][name]`" :value="charge.name">
+                                    <input type="hidden" :name="'charges[' + chargeIndex + '][name]'" :value="charge.name">
                                 </div>
                                 <div>
                                     <select v-model="charge.type" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800">
                                         <option value="percentage">Percentage</option>
                                         <option value="value">Value</option>
                                     </select>
-                                    <input type="hidden" :name="`charges[${chargeIndex}][type]`" :value="charge.type">
+                                    <input type="hidden" :name="'charges[' + chargeIndex + '][type]'" :value="charge.type">
                                 </div>
                                 <div>
                                     <input type="number" min="0" step="0.01" v-model="charge.value" class="w-full rounded border border-gray-200 px-2 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="0.00">
-                                    <input type="hidden" :name="`charges[${chargeIndex}][value]`" :value="charge.value || 0">
+                                    <input type="hidden" :name="'charges[' + chargeIndex + '][value]'" :value="charge.value || 0">
                                 </div>
                                 <div class="text-right font-medium">@{{ $admin.formatPrice(chargeAmount(charge)) }}</div>
                                 <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-xl hover:bg-gray-200 dark:hover:bg-gray-800" @click="removeCharge(chargeIndex)">
@@ -440,13 +446,13 @@
                             :selected-product="product"
                             @on-selected="(product) => addProduct(product)"
                         ></v-quote-product-lookup>
-                        <input type="hidden" :name="`${inputName}[product_id]`" :value="product.product_id || ''">
-                        <input type="text" :name="`${inputName}[item_name]`" v-model="product.name" class="mt-2 w-full rounded border border-gray-200 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="Product name">
+                        <input type="hidden" :name="inputName + '[product_id]'" :value="product.product_id || ''">
+                        <input type="text" :name="inputName + '[item_name]'" v-model="product.name" class="mt-2 w-full rounded border border-gray-200 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="Product name">
                     </div>
                 </x-admin::table.td>
 
                 <x-admin::table.td class="!px-2">
-                    <input type="hidden" :name="`${inputName}[preview_image]`" :value="product.preview_image || ''">
+                    <input type="hidden" :name="inputName + '[preview_image]'" :value="product.preview_image || ''">
                     <img v-if="product.preview_image" :src="product.preview_image" class="mx-auto h-12 w-12 rounded object-cover border border-gray-200" alt="preview">
                     <span v-else class="text-xs text-gray-500">No image</span>
                 </x-admin::table.td>
@@ -457,19 +463,19 @@
                             <option value="">No Color</option>
                             <option v-for="color in (product.available_colors || [])" :key="color.id" :value="String(color.id)">@{{ color.name }}</option>
                         </select>
-                        <input type="hidden" :name="`${inputName}[color_variant_id]`" :value="product.selected_color_id || ''">
-                        <input type="hidden" :name="`${inputName}[color_variant_name]`" :value="product.selected_color_name || ''">
+                        <input type="hidden" :name="inputName + '[color_variant_id]'" :value="product.selected_color_id || ''">
+                        <input type="hidden" :name="inputName + '[color_variant_name]'" :value="product.selected_color_name || ''">
                     </x-admin::form.control-group>
                 </x-admin::table.td>
 
-                <input type="hidden" :name="`${inputName}[item_code]`" :value="product.item_code || ''">
+                <input type="hidden" :name="inputName + '[item_code]'" :value="product.item_code || ''">
 
                 <x-admin::table.td class="!px-2 text-center">
                     <input
                         type="number"
                         min="1"
                         step="1"
-                        :name="`${inputName}[quantity]`"
+                        :name="inputName + '[quantity]'"
                         v-model.number="product.quantity"
                         class="w-full rounded border border-gray-200 px-2 py-1 text-center text-sm dark:border-gray-700 dark:bg-gray-800"
                     >
@@ -480,7 +486,7 @@
                         type="number"
                         min="0"
                         step="0.01"
-                        :name="`${inputName}[price]`"
+                        :name="inputName + '[price]'"
                         v-model="product.price"
                         class="w-full rounded border border-gray-200 px-2 py-1 text-center text-sm dark:border-gray-700 dark:bg-gray-800"
                     >
@@ -490,9 +496,9 @@
                     @{{ $admin.formatPrice(product.price * product.quantity) }}
                 </x-admin::table.td>
 
-                <input type="hidden" :name="`${inputName}[discount_amount]`" value="0">
-                <input type="hidden" :name="`${inputName}[tax_amount]`" value="0">
-                <input type="hidden" :name="`${inputName}[final_total]`" :value="parseFloat(product.price * product.quantity)">
+                <input type="hidden" :name="inputName + '[discount_amount]'" value="0">
+                <input type="hidden" :name="inputName + '[tax_amount]'" value="0">
+                <input type="hidden" :name="inputName + '[final_total]'" :value="parseFloat(product.price * product.quantity)">
 
                 <x-admin::table.td v-if="$parent.products.length > 1" class="!px-2 ltr:text-right rtl:text-left">
                     <x-admin::form.control-group class="!mb-0">

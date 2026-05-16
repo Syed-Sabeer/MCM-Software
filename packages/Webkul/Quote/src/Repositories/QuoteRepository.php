@@ -74,6 +74,7 @@ class QuoteRepository extends Repository
         ]));
 
         foreach ($data['items'] ?? [] as $itemData) {
+            \Log::debug('quote.create.item.payload', $itemData);
             $this->quoteItemRepository->create(array_merge($itemData, [
                 'quote_id' => $quote->id,
             ]));
@@ -129,6 +130,7 @@ class QuoteRepository extends Repository
         if (isset($data['items'])) {
             foreach ($data['items'] as $itemId => $itemData) {
                 if (Str::contains($itemId, 'item_')) {
+                    \Log::debug('quote.update.new_item.payload', $itemData);
                     $this->quoteItemRepository->create(array_merge($itemData, [
                         'quote_id' => $id,
                     ]));
@@ -137,6 +139,7 @@ class QuoteRepository extends Repository
                         $previousItemIds->forget($index);
                     }
 
+                    \Log::debug('quote.update.existing_item.payload', array_merge(['item_id' => $itemId], $itemData));
                     $this->quoteItemRepository->update($itemData, $itemId);
                 }
             }

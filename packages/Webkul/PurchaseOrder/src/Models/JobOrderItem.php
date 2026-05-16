@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Product\Models\Product;
 use Webkul\PurchaseOrder\Contracts\JobOrderItem as JobOrderItemContract;
+use Webkul\Quote\Models\ProformaInvoiceItem;
 
 class JobOrderItem extends Model implements JobOrderItemContract
 {
@@ -30,6 +31,11 @@ class JobOrderItem extends Model implements JobOrderItemContract
         return $this->belongsTo(Product::class);
     }
 
+    public function proformaInvoiceItem(): BelongsTo
+    {
+        return $this->belongsTo(ProformaInvoiceItem::class, 'proforma_invoice_item_id');
+    }
+
     public function jobCards(): HasMany
     {
         return $this->hasMany(JobCard::class);
@@ -43,6 +49,13 @@ class JobOrderItem extends Model implements JobOrderItemContract
     public function getDisplayNameAttribute(): string
     {
         return (string) ($this->display_code !== '-' ? $this->display_code : ($this->item_name ?: $this->product?->name ?: '-'));
+    }
+
+    public function getColorVariantNameAttribute(): ?string
+    {
+        $colorName = trim((string) ($this->proformaInvoiceItem?->color_variant_name ?: ''));
+
+        return $colorName !== '' ? $colorName : null;
     }
 }
 

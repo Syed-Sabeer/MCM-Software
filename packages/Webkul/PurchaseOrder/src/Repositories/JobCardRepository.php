@@ -28,14 +28,32 @@ class JobCardRepository extends Repository
         DB::transaction(function () use ($jobOrder) {
             $jobOrder->jobCards()->delete();
 
-            $jobOrder->loadMissing('items');
+            $jobOrder->loadMissing('items.proformaInvoiceItem');
 
-            foreach ($jobOrder->items as $jobOrderItem) {
+            $groupedItems = collect($jobOrder->items)->groupBy(function ($jobOrderItem) {
+                $productId = (int) ($jobOrderItem->product_id ?: 0);
+
+                if ($productId <= 0) {
+                    return 'item|' . (int) $jobOrderItem->id;
+                }
+
+                return 'product|' . $productId;
+            });
+
+            foreach ($groupedItems as $itemsInGroup) {
+                $jobOrderItem = $itemsInGroup->first();
+                $itemCodes = $itemsInGroup
+                    ->map(fn ($item) => (string) ($item->display_code ?: $item->item_code ?: ''))
+                    ->filter()
+                    ->unique()
+                    ->values();
+                $displayLabel = $itemCodes->isNotEmpty() ? $itemCodes->implode(', ') : $jobOrderItem->display_name;
+
                 $jobCard = $this->create([
                     'job_order_id' => $jobOrder->id,
                     'job_order_item_id' => $jobOrderItem->id,
                     'product_id' => $jobOrderItem->product_id,
-                    'title' => trim(($jobOrder->job_order_number ?: 'JO') . ' - ' . $jobOrderItem->display_name),
+                    'title' => trim(($jobOrder->job_order_number ?: 'JO') . ' - ' . $displayLabel),
                     'status' => 'open',
                     'created_by' => auth()->id(),
                 ]);

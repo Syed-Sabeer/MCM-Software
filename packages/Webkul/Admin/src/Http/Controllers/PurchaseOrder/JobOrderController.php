@@ -126,8 +126,7 @@ class JobOrderController extends Controller
             fputcsv($handle, ['Job Order', 'Item', 'Section', 'Process', 'Requirement Qty', 'Unit']);
 
             foreach ($jobOrder->jobCards as $jobCard) {
-                $itemCode = optional($jobCard->jobOrderItem)->display_code;
-                $itemLabel = $itemCode && $itemCode !== '-' ? $itemCode : ($jobCard->title ?: 'Job Card');
+                $itemLabel = $jobCard->display_item_label;
 
                 foreach ($jobCard->sections as $section) {
                     if ($section->items->isEmpty()) {
@@ -254,8 +253,10 @@ class JobOrderController extends Controller
             'proformaInvoice',
             'proformaInvoice.items',
             'items.product',
+            'items.proformaInvoiceItem',
             'requirements',
             'jobCards.jobOrderItem.product',
+            'jobCards.jobOrderItem.proformaInvoiceItem',
             'jobCards.sections.items',
             'vendorQuotes',
             'purchaseOrders',

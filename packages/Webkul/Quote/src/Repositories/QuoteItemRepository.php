@@ -119,6 +119,21 @@ class QuoteItemRepository extends Repository
             }
         }
 
+        // Normalize color variant fields: convert empty strings to null and cast ids to int
+        if (array_key_exists('color_variant_id', $data)) {
+            if ($data['color_variant_id'] === '' || $data['color_variant_id'] === null) {
+                $data['color_variant_id'] = null;
+            } else {
+                $data['color_variant_id'] = (int) $data['color_variant_id'];
+            }
+        }
+
+        if (array_key_exists('color_variant_name', $data)) {
+            if ($data['color_variant_name'] === '') {
+                $data['color_variant_name'] = null;
+            }
+        }
+
         return $data;
     }
 }

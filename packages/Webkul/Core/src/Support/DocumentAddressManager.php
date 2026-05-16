@@ -14,38 +14,32 @@ class DocumentAddressManager
 
         $options = [];
 
-        $billingAddress = $this->formatStructuredAddress([
-            $organization->billing_street,
-            $organization->billing_city,
-            $organization->billing_state,
-            $organization->billing_postcode,
-            $organization->billing_country,
-        ]);
+        $billingParts = [
+            'street'   => $organization->billing_street,
+            'city'     => $organization->billing_city,
+            'state'    => $organization->billing_state,
+            'postcode' => $organization->billing_postcode,
+            'country'  => $organization->billing_country,
+        ];
+
+        $billingAddress = $this->formatStructuredAddress(array_values($billingParts));
 
         if ($billingAddress !== '') {
-            $options[] = [
-                'key'     => 'billing',
-                'label'   => 'Billing Address',
-                'type'    => 'billing',
-                'address' => $billingAddress,
-            ];
+            $options[] = $this->buildAddressOption('billing', 'Billing Address', 'billing', $billingAddress, $billingParts);
         }
 
-        $shippingAddress = $this->formatStructuredAddress([
-            $organization->shipping_street,
-            $organization->shipping_city,
-            $organization->shipping_state,
-            $organization->shipping_postcode,
-            $organization->shipping_country,
-        ]);
+        $shippingParts = [
+            'street'   => $organization->shipping_street,
+            'city'     => $organization->shipping_city,
+            'state'    => $organization->shipping_state,
+            'postcode' => $organization->shipping_postcode,
+            'country'  => $organization->shipping_country,
+        ];
+
+        $shippingAddress = $this->formatStructuredAddress(array_values($shippingParts));
 
         if ($shippingAddress !== '') {
-            $options[] = [
-                'key'     => 'shipping',
-                'label'   => 'Shipping Address',
-                'type'    => 'shipping',
-                'address' => $shippingAddress,
-            ];
+            $options[] = $this->buildAddressOption('shipping', 'Shipping Address', 'shipping', $shippingAddress, $shippingParts);
         }
 
         foreach (collect($organization->address ?? [])->values() as $index => $row) {
@@ -71,12 +65,13 @@ class DocumentAddressManager
                 continue;
             }
 
-            $options[] = [
-                'key'     => 'extra_' . $index,
-                'label'   => $this->buildExtraAddressLabel($row, $index),
-                'type'    => $type ?: 'other',
-                'address' => $address,
-            ];
+            $options[] = $this->buildAddressOption('extra_' . $index, $this->buildExtraAddressLabel($row, $index), $type ?: 'other', $address, [
+                'street'   => $row['street'] ?? $row['address'] ?? null,
+                'city'     => $row['city'] ?? null,
+                'state'    => $row['state'] ?? null,
+                'postcode' => $row['postcode'] ?? null,
+                'country'  => $row['country'] ?? null,
+            ]);
         }
 
         return $options;
@@ -88,10 +83,15 @@ class DocumentAddressManager
 
         if (empty($options)) {
             return [
-                'key'     => null,
-                'label'   => null,
-                'type'    => $preferredType,
-                'address' => '',
+                'key'      => null,
+                'label'    => null,
+                'type'     => $preferredType,
+                'address'  => '',
+                'street'   => null,
+                'city'     => null,
+                'state'    => null,
+                'postcode' => null,
+                'country'  => null,
             ];
         }
 
@@ -122,14 +122,34 @@ class DocumentAddressManager
 
         if ($manualAddress !== '') {
             return [
-                'key'     => $selectedKey ?: null,
-                'label'   => $value['label'] ?? ucfirst($preferredType) . ' Address',
-                'type'    => $value['type'] ?? $preferredType,
-                'address' => $manualAddress,
+                'key'      => $selectedKey ?: null,
+                'label'    => $value['label'] ?? ucfirst($preferredType) . ' Address',
+                'type'     => $value['type'] ?? $preferredType,
+                'address'  => $manualAddress,
+                'street'   => $value['street'] ?? null,
+                'city'     => $value['city'] ?? null,
+                'state'    => $value['state'] ?? null,
+                'postcode' => $value['postcode'] ?? null,
+                'country'  => $value['country'] ?? null,
             ];
         }
 
         return $this->getDefaultAddress($organization, $preferredType);
+    }
+
+    protected function buildAddressOption(string $key, string $label, string $type, string $address, array $parts): array
+    {
+        return [
+            'key'      => $key,
+            'label'    => $label,
+            'type'     => $type,
+            'address'  => $address,
+            'street'   => $parts['street'] ?? null,
+            'city'     => $parts['city'] ?? null,
+            'state'    => $parts['state'] ?? null,
+            'postcode' => $parts['postcode'] ?? null,
+            'country'  => $parts['country'] ?? null,
+        ];
     }
 
     protected function buildExtraAddressLabel(array $row, int $index): string

@@ -25,4 +25,12 @@ class JobCard extends Model implements JobCardContract
     {
         return $this->hasMany(JobCardSection::class)->orderBy('sort_order');
     }
+
+    public function getDisplayItemLabelAttribute(): string
+    {
+        $itemCode = (string) ($this->jobOrderItem?->display_code ?: '');
+        return $itemCode !== '' && $itemCode !== '-'
+            ? $itemCode
+            : (string) ($this->title ?: 'Job Card');
+    }
 }

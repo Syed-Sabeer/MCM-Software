@@ -525,8 +525,14 @@
             @php
                 $filesQuery = \Webkul\Activity\Models\Activity::query()
                     ->where('type', 'file')
-                    ->where('entity_type', 'organizations')
-                    ->where('entity_id', $organization->id)
+                    ->where(function ($query) use ($organization) {
+                        $query->where(function ($query) use ($organization) {
+                            $query->where('entity_type', 'organizations')
+                                ->where('entity_id', $organization->id);
+                        })->orWhereHas('persons', function ($query) use ($organization) {
+                            $query->where('organization_id', $organization->id);
+                        });
+                    })
                     ->with('files')
                     ->latest();
 
