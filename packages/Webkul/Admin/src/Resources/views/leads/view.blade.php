@@ -1,4 +1,29 @@
 <x-admin::layouts>
+    <script>
+        window.handleLeadDelete = function(e, btn) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var form = btn.closest('.lead-delete-form');
+
+            if (!form) {
+                return;
+            }
+
+            if (typeof window.emitter !== 'undefined') {
+                window.emitter.emit('open-confirm-modal', {
+                    agree: function () {
+                        form.submit();
+                    }
+                });
+            } else {
+                if (confirm('Are you sure you want to perform this action?')) {
+                    form.submit();
+                }
+            }
+        };
+    </script>
+
     <x-slot:title>
         @lang('admin::app.leads.view.title', ['title' => $lead->title])
     </x-slot>
@@ -19,26 +44,40 @@
                     />
                 </div>
 
-                <div class="mb-2">
-                    @if (($days = $lead->rotten_days) > 0)
-                        @php
-                            $lead->tags->prepend([
-                                'name'  => '<span class="icon-rotten text-base"></span>' . trans('admin::app.leads.view.rotten-days', ['days' => $days]),
-                                'color' => '#FEE2E2'
-                            ]);
-                        @endphp
+                <div class="mb-2 flex items-center justify-end gap-2">
+                    @if (bouncer()->hasPermission('leads.edit'))
+                        <a
+                            href="{{ route('admin.leads.edit', $lead->id) }}"
+                            class="secondary-button"
+                        >
+                            Edit
+                        </a>
                     @endif
 
-                    {!! view_render_event('admin.leads.view.tags.before', ['lead' => $lead]) !!}
+                    @if (bouncer()->hasPermission('leads.delete'))
+                        <form
+                            method="POST"
+                            action="{{ route('admin.leads.delete', $lead->id) }}"
+                            class="lead-delete-form"
+                        >
+                            @csrf
+                            @method('DELETE')
+                            <input
+                                type="hidden"
+                                name="redirect_to"
+                                value="{{ route('admin.leads.index') }}"
+                            >
 
-                    <!-- Tags -->
-                    <x-admin::tags
-                        :attach-endpoint="route('admin.leads.tags.attach', $lead->id)"
-                        :detach-endpoint="route('admin.leads.tags.detach', $lead->id)"
-                        :added-tags="$lead->tags"
-                    />
-
-                    {!! view_render_event('admin.leads.view.tags.after', ['lead' => $lead]) !!}
+                            <button
+                                type="button"
+                                class="danger-button"
+                                data-show-loader
+                                onclick="handleLeadDelete(event, this)"
+                            >
+                                Delete
+                            </button>
+                        </form>
+                    @endif
                 </div>
 
 

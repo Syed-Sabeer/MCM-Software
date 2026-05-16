@@ -606,13 +606,13 @@
                                 style="height: 280px;"
                                 @ready="getMiniCalendarActivities"
                                 @view-change="getMiniCalendarActivities"
-                                @event-click="showEventDetails"
+                                @event-click="goToActivity"
                                 locale="{{ app()->getLocale() }}"
                             >
                                 <template #event="{ event }">
                                     <div
                                         class="vuecal__event-content"
-                                        @click.stop="showEventDetails(event)"
+                                        @click.stop="goToActivity(event)"
                                         v-tooltip="{
                                             content: eventTooltip(event),
                                             html: true,
@@ -631,7 +631,7 @@
                                 class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/70"
                             >
                                 <div class="text-sm font-semibold text-gray-900 dark:text-white">@{{ selectedEvent.title || 'Untitled event' }}</div>
-                                <div class="mt-1 text-xs text-gray-500 dark:text-gray-300">@{{ formatDateTime(selectedEvent.start) }} - @{{ formatDateTime(selectedEvent.end) }}</div>
+                                <div class="mt-1 text-xs text-gray-500 dark:text-gray-300">@{{ formatDateTime(selectedEvent.start) }}</div>
                                 <div v-if="selectedEvent.description" class="mt-2 text-xs text-gray-600 dark:text-gray-300">@{{ selectedEvent.description }}</div>
 
                                 <button
@@ -848,7 +848,22 @@
                     },
 
                     getMiniCalendarActivities({ startDate, endDate }) {
-                        this.$axios.get("{{ route('admin.activities.get', ['view_type' => 'calendar']) }}" + `&startDate=${new Date(startDate).toLocaleDateString('en-US')}&endDate=${new Date(endDate).toLocaleDateString('en-US')}`)
+                        const formatDateParam = (value) => {
+                            const date = new Date(value);
+
+                            if (Number.isNaN(date.getTime())) {
+                                return '';
+                            }
+
+                            return date.toISOString().slice(0, 10);
+                        };
+
+                        this.$axios.get("{{ route('admin.activities.get', ['view_type' => 'calendar']) }}", {
+                            params: {
+                                startDate: formatDateParam(startDate),
+                                endDate: formatDateParam(endDate),
+                            },
+                        })
                             .then((response) => {
                                 this.miniCalendarEvents = this.processMiniEvents(response?.data?.activities || []);
 
@@ -864,6 +879,11 @@
 
                     processMiniEvents(events) {
                         return events.map((event) => {
+                            if (event?.start) {
+                                // Show event only on its start date in month cells.
+                                event.end = event.start;
+                            }
+
                             if (! event.background || ['#fff', '#ffffff'].includes(String(event.background).toLowerCase())) {
                                 const colors = ['#0E90D9', '#10B981', '#F59E0B', '#6366F1', '#EF4444'];
                                 const hash = this.hashString(String(event.id || event.title || '0'));
@@ -932,7 +952,7 @@
                         return `
                             <div class='min-w-[220px]'>
                                 <div class='text-sm font-semibold text-white'>${title}</div>
-                                <div class='mt-1 text-xs text-gray-300'>${this.formatDateTime(event?.start)} - ${this.formatDateTime(event?.end)}</div>
+                                <div class='mt-1 text-xs text-gray-300'>${this.formatDateTime(event?.start)}</div>
                                 ${description}
                             </div>
                         `;
@@ -948,6 +968,8 @@
                         }
 
                         this.selectedEvent = event;
+
+                        this.goToActivity(event);
                     },
 
                     openSelectedEvent() {

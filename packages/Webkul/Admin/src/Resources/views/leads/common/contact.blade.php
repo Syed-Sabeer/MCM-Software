@@ -1,7 +1,8 @@
 {!! view_render_event('admin.leads.create.contact_person.form_controls.before') !!}
 
 <v-contact-component
-    :prefill-organization-id="prefillOrganizationId || null"
+    :prefill-organization-id="prefillOrganizationId || selectedOrganizationId || null"
+    :initial-contact="initialContact || null"
     organization-fetch-url="{{ route('admin.contacts.organizations.fetch', ['id' => '__ID__']) }}"
     @organization-selected="handleOrganizationSelected"
 ></v-contact-component>
@@ -104,7 +105,8 @@
 
             props: {
                 prefillOrganizationId: { type: [String, Number], default: null },
-                organizationFetchUrl: { type: String, default: '' }
+                organizationFetchUrl: { type: String, default: '' },
+                initialContact: { type: Object, default: null },
             },
 
             data() {
@@ -124,6 +126,19 @@
             },
 
             mounted() {
+                if (this.initialContact && (this.initialContact.id || this.initialContact.name)) {
+                    this.contacts[0].id = this.initialContact.id || null;
+                    this.contacts[0].name = this.initialContact.name || '';
+                    this.contacts[0].searchQuery = this.initialContact.name || '';
+                    this.contacts[0].organization_id = this.initialContact.organization_id || null;
+                    this.contacts[0].organization_name = this.initialContact.organization_name || '';
+
+                    this.$emit('organization-selected', {
+                        id: this.contacts[0].organization_id,
+                        name: this.contacts[0].organization_name,
+                    });
+                }
+
                 // Close search results when clicking outside
                 document.addEventListener('click', this.handleClickOutside);
             },

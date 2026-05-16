@@ -180,6 +180,11 @@
 
                     processEvents(events) {
                         return events.map((event) => {
+                            if (event?.start) {
+                                // Show event only on the starting date cell.
+                                event.end = event.start;
+                            }
+
                             if (!event.background || ['#fff', '#ffffff'].includes(String(event.background).toLowerCase())) {
                                 const palette = ['#0E90D9', '#10B981', '#F59E0B', '#6366F1', '#EF4444', '#06B6D4'];
                                 const hash = this.hashString(String(event.id || event.title || '0'));
@@ -246,7 +251,7 @@
                         return `
                             <div class='min-w-[220px]'>
                                 <div class='text-sm font-semibold text-white'>${title}</div>
-                                <div class='mt-1 text-xs text-gray-300'>${this.formatDateTime(event?.start)} - ${this.formatDateTime(event?.end)}</div>
+                                <div class='mt-1 text-xs text-gray-300'>${this.formatDateTime(event?.start)}</div>
                                 ${description}
                             </div>
                         `;

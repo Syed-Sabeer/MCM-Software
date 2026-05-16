@@ -431,15 +431,91 @@
     {!! view_render_event('admin.layout.vue-app-mount.before') !!}
 
     <script>
-        /**
-         * Load event, the purpose of using the event is to mount the application
-         * after all of our `Vue` components which is present in blade file have
-         * been registered in the app. No matter what `app.mount()` should be
-         * called in the last.
-         */
-        window.addEventListener("load", function(event) {
-            app.mount("#app");
-        });
+        // Global loader: show spinner on forms/buttons while an action is in progress
+        (function(){
+            function spinnerHtml(){
+                return '<svg xmlns="http://www.w3.org/2000/svg" fill="none" aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5 animate-spin inline-block align-middle"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            }
+
+            function restoreButton(btn){
+                if(!btn) return;
+                if(btn.dataset.prevHtml) btn.innerHTML = btn.dataset.prevHtml;
+                btn.disabled = btn.dataset.prevDisabled === '1';
+                btn.classList.remove('opacity-70','pointer-events-none');
+                delete btn.dataset.loadingActive;
+                delete btn.dataset.prevHtml;
+                delete btn.dataset.prevDisabled;
+            }
+
+            // On form submit, disable submit buttons and show spinner
+            document.addEventListener('submit', function(e){
+                try {
+                    var form = e.target;
+                    var buttons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+
+                    buttons.forEach(function(btn){
+                        if(btn.dataset.loadingActive) return;
+                        btn.dataset.loadingActive = '1';
+                        btn.dataset.prevDisabled = btn.disabled ? '1' : '0';
+                        btn.disabled = true;
+                        btn.dataset.prevHtml = btn.innerHTML;
+                        btn.classList.add('opacity-70','pointer-events-none');
+                        btn.innerHTML = spinnerHtml();
+                    });
+                } catch (err) {
+                    console.error(err);
+                }
+            }, true);
+
+            // For buttons that trigger AJAX actions (non-submit), use data-show-loader attribute
+            document.addEventListener('click', function(e){
+                var btn = e.target.closest('button[data-show-loader], a[data-show-loader]');
+                if(!btn) return;
+                if(btn.type === 'submit') return; // handled above
+                if(btn.dataset.loadingActive) return;
+                btn.dataset.loadingActive = '1';
+                btn.dataset.prevDisabled = btn.disabled ? '1' : '0';
+                btn.disabled = true;
+                btn.dataset.prevHtml = btn.innerHTML;
+                btn.classList.add('opacity-70','pointer-events-none');
+                btn.innerHTML = spinnerHtml();
+
+                // If axios is available, restore on response; otherwise restore after timeout
+                if(window.axios && window.axios.interceptors){
+                    var id = window.axios.interceptors.response.use(function(response){
+                        restoreButton(btn);
+                        window.axios.interceptors.response.eject(id);
+                        return response;
+                    }, function(error){
+                        restoreButton(btn);
+                        window.axios.interceptors.response.eject(id);
+                        return Promise.reject(error);
+                    });
+                } else {
+                    setTimeout(function(){ restoreButton(btn); }, 10000);
+                }
+            }, true);
+
+            // Ensure any lingering loading states clear after axios responses
+            if(window.axios && window.axios.interceptors){
+                window.axios.interceptors.response.use(function(response){
+                    document.querySelectorAll('button[data-loading-active="1"]').forEach(function(b){
+                        restoreButton(b);
+                    });
+                    return response;
+                }, function(error){
+                    document.querySelectorAll('button[data-loading-active="1"]').forEach(function(b){
+                        restoreButton(b);
+                    });
+                    return Promise.reject(error);
+                });
+            }
+
+            // Mount Vue app after everything is registered
+            window.addEventListener("load", function(event) {
+                app.mount("#app");
+            });
+        })();
     </script>
 
     {!! view_render_event('admin.layout.vue-app-mount.after') !!}

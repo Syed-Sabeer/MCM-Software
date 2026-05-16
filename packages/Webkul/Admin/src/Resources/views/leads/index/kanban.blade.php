@@ -123,10 +123,11 @@
                             <template #item="{ element, index }">
                                 {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.before') !!}
 
-                                <a
-                                    class="lead-item flex cursor-pointer flex-col gap-5 rounded-md border border-gray-100 bg-gray-50 p-2 dark:border-gray-400 dark:bg-gray-400"
-                                    :href="'{{ route('admin.leads.view', 'replaceId') }}'.replace('replaceId', element.id)"
+                                <div
+                                    class="lead-item relative flex cursor-pointer flex-col gap-5 rounded-md border border-gray-100 bg-gray-50 p-2 dark:border-gray-400 dark:bg-gray-400"
+                                    @click="goToLead(element.id)"
                                 >
+                                    <div class="relative flex flex-col gap-5">
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.before') !!}
 
                                     <!-- Header -->
@@ -142,6 +143,38 @@
                                                 <span class="text-[10px] leading-normal">
                                                     @{{ element.person && element.person.organization ? element.person.organization.name : '' }}
                                                 </span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Card actions: three-dot menu -->
+                                        <div class="relative z-20">
+                                            <button
+                                                type="button"
+                                                class="icon-more rounded p-1 text-lg text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-800 dark:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-white"
+                                                @click.stop="toggleCardActions(element.id)"
+                                                aria-label="More actions"
+                                            ></button>
+
+
+                                            <div
+                                                v-if="actionOpenId === element.id"
+                                                class="absolute right-0 z-50 mt-2 w-36 rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-800 dark:bg-gray-900"
+                                            >
+                                                <a
+                                                    :href="'{{ route('admin.leads.edit', 'replaceId') }}'.replace('replaceId', element.id)"
+                                                    class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                                                    @click.stop
+                                                >
+                                                    Edit
+                                                </a>
+
+                                                <button
+                                                    type="button"
+                                                    class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                    @click.stop="confirmDelete(element.id)"
+                                                >
+                                                    Delete
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -207,7 +240,8 @@
                                             {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.tag.after') !!}
                                         </template>
                                     </div>
-                                </a>
+                                    </div>
+                                </div>
 
                                 {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.after') !!}
                             </template>
@@ -331,7 +365,14 @@
 
                     stages: @json($pipeline->stages->toArray()),
 
+
                     stageLeads: {},
+
+                    // Id of the card whose actions menu is open
+                    actionOpenId: null,
+
+                    // Id of the lead currently being deleted
+                    deletingId: null,
 
                     isLoading: true,
 
@@ -399,6 +440,49 @@
                                 this.stageLeads[sortOrder] = data;
                             }
                         });
+                },
+
+                toggleCardActions(id) {
+                    this.actionOpenId = this.actionOpenId === id ? null : id;
+                },
+
+                goToLead(id) {
+                    this.actionOpenId = null;
+
+                    window.location.href = "{{ route('admin.leads.view', 'replaceId') }}".replace('replaceId', id);
+                },
+
+                confirmDelete(id) {
+                    this.$emitter.emit('open-confirm-modal', {
+                        agree: () => {
+                            this.deletingId = id;
+
+                            const url = "{{ route('admin.leads.delete', 'replaceId') }}".replace('replaceId', id);
+
+                            this.$axios.delete(url)
+                                .then(response => {
+                                    // Remove lead from stageLeads
+                                    for (let [sortOrder, data] of Object.entries(this.stageLeads)) {
+                                        const idx = data.leads.data.findIndex(l => Number(l.id) === Number(id));
+
+                                        if (idx !== -1) {
+                                            data.leads.data.splice(idx, 1);
+                                            data.leads.meta.total = Math.max(0, data.leads.meta.total - 1);
+                                            break;
+                                        }
+                                    }
+
+                                    this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                    this.actionOpenId = null;
+                                })
+                                .catch(error => {
+                                    this.$emitter.emit('add-flash', { type: 'error', message: (error.response && error.response.data && error.response.data.message) ? error.response.data.message : 'Delete failed' });
+                                })
+                                .finally(() => {
+                                    this.deletingId = null;
+                                });
+                        },
+                    });
                 },
 
                 /**

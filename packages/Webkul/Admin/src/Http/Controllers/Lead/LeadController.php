@@ -411,6 +411,10 @@ class LeadController extends Controller
 
             session()->flash('success', trans('admin::app.leads.destroy-success'));
 
+            if ($redirectTo = request()->input('redirect_to')) {
+                return redirect()->to($redirectTo);
+            }
+
             return redirect()->back();
         } catch (\Exception $exception) {
             if (request()->ajax() || request()->wantsJson()) {
