@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -537,6 +538,35 @@ class ActivityController extends Controller
     }
 
     /**
+     * Preview image file from storage.
+     */
+    public function preview(int $id): BinaryFileResponse|StreamedResponse
+    {
+        try {
+            $file = $this->fileRepository->findOrFail($id);
+
+            if (! Storage::exists($file->path)) {
+                abort(404);
+            }
+
+            $mimeType = Storage::mimeType($file->path) ?: 'application/octet-stream';
+
+            $fileName = $this->fileDownloadName($file);
+
+            if (! str_starts_with($mimeType, 'image/')) {
+                return Storage::download($file->path, $fileName);
+            }
+
+            return response()->file(Storage::path($file->path), [
+                'Content-Type'        => $mimeType,
+                'Content-Disposition' => 'inline; filename="'.addslashes($fileName).'"',
+            ]);
+        } catch (\Exception $exception) {
+            abort(404);
+        }
+    }
+
+    /**
      * Download file from storage.
      */
     public function download(int $id): StreamedResponse
@@ -544,10 +574,31 @@ class ActivityController extends Controller
         try {
             $file = $this->fileRepository->findOrFail($id);
 
-            return Storage::download($file->path);
+            return Storage::download($file->path, $this->fileDownloadName($file));
         } catch (\Exception $exception) {
             abort(404);
         }
+    }
+
+    protected function fileDownloadName($file): string
+    {
+        $name = trim((string) $file->name);
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        $title = trim((string) optional($file->activity)->title);
+
+        if ($title !== '') {
+            $extension = pathinfo((string) $file->path, PATHINFO_EXTENSION);
+
+            return $extension && ! str_contains(basename($title), '.')
+                ? $title.'.'.$extension
+                : $title;
+        }
+
+        return basename((string) $file->path);
     }
 
     /*

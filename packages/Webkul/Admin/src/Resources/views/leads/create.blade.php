@@ -65,10 +65,31 @@
                 />
             @endif
 
+            @if (request('person_id'))
+                <input
+                    type="hidden"
+                    id="lead_person_id"
+                    name="person_id"
+                    value="{{ request('person_id') }}"
+                />
+            @endif
+
+            @php
+                $leadCreateInitialContact = $person
+                    ? [
+                        'id'                => $person->id,
+                        'name'              => trim(($person->first_name ?? '').' '.($person->last_name ?? '')) ?: $person->name,
+                        'organization_id'   => $person->organization_id,
+                        'organization_name' => $person?->organization?->name,
+                    ]
+                    : null;
+            @endphp
+
             <!-- Lead Create Component -->
             <v-lead-create
                 :prefill-organization-id="{{ request('organization_id') ?? 'null' }}"
                 prefill-organization-name="{{ $organization->name ?? '' }}"
+                :initial-contact='@json($leadCreateInitialContact)'
             >
                 <x-admin::shimmer.leads.datagrid />
             </v-lead-create>
@@ -444,7 +465,7 @@
             app.component('v-lead-create', {
                 template: '#v-lead-create-template',
 
-                props: ['prefillOrganizationId', 'prefillOrganizationName'],
+                props: ['prefillOrganizationId', 'prefillOrganizationName', 'initialContact'],
 
                 data() {
                     return {
@@ -458,6 +479,7 @@
 
                         selectedOrganizationName: this.prefillOrganizationName || '',
                         selectedOrganizationId: this.prefillOrganizationId || '',
+                        initialContacts: this.initialContact ? [this.initialContact] : [],
                         
                         caseOwner: {
                             selected: null,

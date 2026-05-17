@@ -56,6 +56,10 @@ class LeadDataGrid extends DataGrid
                 'leads.lead_value',
                 'leads.expected_close_date',
                 'leads.organization_id',
+                DB::raw('COALESCE(organizations.name, primary_person_organizations.name) as company_name'),
+                DB::raw('COALESCE(organizations.id, primary_person_organizations.id) as company_id'),
+                DB::raw("GROUP_CONCAT(DISTINCT COALESCE(NULLIF(TRIM(CONCAT_WS(' ', lead_contacts.first_name, lead_contacts.last_name)), ''), NULLIF(TRIM(lead_contacts.name), ''), CONCAT('Contact #', lead_contacts.id)) ORDER BY COALESCE(NULLIF(TRIM(CONCAT_WS(' ', lead_contacts.first_name, lead_contacts.last_name)), ''), NULLIF(TRIM(lead_contacts.name), ''), CONCAT('Contact #', lead_contacts.id)) SEPARATOR ', ') as contact_names"),
+                DB::raw('COUNT(DISTINCT lead_contacts.id) as contacts_count'),
                 'lead_sources.name as lead_source_name',
                 'lead_types.name as lead_type_name',
                 'leads.created_at',
@@ -72,6 +76,13 @@ class LeadDataGrid extends DataGrid
             )
             ->leftJoin('users', 'leads.user_id', '=', 'users.id')
             ->leftJoin('persons', 'leads.person_id', '=', 'persons.id')
+            ->leftJoin('organizations as primary_person_organizations', 'persons.organization_id', '=', 'primary_person_organizations.id')
+            ->leftJoin('organizations', 'leads.organization_id', '=', 'organizations.id')
+            ->leftJoin('lead_persons', 'leads.id', '=', 'lead_persons.lead_id')
+            ->leftJoin('persons as lead_contacts', function ($join) {
+                $join->on('lead_contacts.id', '=', 'lead_persons.person_id')
+                    ->orOn('lead_contacts.id', '=', 'leads.person_id');
+            })
             ->leftJoin('lead_types', 'leads.lead_type_id', '=', 'lead_types.id')
             ->leftJoin('lead_pipeline_stages', 'leads.lead_pipeline_stage_id', '=', 'lead_pipeline_stages.id')
             ->leftJoin('lead_sources', 'leads.lead_source_id', '=', 'lead_sources.id')
@@ -97,6 +108,24 @@ class LeadDataGrid extends DataGrid
                             ->from('persons')
                             ->whereColumn('persons.id', 'leads.person_id')
                             ->where('persons.organization_id', $organizationId);
+                    })->orWhereExists(function ($subQuery) use ($organizationId) {
+                        $subQuery->select(DB::raw(1))
+                            ->from('lead_persons')
+                            ->join('persons as lead_person_filter', 'lead_person_filter.id', '=', 'lead_persons.person_id')
+                            ->whereColumn('lead_persons.lead_id', 'leads.id')
+                            ->where('lead_person_filter.organization_id', $organizationId);
+                    });
+            });
+        }
+
+        if ($personId = request('person_id')) {
+            $queryBuilder->where(function ($query) use ($personId) {
+                $query->where('leads.person_id', $personId)
+                    ->orWhereExists(function ($subQuery) use ($personId) {
+                        $subQuery->select(DB::raw(1))
+                            ->from('lead_persons')
+                            ->whereColumn('lead_persons.lead_id', 'leads.id')
+                            ->where('lead_persons.person_id', $personId);
                     });
             });
         }
@@ -106,7 +135,9 @@ class LeadDataGrid extends DataGrid
         $this->addFilter('sales_person', 'users.name');
         $this->addFilter('lead_source_name', 'lead_sources.id');
         $this->addFilter('lead_type_name', 'lead_types.id');
-        $this->addFilter('person_name', 'persons.name');
+        $this->addFilter('company_name', DB::raw('COALESCE(organizations.name, primary_person_organizations.name)'));
+        $this->addFilter('contact_names', 'lead_contacts.name');
+        $this->addFilter('person_name', 'lead_contacts.name');
         $this->addFilter('type', 'lead_pipeline_stages.code');
         $this->addFilter('stage', 'lead_pipeline_stages.id');
         $this->addFilter('tag_name', 'tags.name');
@@ -207,24 +238,54 @@ class LeadDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'              => 'person_name',
-            'label'              => trans('admin::app.leads.index.datagrid.contact-person'),
+            'index'              => 'company_name',
+            'label'              => 'Company',
             'type'               => 'string',
             'searchable'         => false,
             'sortable'           => true,
             'filterable'         => true,
             'filterable_type'    => 'searchable_dropdown',
             'filterable_options' => [
-                'repository' => \Webkul\Contact\Repositories\PersonRepository::class,
+                'repository' => \Webkul\Contact\Repositories\OrganizationRepository::class,
                 'column'     => [
                     'label' => 'name',
                     'value' => 'name',
                 ],
             ],
             'closure'    => function ($row) {
-                $route = route('admin.contacts.persons.view', $row->person_id);
+                if (! $row->company_name) {
+                    return '--';
+                }
 
-                return "<a class=\"text-brandColor transition-all hover:underline\" href='".$route."'>".$row->person_name.'</a>';
+                $route = route('admin.customers.organizations.view', $row->company_id);
+
+                return "<a class=\"text-brandColor transition-all hover:underline\" href='".$route."'>".$row->company_name.'</a>';
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'contact_names',
+            'label'      => 'Contacts',
+            'type'       => 'string',
+            'searchable' => true,
+            'sortable'   => false,
+            'filterable' => true,
+            'closure'    => function ($row) {
+                $contacts = collect(explode(',', (string) $row->contact_names))
+                    ->map(fn ($name) => trim($name))
+                    ->filter()
+                    ->values();
+
+                if ($contacts->isEmpty()) {
+                    return '--';
+                }
+
+                $first = e($contacts->first());
+                $more = max(((int) $row->contacts_count) - 1, 0);
+
+                return $more > 0
+                    ? $first.' <span class="text-gray-500 dark:text-gray-300">+'.$more.' more</span>'
+                    : $first;
             },
         ]);
 

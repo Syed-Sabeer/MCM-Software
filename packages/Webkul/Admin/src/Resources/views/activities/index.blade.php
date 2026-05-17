@@ -75,8 +75,14 @@
                     <template v-if="viewType == 'table'">
                         {!! view_render_event('admin.activities.index.datagrid.before') !!}
 
+                        @if (request('type') === 'file')
+                            <x-admin::datagrid
+                                src="{{ route('admin.activities.get', request()->only(['entity_type', 'entity_id', 'type'])) }}"
+                                ref="datagrid"
+                            />
+                        @else
                         <x-admin::datagrid
-                            src="{{ route('admin.activities.get') }}"
+                            src="{{ route('admin.activities.get', request()->only(['entity_type', 'entity_id', 'type'])) }}"
                             :isMultiRow="true"
                             ref="datagrid"
                         >
@@ -93,10 +99,10 @@
                                 </template>
 
                                 <template v-else>
-                                    <div class="row grid grid-cols-[.3fr_.1fr_.3fr_.5fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
+                                    <div class="row grid {{ request('type') === 'file' ? 'grid-cols-[.15fr_.35fr_.2fr_.2fr_.25fr_.15fr]' : 'grid-cols-[.3fr_.1fr_.3fr_.5fr]' }} grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
                                         <div
                                             class="flex select-none items-center gap-2.5"
-                                            v-for="(columnGroup, index) in [['id', 'title', 'created_by_id'], ['is_done'], ['comment', 'lead_title', 'type'], ['schedule_from', 'schedule_to', 'created_at']]"
+                                            v-for="(columnGroup, index) in {{ request('type') === 'file' ? "[['file_preview'], ['file_name'], ['created_by_id'], ['created_at'], ['contact_name'], ['actions']]" : "[['id', 'title', 'created_by_id'], ['is_done'], ['comment', 'lead_title', 'type'], ['schedule_from', 'schedule_to', 'created_at']]" }}"
                                         >
                                             <label
                                                 class="flex w-max cursor-pointer select-none items-center gap-1"
@@ -125,19 +131,25 @@
 
                                             <p class="text-gray-600 dark:text-gray-300">
                                                 <span class="[&>*]:after:content-['_/_']">
+                                                    <template v-if="columnGroup[0] === 'actions'">
+                                                        <span>Actions</span>
+                                                    </template>
+
                                                     <template v-for="column in columnGroup">
-                                                        <span
-                                                            class="after:content-['/'] last:after:content-['']"
-                                                            :class="{
-                                                                'font-medium text-gray-800 dark:text-white': applied.sort.column == column,
-                                                                'cursor-pointer hover:text-gray-800 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === column)?.sortable,
-                                                            }"
-                                                            @click="
-                                                                available.columns.find(columnTemp => columnTemp.index === column)?.sortable ? sort(available.columns.find(columnTemp => columnTemp.index === column)): {}
-                                                            "
-                                                        >
-                                                            @{{ available.columns.find(columnTemp => columnTemp.index === column)?.label }}
-                                                        </span>
+                                                        <template v-if="column !== 'actions'">
+                                                            <span
+                                                                class="after:content-['/'] last:after:content-['']"
+                                                                :class="{
+                                                                    'font-medium text-gray-800 dark:text-white': applied.sort.column == column,
+                                                                    'cursor-pointer hover:text-gray-800 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === column)?.sortable,
+                                                                }"
+                                                                @click="
+                                                                    available.columns.find(columnTemp => columnTemp.index === column)?.sortable ? sort(available.columns.find(columnTemp => columnTemp.index === column)): {}
+                                                                "
+                                                            >
+                                                                @{{ available.columns.find(columnTemp => columnTemp.index === column)?.label }}
+                                                            </span>
+                                                        </template>
                                                     </template>
                                                 </span>
 
@@ -234,9 +246,35 @@
 
                                 <template v-else>
                                     <div
-                                        class="row grid grid-cols-[.3fr_.1fr_.3fr_.5fr] grid-rows-1 gap-x-2.5 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 max-lg:hidden"
+                                        class="row grid {{ request('type') === 'file' ? 'grid-cols-[.15fr_.35fr_.2fr_.2fr_.25fr_.15fr] items-center' : 'grid-cols-[.3fr_.1fr_.3fr_.5fr]' }} grid-rows-1 gap-x-2.5 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 max-lg:hidden"
                                         v-for="record in available.records"
                                     >
+                                        @if (request('type') === 'file')
+                                            <div class="text-gray-600 dark:text-gray-300" v-html="record.file_preview"></div>
+
+                                            <div class="min-w-0 text-gray-600 dark:text-gray-300" v-html="record.file_name"></div>
+
+                                            <div class="text-gray-600 dark:text-gray-300" v-html="record.created_by_id"></div>
+
+                                            <div class="text-gray-600 dark:text-gray-300" v-html="record.created_at"></div>
+
+                                            <div class="text-gray-600 dark:text-gray-300" v-html="record.contact_name"></div>
+
+                                            <div class="flex items-center gap-1.5">
+                                                <p
+                                                    class="place-self-end"
+                                                    v-if="available.actions.length"
+                                                >
+                                                    <span
+                                                        class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                                        :class="action.icon"
+                                                        v-text="! action.icon ? action.title : ''"
+                                                        v-for="action in record.actions"
+                                                        @click="performAction(action)"
+                                                    ></span>
+                                                </p>
+                                            </div>
+                                        @else
                                         <!-- Mass Actions, Title and Created By -->
                                         <div class="flex gap-2.5">
                                             <input
@@ -327,6 +365,7 @@
                                                 </p>
                                             </div>
                                         </div>
+                                        @endif
                                     </div>
 
                                     <!-- Mobile Card View -->
@@ -383,6 +422,7 @@
                                 </template>
                             </template>
                         </x-admin::datagrid>
+                        @endif
 
                         {!! view_render_event('admin.activities.index.datagrid.after') !!}
                     </template>

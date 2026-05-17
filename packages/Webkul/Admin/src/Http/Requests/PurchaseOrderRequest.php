@@ -32,7 +32,7 @@ class PurchaseOrderRequest extends FormRequest
     public function rules(): array
     {
         $id = $this->route('id');
-        $isJobOrderBased = $this->filled('job_order_id') && ! $this->filled('vendor_quote_id');
+        $isJobOrderBased = $this->filled('job_order_id') && ! $this->filled('organization_id');
 
         return [
             'po_number' => ['nullable', 'string', 'max:255'],

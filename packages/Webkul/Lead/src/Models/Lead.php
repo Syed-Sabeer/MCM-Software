@@ -82,6 +82,15 @@ class Lead extends Model implements LeadContract
     }
 
     /**
+     * Get all contacts attached to the lead.
+     */
+    public function persons(): BelongsToMany
+    {
+        return $this->belongsToMany(PersonProxy::modelClass(), 'lead_persons')
+            ->withTimestamps();
+    }
+
+    /**
      * Get the organization that owns the lead.
      */
     public function organization(): BelongsTo

@@ -216,26 +216,40 @@
                                         {!! view_render_event('admin.components.activities.content.activity.item.attachments.before') !!}
 
                                         <!-- Attachments -->
-                                        <div
-                                            class="flex flex-wrap gap-2"
-                                            v-if="activity.files.length"
-                                        >
-                                            <a
-                                                :href="
-                                                    activity.type == 'email'
-                                                    ? `{{ route('admin.mail.attachment_download', 'replaceID') }}`.replace('replaceID', file.id)
-                                                    : `{{ route('admin.activities.file_download', 'replaceID') }}`.replace('replaceID', file.id)
-                                                "
-                                                class="flex cursor-pointer items-center gap-1 rounded-md p-1.5"
-                                                target="_blank"
+                                        <div class="flex flex-col gap-2" v-if="activity.files.length">
+                                            <div
+                                                class="flex items-center gap-2 rounded-md border border-gray-200 p-2 dark:border-gray-800"
                                                 v-for="(file, index) in activity.files"
                                             >
-                                                <span class="icon-attached-file text-xl"></span>
+                                                <a
+                                                    :href="isImageFile(file) ? filePreviewUrl(activity, file) : fileDownloadUrl(activity, file)"
+                                                    :target="isImageFile(file) ? '_blank' : '_self'"
+                                                    class="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800"
+                                                >
+                                                    <img
+                                                        v-if="isImageFile(file)"
+                                                        :src="filePreviewUrl(activity, file)"
+                                                        :alt="file.name"
+                                                        class="h-full w-full object-cover"
+                                                    >
 
-                                                <span class="font-medium text-brandColor">
-                                                    @{{ file.name }}
-                                                </span>
-                                            </a>
+                                                    <span v-else class="icon-attached-file text-2xl text-gray-400"></span>
+                                                </a>
+
+                                                <div class="min-w-0 flex-1">
+                                                    <a
+                                                        :href="fileDownloadUrl(activity, file)"
+                                                        class="block truncate font-medium text-brandColor hover:underline"
+                                                        :title="file.name"
+                                                    >
+                                                        @{{ file.name }}
+                                                    </a>
+
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400" v-if="activity.contact_name">
+                                                        Contact: @{{ activity.contact_name }}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         {!! view_render_event('admin.components.activities.content.activity.item.attachments.after') !!}
@@ -734,6 +748,28 @@
                                 });
                         },
                     });
+                },
+
+                isImageFile(file) {
+                    const extension = String(file?.name || '').split('.').pop().toLowerCase();
+
+                    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+                },
+
+                filePreviewUrl(activity, file) {
+                    if (activity.type == 'email') {
+                        return file.url || this.fileDownloadUrl(activity, file);
+                    }
+
+                    return file.preview_url || `{{ route('admin.activities.file_preview', 'replaceID') }}`.replace('replaceID', file.id);
+                },
+
+                fileDownloadUrl(activity, file) {
+                    if (activity.type == 'email') {
+                        return `{{ route('admin.mail.attachment_download', 'replaceID') }}`.replace('replaceID', file.id);
+                    }
+
+                    return file.download_url || `{{ route('admin.activities.file_download', 'replaceID') }}`.replace('replaceID', file.id);
                 },
 
                 remove(activity) {

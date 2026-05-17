@@ -497,6 +497,7 @@
                         searchFields: '',
                         pipeline_id: "{{ request('pipeline_id') }}",
                         organization_id: "{{ request('organization_id') }}",
+                        person_id: "{{ request('person_id') }}",
                         limit: 10,
                     };
 

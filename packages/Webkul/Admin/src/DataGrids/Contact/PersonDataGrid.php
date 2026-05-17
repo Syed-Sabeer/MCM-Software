@@ -223,6 +223,7 @@ class PersonDataGrid extends DataGrid
 
         if (bouncer()->hasPermission('contacts.persons.view')) {
             $this->addAction([
+                'index'  => 'view',
                 'icon'   => 'icon-eye',
                 'title'  => trans('admin::app.contacts.persons.index.datagrid.view'),
                 'method' => 'GET',
@@ -234,6 +235,7 @@ class PersonDataGrid extends DataGrid
 
         if (bouncer()->hasPermission('contacts.persons.edit')) {
             $this->addAction([
+                'index'  => 'edit',
                 'icon'   => 'icon-edit',
                 'title'  => trans('admin::app.contacts.persons.index.datagrid.edit'),
                 'method' => 'GET',
@@ -245,6 +247,7 @@ class PersonDataGrid extends DataGrid
 
         if (bouncer()->hasPermission('contacts.persons.delete')) {
             $this->addAction([
+                'index'  => 'delete',
                 'icon'   => 'icon-delete',
                 'title'  => trans('admin::app.contacts.persons.index.datagrid.delete'),
                 'method' => 'DELETE',

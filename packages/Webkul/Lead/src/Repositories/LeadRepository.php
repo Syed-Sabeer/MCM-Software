@@ -131,34 +131,19 @@ class LeadRepository extends Repository
      */
     public function create(array $data)
     {
-        // Normalize person[0] structure to person (when form submits person[0][id], person[0][name])
-        if (isset($data['person']) && is_array($data['person']) && array_key_exists(0, $data['person'])) {
-            $data['person'] = $data['person'][0];
-        }
+        $persons = $this->resolvePersonsFromInput($data);
 
         /**
          * If a person is provided (with id or name), create or update the person and set the `person_id`.
          * Contact is optional - leads can be created without a person.
          */
-        if (isset($data['person']) && (! empty($data['person']['id']) || ! empty(trim($data['person']['name'] ?? '')))) {
-            if (! empty($data['person']['id'])) {
-                $person = $this->personRepository->findOrFail($data['person']['id']);
-            } else {
-                $personData = array_merge($data['person'], ['entity_type' => 'persons']);
-                if (empty($personData['name'])) {
-                    $orgId = $personData['organization_id'] ?? $data['organization_id'] ?? null;
-                    $orgName = $orgId
-                        ? optional(app(\Webkul\Contact\Repositories\OrganizationRepository::class)->find($orgId))->name
-                        : null;
-                    $personData['name'] = $orgName ? "Contact from {$orgName}" : 'New Contact';
-                }
-                $person = $this->personRepository->create($personData);
-            }
+        if (! empty($persons)) {
+            $person = $persons[0];
             $data['person_id'] = $person->id;
         }
 
         if (empty($data['organization_id'])) {
-            $data['organization_id'] = $data['person']['organization_id']
+            $data['organization_id'] = $this->firstPersonInputValue($data, 'organization_id')
                 ?? (isset($person) ? $person->organization_id : null);
         }
 
@@ -166,19 +151,19 @@ class LeadRepository extends Repository
             $data['expected_close_date'] = null;
         }
 
-        // Convert empty strings to NULL for optional foreign key fields
-        if (isset($data['lead_source_id']) && $data['lead_source_id'] === '') {
-            $data['lead_source_id'] = null;
-        }
+        $this->normalizeNullableFields($data);
 
-        if (isset($data['priority']) && $data['priority'] === '') {
-            $data['priority'] = null;
-        }
+        // Convert empty strings to NULL for optional foreign key fields
+        unset($data['person'], $data['person_ids']);
 
         $lead = parent::create(array_merge([
             'lead_pipeline_id'       => 1,
             'lead_pipeline_stage_id' => 1,
         ], $data));
+
+        if (! empty($persons)) {
+            $lead->persons()->sync(collect($persons)->pluck('id')->all());
+        }
 
         $this->attributeValueRepository->save(array_merge($data, [
             'entity_id' => $lead->id,
@@ -205,26 +190,25 @@ class LeadRepository extends Repository
      */
     public function update(array $data, $id, $attributes = [])
     {
+        $shouldSyncPersons = array_key_exists('person', $data)
+            || array_key_exists('person_id', $data)
+            || array_key_exists('person_ids', $data);
+
         /**
          * If a person is provided, create or update the person and set the `person_id`.
          * Be cautious, as a lead can be updated without providing person data.
          * For example, in the lead Kanban section, when switching stages, only the stage will be updated.
          */
-        if (isset($data['person'])) {
-            if (! empty($data['person']['id'])) {
-                $person = $this->personRepository->findOrFail($data['person']['id']);
-            } else {
-                $person = $this->personRepository->create(array_merge($data['person'], [
-                    'entity_type' => 'persons',
-                ]));
-            }
-
+        if ($shouldSyncPersons && ! empty($persons = $this->resolvePersonsFromInput($data))) {
+            $person = $persons[0];
             $data['person_id'] = $person->id;
         }
 
         if (empty($data['organization_id']) && isset($person)) {
             $data['organization_id'] = $person->organization_id;
         }
+
+        unset($data['person'], $data['person_ids']);
 
         if (isset($data['lead_pipeline_stage_id'])) {
             $stage = $this->stageRepository->find($data['lead_pipeline_stage_id']);
@@ -240,7 +224,13 @@ class LeadRepository extends Repository
             $data['expected_close_date'] = null;
         }
 
+        $this->normalizeNullableFields($data);
+
         $lead = parent::update($data, $id);
+
+        if ($shouldSyncPersons && isset($persons)) {
+            $lead->persons()->sync(collect($persons)->pluck('id')->all());
+        }
 
         /**
          * If attributes are provided, only save the provided attributes and return.
@@ -298,5 +288,115 @@ class LeadRepository extends Repository
         }
 
         return $lead;
+    }
+
+    /**
+     * Resolve the submitted contact rows into person models.
+     */
+    protected function resolvePersonsFromInput(array $data): array
+    {
+        $personInputs = $this->normalizePersonInputs($data);
+        $persons = [];
+        $seen = [];
+
+        foreach ($personInputs as $personInput) {
+            if (! empty($personInput['id'])) {
+                $person = $this->personRepository->findOrFail($personInput['id']);
+            } elseif (! empty(trim($personInput['name'] ?? ''))) {
+                $personData = array_merge($personInput, [
+                    'entity_type'     => 'persons',
+                    'organization_id' => $personInput['organization_id'] ?? $data['organization_id'] ?? null,
+                ]);
+
+                if (empty($personData['name'])) {
+                    $orgId = $personData['organization_id'] ?? null;
+                    $orgName = $orgId
+                        ? optional(app(\Webkul\Contact\Repositories\OrganizationRepository::class)->find($orgId))->name
+                        : null;
+                    $personData['name'] = $orgName ? "Contact from {$orgName}" : 'New Contact';
+                }
+
+                $person = $this->personRepository->create($personData);
+            } else {
+                continue;
+            }
+
+            if (isset($seen[$person->id])) {
+                continue;
+            }
+
+            $seen[$person->id] = true;
+            $persons[] = $person;
+        }
+
+        return $persons;
+    }
+
+    /**
+     * Normalize person, person[0], person[1] and person_id inputs into rows.
+     */
+    protected function normalizePersonInputs(array $data): array
+    {
+        $inputs = [];
+        $raw = $data['person'] ?? null;
+
+        if (is_array($raw)) {
+            if (! empty($raw['id']) || ! empty(trim($raw['name'] ?? ''))) {
+                $inputs[] = collect($raw)
+                    ->reject(fn ($value, $key) => is_int($key))
+                    ->all();
+            }
+
+            foreach ($raw as $key => $value) {
+                if (is_int($key) && is_array($value)) {
+                    $inputs[] = $value;
+                }
+            }
+        }
+
+        foreach ((array) ($data['person_ids'] ?? []) as $personId) {
+            if (! empty($personId)) {
+                $inputs[] = ['id' => $personId];
+            }
+        }
+
+        if (! empty($data['person_id'])) {
+            array_unshift($inputs, ['id' => $data['person_id']]);
+        }
+
+        return $inputs;
+    }
+
+    /**
+     * Get a value from the first submitted person row.
+     */
+    protected function firstPersonInputValue(array $data, string $key): mixed
+    {
+        foreach ($this->normalizePersonInputs($data) as $personInput) {
+            if (! empty($personInput[$key])) {
+                return $personInput[$key];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Normalize optional nullable fields before insert/update.
+     */
+    protected function normalizeNullableFields(array &$data): void
+    {
+        foreach ([
+            'lead_source_id',
+            'lead_type_id',
+            'priority',
+            'user_id',
+            'organization_id',
+            'person_id',
+        ] as $field) {
+            if (array_key_exists($field, $data) && $data[$field] === '') {
+                $data[$field] = null;
+            }
+        }
     }
 }

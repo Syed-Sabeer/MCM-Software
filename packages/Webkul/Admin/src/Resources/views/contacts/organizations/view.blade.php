@@ -504,16 +504,14 @@
                         @endforeach
                     </div>
 
-                    @if ($casesCount > 3)
-                        <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
-                            <a
-                                href="{{ route('admin.leads.index', ['organization_id' => $organization->id]) }}"
-                                class="text-xs font-semibold text-brandColor hover:underline"
-                            >
-                                View All Cases
-                            </a>
-                        </div>
-                    @endif
+                    <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
+                        <a
+                            href="{{ route('admin.leads.index', ['organization_id' => $organization->id]) }}"
+                            class="text-xs font-semibold text-brandColor hover:underline"
+                        >
+                            View All Cases
+                        </a>
+                    </div>
                 @else
                     <p class="rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                         Track support cases and issues here. Start by creating your first case.
@@ -523,26 +521,68 @@
 
             <!-- Files card -->
             @php
+                $organizationContacts = $organization->persons()
+                    ->selectRaw("id, COALESCE(NULLIF(TRIM(name), ''), NULLIF(TRIM(CONCAT_WS(' ', first_name, last_name)), ''), CONCAT('Contact #', id)) as display_name")
+                    ->get();
+                $organizationContactIds = $organizationContacts->pluck('id')->map(fn ($id) => (int) $id)->all();
+                $organizationContactNames = $organizationContacts->pluck('display_name', 'id');
+
                 $filesQuery = \Webkul\Activity\Models\Activity::query()
                     ->where('type', 'file')
                     ->where(function ($query) use ($organization) {
                         $query->where(function ($query) use ($organization) {
                             $query->where('entity_type', 'organizations')
                                 ->where('entity_id', $organization->id);
+                        })->orWhereHas('organizations', function ($query) use ($organization) {
+                            $query->where('organizations.id', $organization->id);
                         })->orWhereHas('persons', function ($query) use ($organization) {
                             $query->where('organization_id', $organization->id);
                         });
                     })
-                    ->with('files')
+                    ->with(['files', 'persons'])
                     ->latest();
 
-                $filesCount = $filesQuery->count();
+                if (! empty($organizationContactIds)) {
+                    $filesQuery->orWhere(function ($query) use ($organizationContactIds) {
+                        $query->where('type', 'file')
+                            ->where('entity_type', 'persons')
+                            ->whereIn('entity_id', $organizationContactIds);
+                    });
+                }
 
-                $recentFiles = $filesQuery
-                    ->take(7)
+                $activityFiles = (clone $filesQuery)
                     ->get()
-                    ->flatMap(fn ($activity) => $activity->files)
-                    ->take(7);
+                    ->flatMap(function ($activity) use ($organizationContactIds, $organizationContactNames) {
+                        $sourceType = 'organization';
+                        $sourceName = null;
+
+                        if (
+                            $activity->entity_type === 'persons'
+                            || $activity->persons->contains(fn ($person) => in_array((int) $person->id, $organizationContactIds, true))
+                        ) {
+                            $sourceType = 'contact';
+
+                            if ($activity->entity_type === 'persons') {
+                                $sourceName = $organizationContactNames->get((int) $activity->entity_id);
+                            } else {
+                                $sourceName = optional($activity->persons->first(fn ($person) => in_array((int) $person->id, $organizationContactIds, true)))->name;
+                            }
+                        }
+
+                        return $activity->files->map(function ($file) use ($activity, $sourceType, $sourceName) {
+                            $file->source_type = $sourceType;
+                            $file->source_name = $sourceName;
+                            $file->source_activity_id = $activity->id;
+                            $file->source_activity_title = $activity->title;
+
+                            return $file;
+                        });
+                    })
+                    ->sortByDesc('created_at')
+                    ->values();
+
+                $filesCount = $activityFiles->count();
+                $recentFiles = $activityFiles->take(3);
             @endphp
 
             <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -559,32 +599,34 @@
                     <div class="grid gap-3 border-t border-gray-200 pt-3 dark:border-gray-700 sm:grid-cols-2 lg:grid-cols-1">
                         @foreach ($recentFiles as $file)
                             @php
-                                $filePath = $file->url ?? asset('storage/' . $file->path);
-                                $fileName = $file->name ?? $file->original_name;
+                                $previewUrl = route('admin.activities.file_preview', $file->id);
+                                $downloadUrl = route('admin.activities.file_download', $file->id);
+                                $fileName = trim((string) ($file->name ?? '')) ?: (trim((string) ($file->source_activity_title ?? '')) ?: basename((string) $file->path));
+                                $storedExtension = pathinfo((string) $file->path, PATHINFO_EXTENSION);
+                                if ($storedExtension && ! str_contains(basename($fileName), '.')) {
+                                    $fileName .= '.' . $storedExtension;
+                                }
                                 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                                 $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                             @endphp
 
-                            <div class="flex flex-col gap-2 rounded-md border border-gray-200 p-2 dark:border-gray-700">
-                                @if ($isImage)
-                                    <a href="{{ $filePath }}" target="_blank" class="relative overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800">
+                            <div class="flex items-center gap-2 rounded-md border border-gray-200 p-2 dark:border-gray-700">
+                                <a href="{{ $isImage ? $previewUrl : $downloadUrl }}" target="{{ $isImage ? '_blank' : '_self' }}" class="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800">
+                                    @if ($isImage)
                                         <img
-                                            src="{{ $filePath }}"
+                                            src="{{ $previewUrl }}"
                                             alt="{{ $fileName }}"
-                                            class="h-24 w-full object-cover transition hover:opacity-75"
+                                            class="h-full w-full object-cover transition hover:opacity-75"
                                         />
-                                    </a>
-                                @else
-                                    <div class="flex items-center justify-center rounded-md bg-gray-100 py-6 dark:bg-gray-800">
-                                        <i class="icon-document text-3xl text-gray-400"></i>
-                                    </div>
-                                @endif
+                                    @else
+                                        <i class="icon-document text-2xl text-gray-400"></i>
+                                    @endif
+                                </a>
 
-                                <div class="flex items-start justify-between gap-2">
+                                <div class="flex min-w-0 flex-1 items-start justify-between gap-2">
                                     <div class="min-w-0 flex-1">
                                         <a
-                                            href="{{ $filePath }}"
-                                            target="_blank"
+                                            href="{{ $downloadUrl }}"
                                             class="block truncate text-xs font-medium text-brandColor hover:underline"
                                             title="{{ $fileName }}"
                                         >
@@ -592,41 +634,34 @@
                                         </a>
                                         <p class="text-xs text-gray-500 dark:text-gray-400">
                                             {{ core()->formatDate($file->created_at) }}
+                                            @if (($file->source_type ?? null) === 'contact')
+                                                <span class="ml-1 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+                                                    {{ $file->source_name ? 'Contact: ' . $file->source_name : 'Contact' }}
+                                                </span>
+                                            @endif
                                         </p>
                                     </div>
 
-                                    <form
-                                        action="{{ route('admin.' . $routePrefix . '.organizations.files.delete', $file->id) }}"
-                                        method="POST"
-                                        onsubmit="return confirm('Delete this file?');"
-                                        class="inline"
+                                    <a
+                                        href="{{ $downloadUrl }}"
+                                        class="flex-shrink-0 text-gray-400 hover:text-brandColor dark:text-gray-500"
+                                        title="Download {{ $fileName }}"
                                     >
-                                        @csrf
-                                        @method('DELETE')
-
-                                        <button
-                                            type="submit"
-                                            class="flex-shrink-0 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-                                            title="Delete file"
-                                        >
-                                            <i class="icon-delete text-lg"></i>
-                                        </button>
-                                    </form>
+                                        <i class="icon-download text-lg"></i>
+                                    </a>
                                 </div>
                             </div>
                         @endforeach
                     </div>
 
-                    @if ($filesCount >= 7)
-                        <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
-                            <a
-                                href="{{ route('admin.activities.index', ['entity_type' => 'organizations', 'entity_id' => $organization->id]) }}"
-                                class="text-xs font-semibold text-brandColor hover:underline"
-                            >
-                                View All Files
-                            </a>
-                        </div>
-                    @endif
+                    <div class="border-t border-gray-200 pt-3 text-center dark:border-gray-700">
+                        <a
+                            href="{{ route('admin.activities.index', ['entity_type' => 'organizations', 'entity_id' => $organization->id, 'type' => 'file']) }}"
+                            class="text-xs font-semibold text-brandColor hover:underline"
+                        >
+                            View All Files
+                        </a>
+                    </div>
                 @else
                     <p class="rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                         No files yet. Upload proposals, contracts, and documents here.

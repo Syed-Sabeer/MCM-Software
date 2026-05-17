@@ -119,6 +119,10 @@ class LeadController extends Controller
                 });
             }
 
+            if ($personId = request()->query('person_id')) {
+                $query->where('leads.person_id', $personId);
+            }
+
             $stage->lead_value = (clone $query)->sum('lead_value');
 
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
@@ -131,6 +135,8 @@ class LeadController extends Controller
                     'user',
                     'person',
                     'person.organization',
+                    'persons',
+                    'persons.organization',
                     'pipeline',
                     'pipeline.stages',
                     'stage',
@@ -157,9 +163,16 @@ class LeadController extends Controller
     public function create(): View
     {
         $organization = null;
+        $person = null;
 
         if ($organizationId = request()->integer('organization_id')) {
             $organization = app(\Webkul\Contact\Repositories\OrganizationRepository::class)->find($organizationId);
+        }
+
+        if ($personId = request()->integer('person_id')) {
+            $person = $this->personRepository->with('organization')->find($personId);
+
+            $organization ??= $person?->organization;
         }
 
         if (request('pipeline_id')) {
@@ -170,7 +183,7 @@ class LeadController extends Controller
 
         $nextCaseNo = $this->leadRepository->getNextCaseNo();
 
-        return view('admin::leads.create', compact('organization', 'pipeline', 'nextCaseNo'));
+        return view('admin::leads.create', compact('organization', 'person', 'pipeline', 'nextCaseNo'));
     }
 
     /**
@@ -235,9 +248,13 @@ class LeadController extends Controller
      */
     public function edit(int $id): View
     {
-        $lead = $this->leadRepository->findOrFail($id);
+        $lead = $this->leadRepository
+            ->with(['person.organization', 'persons.organization', 'organization', 'pipeline.stages', 'products', 'user'])
+            ->findOrFail($id);
 
-        return view('admin::leads.edit', compact('lead'));
+        $pipeline = $lead->pipeline ?: $this->pipelineRepository->getDefaultPipeline();
+
+        return view('admin::leads.edit', compact('lead', 'pipeline'));
     }
 
     /**
@@ -245,7 +262,9 @@ class LeadController extends Controller
      */
     public function view(int $id)
     {
-        $lead = $this->leadRepository->with('attribute_values')->findOrFail($id);
+        $lead = $this->leadRepository
+            ->with(['attribute_values', 'person.organization', 'persons.organization', 'organization'])
+            ->findOrFail($id);
 
         $userIds = bouncer()->getAuthorizedUserIds();
 
@@ -299,6 +318,34 @@ class LeadController extends Controller
         } else {
             return redirect()->route('admin.leads.index', $data['lead_pipeline_id']);
         }
+    }
+
+    /**
+     * Detach a contact from the lead.
+     */
+    public function detachPerson(int $id, int $personId): RedirectResponse|JsonResponse
+    {
+        $lead = $this->leadRepository->with('persons')->findOrFail($id);
+
+        $lead->persons()->detach($personId);
+
+        if ((int) $lead->person_id === $personId) {
+            $nextPersonId = $lead->persons()->value('persons.id');
+
+            $lead->forceFill([
+                'person_id' => $nextPersonId,
+            ])->save();
+        }
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'message' => 'Contact removed successfully.',
+            ]);
+        }
+
+        session()->flash('success', 'Contact removed successfully.');
+
+        return redirect()->back();
     }
 
     /**

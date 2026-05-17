@@ -41,7 +41,7 @@ class ActivityRepository extends Repository
 
         if (isset($data['file'])) {
             $this->fileRepository->create([
-                'name'        => $data['name'] ?? $data['file']->getClientOriginalName(),
+                'name'        => ! empty($data['name']) ? $data['name'] : $data['file']->getClientOriginalName(),
                 'path'        => $data['file']->store('activities/'.$activity->id),
                 'activity_id' => $activity->id,
             ]);
@@ -86,7 +86,7 @@ class ActivityRepository extends Repository
                 }
 
                 $fileData = [
-                    'name'        => $data['name'] ?? $data['file']->getClientOriginalName(),
+                    'name'        => ! empty($data['name']) ? $data['name'] : $data['file']->getClientOriginalName(),
                     'path'        => $data['file']->store('activities/'.$activity->id),
                     'activity_id' => $activity->id,
                 ];

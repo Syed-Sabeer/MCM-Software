@@ -13,8 +13,26 @@
             return null;
         }
     };
+    $jobOrderMode = (bool) $jobOrder;
     $defaultExpectedReceiveDate = old('expected_receive_date', $formatSafeDate($vendorQuote?->last_delivery_date ?: $vendorQuote?->first_delivery_date ?: $jobOrder?->required_delivery_date));
-    $prefillItems = old('items', $vendorQuote?->items?->map(fn ($item) => [
+    $vendorQuoteItemsByRequirement = collect($vendorQuote?->items ?? [])->keyBy('requirement_id');
+    $prefillItems = old('items', $jobOrder?->requirements?->map(function ($req) use ($vendorQuote, $vendorQuoteItemsByRequirement) {
+        $quoteItem = $vendorQuoteItemsByRequirement->get($req->id);
+        $orderedQuantity = $quoteItem?->quantity ?? $req->balance_qty;
+
+        return [
+            'requirement_id' => $req->id,
+            'item' => $quoteItem?->material_name ?? $req->material_name,
+            'material_name' => $quoteItem?->material_name ?? $req->material_name,
+            'color' => $req->color_name ?: $req->color_code ?: '-',
+            'ordered_quantity' => $orderedQuantity,
+            'received_quantity' => 0,
+            'pending_quantity' => $orderedQuantity,
+            'unit' => $quoteItem?->unit ?: ($req->unit ?: 'PCS'),
+            'price' => $quoteItem?->unit_price ?? 0,
+            'vendor_id' => $vendorQuote?->organization_id ?: collect((array) $req->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first(),
+        ];
+    })->toArray() ?? $vendorQuote?->items?->map(fn ($item) => [
         'requirement_id' => $item->requirement_id,
         'item' => $item->material_name,
         'material_name' => $item->material_name,
@@ -24,20 +42,9 @@
         'pending_quantity' => $item->quantity,
         'unit' => $item->unit ?: optional($item->requirement)->unit ?: 'PCS',
         'price' => $item->unit_price,
-        'vendor_id' => $vendorQuote?->organization_id,
-    ])->toArray() ?? $jobOrder?->requirements?->map(fn ($req) => [
-        'requirement_id' => $req->id,
-        'item' => $req->material_name,
-        'material_name' => $req->material_name,
-        'color' => $req->color_name ?: $req->color_code ?: '-',
-        'ordered_quantity' => $req->balance_qty,
-        'received_quantity' => 0,
-        'pending_quantity' => $req->balance_qty,
-        'unit' => $req->unit ?: 'PCS',
-        'price' => 0,
-        'vendor_id' => collect((array) $req->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first(),
+        'vendor_id' => collect((array) optional($item->requirement)->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first() ?: $vendorQuote?->organization_id,
     ])->toArray() ?? [['item' => '', 'ordered_quantity' => 1, 'unit' => 'PCS', 'price' => 0]]);
-    $initialPurchaseOrderCharges = collect(old('charges', $vendorQuote ? $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote') : []))->values()->all();
+    $initialPurchaseOrderCharges = collect(old('charges', $vendorQuote && ! $jobOrderMode ? $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote') : []))->values()->all();
     $vendorOptions = $vendors->map(fn ($vendor) => [
         'id' => (int) $vendor->id,
         'name' => (string) $vendor->name,
@@ -47,6 +54,23 @@
 
         return [(int) $requirement->id => $ids];
     });
+
+    if ($vendorQuote?->organization_id) {
+        foreach ($vendorQuote->items ?? [] as $item) {
+            if (! $item->requirement_id) {
+                continue;
+            }
+
+            $ids = collect($requirementVendorMap->get((int) $item->requirement_id, []))
+                ->push((int) $vendorQuote->organization_id)
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            $requirementVendorMap->put((int) $item->requirement_id, $ids);
+        }
+    }
 @endphp
 <x-admin::layouts>
     <x-slot:title>Create Vendor Purchase Order</x-slot>
@@ -91,8 +115,8 @@
                     </div>
                 </div>
 
-                <div class="mt-4 grid gap-4" style="grid-template-columns: repeat({{ $jobOrder && ! $vendorQuote ? 2 : 3 }}, minmax(0, 1fr));">
-                    @if (! ($jobOrder && ! $vendorQuote))
+                <div class="mt-4 grid gap-4" style="grid-template-columns: repeat({{ $jobOrderMode ? 2 : 3 }}, minmax(0, 1fr));">
+                    @if (! $jobOrderMode)
                         <div>
                             <label class="mb-1 block text-sm font-medium">Vendor</label>
                             <select name="organization_id" class="custom-select" id="po-organization-select">
@@ -123,7 +147,6 @@
                         <input type="text" name="shipping_method" value="{{ old('shipping_method', $vendorQuote?->shipping_method) }}" class="custom-input">
                     </div>
                 </div>
-
             </div>
 
             <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">

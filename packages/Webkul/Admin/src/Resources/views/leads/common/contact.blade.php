@@ -3,6 +3,7 @@
 <v-contact-component
     :prefill-organization-id="prefillOrganizationId || selectedOrganizationId || null"
     :initial-contact="initialContact || null"
+    :initial-contacts="initialContacts || []"
     organization-fetch-url="{{ route('admin.contacts.organizations.fetch', ['id' => '__ID__']) }}"
     @organization-selected="handleOrganizationSelected"
 ></v-contact-component>
@@ -47,6 +48,13 @@
                             v-if="contact.id || contact.name"
                             type="hidden"
                             :name="index === 0 ? 'person[id]' : `person[${index}][id]`"
+                            :value="contact.id"
+                        />
+
+                        <input
+                            v-if="contact.id"
+                            type="hidden"
+                            name="person_ids[]"
                             :value="contact.id"
                         />
 
@@ -107,6 +115,7 @@
                 prefillOrganizationId: { type: [String, Number], default: null },
                 organizationFetchUrl: { type: String, default: '' },
                 initialContact: { type: Object, default: null },
+                initialContacts: { type: Array, default: () => [] },
             },
 
             data() {
@@ -126,12 +135,20 @@
             },
 
             mounted() {
-                if (this.initialContact && (this.initialContact.id || this.initialContact.name)) {
-                    this.contacts[0].id = this.initialContact.id || null;
-                    this.contacts[0].name = this.initialContact.name || '';
-                    this.contacts[0].searchQuery = this.initialContact.name || '';
-                    this.contacts[0].organization_id = this.initialContact.organization_id || null;
-                    this.contacts[0].organization_name = this.initialContact.organization_name || '';
+                const contacts = this.initialContacts.length
+                    ? this.initialContacts
+                    : (this.initialContact && (this.initialContact.id || this.initialContact.name) ? [this.initialContact] : []);
+
+                if (contacts.length) {
+                    this.contacts = contacts.map(contact => ({
+                        id: contact.id || null,
+                        name: contact.name || '',
+                        searchQuery: contact.name || '',
+                        organization_id: contact.organization_id || null,
+                        organization_name: contact.organization_name || '',
+                        searchResults: [],
+                        showResults: false
+                    }));
 
                     this.$emit('organization-selected', {
                         id: this.contacts[0].organization_id,

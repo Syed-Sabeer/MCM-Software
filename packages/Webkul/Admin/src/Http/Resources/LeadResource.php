@@ -28,6 +28,7 @@ class LeadResource extends JsonResource
             'created_at'           => $this->created_at,
             'updated_at'           => $this->updated_at,
             'person'               => new PersonResource($this->person),
+            'persons'              => PersonResource::collection($this->whenLoaded('persons')),
             'user'                 => new UserResource($this->user),
             'type'                 => new TypeResource($this->type),
             'source'               => new SourceResource($this->source),

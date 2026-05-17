@@ -31,8 +31,15 @@ class ActivityController extends Controller
     public function index($id)
     {
         $activities = $this->activityRepository
+            ->select('activities.*')
             ->leftJoin('person_activities', 'activities.id', '=', 'person_activities.activity_id')
-            ->where('person_activities.person_id', $id)
+            ->where(function ($query) use ($id) {
+                $query->where('person_activities.person_id', $id)
+                    ->orWhere(function ($query) use ($id) {
+                        $query->where('activities.entity_type', 'persons')
+                            ->where('activities.entity_id', $id);
+                    });
+            })
             ->get();
 
         return ActivityResource::collection($this->concatEmailAsActivities($id, $activities));
