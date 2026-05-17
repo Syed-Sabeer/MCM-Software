@@ -19,6 +19,7 @@ use Webkul\PurchaseOrder\Repositories\JobOrderRepository;
 use Webkul\PurchaseOrder\Repositories\JobOrderRequirementRepository;
 use Webkul\PurchaseOrder\Repositories\PurchaseOrderRepository;
 use Webkul\PurchaseOrder\Repositories\VendorQuoteRepository;
+use Webkul\PurchaseOrder\Support\RequirementVendorAggregator;
 
 class PurchaseOrderController extends Controller
 {
@@ -28,7 +29,8 @@ class PurchaseOrderController extends Controller
         protected PurchaseOrderRepository $purchaseOrderRepository,
         protected VendorQuoteRepository $vendorQuoteRepository,
         protected JobOrderRepository $jobOrderRepository,
-        protected JobOrderRequirementRepository $jobOrderRequirementRepository
+        protected JobOrderRequirementRepository $jobOrderRequirementRepository,
+        protected RequirementVendorAggregator $requirementVendorAggregator
     ) {
     }
 
@@ -66,6 +68,11 @@ class PurchaseOrderController extends Controller
                     $jobOrder->requirements->whereIn('id', $selectedRequirementIds)->values()
                 );
             }
+
+            $jobOrder->setRelation(
+                'vendorRequirementTotals',
+                $this->requirementVendorAggregator->totals($jobOrder->requirements)
+            );
         }
 
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)

@@ -25,12 +25,14 @@ class UnitReferenceController extends Controller
     {
         $data = request()->validate([
             'name' => ['required', 'string', 'max:100', 'unique:unit_references,name'],
+            'meter_conversion' => ['nullable', 'numeric', 'gt:0'],
         ]);
 
         Event::dispatch('settings.unit_reference.create.before');
 
         $unitReference = UnitReference::create([
             'name' => strtoupper(trim((string) $data['name'])),
+            'meter_conversion' => $data['meter_conversion'] ?? null,
         ]);
 
         Event::dispatch('settings.unit_reference.create.after', $unitReference);
@@ -52,6 +54,7 @@ class UnitReferenceController extends Controller
     {
         $data = request()->validate([
             'name' => ['required', 'string', 'max:100', 'unique:unit_references,name,' . $id],
+            'meter_conversion' => ['nullable', 'numeric', 'gt:0'],
         ]);
 
         Event::dispatch('settings.unit_reference.update.before', $id);
@@ -59,6 +62,7 @@ class UnitReferenceController extends Controller
         $unitReference = UnitReference::findOrFail($id);
         $unitReference->update([
             'name' => strtoupper(trim((string) $data['name'])),
+            'meter_conversion' => $data['meter_conversion'] ?? null,
         ]);
 
         Event::dispatch('settings.unit_reference.update.after', $unitReference);

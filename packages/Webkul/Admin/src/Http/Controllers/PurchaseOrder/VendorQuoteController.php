@@ -17,6 +17,7 @@ use Webkul\Core\Traits\PDFHandler;
 use Webkul\PurchaseOrder\Models\VendorQuote;
 use Webkul\PurchaseOrder\Repositories\JobOrderRepository;
 use Webkul\PurchaseOrder\Repositories\VendorQuoteRepository;
+use Webkul\PurchaseOrder\Support\RequirementVendorAggregator;
 
 class VendorQuoteController extends Controller
 {
@@ -24,7 +25,8 @@ class VendorQuoteController extends Controller
 
     public function __construct(
         protected VendorQuoteRepository $vendorQuoteRepository,
-        protected JobOrderRepository $jobOrderRepository
+        protected JobOrderRepository $jobOrderRepository,
+        protected RequirementVendorAggregator $requirementVendorAggregator
     ) {
     }
 
@@ -52,6 +54,11 @@ class VendorQuoteController extends Controller
                     $jobOrder->requirements->whereIn('id', $selectedRequirementIds)->values()
                 );
             }
+
+            $jobOrder->setRelation(
+                'vendorRequirementTotals',
+                $this->requirementVendorAggregator->totals($jobOrder->requirements)
+            );
         }
 
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)

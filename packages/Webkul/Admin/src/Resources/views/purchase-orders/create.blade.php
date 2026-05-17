@@ -16,21 +16,33 @@
     $jobOrderMode = (bool) $jobOrder;
     $defaultExpectedReceiveDate = old('expected_receive_date', $formatSafeDate($vendorQuote?->last_delivery_date ?: $vendorQuote?->first_delivery_date ?: $jobOrder?->required_delivery_date));
     $vendorQuoteItemsByRequirement = collect($vendorQuote?->items ?? [])->keyBy('requirement_id');
-    $prefillItems = old('items', $jobOrder?->requirements?->map(function ($req) use ($vendorQuote, $vendorQuoteItemsByRequirement) {
-        $quoteItem = $vendorQuoteItemsByRequirement->get($req->id);
-        $orderedQuantity = $quoteItem?->quantity ?? $req->balance_qty;
+    $vendorRequirementTotals = $jobOrder?->relationLoaded('vendorRequirementTotals')
+        ? collect($jobOrder->getRelation('vendorRequirementTotals'))
+        : collect();
+    $prefillSourceRows = $vendorRequirementTotals->isNotEmpty() ? $vendorRequirementTotals : collect($jobOrder?->requirements ?? [])->map(fn ($req) => [
+        'requirement_id' => $req->id,
+        'material_name' => $req->material_name,
+        'color_label' => $req->color_name ?: $req->color_code ?: '-',
+        'balance_qty' => $req->balance_qty,
+        'unit' => $req->unit ?: 'PCS',
+        'vendor_ids' => (array) $req->vendor_ids,
+    ]);
+    $prefillItems = old('items', $prefillSourceRows->map(function ($req) use ($vendorQuote, $vendorQuoteItemsByRequirement) {
+        $reqId = $req['requirement_id'] ?? null;
+        $quoteItem = $reqId ? $vendorQuoteItemsByRequirement->get($reqId) : null;
+        $orderedQuantity = $quoteItem?->quantity ?? $req['balance_qty'];
 
         return [
-            'requirement_id' => $req->id,
-            'item' => $quoteItem?->material_name ?? $req->material_name,
-            'material_name' => $quoteItem?->material_name ?? $req->material_name,
-            'color' => $req->color_name ?: $req->color_code ?: '-',
+            'requirement_id' => $reqId,
+            'item' => $quoteItem?->material_name ?? $req['material_name'],
+            'material_name' => $quoteItem?->material_name ?? $req['material_name'],
+            'color' => $req['color_label'] ?? '-',
             'ordered_quantity' => $orderedQuantity,
             'received_quantity' => 0,
             'pending_quantity' => $orderedQuantity,
-            'unit' => $quoteItem?->unit ?: ($req->unit ?: 'PCS'),
+            'unit' => $quoteItem?->unit ?: ($req['unit'] ?: 'PCS'),
             'price' => $quoteItem?->unit_price ?? 0,
-            'vendor_id' => $vendorQuote?->organization_id ?: collect((array) $req->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first(),
+            'vendor_id' => $vendorQuote?->organization_id ?: collect((array) ($req['vendor_ids'] ?? []))->filter()->map(fn ($id) => (int) $id)->first(),
         ];
     })->toArray() ?? $vendorQuote?->items?->map(fn ($item) => [
         'requirement_id' => $item->requirement_id,

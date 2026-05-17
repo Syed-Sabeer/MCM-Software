@@ -55,6 +55,7 @@
 
                             <p>@{{ record.id }}</p>
                             <p>@{{ record.name }}</p>
+                            <p>@{{ record.meter_conversion }}</p>
                             <p>@{{ record.created_at }}</p>
                             <div
                                 v-if="available.actions.length"
@@ -97,6 +98,24 @@
                                 />
                                 <x-admin::form.control-group.error control-name="name" />
                             </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>Conversion To Meter</x-admin::form.control-group.label>
+                                <x-admin::form.control-group.control
+                                    type="number"
+                                    id="unit-reference-meter-conversion"
+                                    name="meter_conversion"
+                                    rules="decimal|min_value:0.00000001"
+                                    label="Conversion To Meter"
+                                    step="0.00000001"
+                                    min="0"
+                                    placeholder="Example: 0.0254 for Inch"
+                                />
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-300">
+                                    Leave blank for non-length units like PCS, CONES, BOX, etc.
+                                </p>
+                                <x-admin::form.control-group.error control-name="meter_conversion" />
+                            </x-admin::form.control-group>
                         </x-slot>
 
                         <x-slot:footer>
@@ -127,7 +146,7 @@
                 methods: {
                     openModal() {
                         this.selectedRecord = false;
-                        this.$refs.modalForm.setValues({ id: '', name: '' });
+                        this.$refs.modalForm.setValues({ id: '', name: '', meter_conversion: '' });
                         this.$refs.unitReferencesModal.open();
                     },
 

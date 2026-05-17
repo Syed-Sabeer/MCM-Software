@@ -8,5 +8,6 @@ class UnitReference extends Model
 {
     protected $fillable = [
         'name',
+        'meter_conversion',
     ];
 }

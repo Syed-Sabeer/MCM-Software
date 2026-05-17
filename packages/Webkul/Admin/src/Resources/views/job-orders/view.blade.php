@@ -176,6 +176,35 @@
                         @endforeach
                     </tbody>
                 </table>
+
+                <div class="mt-6 text-base font-semibold dark:text-white">Total Requirement from Vendor</div>
+
+                <table class="mt-3 w-full text-sm dark:text-white">
+                    <thead>
+                        <tr class="border-b dark:border-gray-700">
+                            <th class="py-2 text-left">Material</th>
+                            <th class="py-2 text-left">Color</th>
+                            <th class="py-2 text-left">Total Required</th>
+                            <th class="py-2 text-left">Received</th>
+                            <th class="py-2 text-left">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($vendorRequirementTotals as $total)
+                            <tr class="border-b dark:border-gray-800">
+                                <td class="py-2">{{ $total['material_name'] }}</td>
+                                <td class="py-2">{{ $total['color_label'] }}</td>
+                                <td class="py-2">{{ $formatStageQty($total['required_qty']) }} {{ $total['unit'] }}</td>
+                                <td class="py-2">{{ $formatStageQty($total['received_qty']) }} {{ $total['unit'] }}</td>
+                                <td class="py-2">{{ $formatStageQty($total['balance_qty']) }} {{ $total['unit'] }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-4 text-center text-gray-500">No vendor requirements available.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
 

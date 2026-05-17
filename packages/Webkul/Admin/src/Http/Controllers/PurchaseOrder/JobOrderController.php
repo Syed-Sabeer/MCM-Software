@@ -16,6 +16,7 @@ use Webkul\Contact\Models\Organization;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\PurchaseOrder\Models\JobOrder;
 use Webkul\PurchaseOrder\Repositories\JobOrderRepository;
+use Webkul\PurchaseOrder\Support\RequirementVendorAggregator;
 use Webkul\Quote\Repositories\ProformaInvoiceRepository;
 
 class JobOrderController extends Controller
@@ -24,7 +25,8 @@ class JobOrderController extends Controller
 
     public function __construct(
         protected JobOrderRepository $jobOrderRepository,
-        protected ProformaInvoiceRepository $proformaInvoiceRepository
+        protected ProformaInvoiceRepository $proformaInvoiceRepository,
+        protected RequirementVendorAggregator $requirementVendorAggregator
     ) {
     }
 
@@ -63,8 +65,9 @@ class JobOrderController extends Controller
     {
         $jobOrder = $this->findJobOrderForExport($id);
         $requirementVendors = $this->resolveRequirementVendors($jobOrder);
+        $vendorRequirementTotals = $this->requirementVendorAggregator->totals($jobOrder->requirements);
 
-        return view('admin::job-orders.view', compact('jobOrder', 'requirementVendors'));
+        return view('admin::job-orders.view', compact('jobOrder', 'requirementVendors', 'vendorRequirementTotals'));
     }
 
     public function edit(int $id): View
@@ -178,6 +181,7 @@ class JobOrderController extends Controller
                 return [
                     'vendor'       => $vendor,
                     'requirements' => $requirements,
+                    'totals'       => $this->requirementVendorAggregator->totals($requirements),
                 ];
             })->filter(fn ($group) => $group['requirements']->isNotEmpty())->values();
 
@@ -185,6 +189,7 @@ class JobOrderController extends Controller
                 $vendorRequirementGroups = collect([[
                     'vendor'       => null,
                     'requirements' => collect(),
+                    'totals'       => collect(),
                 ]]);
             }
         } else {
@@ -206,6 +211,7 @@ class JobOrderController extends Controller
             $vendorRequirementGroups = collect([[
                 'vendor'       => $selectedVendor,
                 'requirements' => $requirements,
+                'totals'       => $this->requirementVendorAggregator->totals($requirements),
             ]]);
         }
 
@@ -236,6 +242,22 @@ class JobOrderController extends Controller
                     $requirement->balance_qty,
                     $requirement->unit,
                     $requirement->status,
+                ]);
+            }
+
+            fputcsv($handle, []);
+            fputcsv($handle, ['Total Requirement from Vendor']);
+            fputcsv($handle, ['Job Order', 'Material', 'Color', 'Total Required', 'Received', 'Balance', 'Unit']);
+
+            foreach ($this->requirementVendorAggregator->totals($jobOrder->requirements) as $total) {
+                fputcsv($handle, [
+                    $jobOrder->job_order_number,
+                    $total['material_name'],
+                    $total['color_label'],
+                    $total['required_qty'],
+                    $total['received_qty'],
+                    $total['balance_qty'],
+                    $total['unit'],
                 ]);
             }
 

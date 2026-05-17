@@ -94,6 +94,37 @@
                 @endforelse
             </tbody>
         </table>
+
+        <div style="margin-top: 18px; font-weight: 700; color: {{ $brandColor }};">
+            Total Requirement from Vendor
+        </div>
+
+        <table class="items-table" style="margin-top:8px;">
+            <thead>
+                <tr>
+                    <th style="width: 34%;">Material</th>
+                    <th style="width: 18%;">Color</th>
+                    <th style="width: 16%;">Total Required</th>
+                    <th style="width: 16%;">Received</th>
+                    <th style="width: 16%;">Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse (($group['totals'] ?? collect()) as $total)
+                    <tr>
+                        <td>{{ $total['material_name'] ?: '-' }}</td>
+                        <td>{{ $total['color_label'] ?: '-' }}</td>
+                        <td>{{ $formatStageQty($total['required_qty']) }} {{ $total['unit'] }}</td>
+                        <td>{{ $formatStageQty($total['received_qty']) }} {{ $total['unit'] }}</td>
+                        <td>{{ $formatStageQty($total['balance_qty']) }} {{ $total['unit'] }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" style="text-align: center;">No vendor totals available.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     @endforeach
 </div>
 </body>

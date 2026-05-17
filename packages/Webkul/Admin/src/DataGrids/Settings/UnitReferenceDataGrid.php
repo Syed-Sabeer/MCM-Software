@@ -14,11 +14,13 @@ class UnitReferenceDataGrid extends DataGrid
             ->addSelect(
                 'unit_references.id',
                 'unit_references.name',
+                'unit_references.meter_conversion',
                 'unit_references.created_at'
             );
 
         $this->addFilter('id', 'unit_references.id');
         $this->addFilter('name', 'unit_references.name');
+        $this->addFilter('meter_conversion', 'unit_references.meter_conversion');
         $this->addFilter('created_at', 'unit_references.created_at');
 
         return $queryBuilder;
@@ -40,6 +42,17 @@ class UnitReferenceDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => true,
             'filterable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'meter_conversion',
+            'label'      => 'Meter Conversion',
+            'type'       => 'string',
+            'sortable'   => true,
+            'filterable' => true,
+            'closure'    => fn ($row) => $row->meter_conversion !== null
+                ? rtrim(rtrim(number_format((float) $row->meter_conversion, 8, '.', ''), '0'), '.')
+                : '--',
         ]);
 
         $this->addColumn([

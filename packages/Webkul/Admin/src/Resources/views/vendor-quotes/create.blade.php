@@ -13,15 +13,26 @@
         }
     };
     $defaultExpectedReceiveDate = old('expected_receive_date', $formatSafeDate($jobOrder?->required_delivery_date));
-    $prefillItems = old('items', $jobOrder?->requirements?->map(fn ($requirement) => [
+    $vendorRequirementTotals = $jobOrder?->relationLoaded('vendorRequirementTotals')
+        ? collect($jobOrder->getRelation('vendorRequirementTotals'))
+        : collect();
+    $prefillSourceRows = $vendorRequirementTotals->isNotEmpty() ? $vendorRequirementTotals : collect($jobOrder?->requirements ?? [])->map(fn ($requirement) => [
         'requirement_id' => $requirement->id,
-        'item' => $requirement->material_name,
         'material_name' => $requirement->material_name,
-        'color' => $requirement->color_name ?: $requirement->color_code ?: '-',
-        'ordered_quantity' => $requirement->balance_qty,
+        'color_label' => $requirement->color_name ?: $requirement->color_code ?: '-',
+        'balance_qty' => $requirement->balance_qty,
         'unit' => $requirement->unit ?: 'PCS',
+        'vendor_ids' => (array) $requirement->vendor_ids,
+    ]);
+    $prefillItems = old('items', $prefillSourceRows->map(fn ($requirement) => [
+        'requirement_id' => $requirement['requirement_id'] ?? null,
+        'item' => $requirement['material_name'],
+        'material_name' => $requirement['material_name'],
+        'color' => $requirement['color_label'] ?? '-',
+        'ordered_quantity' => $requirement['balance_qty'],
+        'unit' => $requirement['unit'] ?: 'PCS',
         'price' => 0,
-        'vendor_id' => collect((array) $requirement->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first(),
+        'vendor_id' => collect((array) ($requirement['vendor_ids'] ?? []))->filter()->map(fn ($id) => (int) $id)->first(),
         'expected_receive_date' => $defaultExpectedReceiveDate,
     ])->toArray() ?? [['item' => '', 'color' => '-', 'ordered_quantity' => 1, 'unit' => 'PCS', 'price' => 0, 'vendor_id' => null, 'expected_receive_date' => $defaultExpectedReceiveDate]]);
     $initialVendorQuoteCharges = collect(old('charges', []))->values()->all();
