@@ -49,7 +49,14 @@ class PurchaseOrderDataGrid extends DataGrid
         $this->addColumn(['index' => 'job_order_number', 'label' => 'Job Order', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->job_order_id ? '<a href="'.e(route('admin.job_orders.view', $row->job_order_id)).'" class="text-brandColor">'.e($row->job_order_number).'</a>' : '--']);
         $this->addColumn(['index' => 'expected_receive_date', 'label' => 'Expected Receive Date', 'type' => 'date', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->expected_receive_date ? core()->formatDate($row->expected_receive_date, 'd M Y') : '--']);
         $this->addColumn(['index' => 'grand_total', 'label' => 'Grand Total', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => 'PKR '.number_format((float) $row->grand_total, 2)]);
-        $this->addColumn(['index' => 'status', 'label' => 'Status', 'type' => 'string', 'sortable' => true, 'filterable' => true]);
+        $this->addColumn([
+            'index'      => 'status',
+            'label'      => 'Status',
+            'type'       => 'string',
+            'sortable'   => true,
+            'filterable' => true,
+            'closure'    => fn ($row) => e($this->formatStatus($row->status)),
+        ]);
     }
 
     public function prepareActions(): void
@@ -64,5 +71,10 @@ class PurchaseOrderDataGrid extends DataGrid
     public function prepareMassActions(): void
     {
         $this->addMassAction(['icon' => 'icon-delete', 'title' => 'Delete', 'method' => 'POST', 'url' => route('admin.purchase_orders.mass_delete')]);
+    }
+
+    protected function formatStatus(?string $status): string
+    {
+        return ucwords(str_replace('_', ' ', $status ?: 'draft'));
     }
 }
