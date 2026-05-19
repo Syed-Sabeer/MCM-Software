@@ -239,7 +239,7 @@ return [
         'name'       => 'admin::app.layouts.settings',
         'route'      => 'admin.settings.index',
         'sort'       => 9,
-        'icon-class' => 'icon-setting',
+        'icon-class' => 'icon-role',
     ],
      [
         'key'        => 'settings.user',
@@ -271,34 +271,6 @@ return [
         'route'      => 'admin.settings.users.index',
         'sort'       => 3,
         'icon-class' => 'icon-user',
-    ], [
-        'key'        => 'settings.lead',
-        'name'       => 'admin::app.layouts.lead',
-        'info'       => 'admin::app.layouts.lead-info',
-        'route'      => 'admin.settings.pipelines.index',
-        'sort'       => 2,
-        'icon-class' => '',
-    ], [
-        'key'        => 'settings.lead.pipelines',
-        'name'       => 'admin::app.layouts.pipelines',
-        'info'       => 'admin::app.layouts.pipelines-info',
-        'route'      => 'admin.settings.pipelines.index',
-        'sort'       => 1,
-        'icon-class' => 'icon-settings-pipeline',
-    ], [
-        'key'        => 'settings.lead.sources',
-        'name'       => 'admin::app.layouts.sources',
-        'info'       => 'admin::app.layouts.sources-info',
-        'route'      => 'admin.settings.sources.index',
-        'sort'       => 2,
-        'icon-class' => 'icon-settings-sources',
-    ], [
-        'key'        => 'settings.lead.types',
-        'name'       => 'admin::app.layouts.types',
-        'info'       => 'admin::app.layouts.types-info',
-        'route'      => 'admin.settings.types.index',
-        'sort'       => 3,
-        'icon-class' => 'icon-settings-type',
     ],
     // [
     //     'key'        => 'settings.warehouse',
@@ -315,28 +287,6 @@ return [
     //     'sort'       => 1,
     //     'icon-class' => 'icon-settings-warehouse',
     // ],
-    [
-        'key'        => 'settings.automation',
-        'name'       => 'admin::app.layouts.automation',
-        'info'       => 'admin::app.layouts.automation-info',
-        'route'      => 'admin.settings.attributes.index',
-        'sort'       => 3,
-        'icon-class' => '',
-    ], [
-        'key'        => 'settings.automation.attributes',
-        'name'       => 'admin::app.layouts.attributes',
-        'info'       => 'admin::app.layouts.attributes-info',
-        'route'      => 'admin.settings.attributes.index',
-        'sort'       => 1,
-        'icon-class' => 'icon-attribute',
-    ], [
-        'key'        => 'settings.automation.email_templates',
-        'name'       => 'admin::app.layouts.email-templates',
-        'info'       => 'admin::app.layouts.email-templates-info',
-        'route'      => 'admin.settings.email_templates.index',
-        'sort'       => 2,
-        'icon-class' => 'icon-settings-mail',
-    ],
     // [
     //     'key'        => 'settings.automation.events',
     //     'name'       => 'admin::app.layouts.events',
@@ -359,14 +309,6 @@ return [
     //     'sort'       => 2,
     //     'icon-class' => 'icon-settings-webhooks',
     // ],
-    [
-        'key'        => 'settings.automation.workflows',
-        'name'       => 'admin::app.layouts.workflows',
-        'info'       => 'admin::app.layouts.workflows-info',
-        'route'      => 'admin.settings.workflows.index',
-        'sort'       => 3,
-        'icon-class' => 'icon-settings-flow',
-    ],
     // [
     //     'key'        => 'settings.automation.data_transfer',
     //     'name'       => 'admin::app.layouts.data_transfer',
@@ -394,10 +336,18 @@ return [
      * Configuration.
      */
     [
+        'key'        => 'general-settings',
+        'name'       => 'admin::app.layouts.general-settings',
+        'route'      => 'admin.configuration.index',
+        'params'     => ['general', 'general'],
+        'sort'       => 10,
+        'icon-class' => 'icon-setting',
+    ],
+    [
         'key'        => 'configuration',
         'name'       => 'admin::app.layouts.configuration',
         'route'      => 'admin.configuration.index',
-        'sort'       => 10,
+        'sort'       => 11,
         'icon-class' => 'icon-configuration',
     ],
 
@@ -408,8 +358,8 @@ return [
         'key'        => 'website-submissions',
         'name'       => 'admin::app.layouts.website',
         'route'      => 'admin.website_submissions.index',
-        'sort'       => 11,
-        'icon-class' => 'icon-globe',
+        'sort'       => 12,
+        'icon-class' => 'icon-settings-webhooks',
     ],
 
 ];

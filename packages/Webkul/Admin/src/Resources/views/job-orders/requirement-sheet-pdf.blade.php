@@ -4,11 +4,10 @@
     $logoPath = $logo && file_exists(public_path('storage/' . $logo)) ? public_path('storage/' . $logo) : null;
     $companyName = core()->getConfigData('general.general.company_info.company_name') ?: config('app.name');
     $formatStageQty = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
-    $scope = $scope ?? 'single';
-    $vendorRequirementGroups = $vendorRequirementGroups ?? collect([[
-        'vendor' => null,
+    $requirementGroup = $requirementGroup ?? [
         'requirements' => $jobOrder->requirements ?? collect(),
-    ]]);
+        'totals'       => collect(),
+    ];
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -46,86 +45,72 @@
                     <tr><td class="meta-label">Customer</td><td>{{ optional($jobOrder->organization)->name ?: '-' }}</td></tr>
                     <tr><td class="meta-label">Issue Date</td><td>{{ optional($jobOrder->issue_date)->format('Y-m-d') ?: '-' }}</td></tr>
                     <tr><td class="meta-label">Required Delivery</td><td>{{ optional($jobOrder->required_delivery_date)->format('Y-m-d') ?: '-' }}</td></tr>
-                    <tr>
-                        <td class="meta-label">Export Scope</td>
-                        <td>{{ $scope === 'all' ? 'All Vendors' : 'Single Vendor' }}</td>
-                    </tr>
                 </table>
             </td>
         </tr>
     </table>
 
-    @foreach ($vendorRequirementGroups as $groupIndex => $group)
-        @if ($scope === 'all')
-            <div style="margin-top: {{ $groupIndex === 0 ? '14px' : '18px' }}; font-weight: 700; color: {{ $brandColor }};">
-                Vendor: {{ optional($group['vendor'])->name ?: 'Unassigned Vendor' }}
-            </div>
-        @endif
-
-        <table class="items-table" style="{{ $scope === 'all' ? 'margin-top:8px;' : '' }}">
-            <thead>
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 14%;">Item</th>
+                <th style="width: 27%;">Material</th>
+                <th style="width: 16%;">Color</th>
+                <th style="width: 13%;">Per Item Required</th>
+                <th style="width: 12%;">Required</th>
+                <th style="width: 9%;">Received</th>
+                <th style="width: 9%;">Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($requirementGroup['requirements'] as $requirement)
                 <tr>
-                    <th style="width: 14%;">Item</th>
-                    <th style="width: 24%;">Material</th>
-                    <th style="width: 16%;">Color</th>
-                    <th style="width: 12%;">Per Item Required</th>
-                    <th style="width: 11%;">Required</th>
-                    <th style="width: 9%;">Received</th>
-                    <th style="width: 9%;">Balance</th>
-                    <th style="width: 11%;">Status</th>
+                    <td>{{ $requirement->item_codes ?: '-' }}</td>
+                    <td>{{ $requirement->material_name ?: '-' }}</td>
+                    <td>{{ $requirement->color_name ?: $requirement->color_code ?: '-' }}</td>
+                    <td>{{ $formatStageQty($requirement->qty_per_unit) }} {{ $requirement->unit }}</td>
+                    <td>{{ $formatStageQty($requirement->required_qty) }} {{ $requirement->unit }}</td>
+                    <td>{{ $formatStageQty($requirement->received_qty) }}</td>
+                    <td>{{ $formatStageQty($requirement->balance_qty) }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                @forelse ($group['requirements'] as $requirement)
-                    <tr>
-                        <td>{{ $requirement->item_codes ?: '-' }}</td>
-                        <td>{{ $requirement->material_name ?: '-' }}</td>
-                        <td>{{ $requirement->color_name ?: $requirement->color_code ?: '-' }}</td>
-                        <td>{{ $formatStageQty($requirement->qty_per_unit) }} {{ $requirement->unit }}</td>
-                        <td>{{ $formatStageQty($requirement->required_qty) }} {{ $requirement->unit }}</td>
-                        <td>{{ $formatStageQty($requirement->received_qty) }}</td>
-                        <td>{{ $formatStageQty($requirement->balance_qty) }}</td>
-                        <td>{{ ucfirst(str_replace('_', ' ', $requirement->status ?: 'pending')) }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="8" style="text-align: center;">No requirements available for this vendor.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-
-        <div style="margin-top: 18px; font-weight: 700; color: {{ $brandColor }};">
-            Total Requirement from Vendor
-        </div>
-
-        <table class="items-table" style="margin-top:8px;">
-            <thead>
+            @empty
                 <tr>
-                    <th style="width: 34%;">Material</th>
-                    <th style="width: 18%;">Color</th>
-                    <th style="width: 16%;">Total Required</th>
-                    <th style="width: 16%;">Received</th>
-                    <th style="width: 16%;">Balance</th>
+                    <td colspan="7" style="text-align: center;">No requirements available.</td>
                 </tr>
-            </thead>
-            <tbody>
-                @forelse (($group['totals'] ?? collect()) as $total)
-                    <tr>
-                        <td>{{ $total['material_name'] ?: '-' }}</td>
-                        <td>{{ $total['color_label'] ?: '-' }}</td>
-                        <td>{{ $formatStageQty($total['required_qty']) }} {{ $total['unit'] }}</td>
-                        <td>{{ $formatStageQty($total['received_qty']) }} {{ $total['unit'] }}</td>
-                        <td>{{ $formatStageQty($total['balance_qty']) }} {{ $total['unit'] }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" style="text-align: center;">No vendor totals available.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    @endforeach
+            @endforelse
+        </tbody>
+    </table>
+
+    <div style="margin-top: 18px; font-weight: 700; color: {{ $brandColor }};">
+        Total Requirement from Vendor
+    </div>
+
+    <table class="items-table" style="margin-top:8px;">
+        <thead>
+            <tr>
+                <th style="width: 34%;">Material</th>
+                <th style="width: 18%;">Color</th>
+                <th style="width: 16%;">Total Required</th>
+                <th style="width: 16%;">Received</th>
+                <th style="width: 16%;">Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse (($requirementGroup['totals'] ?? collect()) as $total)
+                <tr>
+                    <td>{{ $total['material_name'] ?: '-' }}</td>
+                    <td>{{ $total['color_label'] ?: '-' }}</td>
+                    <td>{{ $formatStageQty($total['required_qty']) }} {{ $total['unit'] }}</td>
+                    <td>{{ $formatStageQty($total['received_qty']) }} {{ $total['unit'] }}</td>
+                    <td>{{ $formatStageQty($total['balance_qty']) }} {{ $total['unit'] }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5" style="text-align: center;">No vendor totals available.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 </div>
 </body>
 </html>

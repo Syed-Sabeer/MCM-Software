@@ -76,7 +76,7 @@
             </div>
         </div>
 
-        <div class="flex gap-2.5 overflow-auto py-3.5 max-xl:flex-wrap">
+        <div class="flex flex-col gap-2.5 py-3.5">
             <!-- Stages Component -->
             <v-stages-component>
                 <x-admin::shimmer.pipelines.kanban />
@@ -91,7 +91,22 @@
             type="text/x-template"
             id="v-stages-component-template"
         >
-            <div class="flex gap-4">
+            <div class="flex flex-col gap-4">
+                <div class="flex justify-end">
+                    {!! view_render_event('admin.settings.pipelines.edit.form.stages.create_button.before', ['pipeline' => $pipeline]) !!}
+
+                    <!-- Add Stage Button -->
+                    <button
+                        class="secondary-button"
+                        @click="addStage"
+                        type="button"
+                    >
+                        @lang('admin::app.settings.pipelines.edit.stage-btn')
+                    </button>
+
+                    {!! view_render_event('admin.settings.pipelines.edit.form.stages.create_button.after', ['pipeline' => $pipeline]) !!}
+                </div>
+
                 <!-- Stages Draggable Component -->
                 <draggable
                     tag="div"
@@ -101,11 +116,11 @@
                     :list="stages"
                     :move="handleDragging"
                     @end="reorderStages"
-                    class="flex gap-4"
+                    class="flex flex-col gap-4"
                 >
                     <template #item="{ element, index }">
-                        <div ::class="{ draggable: isDragable(element) }" class="flex gap-4 overflow-x-auto">
-                            <div class="flex min-w-[275px] max-w-[275px] flex-col justify-between rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                        <div ::class="{ draggable: isDragable(element) }" class="w-full">
+                            <div class="flex w-full flex-col justify-between rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                                 <div class="flex flex-col gap-6 px-4 py-3">
                                     <!-- Stage Title and Action -->
                                     <div class="flex items-center justify-between">
@@ -185,36 +200,6 @@
                         </div>
                     </template>
                 </draggable>
-
-                <!-- Add New Stage Card -->
-                <div class="flex min-h-[400px] min-w-[275px] max-w-[275px] flex-col items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-                    <div class="flex flex-col items-center justify-center gap-6 px-4 py-3">
-                        <div class="grid justify-center justify-items-center gap-3.5 text-center">
-                            <div class="flex flex-col items-center gap-2">
-                                <p class="text-xl font-semibold dark:text-gray-300">
-                                    @lang('admin::app.settings.pipelines.edit.add-new-stages')
-                                </p>
-
-                                <p class="text-gray-400">
-                                    @lang('admin::app.settings.pipelines.edit.add-stage-info')
-                                </p>
-                            </div>
-
-                            {!! view_render_event('admin.settings.pipelines.edit.form.stages.create_button.before', ['pipeline' => $pipeline]) !!}
-
-                            <!-- Add Stage Button -->
-                            <button
-                                class="secondary-button"
-                                @click="addStage"
-                                type="button"
-                            >
-                                @lang('admin::app.settings.pipelines.edit.stage-btn')
-                            </button>
-
-                            {!! view_render_event('admin.settings.pipelines.edit.form.stages.create_button.after', ['pipeline' => $pipeline]) !!}
-                        </div>
-                    </div>
-                </div>
             </div>
         </script>
 

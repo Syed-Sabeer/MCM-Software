@@ -18,7 +18,7 @@ return [
         'persons'         => 'Contacts',
         'organizations'   => 'Companies',
         'products'        => 'Products',
-        'settings'        => 'Settings',
+        'settings'        => 'Role & Permission',
         'groups'          => 'Groups',
         'roles'           => 'Roles',
         'users'           => 'Users',
@@ -33,6 +33,7 @@ return [
         'other-settings'  => 'Other Settings',
         'tags'            => 'Tags',
         'configuration'   => 'Configuration',
+        'general-settings'=> 'Settings',
         'create'          => 'Create',
         'edit'            => 'Edit',
         'view'            => 'View',
@@ -957,7 +958,7 @@ return [
     ],
 
     'settings' => [
-        'title' => 'Settings',
+        'title' => 'Role & Permission',
 
         'groups' => [
             'index' => [
@@ -1507,8 +1508,8 @@ return [
             ],
 
             'create' => [
-                'title'                => 'Create Pipeline',
-                'save-btn'             => 'Save Pipeline',
+                'title'                => 'Create Stage',
+                'save-btn'             => 'Add Stage',
                 'name'                 => 'Name',
                 'rotten-days'          => 'Rotten Days',
                 'mark-as-default'      => 'Mark as Default',
@@ -2538,7 +2539,8 @@ return [
         'organization'         => 'Organization',
         'products'             => 'Products',
         'product'              => 'Product',
-        'settings'             => 'Settings',
+        'settings'             => 'Role & Permission',
+        'general-settings'     => 'Settings',
         'user'                 => 'User',
         'user-info'            => 'Manage all your users and their permissions in the CRM, what they’re allowed to do.',
         'groups'               => 'Groups',
@@ -2550,8 +2552,8 @@ return [
         'users-info'           => 'Add, edit or delete users from CRM',
         'lead'                 => 'Case',
         'lead-info'            => 'Manage all your leads related settings in the CRM',
-        'pipelines'            => 'Pipelines',
-        'pipelines-info'       => 'Add, edit or delete pipelines from CRM',
+        'pipelines'            => 'Stage',
+        'pipelines-info'       => 'Manage stages used to track case progress.',
         'sources'              => 'Sources',
         'sources-info'         => 'Add, edit or delete sources from CRM',
         'types'                => 'Types',

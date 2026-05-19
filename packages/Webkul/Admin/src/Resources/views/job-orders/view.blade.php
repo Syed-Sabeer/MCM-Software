@@ -114,41 +114,7 @@
                     <div class="text-base font-semibold dark:text-white">Requirement Sheet</div>
 
                     <div class="flex items-center gap-2">
-                        <x-admin::modal ref="requirementPdfModal">
-                            <x-slot:toggle>
-                                <button type="button" class="secondary-button">Export to PDF</button>
-                            </x-slot:toggle>
-
-                            <x-slot:header>
-                                <p class="text-lg font-bold text-gray-800 dark:text-white">Requirement Sheet PDF</p>
-                            </x-slot:header>
-
-                            <x-slot:content>
-                                <div class="grid gap-3">
-                                    <p class="text-sm text-gray-600 dark:text-gray-300">
-                                        Choose whether to export all vendor-wise pages or only one selected vendor.
-                                    </p>
-
-                                    <div>
-                                        <label class="mb-1 block text-sm font-medium text-gray-800 dark:text-white">Vendor</label>
-                                        <select id="requirement-pdf-vendor-id" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                                            @forelse ($requirementVendors as $vendor)
-                                                <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
-                                            @empty
-                                                <option value="">No vendor mapped</option>
-                                            @endforelse
-                                        </select>
-                                    </div>
-                                </div>
-                            </x-slot:content>
-
-                            <x-slot:footer>
-                                <div class="flex w-full items-center justify-end gap-2">
-                                    <button type="button" id="print-all-vendors-requirements" class="secondary-button">Print All Vendors</button>
-                                    <button type="button" id="print-single-vendor-requirements" class="primary-button">Print Selected Vendor</button>
-                                </div>
-                            </x-slot:footer>
-                        </x-admin::modal>
+                        <a href="{{ route('admin.job_orders.requirement_sheet.pdf', $jobOrder->id) }}" class="secondary-button">Export to PDF</a>
                         <a href="{{ route('admin.job_orders.requirement_sheet.csv', $jobOrder->id) }}" class="secondary-button">Export to CSV</a>
                     </div>
                 </div>
@@ -301,30 +267,6 @@
                         this.innerHTML = `<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent align-[-2px]"></span><span class="ml-2">${this.dataset.loadingText || 'Opening...'}</span>`;
                     });
                 });
-
-                var printAllButton = document.getElementById('print-all-vendors-requirements');
-                var printSingleButton = document.getElementById('print-single-vendor-requirements');
-                var vendorSelect = document.getElementById('requirement-pdf-vendor-id');
-
-                var basePdfUrl = @json(route('admin.job_orders.requirement_sheet.pdf', $jobOrder->id));
-
-                if (printAllButton) {
-                    printAllButton.addEventListener('click', function () {
-                        window.open(basePdfUrl + '?vendor_scope=all', '_blank');
-                    });
-                }
-
-                if (printSingleButton) {
-                    printSingleButton.addEventListener('click', function () {
-                        var vendorId = vendorSelect ? vendorSelect.value : '';
-                        if (!vendorId) {
-                            alert('Please select a vendor first.');
-                            return;
-                        }
-
-                        window.open(basePdfUrl + '?vendor_scope=single&vendor_id=' + encodeURIComponent(vendorId), '_blank');
-                    });
-                }
             });
         </script>
     @endPushOnce

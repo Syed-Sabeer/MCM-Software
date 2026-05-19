@@ -9,27 +9,39 @@
             <!-- Navigation Menu -->
             @foreach (menu()->getItems('admin') as $menuItem)
                 @php
+                    $highlightKeys = ['settings', 'employees', 'website-submissions'];
+                    $isHighlighted = in_array($menuItem->getKey(), $highlightKeys, true);
+
                     $hasInlineChildren = ! in_array($menuItem->getKey(), ['settings', 'configuration'])
                         && $menuItem->haveChildren();
+                    $menuLabel = $menuItem->getKey() === 'settings'
+                        ? 'RBAC'
+                        : (core()->getConfigData('general.settings.menu.'.$menuItem->getKey()) ?? $menuItem->getName());
+
+                    $isMenuActive = $menuItem->isActive();
+                    $isGeneralSettingsPage = request()->fullUrlIs(route('admin.configuration.index', ['general', 'general']).'*');
+                    if ($menuItem->getKey() === 'configuration' && $isGeneralSettingsPage) {
+                        $isMenuActive = false;
+                    }
                 @endphp
 
-                <div class="px-4 group/item {{ $menuItem->isActive() ? 'active' : 'inactive' }}">
+                <div class="px-4 group/item {{ $isMenuActive ? 'active' : 'inactive' }}">
                     <a
-                        class="flex gap-2 p-1.5 items-center cursor-pointer rounded-lg transition-all {{ $menuItem->isActive() == 'active' ? 'bg-brandColor' : 'hover:bg-gray-100 hover:dark:bg-gray-950' }} peer"
+                        class="flex gap-2 p-1.5 items-center cursor-pointer rounded-lg transition-all {{ $isMenuActive ? 'bg-brandColor' : ($isHighlighted ? 'hover:bg-red-50 hover:dark:bg-red-500/10' : 'hover:bg-gray-100 hover:dark:bg-gray-950') }} peer"
                         href="{{ $hasInlineChildren ? 'javascript:void(0)' : $menuItem->getUrl() }}"
                         @if ($hasInlineChildren)
                             @click.prevent="hoveringMenu = hoveringMenu === '{{$menuItem->getKey()}}' ? '' : '{{$menuItem->getKey()}}'; isMenuActive = hoveringMenu !== ''"
                         @endif
                     >
-                        <span class="{{ $menuItem->getIcon() }} text-2xl {{ $menuItem->isActive() ? 'text-white' : ''}}"></span>
+                        <span class="{{ $menuItem->getIcon() }} text-2xl {{ $isMenuActive ? 'text-white' : ($isHighlighted ? 'text-red-600 dark:text-red-300' : '')}}"></span>
 
-                        <div class="flex-1 flex justify-between items-center text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap {{ $menuItem->isActive() ? 'text-white' : ''}} group">
-                            <p>{{ core()->getConfigData('general.settings.menu.'.$menuItem->getKey()) ?? $menuItem->getName() }}</p>
+                        <div class="flex-1 flex justify-between items-center {{ $isMenuActive ? 'text-white' : ($isHighlighted ? 'text-red-600 dark:text-red-300' : 'text-gray-600 dark:text-gray-300')}} font-medium whitespace-nowrap group">
+                            <p>{{ $menuLabel }}</p>
                         
                             @if ($hasInlineChildren)
                                 <i
-                                    class="icon-right-arrow rtl:icon-left-arrow text-lg transition-transform duration-200 {{ $menuItem->isActive() ? 'text-white' : 'text-gray-500 dark:text-gray-400' }}"
-                                    :class="[((hoveringMenu == '{{$menuItem->getKey()}}') || (hoveringMenu == '' && '{{ $menuItem->isActive() }}' === 'active')) ? 'rotate-90 rtl:-rotate-90' : '']"
+                                    class="icon-right-arrow rtl:icon-left-arrow text-lg transition-transform duration-200 {{ $isMenuActive ? 'text-white' : 'text-gray-500 dark:text-gray-400' }}"
+                                    :class="[((hoveringMenu == '{{$menuItem->getKey()}}') || (hoveringMenu == '' && '{{ $isMenuActive ? 'active' : '' }}' === 'active')) ? 'rotate-90 rtl:-rotate-90' : '']"
                                 ></i>
                             @endif
                         </div>
@@ -39,7 +51,7 @@
                     @if ($hasInlineChildren)
                         <div
                             class="mt-1 hidden flex-col gap-1 ltr:ml-6 rtl:mr-6 ltr:pl-3 rtl:pr-3 ltr:border-l rtl:border-r border-gray-200 dark:border-gray-700"
-                            :class="[((hoveringMenu == '{{$menuItem->getKey()}}') || (hoveringMenu == '' && '{{ $menuItem->isActive() }}' === 'active')) ? '!flex' : 'hidden']"
+                            :class="[((hoveringMenu == '{{$menuItem->getKey()}}') || (hoveringMenu == '' && '{{ $isMenuActive ? 'active' : '' }}' === 'active')) ? '!flex' : 'hidden']"
                         >
                             @foreach ($menuItem->getChildren() as $subMenuItem)
                                 <a

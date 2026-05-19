@@ -674,9 +674,15 @@ return [
         'sort'  => 4,
     ],
     [
+        'key'   => 'general-settings',
+        'name'  => 'admin::app.acl.general-settings',
+        'route' => 'admin.configuration.index',
+        'sort'  => 9,
+    ],
+    [
         'key'   => 'configuration',
         'name'  => 'admin::app.acl.configuration',
         'route' => 'admin.configuration.index',
-        'sort'  => 9,
+        'sort'  => 10,
     ],
 ];

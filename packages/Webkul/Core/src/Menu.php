@@ -105,10 +105,15 @@ class Menu
     private function prepareMenuItems(): void
     {
         $menuWithDotNotation = [];
+        $currentUrlLength = 0;
 
         foreach ($this->configMenu as $item) {
-            if (strpos(request()->url(), route($item['route'])) !== false) {
+            if (
+                strpos(request()->url(), $item['url']) !== false
+                && strlen($item['url']) >= $currentUrlLength
+            ) {
                 $this->currentKey = $item['key'];
+                $currentUrlLength = strlen($item['url']);
             }
 
             $menuWithDotNotation[$item['key']] = $item;

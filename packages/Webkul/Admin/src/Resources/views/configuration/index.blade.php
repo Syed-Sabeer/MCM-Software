@@ -42,6 +42,58 @@
         <div>
             <div class="grid gap-1">
                 <p class="font-semibold text-gray-600 dark:text-gray-300">
+                    CRM Setup
+                </p>
+
+                <p class="text-gray-600 dark:text-gray-300">
+                    Manage CRM setup options used across cases and emails.
+                </p>
+            </div>
+
+            <div class="box-shadow mt-2 grid grid-cols-4 gap-x-12 gap-y-6 rounded bg-white p-4 dark:bg-gray-900 max-1580:grid-cols-3 max-xl:grid-cols-2 max-lg:gap-y-4 max-sm:grid-cols-1">
+                <a
+                    class="flex max-w-[360px] items-center gap-2 rounded-lg p-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                    href="{{ route('admin.settings.pipelines.create') }}"
+                >
+                    <div class="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+                        <i class="icon-settings-pipeline text-3xl"></i>
+                    </div>
+
+                    <div class="grid">
+                        <p class="mb-1.5 text-base font-semibold text-gray-800 dark:text-white">
+                            @lang('admin::app.layouts.pipelines')
+                        </p>
+
+                        <p class="text-xs text-gray-600 dark:text-gray-300">
+                            @lang('admin::app.layouts.pipelines-info')
+                        </p>
+                    </div>
+                </a>
+
+                <a
+                    class="flex max-w-[360px] items-center gap-2 rounded-lg p-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                    href="{{ route('admin.settings.email_templates.index') }}"
+                >
+                    <div class="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+                        <i class="icon-settings-mail text-3xl"></i>
+                    </div>
+
+                    <div class="grid">
+                        <p class="mb-1.5 text-base font-semibold text-gray-800 dark:text-white">
+                            @lang('admin::app.layouts.email-templates')
+                        </p>
+
+                        <p class="text-xs text-gray-600 dark:text-gray-300">
+                            @lang('admin::app.layouts.email-templates-info')
+                        </p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div>
+            <div class="grid gap-1">
+                <p class="font-semibold text-gray-600 dark:text-gray-300">
                     Product Setup
                 </p>
 
@@ -111,6 +163,7 @@
         </div>
 
         @foreach (system_config()->getItems() as $item)
+            @continue($item->getKey() === 'general')
             <div>
                 <div class="grid gap-1">
                     <!-- Title of the Main Card -->
@@ -127,6 +180,8 @@
                 <div class="box-shadow max-1580:grid-cols-3 mt-2 grid grid-cols-4 flex-wrap justify-between gap-x-12 gap-y-6 rounded bg-white p-4 dark:bg-gray-900 max-xl:grid-cols-2 max-lg:gap-y-4 max-sm:grid-cols-1">
                     <!-- Menus cards -->
                     @foreach ($item->getChildren() as $key => $child)
+                        @continue($item->getKey() === 'general' && $key === 'settings')
+
                         <a
                             class="flex max-w-[360px] items-center gap-2 rounded-lg p-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
                             href="{{ route('admin.configuration.index', ($item->getKey() . '/' . $key)) }}"

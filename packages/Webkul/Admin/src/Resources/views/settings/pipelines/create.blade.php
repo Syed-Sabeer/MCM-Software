@@ -41,8 +41,9 @@
 
                         <!-- Create button for Pipeline -->
                         <button
-                            type="submit"
+                            type="button"
                             class="primary-button"
+                            onclick="window.dispatchEvent(new CustomEvent('pipelines:add-stage'))"
                         >
                             @lang('admin::app.settings.pipelines.create.save-btn')
                         </button>
@@ -52,28 +53,9 @@
                 </div>
             </div>
 
-            <div class="flex gap-4 border-t border-gray-200 px-4 py-2 align-top dark:border-gray-800 max-sm:flex-wrap">
+            <div class="border-t border-gray-200 px-4 py-2 dark:border-gray-800">
                 {!! view_render_event('admin.settings.pipelines.create.form.name.before') !!}
-
-                <!-- Name -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.create.name')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="name"
-                        id="name"
-                        rules="required"
-                        :label="trans('admin::app.settings.pipelines.create.name')"
-                        :placeholder="trans('admin::app.settings.pipelines.create.name')"
-                        value="{{ old('name', $isManagingExistingPipeline ? $pipeline->name : '') }}"
-                    />
-
-                    <x-admin::form.control-group.error control-name="name" />
-                </x-admin::form.control-group>
-
+                <input type="hidden" name="name" id="name" value="{{ old('name', $isManagingExistingPipeline ? $pipeline->name : 'Pipeline') }}">
                 {!! view_render_event('admin.settings.pipelines.create.form.name.after') !!}
 
                 <input type="hidden" name="rotten_days" value="{{ old('rotten_days') ?? 30 }}">
@@ -81,7 +63,7 @@
         </div>
 
         <!-- Stages Component -->
-        <div class="flex gap-2.5 overflow-auto py-3.5 max-xl:flex-wrap">
+        <div class="flex flex-col gap-2.5 py-3.5">
             {!! view_render_event('admin.settings.pipelines.create.form.stages.before') !!}
 
             <v-stages-component>
@@ -120,7 +102,7 @@
             type="text/x-template"
             id="v-stages-component-template"
         >
-            <div class="flex gap-4">
+            <div class="flex flex-col gap-4">
                 <!-- Stages Draggable Component -->
                 <draggable
                     tag="div"
@@ -131,14 +113,14 @@
                     :list="stages"
                     :move="handleDragging"
                     @end="reorderStages"
-                    class="flex gap-4"
+                    class="flex flex-col gap-4"
                 >
                     <template #item="{ element, index }">
                         <div
                             ::class="{ draggable: isDragable(element) }"
-                            class="flex gap-4 overflow-x-auto"
+                            class="w-full"
                         >
-                            <div class="flex min-w-[275px] max-w-[275px] flex-col justify-between rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                            <div class="flex w-full flex-col justify-between rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                                 <!-- Stage Crad -->
                                 <div class="flex flex-col gap-6 px-4 py-3">
                                     <!-- Stage Title and Action -->
@@ -219,36 +201,6 @@
 
                     </template>
                 </draggable>
-
-                <!-- Add New Stage Card -->
-                <div class="flex min-h-[400px] min-w-[275px] max-w-[275px] flex-col items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-                    <div class="flex flex-col items-center justify-center gap-6 px-4 py-3">
-                        <div class="grid justify-center justify-items-center gap-3.5 text-center">
-                            <div class="flex flex-col items-center gap-2">
-                                <p class="text-xl font-semibold dark:text-gray-300">
-                                    @lang('admin::app.settings.pipelines.create.add-new-stages')
-                                </p>
-
-                                <p class="text-gray-400">
-                                    @lang('admin::app.settings.pipelines.create.add-stage-info')
-                                </p>
-                            </div>
-
-                            {!! view_render_event('admin.settings.pipelines.create.form.stages.create_button.before') !!}
-
-                            <!-- Add Stage Button -->
-                            <button
-                                class="secondary-button"
-                                @click="addStage"
-                                type="button"
-                            >
-                                @lang('admin::app.settings.pipelines.create.stage-btn')
-                            </button>
-
-                            {!! view_render_event('admin.settings.pipelines.create.form.stages.create_button.after') !!}
-                        </div>
-                    </div>
-                </div>
             </div>
         </script>
 
@@ -281,6 +233,11 @@
 
                 created() {
                     this.extendValidations();
+
+                    window.addEventListener('pipelines:add-stage', this.addStage);
+                },
+                beforeUnmount() {
+                    window.removeEventListener('pipelines:add-stage', this.addStage);
                 },
 
                 computed: {

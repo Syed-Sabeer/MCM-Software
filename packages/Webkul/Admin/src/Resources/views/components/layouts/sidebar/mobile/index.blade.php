@@ -37,13 +37,20 @@
                 <div class="journal-scroll h-[calc(100vh-100px)] overflow-auto">
                     <nav class="grid w-full gap-2">
                         @foreach (menu()->getItems('admin') as $menuItem)
-                            @php
-                                $hasActiveChild = $menuItem->haveChildren() && collect($menuItem->getChildren())->contains(fn($child) => $child->isActive());
+                                @php
+                                    $hasActiveChild = $menuItem->haveChildren() && collect($menuItem->getChildren())->contains(fn($child) => $child->isActive());
 
-                                $isMenuActive = $menuItem->isActive() == 'active' || $hasActiveChild;
+                                    $isMenuActive = $menuItem->isActive() == 'active' || $hasActiveChild;
 
-                                $menuKey = $menuItem->getKey();
-                            @endphp
+                                    $menuKey = $menuItem->getKey();
+                                    $menuLabel = $menuKey === 'settings' ? 'RBAC' : $menuItem->getName();
+                                    $highlightKeys = ['settings', 'employees', 'website-submissions'];
+                                    $isHighlighted = in_array($menuKey, $highlightKeys, true);
+                                    $isGeneralSettingsPage = request()->fullUrlIs(route('admin.configuration.index', ['general', 'general']).'*');
+                                    if ($menuKey === 'configuration' && $isGeneralSettingsPage) {
+                                        $isMenuActive = false;
+                                    }
+                                @endphp
 
                             <div
                                 class="menu-item relative"
@@ -57,10 +64,10 @@
                                     @endif
                                     :class="{ 'bg-brandColor text-white': activeMenu === '{{ $menuKey }}' || {{ $isMenuActive ? 'true' : 'false' }}, 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-950': !(activeMenu === '{{ $menuKey }}' || {{ $isMenuActive ? 'true' : 'false' }}) }"
                                 >
-                                    <div class="flex items-center gap-3">
-                                        <span class="{{ $menuItem->getIcon() }} text-2xl"></span>
+                                        <div class="flex items-center gap-3">
+                                        <span class="{{ $menuItem->getIcon() }} text-2xl {{ $isHighlighted ? 'text-red-600 dark:text-red-300' : '' }}"></span>
 
-                                        <p class="whitespace-nowrap font-semibold">{{ $menuItem->getName() }}</p>
+                                        <p class="whitespace-nowrap font-semibold {{ $isHighlighted ? 'text-red-600 dark:text-red-300' : '' }}">{{ $menuLabel }}</p>
                                     </div>
 
                                     @if ($menuItem->haveChildren())

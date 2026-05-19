@@ -167,56 +167,13 @@ class JobOrderController extends Controller
     public function downloadRequirementSheetPdf(int $id): Response|StreamedResponse
     {
         $jobOrder = $this->findJobOrderForExport($id);
-        $requirementVendors = $this->resolveRequirementVendors($jobOrder)->keyBy('id');
-
-        $scope = request('vendor_scope') === 'all' ? 'all' : 'single';
-        $selectedVendorId = (int) request('vendor_id', 0);
-
-        if ($scope === 'all') {
-            $vendorRequirementGroups = $requirementVendors->map(function ($vendor) use ($jobOrder) {
-                $requirements = $jobOrder->requirements->filter(function ($requirement) use ($vendor) {
-                    return in_array((int) $vendor->id, array_map('intval', (array) ($requirement->vendor_ids ?? [])), true);
-                })->values();
-
-                return [
-                    'vendor'       => $vendor,
-                    'requirements' => $requirements,
-                    'totals'       => $this->requirementVendorAggregator->totals($requirements),
-                ];
-            })->filter(fn ($group) => $group['requirements']->isNotEmpty())->values();
-
-            if ($vendorRequirementGroups->isEmpty()) {
-                $vendorRequirementGroups = collect([[
-                    'vendor'       => null,
-                    'requirements' => collect(),
-                    'totals'       => collect(),
-                ]]);
-            }
-        } else {
-            if ($selectedVendorId <= 0 && $requirementVendors->isNotEmpty()) {
-                $selectedVendorId = (int) $requirementVendors->first()->id;
-            }
-
-            $selectedVendor = $selectedVendorId > 0 ? $requirementVendors->get($selectedVendorId) : null;
-            $requirements = $jobOrder->requirements
-                ->filter(function ($requirement) use ($selectedVendorId) {
-                    if ($selectedVendorId <= 0) {
-                        return true;
-                    }
-
-                    return in_array($selectedVendorId, array_map('intval', (array) ($requirement->vendor_ids ?? [])), true);
-                })
-                ->values();
-
-            $vendorRequirementGroups = collect([[
-                'vendor'       => $selectedVendor,
-                'requirements' => $requirements,
-                'totals'       => $this->requirementVendorAggregator->totals($requirements),
-            ]]);
-        }
+        $requirementGroup = [
+            'requirements' => $jobOrder->requirements,
+            'totals'       => $this->requirementVendorAggregator->totals($jobOrder->requirements),
+        ];
 
         return $this->downloadPDF(
-            view('admin::job-orders.requirement-sheet-pdf', compact('jobOrder', 'vendorRequirementGroups', 'scope'))->render(),
+            view('admin::job-orders.requirement-sheet-pdf', compact('jobOrder', 'requirementGroup'))->render(),
             'Requirement_Sheet_' . ($jobOrder->job_order_number ?: $jobOrder->id)
         );
     }
@@ -228,36 +185,31 @@ class JobOrderController extends Controller
         return response()->streamDownload(function () use ($jobOrder) {
             $handle = fopen('php://output', 'w');
 
-            fputcsv($handle, ['Job Order', 'Item', 'Material', 'Color', 'Per Item Required', 'Required', 'Received', 'Balance', 'Unit', 'Status']);
+            fputcsv($handle, ['Item', 'Material', 'Color', 'Per Item Required', 'Required', 'Received', 'Balance']);
 
             foreach ($jobOrder->requirements as $requirement) {
                 fputcsv($handle, [
-                    $jobOrder->job_order_number,
                     $requirement->item_codes ?: '',
                     $requirement->material_name,
                     $requirement->color_name ?: $requirement->color_code ?: '',
-                    $requirement->qty_per_unit,
-                    $requirement->required_qty,
-                    $requirement->received_qty,
-                    $requirement->balance_qty,
-                    $requirement->unit,
-                    $requirement->status,
+                    $this->formatRequirementQty($requirement->qty_per_unit).' '.$requirement->unit,
+                    $this->formatRequirementQty($requirement->required_qty).' '.$requirement->unit,
+                    $this->formatRequirementQty($requirement->received_qty),
+                    $this->formatRequirementQty($requirement->balance_qty),
                 ]);
             }
 
             fputcsv($handle, []);
             fputcsv($handle, ['Total Requirement from Vendor']);
-            fputcsv($handle, ['Job Order', 'Material', 'Color', 'Total Required', 'Received', 'Balance', 'Unit']);
+            fputcsv($handle, ['Material', 'Color', 'Total Required', 'Received', 'Balance']);
 
             foreach ($this->requirementVendorAggregator->totals($jobOrder->requirements) as $total) {
                 fputcsv($handle, [
-                    $jobOrder->job_order_number,
                     $total['material_name'],
                     $total['color_label'],
-                    $total['required_qty'],
-                    $total['received_qty'],
-                    $total['balance_qty'],
-                    $total['unit'],
+                    $this->formatRequirementQty($total['required_qty']).' '.$total['unit'],
+                    $this->formatRequirementQty($total['received_qty']).' '.$total['unit'],
+                    $this->formatRequirementQty($total['balance_qty']).' '.$total['unit'],
                 ]);
             }
 
@@ -265,6 +217,11 @@ class JobOrderController extends Controller
         }, 'Requirement_Sheet_' . ($jobOrder->job_order_number ?: $jobOrder->id) . '.csv', [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    protected function formatRequirementQty($value): string
+    {
+        return rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
     }
 
     protected function findJobOrderForExport(int $id): JobOrder
