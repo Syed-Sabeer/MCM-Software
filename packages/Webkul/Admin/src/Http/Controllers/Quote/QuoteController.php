@@ -322,6 +322,8 @@ class QuoteController extends Controller
             'status' => request('issue_now') ? 'issued' : 'draft',
         ]);
 
+        $this->quoteRepository->update(['status' => 'closed'], $quote->id);
+
         Event::dispatch('quote.convert_to_proforma.after', [$quote, $proforma]);
 
         session()->flash('success', 'Proforma invoice created successfully.');

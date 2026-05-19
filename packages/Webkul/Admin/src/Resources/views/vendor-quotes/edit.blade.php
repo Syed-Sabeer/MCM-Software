@@ -404,9 +404,14 @@
 
                 document.querySelector('form')?.addEventListener('submit', function () {
                     document.querySelectorAll('[data-loading-submit]').forEach((button) => {
+                        if (button.dataset.loading === '1') {
+                            return;
+                        }
+
+                        button.dataset.loading = '1';
                         button.disabled = true;
                         button.classList.add('opacity-70', 'cursor-not-allowed');
-                        button.textContent = button.dataset.loadingText || 'Saving...';
+                        button.innerHTML = `<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-[-2px]"></span><span class="ml-2">${button.dataset.loadingText || 'Saving...'}</span>`;
                     });
                 });
             });

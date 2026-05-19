@@ -292,8 +292,13 @@
             document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('[data-loading-link]').forEach((link) => {
                     link.addEventListener('click', function () {
+                        if (this.dataset.loading === '1') {
+                            return;
+                        }
+
+                        this.dataset.loading = '1';
                         this.classList.add('opacity-70', 'pointer-events-none');
-                        this.textContent = this.dataset.loadingText || 'Opening...';
+                        this.innerHTML = `<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent align-[-2px]"></span><span class="ml-2">${this.dataset.loadingText || 'Opening...'}</span>`;
                     });
                 });
 
