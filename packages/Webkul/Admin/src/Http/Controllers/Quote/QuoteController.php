@@ -322,7 +322,7 @@ class QuoteController extends Controller
             'status' => request('issue_now') ? 'issued' : 'draft',
         ]);
 
-        $this->quoteRepository->update(['status' => 'closed'], $quote->id);
+        $quote->forceFill(['status' => 'closed'])->save();
 
         Event::dispatch('quote.convert_to_proforma.after', [$quote, $proforma]);
 

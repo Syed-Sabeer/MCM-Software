@@ -61,7 +61,7 @@ class ProformaInvoiceController extends Controller
             $quote = $this->quoteRepository->with('items', 'person', 'organization')->findOrFail($request->input('quote_id'));
             $proforma = $this->proformaInvoiceRepository->createFromQuote($quote, $payload);
 
-            $this->quoteRepository->update(['status' => 'closed'], $quote->id);
+            $quote->forceFill(['status' => 'closed'])->save();
         } else {
             $proforma = $this->proformaInvoiceRepository->create($payload);
         }
