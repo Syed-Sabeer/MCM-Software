@@ -16,6 +16,13 @@
                 'email' => auth()->guard('user')->user()->email,
             ]
             : null;
+        $activityPayload = $activity->toArray();
+
+        foreach (['schedule_from', 'schedule_to'] as $scheduleField) {
+            $activityPayload[$scheduleField] = $activity->{$scheduleField}
+                ? $activity->{$scheduleField}->format('Y-m-d H:i:s')
+                : null;
+        }
     @endphp
 
     <x-slot:title>
@@ -41,7 +48,7 @@
         </div>
 
         <v-activity-edit-page
-            :activity='@json($activity)'
+            :activity='@json($activityPayload)'
             :entity='@json($activityEntity ?? new stdClass())'
             entity-control-name="{{ $entityControlName ?? '' }}"
             update-url="{{ route('admin.activities.update', $activity->id) }}"
@@ -507,23 +514,68 @@
                 },
 
                 methods: {
+                    parseScheduleValue(value) {
+                        if (! value) {
+                            return null;
+                        }
+
+                        const normalizedValue = String(value).replace('T', ' ').replace(/\.\d+Z?$/, '').replace(/Z$/, '');
+                        const match = normalizedValue.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+
+                        if (! match) {
+                            const parsedDate = new Date(value);
+
+                            return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+                        }
+
+                        return new Date(
+                            Number(match[1]),
+                            Number(match[2]) - 1,
+                            Number(match[3]),
+                            Number(match[4] || 0),
+                            Number(match[5] || 0),
+                            Number(match[6] || 0)
+                        );
+                    },
+
+                    formatDateInput(date) {
+                        if (! date || Number.isNaN(date.getTime())) {
+                            return '';
+                        }
+
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+
+                        return `${year}-${month}-${day}`;
+                    },
+
+                    formatTimeInput(date) {
+                        if (! date || Number.isNaN(date.getTime())) {
+                            return '';
+                        }
+
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+                        return `${hours}:${minutes}`;
+                    },
+
                     initializeFromActivity() {
                         if (this.activity.type === 'task' && this.activity.schedule_from) {
-                            const dueDate = new Date(this.activity.schedule_from);
+                            const dueDate = this.parseScheduleValue(this.activity.schedule_from);
 
-                            if (! Number.isNaN(dueDate.getTime())) {
-                                this.form.due_date = dueDate.toISOString().slice(0, 10);
-                            }
+                            this.form.due_date = this.formatDateInput(dueDate);
                         }
 
                         if (this.activity.type === 'meeting') {
-                            const scheduleFrom = this.activity.schedule_from ? new Date(this.activity.schedule_from) : null;
-                            const scheduleTo = this.activity.schedule_to ? new Date(this.activity.schedule_to) : null;
+                            const scheduleFrom = this.parseScheduleValue(this.activity.schedule_from);
+                            const scheduleTo = this.parseScheduleValue(this.activity.schedule_to);
 
-                            this.form.start_date = scheduleFrom && !Number.isNaN(scheduleFrom.getTime()) ? scheduleFrom.toISOString().slice(0, 10) : '';
-                            this.form.start_time = scheduleFrom && !Number.isNaN(scheduleFrom.getTime()) ? scheduleFrom.toTimeString().slice(0, 5) : '';
-                            this.form.end_date = scheduleTo && !Number.isNaN(scheduleTo.getTime()) ? scheduleTo.toISOString().slice(0, 10) : this.form.start_date;
-                            this.form.end_time = scheduleTo && !Number.isNaN(scheduleTo.getTime()) ? scheduleTo.toTimeString().slice(0, 5) : this.form.start_time;
+                            this.form.start_date = this.formatDateInput(scheduleFrom);
+                            this.form.start_time = this.formatTimeInput(scheduleFrom);
+                            this.form.end_date = this.formatDateInput(scheduleTo) || this.form.start_date;
+                            this.form.end_time = this.formatTimeInput(scheduleTo) || this.form.start_time;
                         }
 
                         this.contacts.selected = (this.activity?.participants || [])
