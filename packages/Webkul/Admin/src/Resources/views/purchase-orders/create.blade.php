@@ -105,7 +105,7 @@
                     <div class="text-xl font-bold dark:text-white">Create Vendor Purchase Order</div>
                     <div class="text-sm text-gray-500">{{ $vendorQuote?->vendor_quote_number ?: ($jobOrder?->job_order_number ?: 'Manual') }}</div>
                 </div>
-                <button class="primary-button">Save Purchase Order</button>
+                <button class="primary-button" data-loading-submit data-loading-text="Saving...">Save Purchase Order</button>
             </div>
 
             <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
@@ -373,6 +373,19 @@
                 document.querySelectorAll('#purchase-order-items-table tbody tr').forEach((row) => window.syncRowVendor(row));
                 window.renderPoCharges();
                 window.calculatePoTotals();
+
+                document.querySelector('form')?.addEventListener('submit', function () {
+                    document.querySelectorAll('[data-loading-submit]').forEach((button) => {
+                        if (button.dataset.loading === '1') {
+                            return;
+                        }
+
+                        button.dataset.loading = '1';
+                        button.disabled = true;
+                        button.classList.add('opacity-70', 'cursor-not-allowed');
+                        button.innerHTML = `<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-[-2px]"></span><span class="ml-2">${button.dataset.loadingText || 'Saving...'}</span>`;
+                    });
+                });
             });
         </script>
     @endPushOnce

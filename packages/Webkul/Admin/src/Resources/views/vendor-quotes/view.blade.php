@@ -4,6 +4,7 @@
     @php
         $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
         $formatQty = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+        $formatPkr = fn ($value) => 'PKR ' . number_format((float) $value, 2);
         $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
             . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
         $companyName = core()->getConfigData('general.general.company_info.company_name');
@@ -143,8 +144,8 @@
                             <td class="py-2">{{ $item->color ?: optional($item->requirement)->color_name ?: optional($item->requirement)->color_code ?: '-' }}</td>
                             <td class="py-2">{{ $formatQty($item->quantity) }}</td>
                             <td class="py-2">{{ $unit }}</td>
-                            <td class="py-2">{{ core()->formatBasePrice($item->unit_price, 2) }}</td>
-                            <td class="py-2">{{ core()->formatBasePrice($item->total, 2) }}</td>
+                            <td class="py-2">{{ $formatPkr($item->unit_price) }}</td>
+                            <td class="py-2">{{ $formatPkr($item->total) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -155,11 +156,11 @@
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <div class="mb-3 text-base font-semibold">Totals</div>
                 <div class="space-y-2 text-sm">
-                    <div class="flex justify-between"><span>Sub Total</span><span>{{ number_format((float) $vendorQuote->subtotal, 2) }}</span></div>
+                    <div class="flex justify-between"><span>Sub Total</span><span>{{ $formatPkr($vendorQuote->subtotal) }}</span></div>
                     @foreach ($charges as $charge)
-                        <div class="flex justify-between"><span>{{ $formatChargeLabel($charge) }}</span><span>{{ number_format((float) $charge['amount'], 2) }}</span></div>
+                        <div class="flex justify-between"><span>{{ $formatChargeLabel($charge) }}</span><span>{{ $formatPkr($charge['amount']) }}</span></div>
                     @endforeach
-                    <div class="flex justify-between border-t pt-2 text-base font-bold"><span>Grand Total</span><span>{{ number_format((float) $vendorQuote->grand_total, 2) }}</span></div>
+                    <div class="flex justify-between border-t pt-2 text-base font-bold"><span>Grand Total</span><span>{{ $formatPkr($vendorQuote->grand_total) }}</span></div>
                 </div>
             </div>
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">

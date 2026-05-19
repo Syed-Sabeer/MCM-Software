@@ -7,6 +7,7 @@
         $selectedBillingAddress = trim((string) data_get($purchaseOrder->billing_address, 'address'));
         $selectedShippingAddress = trim((string) data_get($purchaseOrder->shipping_address, 'address'));
         $addressLines = fn ($value) => collect(preg_split("/\r\n|\n|\r/", (string) $value))->map(fn ($line) => trim((string) $line))->filter()->values()->all();
+        $formatPkr = fn ($value) => 'PKR ' . number_format((float) $value, 2);
         $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
             . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
     @endphp
@@ -135,8 +136,8 @@
                                 <td class="py-2 text-right">{{ rtrim(rtrim(number_format((float) ($item->received_quantity ?: 0), 4, '.', ''), '0'), '.') }}</td>
                                 <td class="py-2 text-right">{{ rtrim(rtrim(number_format((float) ($item->pending_quantity ?: 0), 4, '.', ''), '0'), '.') }}</td>
                                 <td class="py-2 text-center">{{ $item->unit ?: '-' }}</td>
-                                <td class="py-2 text-right">{{ core()->formatBasePrice($item->price ?: 0, 2) }}</td>
-                                <td class="py-2 text-right">{{ core()->formatBasePrice($item->total ?: 0, 2) }}</td>
+                                <td class="py-2 text-right">{{ $formatPkr($item->price ?: 0) }}</td>
+                                <td class="py-2 text-right">{{ $formatPkr($item->total ?: 0) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -157,11 +158,11 @@
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="mb-3 text-base font-semibold dark:text-white">Totals</div>
                 <div class="space-y-2 text-sm dark:text-white">
-                    <div class="flex items-center justify-between"><span>Sub Total</span><strong>{{ core()->formatBasePrice($purchaseOrder->sub_total ?: 0, 2) }}</strong></div>
+                    <div class="flex items-center justify-between"><span>Sub Total</span><strong>{{ $formatPkr($purchaseOrder->sub_total ?: 0) }}</strong></div>
                     @foreach ($charges as $charge)
-                        <div class="flex items-center justify-between"><span>{{ $formatChargeLabel($charge) }}</span><strong>{{ core()->formatBasePrice($charge['amount'] ?: 0, 2) }}</strong></div>
+                        <div class="flex items-center justify-between"><span>{{ $formatChargeLabel($charge) }}</span><strong>{{ $formatPkr($charge['amount'] ?: 0) }}</strong></div>
                     @endforeach
-                    <div class="flex items-center justify-between border-t pt-2 text-base"><span>Grand Total</span><strong>{{ core()->formatBasePrice($purchaseOrder->grand_total ?: 0, 2) }}</strong></div>
+                    <div class="flex items-center justify-between border-t pt-2 text-base"><span>Grand Total</span><strong>{{ $formatPkr($purchaseOrder->grand_total ?: 0) }}</strong></div>
                 </div>
             </div>
         </div>
@@ -187,7 +188,7 @@
                     @forelse ($purchaseOrder->payables as $payable)
                         <div class="rounded border border-gray-200 p-3 dark:border-gray-700">
                             <div class="font-semibold">{{ $payable->payable_number }}</div>
-                            <div class="text-gray-500">{{ core()->formatBasePrice($payable->total_amount, 2) }} | Remaining {{ core()->formatBasePrice($payable->remaining_amount, 2) }}</div>
+                            <div class="text-gray-500">{{ $formatPkr($payable->total_amount) }} | Remaining {{ $formatPkr($payable->remaining_amount) }}</div>
                         </div>
                     @empty
                         <div class="text-gray-500">No vendor payables created yet.</div>

@@ -35,7 +35,7 @@
                     <div class="text-xl font-bold dark:text-white">Edit Vendor Purchase Order</div>
                     <div class="text-sm text-gray-500">{{ $purchaseOrder->po_number }}</div>
                 </div>
-                <button class="primary-button">Update Purchase Order</button>
+                <button class="primary-button" data-loading-submit data-loading-text="Updating...">Update Purchase Order</button>
             </div>
 
             <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
@@ -369,6 +369,19 @@
                 window.populatePoAddressOptions();
                 window.renderPoCharges();
                 window.calculatePoTotals();
+
+                document.querySelector('form')?.addEventListener('submit', function () {
+                    document.querySelectorAll('[data-loading-submit]').forEach((button) => {
+                        if (button.dataset.loading === '1') {
+                            return;
+                        }
+
+                        button.dataset.loading = '1';
+                        button.disabled = true;
+                        button.classList.add('opacity-70', 'cursor-not-allowed');
+                        button.innerHTML = `<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent align-[-2px]"></span><span class="ml-2">${button.dataset.loadingText || 'Saving...'}</span>`;
+                    });
+                });
             });
         </script>
     @endPushOnce

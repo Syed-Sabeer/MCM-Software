@@ -6,6 +6,7 @@
     $terms = trim((string) ($purchaseOrder->terms ?: ''));
     $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
         . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
+    $formatPkr = fn ($value) => 'PKR ' . number_format((float) $value, 2);
 
     $logo = core()->getConfigData('general.general.admin_logo.logo_image');
     $logoPath = $logo && file_exists(public_path('storage/' . $logo)) ? public_path('storage/' . $logo) : null;
@@ -148,8 +149,8 @@
                             <div style="margin-top: 4px; color: #6b7280; font-size: 10px;">UOM: {{ $item->unit }}</div>
                         @endif
                     </td>
-                    <td class="text-right">{{ core()->formatBasePrice($item->price ?: 0, 2) }}</td>
-                    <td class="text-right">{{ core()->formatBasePrice($item->total ?: 0, 2) }}</td>
+                    <td class="text-right">{{ $formatPkr($item->price ?: 0) }}</td>
+                    <td class="text-right">{{ $formatPkr($item->total ?: 0) }}</td>
                 </tr>
             @empty
                 <tr><td colspan="5" class="text-center">No line items available.</td></tr>
@@ -158,11 +159,11 @@
     </table>
 
     <table class="totals-table">
-        <tr><td class="totals-label">Sub Total</td><td class="totals-value">{{ core()->formatBasePrice($purchaseOrder->sub_total ?: 0, 2) }}</td></tr>
+        <tr><td class="totals-label">Sub Total</td><td class="totals-value">{{ $formatPkr($purchaseOrder->sub_total ?: 0) }}</td></tr>
         @foreach ($charges as $charge)
-            <tr><td class="totals-label">{{ $formatChargeLabel($charge) }}</td><td class="totals-value">{{ core()->formatBasePrice($charge['amount'] ?: 0, 2) }}</td></tr>
+            <tr><td class="totals-label">{{ $formatChargeLabel($charge) }}</td><td class="totals-value">{{ $formatPkr($charge['amount'] ?: 0) }}</td></tr>
         @endforeach
-        <tr class="grand-row"><td class="totals-label">Grand Total</td><td class="totals-value">{{ core()->formatBasePrice($purchaseOrder->grand_total ?: 0, 2) }}</td></tr>
+        <tr class="grand-row"><td class="totals-label">Grand Total</td><td class="totals-value">{{ $formatPkr($purchaseOrder->grand_total ?: 0) }}</td></tr>
     </table>
 
     @if ($remarks)
