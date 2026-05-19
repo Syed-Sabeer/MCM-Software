@@ -7,13 +7,31 @@
     $companyCell = core()->getConfigData('general.general.company_info.cell');
     $companyEmail = core()->getConfigData('general.general.company_info.email');
 
+    $formatSafeDate = function ($value) {
+        if (blank($value)) {
+            return null;
+        }
+
+        try {
+            $date = $value instanceof \Carbon\CarbonInterface ? $value : \Carbon\Carbon::parse($value);
+
+            return $date->year > 1 ? $date->toDateString() : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    };
+    $defaultExpectedReceiveDate = old('expected_receive_date', $formatSafeDate($vendorQuote->last_delivery_date ?: $vendorQuote->first_delivery_date ?: $vendorQuote->jobOrder?->required_delivery_date));
     $prefillItems = old('items', $vendorQuote->items->map(fn ($item) => [
         'id' => $item->id,
         'requirement_id' => $item->requirement_id,
+        'item' => $item->material_name,
         'material_name' => $item->material_name,
-        'quantity' => $item->quantity,
+        'color' => $item->color ?: optional($item->requirement)->color_name ?: optional($item->requirement)->color_code ?: '-',
+        'ordered_quantity' => $item->quantity,
         'unit' => $item->unit ?: optional($item->requirement)->unit ?: 'PCS',
-        'unit_price' => $item->unit_price,
+        'price' => $item->unit_price,
+        'vendor_id' => $item->vendor_id ?: collect((array) optional($item->requirement)->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first() ?: $vendorQuote->organization_id,
+        'expected_receive_date' => $formatSafeDate($item->expected_receive_date) ?: $defaultExpectedReceiveDate,
     ])->toArray());
     $initialVendorQuoteCharges = collect(old('charges', $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote')))->values()->all();
     $vendorAddressOptions = $vendors->mapWithKeys(fn ($vendor) => [
@@ -23,6 +41,30 @@
             'default_shipping_address' => $addressManager->getDefaultAddress($vendor, 'shipping'),
         ],
     ]);
+    $vendorOptions = $vendors->map(fn ($vendor) => [
+        'id' => (int) $vendor->id,
+        'name' => (string) $vendor->name,
+    ])->values();
+    $requirementVendorMap = collect($vendorQuote->jobOrder?->requirements ?? [])->mapWithKeys(function ($requirement) {
+        $ids = collect((array) $requirement->vendor_ids)->filter()->map(fn ($id) => (int) $id)->values()->all();
+
+        return [(int) $requirement->id => $ids];
+    });
+
+    foreach ($vendorQuote->items as $item) {
+        if (! $item->requirement_id || ! $item->vendor_id) {
+            continue;
+        }
+
+        $ids = collect($requirementVendorMap->get((int) $item->requirement_id, []))
+            ->push((int) $item->vendor_id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $requirementVendorMap->put((int) $item->requirement_id, $ids);
+    }
 @endphp
 <x-admin::layouts>
     <x-slot:title>Edit Vendor Quote</x-slot>
@@ -36,7 +78,7 @@
                     <div class="text-xl font-bold dark:text-white">Edit Vendor Quote</div>
                     <div class="text-sm text-gray-500">{{ $vendorQuote->jobOrder?->job_order_number ? 'Job Order: ' . $vendorQuote->jobOrder->job_order_number : 'Procurement RFQ' }}</div>
                 </div>
-                <button class="primary-button">Save Vendor Quote</button>
+                <button class="primary-button" data-loading-submit data-loading-text="Saving...">Save Vendor Quote</button>
             </div>
 
             <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
@@ -56,16 +98,7 @@
                     <div><label class="mb-1 block text-sm font-medium">Issue Date</label><input type="date" name="issue_date" value="{{ old('issue_date', optional($vendorQuote->issue_date)->toDateString()) }}" class="custom-input"></div>
                 </div>
 
-                <div class="mt-4 grid gap-4" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">Vendor</label>
-                        <select name="organization_id" class="custom-select" id="vendor-select">
-                            <option value="">Select vendor</option>
-                            @foreach ($vendors as $vendor)
-                                <option value="{{ $vendor->id }}" @selected(old('organization_id', $vendorQuote->organization_id) == $vendor->id)>{{ $vendor->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                <div class="mt-4 grid gap-4" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
                     <div><label class="mb-1 block text-sm font-medium">Payment Term</label><input type="text" name="payment_term" value="{{ old('payment_term', $vendorQuote->payment_term) }}" class="custom-input"></div>
                     <div><label class="mb-1 block text-sm font-medium">Shipping Method</label><input type="text" name="shipping_method" value="{{ old('shipping_method', $vendorQuote->shipping_method) }}" class="custom-input"></div>
                 </div>
@@ -73,19 +106,6 @@
                 <div class="mt-4 grid gap-4" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
                     <div><label class="mb-1 block text-sm font-medium">First Delivery</label><input type="date" name="first_delivery_date" value="{{ old('first_delivery_date', optional($vendorQuote->first_delivery_date)->toDateString()) }}" class="custom-input"></div>
                     <div><label class="mb-1 block text-sm font-medium">Last Delivery</label><input type="date" name="last_delivery_date" value="{{ old('last_delivery_date', optional($vendorQuote->last_delivery_date)->toDateString()) }}" class="custom-input"></div>
-                </div>
-
-                <div class="mt-4 grid gap-4" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">Vendor Address</label>
-                        <select class="custom-select" id="vendor-quote-billing-select"></select>
-                        <div class="mt-2 whitespace-pre-line text-xs text-gray-500" id="vendor-quote-billing-preview">No address selected.</div>
-                    </div>
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">Ship To Address</label>
-                        <select class="custom-select" id="vendor-quote-shipping-select"></select>
-                        <div class="mt-2 whitespace-pre-line text-xs text-gray-500" id="vendor-quote-shipping-preview">No address selected.</div>
-                    </div>
                 </div>
             </div>
 
@@ -102,8 +122,10 @@
                     <thead>
                         <tr class="border-b dark:border-gray-700">
                             <th class="py-2 text-left">Material</th>
-                            <th class="py-2 text-left">Qty</th>
+                            <th class="py-2 text-left">Color</th>
+                            <th class="py-2 text-left">Ordered Qty</th>
                             <th class="py-2 text-left">Unit</th>
+                            <th class="py-2 text-left">Vendor</th>
                             <th class="py-2 text-left">Price</th>
                             <th class="py-2 text-left">Amount</th>
                             <th class="py-2 text-center">Action</th>
@@ -112,12 +134,27 @@
                     <tbody>
                         @foreach ($prefillItems as $index => $item)
                             <tr>
-                                <td class="py-2"><input type="hidden" name="items[{{ $index }}][id]" value="{{ $item['id'] ?? '' }}"><input type="hidden" name="items[{{ $index }}][requirement_id]" value="{{ $item['requirement_id'] ?? '' }}"><input type="text" name="items[{{ $index }}][material_name]" value="{{ $item['material_name'] ?? '' }}" class="custom-input"></td>
-                                <td class="py-2"><input type="number" step="0.0001" min="0.0001" name="items[{{ $index }}][quantity]" value="{{ $item['quantity'] ?? 1 }}" class="custom-input item-qty" oninput="window.calculateVendorQuoteTotals()"></td>
+                                <td class="py-2">
+                                    <input type="hidden" name="items[{{ $index }}][id]" value="{{ $item['id'] ?? '' }}">
+                                    <input type="hidden" name="items[{{ $index }}][requirement_id]" value="{{ $item['requirement_id'] ?? '' }}">
+                                    <input type="text" name="items[{{ $index }}][item]" value="{{ $item['item'] ?? $item['material_name'] ?? '' }}" class="custom-input">
+                                    <input type="hidden" name="items[{{ $index }}][material_name]" value="{{ $item['material_name'] ?? $item['item'] ?? '' }}">
+                                </td>
+                                <td class="py-2"><input type="text" name="items[{{ $index }}][color]" value="{{ $item['color'] ?? '-' }}" class="custom-input"></td>
+                                <td class="py-2"><input type="number" step="0.0001" min="0.0001" name="items[{{ $index }}][ordered_quantity]" value="{{ $item['ordered_quantity'] ?? $item['quantity'] ?? 1 }}" class="custom-input item-qty" oninput="window.calculateVendorQuoteTotals()"></td>
                                 <td class="py-2"><input type="text" name="items[{{ $index }}][unit]" value="{{ $item['unit'] ?? 'PCS' }}" class="custom-input"></td>
-                                <td class="py-2"><input type="number" step="0.01" min="0" name="items[{{ $index }}][unit_price]" value="{{ $item['unit_price'] ?? 0 }}" class="custom-input item-price" oninput="window.calculateVendorQuoteTotals()"></td>
+                                <td class="py-2">
+                                    <select name="items[{{ $index }}][vendor_id]" class="custom-select item-vendor">
+                                        <option value="">Select vendor</option>
+                                        @foreach ($vendors as $vendor)
+                                            <option value="{{ $vendor->id }}" @selected((int) old('items.' . $index . '.vendor_id', $item['vendor_id'] ?? 0) === (int) $vendor->id)>{{ $vendor->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td class="py-2"><input type="number" step="0.01" min="0" name="items[{{ $index }}][price]" value="{{ $item['price'] ?? $item['unit_price'] ?? 0 }}" class="custom-input item-price" oninput="window.calculateVendorQuoteTotals()"></td>
                                 <td class="py-2 text-right align-middle"><span class="item-amount">0.00</span></td>
                                 <td class="py-2 text-center"><button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removeVendorQuoteRow(this)"><i class="icon-delete"></i></button></td>
+                                <input type="hidden" name="items[{{ $index }}][expected_receive_date]" value="{{ $item['expected_receive_date'] ?? $defaultExpectedReceiveDate }}">
                             </tr>
                         @endforeach
                     </tbody>
@@ -156,6 +193,39 @@
         <script>
             window.vendorQuoteCharges = @json($initialVendorQuoteCharges);
             window.vendorQuoteAddressBook = @json($vendorAddressOptions);
+            window.vendorQuoteVendorOptions = @json($vendorOptions);
+            window.requirementVendorMap = @json($requirementVendorMap);
+
+            window.vendorQuoteVendorOptionsHtml = function (requirementId, selectedVendorId) {
+                const reqId = Number(requirementId || 0);
+                const allowedIds = Array.isArray(window.requirementVendorMap?.[reqId]) ? window.requirementVendorMap[reqId].map((id) => Number(id)) : [];
+                const options = allowedIds.length
+                    ? window.vendorQuoteVendorOptions.filter((vendor) => allowedIds.includes(Number(vendor.id)))
+                    : window.vendorQuoteVendorOptions;
+
+                const selectedIdNum = Number(selectedVendorId || 0);
+                let html = '<option value="">Select vendor</option>';
+
+                options.forEach((vendor) => {
+                    const selectedAttr = selectedIdNum === Number(vendor.id) ? ' selected' : '';
+                    html += `<option value="${vendor.id}"${selectedAttr}>${vendor.name}</option>`;
+                });
+
+                return html;
+            };
+
+            window.syncVendorQuoteRowVendor = function (row) {
+                if (! row) return;
+
+                const requirementInput = row.querySelector('input[name*="[requirement_id]"]');
+                const vendorSelect = row.querySelector('.item-vendor');
+
+                if (! vendorSelect) return;
+
+                const requirementId = Number(requirementInput?.value || 0);
+                const selectedVendorId = Number(vendorSelect.value || 0);
+                vendorSelect.innerHTML = window.vendorQuoteVendorOptionsHtml(requirementId, selectedVendorId);
+            };
 
             window.syncVendorQuoteAddressField = function (prefix, option) {
                 document.getElementById(`vendor-quote-${prefix}-key`).value = option?.key || '';
@@ -279,9 +349,44 @@
                 document.getElementById('vendor-quote-grand-total').textContent = grandTotal.toFixed(2);
                 document.getElementById('vendor-quote-grand-total-input').value = grandTotal.toFixed(4);
             };
-            window.removeVendorQuoteRow = function (button) { const tbody = document.querySelector('#vendor-quote-items-table tbody'); const row = button.closest('tr'); if (!tbody || !row) return; if (tbody.children.length <= 1) { row.querySelectorAll('input').forEach((input) => { if (input.type === 'hidden') input.value = ''; else if (input.type === 'number') input.value = input.name.includes('[quantity]') ? '1' : '0'; else input.value = input.name.includes('[unit]') ? 'PCS' : ''; }); const amount = row.querySelector('.item-amount'); if (amount) amount.textContent = '0.00'; window.calculateVendorQuoteTotals(); return; } row.remove(); window.calculateVendorQuoteTotals(); };
-            window.addVendorQuoteRow = function () { const tbody = document.querySelector('#vendor-quote-items-table tbody'); const index = tbody.children.length; tbody.insertAdjacentHTML('beforeend', `<tr><td class="py-2"><input type="hidden" name="items[${index}][id]" value=""><input type="hidden" name="items[${index}][requirement_id]" value=""><input type="text" name="items[${index}][material_name]" class="custom-input"></td><td class="py-2"><input type="number" step="0.0001" min="0.0001" name="items[${index}][quantity]" value="1" class="custom-input item-qty" oninput="window.calculateVendorQuoteTotals()"></td><td class="py-2"><input type="text" name="items[${index}][unit]" value="PCS" class="custom-input"></td><td class="py-2"><input type="number" step="0.01" min="0" name="items[${index}][unit_price]" value="0" class="custom-input item-price" oninput="window.calculateVendorQuoteTotals()"></td><td class="py-2 text-right align-middle"><span class="item-amount">0.00</span></td><td class="py-2 text-center"><button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removeVendorQuoteRow(this)"><i class="icon-delete"></i></button></td></tr>`); window.calculateVendorQuoteTotals(); };
+            window.removeVendorQuoteRow = function (button) {
+                const tbody = document.querySelector('#vendor-quote-items-table tbody');
+                const row = button.closest('tr');
+                if (! tbody || ! row) return;
+
+                if (tbody.children.length <= 1) {
+                    row.querySelectorAll('input').forEach((input) => {
+                        if (input.type === 'hidden') input.value = '';
+                        else if (input.type === 'number') input.value = input.name.includes('[ordered_quantity]') ? '1' : '0';
+                        else input.value = input.name.includes('[unit]') ? 'PCS' : '';
+                    });
+
+                    const vendor = row.querySelector('.item-vendor');
+                    if (vendor) vendor.value = '';
+
+                    const amount = row.querySelector('.item-amount');
+                    if (amount) amount.textContent = '0.00';
+
+                    window.calculateVendorQuoteTotals();
+
+                    return;
+                }
+
+                row.remove();
+                window.calculateVendorQuoteTotals();
+            };
+
+            window.addVendorQuoteRow = function () {
+                const tbody = document.querySelector('#vendor-quote-items-table tbody');
+                const index = tbody.children.length;
+                const expectedDate = document.querySelector('input[name="items[0][expected_receive_date]"]')?.value || '';
+
+                tbody.insertAdjacentHTML('beforeend', `<tr><td class="py-2"><input type="hidden" name="items[${index}][id]" value=""><input type="hidden" name="items[${index}][requirement_id]" value=""><input type="text" name="items[${index}][item]" class="custom-input"><input type="hidden" name="items[${index}][material_name]" value=""></td><td class="py-2"><input type="text" name="items[${index}][color]" value="-" class="custom-input"></td><td class="py-2"><input type="number" step="0.0001" min="0.0001" name="items[${index}][ordered_quantity]" value="1" class="custom-input item-qty" oninput="window.calculateVendorQuoteTotals()"></td><td class="py-2"><input type="text" name="items[${index}][unit]" value="PCS" class="custom-input"></td><td class="py-2"><select name="items[${index}][vendor_id]" class="custom-select item-vendor">${window.vendorQuoteVendorOptionsHtml(0, 0)}</select></td><td class="py-2"><input type="number" step="0.01" min="0" name="items[${index}][price]" value="0" class="custom-input item-price" oninput="window.calculateVendorQuoteTotals()"></td><td class="py-2 text-right align-middle"><span class="item-amount">0.00</span></td><td class="py-2 text-center"><button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removeVendorQuoteRow(this)"><i class="icon-delete"></i></button></td><input type="hidden" name="items[${index}][expected_receive_date]" value="${expectedDate}"></tr>`);
+
+                window.calculateVendorQuoteTotals();
+            };
             document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('#vendor-quote-items-table tbody tr').forEach((row) => window.syncVendorQuoteRowVendor(row));
                 document.getElementById('vendor-select')?.addEventListener('change', window.populateVendorQuoteAddresses);
                 document.getElementById('vendor-quote-billing-select')?.addEventListener('change', function () {
                     const vendorId = document.getElementById('vendor-select')?.value || '';
@@ -296,6 +401,14 @@
                 window.populateVendorQuoteAddresses();
                 window.renderVendorQuoteCharges();
                 window.calculateVendorQuoteTotals();
+
+                document.querySelector('form')?.addEventListener('submit', function () {
+                    document.querySelectorAll('[data-loading-submit]').forEach((button) => {
+                        button.disabled = true;
+                        button.classList.add('opacity-70', 'cursor-not-allowed');
+                        button.textContent = button.dataset.loadingText || 'Saving...';
+                    });
+                });
             });
         </script>
     @endpush

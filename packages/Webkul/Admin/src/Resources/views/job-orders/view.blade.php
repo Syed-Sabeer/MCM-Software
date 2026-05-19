@@ -5,6 +5,7 @@
         $formatItemQty = fn ($value) => number_format((float) $value, 0, '.', '');
         $formatStageQty = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
         $formatAmount = fn ($value) => number_format((float) $value, 3, '.', ',');
+        $createdPurchaseOrder = $jobOrder->purchaseOrders->first();
     @endphp
 
     <div class="flex flex-col gap-4">
@@ -16,9 +17,13 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <a href="{{ route('admin.vendor_quotes.create', ['job_order_id' => $jobOrder->id]) }}" class="secondary-button">Create Vendor Quote</a>
-                    <a href="{{ route('admin.purchase_orders.create', ['job_order_id' => $jobOrder->id]) }}" class="secondary-button">Create Vendor PO</a>
-                    <a href="{{ route('admin.job_orders.edit', $jobOrder->id) }}" class="primary-button">Edit</a>
+                    <a href="{{ route('admin.vendor_quotes.create', ['job_order_id' => $jobOrder->id]) }}" class="secondary-button" data-loading-link data-loading-text="Opening...">Create Vendor Quote</a>
+                    @if ($createdPurchaseOrder)
+                        <a href="{{ route('admin.purchase_orders.view', $createdPurchaseOrder->id) }}" class="secondary-button" data-loading-link data-loading-text="Opening...">PO Created</a>
+                    @else
+                        <a href="{{ route('admin.purchase_orders.create', ['job_order_id' => $jobOrder->id]) }}" class="secondary-button" data-loading-link data-loading-text="Opening...">Create Vendor PO</a>
+                    @endif
+                    <a href="{{ route('admin.job_orders.edit', $jobOrder->id) }}" class="primary-button" data-loading-link data-loading-text="Opening...">Edit</a>
                 </div>
             </div>
 
@@ -177,7 +182,7 @@
                     </tbody>
                 </table>
 
-                <div class="mt-6 text-base font-semibold dark:text-white">Total Requirement from Vendor</div>
+                <div class="mt-6 text-base font-semibold dark:text-white" style="margin-top:4%;">Total Requirement from Vendor</div>
 
                 <table class="mt-3 w-full text-sm dark:text-white">
                     <thead>
@@ -285,6 +290,13 @@
     @pushOnce('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('[data-loading-link]').forEach((link) => {
+                    link.addEventListener('click', function () {
+                        this.classList.add('opacity-70', 'pointer-events-none');
+                        this.textContent = this.dataset.loadingText || 'Opening...';
+                    });
+                });
+
                 var printAllButton = document.getElementById('print-all-vendors-requirements');
                 var printSingleButton = document.getElementById('print-single-vendor-requirements');
                 var vendorSelect = document.getElementById('requirement-pdf-vendor-id');

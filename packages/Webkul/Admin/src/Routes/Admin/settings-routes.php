@@ -217,6 +217,16 @@ Route::prefix('settings')->group(function () {
 
         Route::get('edit/{id?}', 'edit')->name('admin.settings.pipelines.edit');
 
+        Route::post('edit/{id}/rename', 'rename')->name('admin.settings.pipelines.rename');
+
+        Route::post('edit/{id}/stages', 'storeStage')->name('admin.settings.pipelines.stages.store');
+
+        Route::put('edit/{id}/stages/reorder', 'reorderStages')->name('admin.settings.pipelines.stages.reorder');
+
+        Route::put('edit/{id}/stages/{stageId}', 'updateStage')->name('admin.settings.pipelines.stages.update');
+
+        Route::delete('edit/{id}/stages/{stageId}', 'destroyStage')->name('admin.settings.pipelines.stages.delete');
+
         Route::post('edit/{id}', 'update')->name('admin.settings.pipelines.update');
 
         Route::delete('{id}', 'destroy')->name('admin.settings.pipelines.delete');

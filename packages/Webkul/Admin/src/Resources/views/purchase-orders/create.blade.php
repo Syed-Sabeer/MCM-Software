@@ -15,7 +15,7 @@
     };
     $jobOrderMode = (bool) $jobOrder;
     $defaultExpectedReceiveDate = old('expected_receive_date', $formatSafeDate($vendorQuote?->last_delivery_date ?: $vendorQuote?->first_delivery_date ?: $jobOrder?->required_delivery_date));
-    $vendorQuoteItemsByRequirement = collect($vendorQuote?->items ?? [])->keyBy('requirement_id');
+    $vendorQuoteItems = collect($vendorQuote?->items ?? []);
     $vendorRequirementTotals = $jobOrder?->relationLoaded('vendorRequirementTotals')
         ? collect($jobOrder->getRelation('vendorRequirementTotals'))
         : collect();
@@ -27,36 +27,45 @@
         'unit' => $req->unit ?: 'PCS',
         'vendor_ids' => (array) $req->vendor_ids,
     ]);
-    $prefillItems = old('items', $prefillSourceRows->map(function ($req) use ($vendorQuote, $vendorQuoteItemsByRequirement) {
-        $reqId = $req['requirement_id'] ?? null;
-        $quoteItem = $reqId ? $vendorQuoteItemsByRequirement->get($reqId) : null;
-        $orderedQuantity = $quoteItem?->quantity ?? $req['balance_qty'];
+    $prefillItems = old('items');
 
-        return [
-            'requirement_id' => $reqId,
-            'item' => $quoteItem?->material_name ?? $req['material_name'],
-            'material_name' => $quoteItem?->material_name ?? $req['material_name'],
-            'color' => $req['color_label'] ?? '-',
-            'ordered_quantity' => $orderedQuantity,
-            'received_quantity' => 0,
-            'pending_quantity' => $orderedQuantity,
-            'unit' => $quoteItem?->unit ?: ($req['unit'] ?: 'PCS'),
-            'price' => $quoteItem?->unit_price ?? 0,
-            'vendor_id' => $vendorQuote?->organization_id ?: collect((array) ($req['vendor_ids'] ?? []))->filter()->map(fn ($id) => (int) $id)->first(),
-        ];
-    })->toArray() ?? $vendorQuote?->items?->map(fn ($item) => [
-        'requirement_id' => $item->requirement_id,
-        'item' => $item->material_name,
-        'material_name' => $item->material_name,
-        'color' => optional($item->requirement)->color_name ?: optional($item->requirement)->color_code ?: '-',
-        'ordered_quantity' => $item->quantity,
-        'received_quantity' => 0,
-        'pending_quantity' => $item->quantity,
-        'unit' => $item->unit ?: optional($item->requirement)->unit ?: 'PCS',
-        'price' => $item->unit_price,
-        'vendor_id' => collect((array) optional($item->requirement)->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first() ?: $vendorQuote?->organization_id,
-    ])->toArray() ?? [['item' => '', 'ordered_quantity' => 1, 'unit' => 'PCS', 'price' => 0]]);
-    $initialPurchaseOrderCharges = collect(old('charges', $vendorQuote && ! $jobOrderMode ? $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote') : []))->values()->all();
+    if (is_null($prefillItems)) {
+        if ($vendorQuoteItems->isNotEmpty()) {
+            $prefillItems = $vendorQuoteItems->map(fn ($item) => [
+                'requirement_id' => $item->requirement_id,
+                'item' => $item->material_name,
+                'material_name' => $item->material_name,
+                'color' => $item->color ?: optional($item->requirement)->color_name ?: optional($item->requirement)->color_code ?: '-',
+                'ordered_quantity' => $item->quantity,
+                'received_quantity' => 0,
+                'pending_quantity' => $item->quantity,
+                'unit' => $item->unit ?: optional($item->requirement)->unit ?: 'PCS',
+                'price' => $item->unit_price,
+                'vendor_id' => $item->vendor_id ?: collect((array) optional($item->requirement)->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first() ?: $vendorQuote?->organization_id,
+                'expected_receive_date' => $formatSafeDate($item->expected_receive_date) ?: $defaultExpectedReceiveDate,
+            ])->toArray();
+        } else {
+            $prefillItems = $prefillSourceRows->map(fn ($req) => [
+                'requirement_id' => $req['requirement_id'] ?? null,
+                'item' => $req['material_name'],
+                'material_name' => $req['material_name'],
+                'color' => $req['color_label'] ?? '-',
+                'ordered_quantity' => $req['balance_qty'],
+                'received_quantity' => 0,
+                'pending_quantity' => $req['balance_qty'],
+                'unit' => $req['unit'] ?: 'PCS',
+                'price' => 0,
+                'vendor_id' => collect((array) ($req['vendor_ids'] ?? []))->filter()->map(fn ($id) => (int) $id)->first(),
+                'expected_receive_date' => $defaultExpectedReceiveDate,
+            ])->toArray();
+        }
+    }
+
+    if (empty($prefillItems)) {
+        $prefillItems = [['item' => '', 'ordered_quantity' => 1, 'unit' => 'PCS', 'price' => 0, 'vendor_id' => $vendorQuote?->organization_id, 'expected_receive_date' => $defaultExpectedReceiveDate]];
+    }
+
+    $initialPurchaseOrderCharges = collect(old('charges', $vendorQuote ? $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote') : []))->values()->all();
     $vendorOptions = $vendors->map(fn ($vendor) => [
         'id' => (int) $vendor->id,
         'name' => (string) $vendor->name,
@@ -67,14 +76,14 @@
         return [(int) $requirement->id => $ids];
     });
 
-    if ($vendorQuote?->organization_id) {
+    if ($vendorQuote) {
         foreach ($vendorQuote->items ?? [] as $item) {
             if (! $item->requirement_id) {
                 continue;
             }
 
             $ids = collect($requirementVendorMap->get((int) $item->requirement_id, []))
-                ->push((int) $vendorQuote->organization_id)
+                ->push((int) ($item->vendor_id ?: $vendorQuote->organization_id))
                 ->filter()
                 ->unique()
                 ->values()
@@ -203,7 +212,7 @@
                                 <td class="py-2 text-center"><button type="button" class="inline-flex items-center justify-center rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800" onclick="window.removePoRow(this)"><i class="icon-delete"></i></button></td>
                                 <input type="hidden" name="items[{{ $index }}][received_quantity]" value="0">
                                 <input type="hidden" name="items[{{ $index }}][pending_quantity]" value="{{ $item['pending_quantity'] ?? $item['ordered_quantity'] ?? 1 }}">
-                                <input type="hidden" name="items[{{ $index }}][expected_receive_date]" value="{{ $defaultExpectedReceiveDate }}">
+                                <input type="hidden" name="items[{{ $index }}][expected_receive_date]" value="{{ $item['expected_receive_date'] ?? $defaultExpectedReceiveDate }}">
                             </tr>
                         @endforeach
                     </tbody>

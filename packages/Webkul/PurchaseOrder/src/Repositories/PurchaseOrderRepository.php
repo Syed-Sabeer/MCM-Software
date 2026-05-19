@@ -63,6 +63,7 @@ class PurchaseOrderRepository extends Repository
                 'price' => $item->unit_price,
                 'expected_receive_date' => $item->expected_receive_date?->toDateString(),
                 'line_status' => 'open',
+                'vendor_id' => $item->vendor_id ?: collect((array) optional($item->requirement)->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first() ?: $vendorQuote->organization_id,
             ])->toArray(),
         ], $overrides);
 

@@ -59,6 +59,7 @@ class VendorQuoteRequest extends FormRequest
             'items' => ['required', 'array', 'min:1'],
             'items.*.material_name' => ['nullable', 'string'],
             'items.*.item' => ['nullable', 'string'],
+            'items.*.color' => ['nullable', 'string', 'max:255'],
             'items.*.quantity' => ['nullable', 'numeric', 'gt:0'],
             'items.*.ordered_quantity' => ['nullable', 'numeric', 'gt:0'],
             'items.*.unit' => ['nullable', 'string', 'max:100'],

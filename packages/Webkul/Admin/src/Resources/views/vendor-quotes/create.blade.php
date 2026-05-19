@@ -58,7 +58,7 @@
                     <div class="text-xl font-bold dark:text-white">Create Vendor Quote</div>
                     <div class="text-sm text-gray-500">{{ $jobOrder?->job_order_number ? 'Job Order: ' . $jobOrder->job_order_number : 'Procurement RFQ' }}</div>
                 </div>
-                <button class="primary-button">Save Vendor Quote</button>
+                <button class="primary-button" data-loading-submit data-loading-text="Saving...">Save Vendor Quote</button>
             </div>
 
             <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
@@ -345,6 +345,14 @@
                 document.querySelectorAll('#vendor-quote-items-table tbody tr').forEach((row) => window.syncVendorQuoteRowVendor(row));
                 window.renderVendorQuoteCharges();
                 window.calculateVendorQuoteTotals();
+
+                document.querySelector('form')?.addEventListener('submit', function () {
+                    document.querySelectorAll('[data-loading-submit]').forEach((button) => {
+                        button.disabled = true;
+                        button.classList.add('opacity-70', 'cursor-not-allowed');
+                        button.textContent = button.dataset.loadingText || 'Saving...';
+                    });
+                });
             });
         </script>
     @endPushOnce

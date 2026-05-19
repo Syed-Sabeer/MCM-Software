@@ -1545,6 +1545,12 @@ return [
                 'add-new-stages'       => 'Add New Stages',
                 'add-stage-info'       => 'Add new stage for your Pipeline',
                 'stage-delete-success' => 'Stage Deleted Successfully',
+                'rename-success'       => 'Pipeline name saved.',
+                'stage-create-success' => 'Stage created successfully.',
+                'stage-update-success' => 'Stage saved successfully.',
+                'stage-order-success'  => 'Stage position saved.',
+                'stage-order-stale'    => 'Stage positions changed. Please refresh and try again.',
+                'stage-delete-last-error' => 'At least one stage is required.',
             ],
         ],
 

@@ -8,7 +8,7 @@ use Webkul\PurchaseOrder\Contracts\VendorQuoteItem as VendorQuoteItemContract;
 
 class VendorQuoteItem extends Model implements VendorQuoteItemContract
 {
-    protected $fillable = ['vendor_quote_id', 'requirement_id', 'material_name', 'description', 'quantity', 'unit', 'unit_price', 'total', 'vendor_lead_time', 'expected_receive_date', 'sort_order'];
+    protected $fillable = ['vendor_quote_id', 'requirement_id', 'vendor_id', 'material_name', 'color', 'description', 'quantity', 'unit', 'unit_price', 'total', 'vendor_lead_time', 'expected_receive_date', 'sort_order'];
 
     protected $casts = ['quantity' => 'decimal:4', 'unit_price' => 'decimal:4', 'total' => 'decimal:4', 'expected_receive_date' => 'date'];
 

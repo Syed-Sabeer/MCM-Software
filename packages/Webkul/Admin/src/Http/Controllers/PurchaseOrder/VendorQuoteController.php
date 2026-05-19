@@ -62,7 +62,7 @@ class VendorQuoteController extends Controller
         }
 
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
-            ->whereIn('type', ['vendor', 'Vendor'])
+            ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
             ->get();
 
@@ -96,7 +96,7 @@ class VendorQuoteController extends Controller
 
     public function view(int $id): View
     {
-        $vendorQuote = $this->vendorQuoteRepository->with(['organization', 'person', 'jobOrder.organization', 'items.requirement'])->findOrFail($id);
+        $vendorQuote = $this->vendorQuoteRepository->with(['organization', 'person', 'jobOrder.organization', 'items.requirement', 'purchaseOrders'])->findOrFail($id);
 
         return view('admin::vendor-quotes.view', compact('vendorQuote'));
     }
@@ -115,9 +115,9 @@ class VendorQuoteController extends Controller
 
     public function edit(int $id): View
     {
-        $vendorQuote = $this->vendorQuoteRepository->with(['organization', 'person', 'jobOrder', 'items'])->findOrFail($id);
+        $vendorQuote = $this->vendorQuoteRepository->with(['organization', 'person', 'jobOrder.requirements', 'items.requirement', 'purchaseOrders'])->findOrFail($id);
         $vendors = app(\Webkul\Contact\Repositories\OrganizationRepository::class)
-            ->whereIn('type', ['vendor', 'Vendor'])
+            ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
             ->get();
 

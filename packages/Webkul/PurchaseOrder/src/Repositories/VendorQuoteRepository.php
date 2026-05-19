@@ -125,7 +125,9 @@ class VendorQuoteRepository extends Repository
             $payload = [
                 'vendor_quote_id' => $vendorQuote->id,
                 'requirement_id' => $item['requirement_id'] ?? null,
+                'vendor_id' => $item['vendor_id'] ?? null,
                 'material_name' => $materialName,
+                'color' => $item['color'] ?? null,
                 'description' => $item['description'] ?? null,
                 'quantity' => $quantity,
                 'unit' => $item['unit'] ?? null,

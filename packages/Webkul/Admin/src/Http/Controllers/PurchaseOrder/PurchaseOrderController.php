@@ -114,7 +114,7 @@ class PurchaseOrderController extends Controller
                 'price' => $item->unit_price,
                 'expected_receive_date' => $item->expected_receive_date?->toDateString(),
                 'line_status' => 'open',
-                'vendor_id' => collect((array) optional($item->requirement)->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first() ?: $vendorQuote->organization_id,
+                'vendor_id' => $item->vendor_id ?: collect((array) optional($item->requirement)->vendor_ids)->filter()->map(fn ($id) => (int) $id)->first() ?: $vendorQuote->organization_id,
             ])->toArray();
 
             $groupedItems = collect($items)->groupBy(fn ($it) => (int) ($it['vendor_id'] ?? 0))->filter(fn ($g, $vendorId) => $vendorId > 0);

@@ -100,6 +100,7 @@
                     item-key="id"
                     :list="stages"
                     :move="handleDragging"
+                    @end="reorderStages"
                     class="flex gap-4"
                 >
                     <template #item="{ element, index }">
@@ -150,6 +151,7 @@
                                                 v-model="element['name']"
                                                 ::rules="{ required: true, unique_name: stages, min: 0, max: 100 }"
                                                 :label="trans('admin::app.settings.pipelines.edit.name')"
+                                                @input="saveStageName(element)"
                                             />
 
                                             <x-admin::form.control-group.error ::name="'stages[' + element.id + '][name]'" />
@@ -225,6 +227,10 @@
                         stages: @json($pipeline->stages),
 
                         stageCount: 1,
+
+                        saveTimers: {},
+
+                        lastSavedStageIds: @json($pipeline->stages->pluck('id')->values()),
                     };
                 },
 
@@ -234,12 +240,18 @@
 
                 methods: {
                     addStage() {
-                        this.stages.push({
-                            'id': 'stage_' + this.stageCount++,
-                            'code': '',
-                            'name': '',
-                            'probability': 100,
-                        });
+                        const name = this.nextStageName();
+
+                        this.$axios.post(@json(route('admin.settings.pipelines.stages.store', $pipeline->id)), {
+                            name,
+                            probability: 100,
+                        }).then((response) => {
+                            this.stages.push(response.data.stage);
+
+                            this.lastSavedStageIds = this.stages.map(stage => stage.id);
+
+                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                        }).catch((error) => this.flashError(error));
                     },
 
                     remove(stage) {
@@ -247,13 +259,21 @@
                             title: 'Delete stage',
                             message: this.deleteStageMessage(stage),
                             agree: () => {
-                                let tempStages = this.stages.filter(item => item.id !== stage.id);
+                                this.$axios.delete(@json(route('admin.settings.pipelines.stages.delete', [$pipeline->id, ':stageId'])).replace(':stageId', stage.id))
+                                    .then((response) => {
+                                        let tempStages = this.stages.filter(item => item.id !== stage.id);
 
-                                this.stages = [];
+                                        this.stages = [];
 
-                                this.$nextTick(() => this.stages = tempStages);
+                                        this.$nextTick(() => {
+                                            this.stages = tempStages;
+                                            this.lastSavedStageIds = this.stages.map(item => item.id);
+                                        });
 
-                                this.removeUniqueNameErrors();
+                                        this.removeUniqueNameErrors();
+
+                                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                    }).catch((error) => this.flashError(error));
                             },
                         });
                     },
@@ -276,6 +296,51 @@
                         const index = this.stages.findIndex(item => item.id === stage.id);
 
                         return this.stages[index + 1] || this.stages[index - 1] || null;
+                    },
+
+                    nextStageName() {
+                        let number = this.stageCount++;
+                        let name = `New Stage ${number}`;
+                        let stageNames = this.stages.map(stage => (stage.name || '').toLowerCase());
+
+                        while (stageNames.includes(name.toLowerCase())) {
+                            name = `New Stage ${++number}`;
+                        }
+
+                        return name;
+                    },
+
+                    saveStageName(stage) {
+                        clearTimeout(this.saveTimers[stage.id]);
+
+                        this.saveTimers[stage.id] = setTimeout(() => {
+                            if (! stage.name || this.isDuplicateStageNameExists()) {
+                                return;
+                            }
+
+                            this.$axios.put(@json(route('admin.settings.pipelines.stages.update', [$pipeline->id, ':stageId'])).replace(':stageId', stage.id), {
+                                name: stage.name,
+                                probability: stage.probability ?? 100,
+                            }).then((response) => {
+                                Object.assign(stage, response.data.stage);
+                            }).catch((error) => this.flashError(error));
+                        }, 600);
+                    },
+
+                    reorderStages() {
+                        const stageIds = this.stages.map(stage => stage.id);
+
+                        this.$axios.put(@json(route('admin.settings.pipelines.stages.reorder', $pipeline->id)), {
+                            stage_ids: stageIds,
+                        }).then(() => {
+                            this.lastSavedStageIds = [...stageIds];
+                        }).catch((error) => {
+                            this.stages = this.lastSavedStageIds
+                                .map(stageId => this.stages.find(stage => stage.id === stageId))
+                                .filter(Boolean);
+
+                            this.flashError(error);
+                        });
                     },
 
                     slugify(name) {
@@ -342,8 +407,49 @@
                     isDragable () {
                         return true;
                     },
+
+                    flashError(error) {
+                        let message = error.response?.data?.message;
+
+                        if (! message && error.response?.data?.errors) {
+                            message = Object.values(error.response.data.errors).flat()[0];
+                        }
+
+                        this.$emitter.emit('add-flash', {
+                            type: 'error',
+                            message: message || 'Unable to save changes.',
+                        });
+                    },
                 },
             })
+
+            const pipelineNameInput = document.getElementById('name');
+            let pipelineNameTimer;
+
+            if (pipelineNameInput) {
+                pipelineNameInput.addEventListener('input', () => {
+                    clearTimeout(pipelineNameTimer);
+
+                    pipelineNameTimer = setTimeout(() => {
+                        if (! pipelineNameInput.value.trim()) {
+                            return;
+                        }
+
+                        window.axios.post(@json(route('admin.settings.pipelines.rename', $pipeline->id)), {
+                            name: pipelineNameInput.value.trim(),
+                        }).catch((error) => {
+                            const message = error.response?.data?.message
+                                || (error.response?.data?.errors ? Object.values(error.response.data.errors).flat()[0] : null)
+                                || 'Unable to save pipeline name.';
+
+                            window.emitter.emit('add-flash', {
+                                type: 'error',
+                                message,
+                            });
+                        });
+                    }, 600);
+                });
+            }
         </script>
     @endPushOnce
 </x-admin::layouts>

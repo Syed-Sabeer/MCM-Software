@@ -13,6 +13,7 @@
         $companyEmail = core()->getConfigData('general.general.company_info.email');
 
         $vendor = $vendorQuote->organization;
+        $createdPurchaseOrder = $vendorQuote->purchaseOrders->first();
         $charges = $chargeManager->extract($vendorQuote->loadMissing('additionalCharges'), 'vendor_quote');
         $selectedBillingAddress = trim((string) data_get($vendorQuote->billing_address, 'address'));
         $selectedShippingAddress = trim((string) data_get($vendorQuote->shipping_address, 'address'));
@@ -48,9 +49,13 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <a href="{{ route('admin.vendor_quotes.print', $vendorQuote->id) }}" class="secondary-button">Print</a>
-                    <a href="{{ route('admin.purchase_orders.create', ['vendor_quote_id' => $vendorQuote->id]) }}" class="secondary-button">Create Vendor PO</a>
-                    <a href="{{ route('admin.vendor_quotes.edit', $vendorQuote->id) }}" class="primary-button">Edit</a>
+                    <a href="{{ route('admin.vendor_quotes.print', $vendorQuote->id) }}" class="secondary-button" data-loading-link data-loading-text="Opening...">Print</a>
+                    @if ($createdPurchaseOrder)
+                        <a href="{{ route('admin.purchase_orders.view', $createdPurchaseOrder->id) }}" class="secondary-button" data-loading-link data-loading-text="Opening...">PO Created</a>
+                    @else
+                        <a href="{{ route('admin.purchase_orders.create', ['vendor_quote_id' => $vendorQuote->id]) }}" class="secondary-button" data-loading-link data-loading-text="Opening...">Create Vendor PO</a>
+                    @endif
+                    <a href="{{ route('admin.vendor_quotes.edit', $vendorQuote->id) }}" class="primary-button" data-loading-link data-loading-text="Opening...">Edit</a>
                 </div>
             </div>
 
@@ -117,6 +122,7 @@
                 <thead>
                     <tr class="border-b dark:border-gray-700">
                         <th class="py-2 text-left">Material</th>
+                        <th class="py-2 text-left">Color</th>
                         <th class="py-2 text-left">Qty</th>
                         <th class="py-2 text-left">Unit</th>
                         <th class="py-2 text-left">Price</th>
@@ -134,6 +140,7 @@
                                     {{ $item->material_name }}
                                 @endif
                             </td>
+                            <td class="py-2">{{ $item->color ?: optional($item->requirement)->color_name ?: optional($item->requirement)->color_code ?: '-' }}</td>
                             <td class="py-2">{{ $formatQty($item->quantity) }}</td>
                             <td class="py-2">{{ $unit }}</td>
                             <td class="py-2">{{ core()->formatBasePrice($item->unit_price, 2) }}</td>
@@ -163,4 +170,17 @@
             </div>
         </div>
     </div>
+
+    @pushOnce('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('[data-loading-link]').forEach((link) => {
+                    link.addEventListener('click', function () {
+                        this.classList.add('opacity-70', 'pointer-events-none');
+                        this.textContent = this.dataset.loadingText || 'Opening...';
+                    });
+                });
+            });
+        </script>
+    @endPushOnce
 </x-admin::layouts>
