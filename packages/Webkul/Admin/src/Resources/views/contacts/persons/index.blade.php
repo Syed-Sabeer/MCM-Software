@@ -87,8 +87,8 @@
                                 class="flex select-none items-center gap-2.5"
                                 v-for="(columnGroup, index) in {{
                                     $hideIdColumn
-                                        ? "[['person_name'], ['emails'], ['contact_numbers'], ['organization']]"
-                                        : "[['id'], ['person_name'], ['emails'], ['contact_numbers'], ['organization']]"
+                                        ? "[[], ['person_name'], ['emails'], ['contact_numbers'], ['organization'], ['actions']]"
+                                        : "[['id'], ['person_name'], ['emails'], ['contact_numbers'], ['organization'], ['actions']]"
                                 }}"
                             >
                                 <label
@@ -117,7 +117,16 @@
                                 </label>
 
                                 <p class="text-gray-600 dark:text-gray-300">
-                                    <span class="[&>*]:after:content-['_/_']">
+                                    <template v-if="columnGroup[0] === 'actions'">
+                                        <span class="font-medium">
+                                            Actions
+                                        </span>
+                                    </template>
+
+                                    <span
+                                        class="[&>*]:after:content-['_/_']"
+                                        v-else
+                                    >
                                         <template v-for="column in columnGroup">
                                             <span
                                                 class="after:content-['/'] last:after:content-['']"

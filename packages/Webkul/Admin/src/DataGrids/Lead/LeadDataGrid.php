@@ -46,8 +46,6 @@ class LeadDataGrid extends DataGrid
      */
     public function prepareQueryBuilder(): Builder
     {
-        $tablePrefix = DB::getTablePrefix();
-
         $queryBuilder = DB::table('leads')
             ->addSelect(
                 'leads.id',
@@ -58,7 +56,7 @@ class LeadDataGrid extends DataGrid
                 'leads.organization_id',
                 DB::raw('COALESCE(organizations.name, primary_person_organizations.name) as company_name'),
                 DB::raw('COALESCE(organizations.id, primary_person_organizations.id) as company_id'),
-                DB::raw("GROUP_CONCAT(DISTINCT COALESCE(NULLIF(TRIM(CONCAT_WS(' ', lead_contacts.first_name, lead_contacts.last_name)), ''), NULLIF(TRIM(lead_contacts.name), ''), CONCAT('Contact #', lead_contacts.id)) ORDER BY COALESCE(NULLIF(TRIM(CONCAT_WS(' ', lead_contacts.first_name, lead_contacts.last_name)), ''), NULLIF(TRIM(lead_contacts.name), ''), CONCAT('Contact #', lead_contacts.id)) SEPARATOR ', ') as contact_names"),
+                DB::raw("GROUP_CONCAT(DISTINCT CONCAT(lead_contacts.id, '::', COALESCE(NULLIF(TRIM(CONCAT_WS(' ', lead_contacts.first_name, lead_contacts.last_name)), ''), NULLIF(TRIM(lead_contacts.name), ''), CONCAT('Contact #', lead_contacts.id))) ORDER BY COALESCE(NULLIF(TRIM(CONCAT_WS(' ', lead_contacts.first_name, lead_contacts.last_name)), ''), NULLIF(TRIM(lead_contacts.name), ''), CONCAT('Contact #', lead_contacts.id)) SEPARATOR '||') as contact_names"),
                 DB::raw('COUNT(DISTINCT lead_contacts.id) as contacts_count'),
                 'lead_sources.name as lead_source_name',
                 'lead_types.name as lead_type_name',
@@ -70,9 +68,6 @@ class LeadDataGrid extends DataGrid
                 'persons.id as person_id',
                 'persons.name as person_name',
                 'tags.name as tag_name',
-                'lead_pipelines.rotten_days as pipeline_rotten_days',
-                'lead_pipeline_stages.code as stage_code',
-                DB::raw('CASE WHEN DATEDIFF(NOW(),'.$tablePrefix.'leads.created_at) >='.$tablePrefix.'lead_pipelines.rotten_days THEN 1 ELSE 0 END as rotten_lead'),
             )
             ->leftJoin('users', 'leads.user_id', '=', 'users.id')
             ->leftJoin('persons', 'leads.person_id', '=', 'persons.id')
@@ -86,7 +81,6 @@ class LeadDataGrid extends DataGrid
             ->leftJoin('lead_types', 'leads.lead_type_id', '=', 'lead_types.id')
             ->leftJoin('lead_pipeline_stages', 'leads.lead_pipeline_stage_id', '=', 'lead_pipeline_stages.id')
             ->leftJoin('lead_sources', 'leads.lead_source_id', '=', 'lead_sources.id')
-            ->leftJoin('lead_pipelines', 'leads.lead_pipeline_id', '=', 'lead_pipelines.id')
             ->leftJoin('lead_tags', 'leads.id', '=', 'lead_tags.lead_id')
             ->leftJoin('tags', 'tags.id', '=', 'lead_tags.tag_id')
             ->groupBy('leads.id')
@@ -94,10 +88,6 @@ class LeadDataGrid extends DataGrid
 
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $queryBuilder->whereIn('leads.user_id', $userIds);
-        }
-
-        if (! is_null(request()->input('rotten_lead.in'))) {
-            $queryBuilder->havingRaw($tablePrefix.'rotten_lead = '.request()->input('rotten_lead.in'));
         }
 
         if ($organizationId = request('organization_id')) {
@@ -144,7 +134,6 @@ class LeadDataGrid extends DataGrid
         $this->addFilter('expected_close_date', 'leads.expected_close_date');
         $this->addFilter('created_at', 'leads.created_at');
         $this->addFilter('organization_id', 'leads.organization_id');
-        $this->addFilter('rotten_lead', DB::raw('DATEDIFF(NOW(), '.$tablePrefix.'leads.created_at) >= '.$tablePrefix.'lead_pipelines.rotten_days'));
 
         return $queryBuilder;
     }
@@ -271,8 +260,8 @@ class LeadDataGrid extends DataGrid
             'sortable'   => false,
             'filterable' => true,
             'closure'    => function ($row) {
-                $contacts = collect(explode(',', (string) $row->contact_names))
-                    ->map(fn ($name) => trim($name))
+                $contacts = collect(explode('||', (string) $row->contact_names))
+                    ->map(fn ($name) => trim(preg_replace('/^\d+::/', '', $name)))
                     ->filter()
                     ->values();
 
@@ -282,9 +271,10 @@ class LeadDataGrid extends DataGrid
 
                 $first = e($contacts->first());
                 $more = max(((int) $row->contacts_count) - 1, 0);
+                $allContacts = e($contacts->implode(', '));
 
                 return $more > 0
-                    ? $first.' <span class="text-gray-500 dark:text-gray-300">+'.$more.' more</span>'
+                    ? '<span title="'.$allContacts.'">'.$first.' <span class="text-gray-500 dark:text-gray-300">'.$more.' More</span></span>'
                     : $first;
             },
         ]);
@@ -303,25 +293,6 @@ class LeadDataGrid extends DataGrid
                 })
                 ->values()
                 ->all(),
-        ]);
-
-        $this->addColumn([
-            'index'      => 'rotten_lead',
-            'label'      => trans('admin::app.leads.index.datagrid.rotten-lead'),
-            'type'       => 'string',
-            'sortable'   => true,
-            'searchable' => false,
-            'closure'    => function ($row) {
-                if (! $row->rotten_lead) {
-                    return trans('admin::app.leads.index.datagrid.no');
-                }
-
-                if (in_array($row->stage_code, ['won', 'lost'])) {
-                    return trans('admin::app.leads.index.datagrid.no');
-                }
-
-                return trans('admin::app.leads.index.datagrid.yes');
-            },
         ]);
 
         $this->addColumn([

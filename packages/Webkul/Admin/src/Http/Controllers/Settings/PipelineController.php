@@ -37,7 +37,13 @@ class PipelineController extends Controller
      */
     public function create(): View
     {
-        return view('admin::settings.pipelines.create');
+        $pipeline = request('pipeline_id')
+            ? $this->pipelineRepository->find(request('pipeline_id'))
+            : $this->pipelineRepository->getDefaultPipeline();
+
+        $pipeline?->load('stages');
+
+        return view('admin::settings.pipelines.create', compact('pipeline'));
     }
 
     /**
@@ -48,7 +54,7 @@ class PipelineController extends Controller
         $request->validated();
 
         $request->merge([
-            'is_default' => request()->has('is_default') ? 1 : 0,
+            'is_default' => $request->boolean('is_default') ? 1 : 0,
         ]);
 
         Event::dispatch('settings.pipeline.create.before');
@@ -69,6 +75,8 @@ class PipelineController extends Controller
     {
         $pipeline = $this->pipelineRepository->findOrFail($id);
 
+        $pipeline->load(['stages' => fn ($query) => $query->withCount('leads')]);
+
         return view('admin::settings.pipelines.edit', compact('pipeline'));
     }
 
@@ -79,7 +87,7 @@ class PipelineController extends Controller
     {
         $request->validated();
 
-        $isDefault = request()->has('is_default') ? 1 : 0;
+        $isDefault = $request->boolean('is_default') ? 1 : 0;
 
         if (! $isDefault) {
             $defaultCount = $this->pipelineRepository->findWhere(['is_default' => 1])->count();

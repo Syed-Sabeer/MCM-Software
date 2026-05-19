@@ -71,51 +71,8 @@
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.name.after', ['pipeline' => $pipeline]) !!}
 
-                {!! view_render_event('admin.settings.pipelines.edit.form.rotten_days.before', ['pipeline' => $pipeline]) !!}
-                
-                <!-- Pipeline Rotten Days -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.edit.rotten-days')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="rotten_days"
-                        id="rotten_days"
-                        rules="required|numeric|min_value:1"
-                        :label="trans('admin::app.settings.pipelines.edit.rotten-days')"
-                        :placeholder="trans('admin::app.settings.pipelines.edit.rotten-days')"
-                        value="{{ old('rotten_days') ?: $pipeline->rotten_days }}"
-                    />
-
-                    <x-admin::form.control-group.error control-name="rotten_days" />
-                </x-admin::form.control-group>
-
-                {!! view_render_event('admin.settings.pipelines.edit.form.rotten_days.after', ['pipeline' => $pipeline]) !!}
-
-                {!! view_render_event('admin.settings.pipelines.edit.form.is_default.before', ['pipeline' => $pipeline]) !!}
-
-                <!-- Pipeline Default Switcher -->
-                <x-admin::form.control-group class="mt-4 flex items-center gap-4">
-                    <x-admin::form.control-group.label class="mb-0">
-                        @lang('admin::app.settings.pipelines.edit.mark-as-default')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.control
-                        type="switch"
-                        class="cursor-pointer"
-                        name="is_default"
-                        id="is_default"
-                        value="1"
-                        :checked="(boolean) $pipeline->is_default"
-                        :label="trans('admin::app.settings.pipelines.edit.mark-as-default')"
-                    />
-
-                    <x-admin::form.control-group.error control-name="is_default" />
-                </x-admin::form.control-group>
-
-                {!! view_render_event('admin.settings.pipelines.edit.form.is_default.after', ['pipeline' => $pipeline]) !!}
+                <input type="hidden" name="rotten_days" value="{{ old('rotten_days') ?: $pipeline->rotten_days ?: 30 }}">
+                <input type="hidden" name="is_default" value="{{ $pipeline->is_default ? 1 : 0 }}">
             </div>
         </div>
 
@@ -200,26 +157,11 @@
 
                                         {!! view_render_event('admin.settings.pipelines.edit.form.stages.name.after', ['pipeline' => $pipeline]) !!}
 
-                                        {!! view_render_event('admin.settings.pipelines.edit.form.stages.probability.before', ['pipeline' => $pipeline]) !!}
-
-                                        <!-- Probability -->
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label class="required">
-                                                @lang('admin::app.settings.pipelines.edit.probability')
-                                            </x-admin::form.control-group.label>
-
-                                            <x-admin::form.control-group.control
-                                                type="text"
-                                                ::name="'stages[' + element.id + '][probability]'"
-                                                v-model="element['probability']"
-                                                rules="required|numeric|min_value:0|max_value:100"
-                                                ::readonly="element?.code != 'new'"
-                                                :label="trans('admin::app.settings.pipelines.create.probability')"
-                                            />
-                                            <x-admin::form.control-group.error ::name="'stages[' + element.id + '][probability]'" />
-                                        </x-admin::form.control-group>
-
-                                        {!! view_render_event('admin.settings.pipelines.edit.form.stages.probability.after', ['pipeline' => $pipeline]) !!}
+                                        <input
+                                            type="hidden"
+                                            :name="'stages[' + element.id + '][probability]'"
+                                            :value="element['probability'] ?? 0"
+                                        />
                                     </div>
                                 </div>
                                 
@@ -229,7 +171,7 @@
                                 <div
                                     class="flex cursor-pointer items-center gap-2 border-t border-gray-200 p-2 text-red-600 dark:border-gray-800" 
                                     @click="remove(element)"
-                                    v-if="isDragable(element)"
+                                    v-if="stages.length > 1"
                                 >
                                     <i class="icon-delete text-2xl"></i>
                                     
@@ -292,7 +234,7 @@
 
                 methods: {
                     addStage() {
-                        this.stages.splice((this.stages.length - 2), 0, {
+                        this.stages.push({
                             'id': 'stage_' + this.stageCount++,
                             'code': '',
                             'name': '',
@@ -302,6 +244,8 @@
 
                     remove(stage) {
                         this.$emitter.emit('open-confirm-modal', {
+                            title: 'Delete stage',
+                            message: this.deleteStageMessage(stage),
                             agree: () => {
                                 let tempStages = this.stages.filter(item => item.id !== stage.id);
 
@@ -312,6 +256,26 @@
                                 this.removeUniqueNameErrors();
                             },
                         });
+                    },
+
+                    deleteStageMessage(stage) {
+                        const leadsCount = Number(stage.leads_count || 0);
+
+                        if (! leadsCount) {
+                            return `Are you sure you want to delete "${stage.name}"?`;
+                        }
+
+                        const replacement = this.replacementStage(stage);
+                        const replacementName = replacement?.name || 'the nearest available stage';
+                        const caseLabel = leadsCount === 1 ? 'case' : 'cases';
+
+                        return `There are already ${leadsCount} ${caseLabel} in "${stage.name}". Deleting this stage will affect their position and move them to "${replacementName}".`;
+                    },
+
+                    replacementStage(stage) {
+                        const index = this.stages.findIndex(item => item.id === stage.id);
+
+                        return this.stages[index + 1] || this.stages[index - 1] || null;
                     },
 
                     slugify(name) {
@@ -375,11 +339,7 @@
                         return this.isDragable(draggedElement) && this.isDragable(relatedElement);
                     },
 
-                    isDragable (stage) {
-                        if (stage.code == 'new' || stage.code == 'won' || stage.code == 'lost') {
-                            return false;
-                        }
-
+                    isDragable () {
                         return true;
                     },
                 },

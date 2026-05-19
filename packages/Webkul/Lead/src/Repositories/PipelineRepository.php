@@ -85,9 +85,17 @@ class PipelineRepository extends Repository
             }
         }
 
+        $stages = $pipeline->stages()->get(['id', 'sort_order']);
+
         foreach ($previousStageIds as $stageId) {
+            $replacementStageId = $this->getReplacementStageId($stages, (int) $stageId, $previousStageIds->map(fn ($id) => (int) $id)->all());
+
+            if (! $replacementStageId) {
+                continue;
+            }
+
             $pipeline->leads()->where('lead_pipeline_stage_id', $stageId)->update([
-                'lead_pipeline_stage_id' => $pipeline->stages()->first()->id,
+                'lead_pipeline_stage_id' => $replacementStageId,
             ]);
 
             $this->stageRepository->delete($stageId);
@@ -110,5 +118,27 @@ class PipelineRepository extends Repository
         }
 
         return $pipeline;
+    }
+
+    /**
+     * Resolve where leads should move when a stage is removed.
+     */
+    protected function getReplacementStageId($stages, int $removedStageId, array $removedStageIds): ?int
+    {
+        $removedStage = $stages->firstWhere('id', $removedStageId);
+        $availableStages = $stages->whereNotIn('id', $removedStageIds);
+
+        if (! $removedStage) {
+            return $availableStages->first()?->id;
+        }
+
+        return $availableStages
+            ->where('sort_order', '>', $removedStage->sort_order)
+            ->sortBy('sort_order')
+            ->first()?->id
+            ?? $availableStages
+                ->where('sort_order', '<', $removedStage->sort_order)
+                ->sortByDesc('sort_order')
+                ->first()?->id;
     }
 }

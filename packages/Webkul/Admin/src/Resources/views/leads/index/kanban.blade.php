@@ -53,20 +53,6 @@
                                 @endif
                             </div>
 
-                            <!-- Stage Total Leads and Amount -->
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-medium dark:text-white">
-                                    @{{ $admin.formatPrice(stage.lead_value) }}
-                                </span>
-
-                                <!-- Progress Bar -->
-                                <div class="h-1 w-36 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
-                                    <div
-                                        class="h-1 bg-green-500"
-                                        :style="{ width: (stage.lead_value / totalStagesAmount) * 100 + '%' }"
-                                    ></div>
-                                </div>
-                            </div>
                         </div>
 
                         {!! view_render_event('admin.leads.index.kanban.content.stage.header.after') !!}
@@ -133,15 +119,18 @@
                                     <!-- Header -->
                                     <div class="flex items-start justify-between">
                                         <div class="flex items-center gap-1">
-                                            <x-admin::avatar ::name="(element.person && element.person.name) || '—'" />
+                                            <x-admin::avatar ::name="leadCompanyName(element)" />
 
                                             <div class="flex flex-col gap-0.5">
                                                 <span class="text-xs font-medium">
-                                                    @{{ (element.person && element.person.name) || '—' }}
+                                                    @{{ leadCompanyName(element) }}
                                                 </span>
 
-                                                <span class="text-[10px] leading-normal">
-                                                    @{{ element.person && element.person.organization ? element.person.organization.name : '' }}
+                                                <span
+                                                    class="text-[10px] leading-normal"
+                                                    :title="contactTooltip(element)"
+                                                >
+                                                    @{{ contactSummary(element) }}
                                                 </span>
                                             </div>
                                         </div>
@@ -254,90 +243,6 @@
                 {!! view_render_event('admin.leads.index.kanban.content.after') !!}
             </div>
 
-            <!-- Show modal for additional information while updating the leads into won or lost stage. -->
-            <x-admin::form
-                v-slot="{ meta, errors, handleSubmit }"
-                as="div"
-                ref="stageUpdateForm"
-            >
-                <form @submit="handleSubmit($event, handleFormSubmit)">
-                    <!-- Modal -->
-                    <x-admin::modal
-                        ref="stageUpdateModal"
-                        @toggle="handleCloseModal"
-                    >
-                        <!-- Header -->
-                        <x-slot:header>
-                            <h3 class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.leads.index.kanban.stages.need-more-info')
-                            </h3>
-                        </x-slot>
-
-                        <!-- Content -->
-                        <x-slot:content>
-                            <x-admin::form.control-group.control
-                                type="hidden"
-                                name="lead_pipeline_stage_id"
-                                ::value="finalized.stage.id"
-                            />
-
-                            <!-- Won Value -->
-                            <template v-if="finalized.stage.code == 'won'">
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.leads.index.kanban.stages.won-value')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.control
-                                        type="price"
-                                        name="lead_value"
-                                        ::value="finalized.lead.lead_value"
-                                    />
-                                </x-admin::form.control-group>
-                            </template>
-
-                            <!-- Lost Reason -->
-                            <template v-else>
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.leads.index.kanban.stages.lost-reason')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.control
-                                        type="textarea"
-                                        name="lost_reason"
-                                    />
-                                </x-admin::form.control-group>
-                            </template>
-
-                            <!-- Closed At -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.leads.index.kanban.stages.closed-at')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.control
-                                    type="datetime"
-                                    name="closed_at"
-                                    :label="trans('admin::app.leads.index.kanban.stages.closed-at')"
-                                />
-
-                                <x-admin::form.control-group.error control-name="closed_at"/>
-                            </x-admin::form.control-group>
-                        </x-slot>
-
-                        <!-- Footer -->
-                        <x-slot:footer>
-                            <x-admin::button
-                                class="primary-button"
-                                :title="trans('admin::app.leads.index.kanban.stages.save-btn')"
-                                ::loading="finalized.updating"
-                                ::disabled="finalized.updating"
-                            />
-                        </x-slot>
-                    </x-admin::modal>
-                </form>
-            </x-admin::form>
         </template>
     </script>
 
@@ -355,12 +260,6 @@
                         filters: {
                             columns: [],
                         }
-                    },
-
-                    finalized: {
-                        lead: null,
-                        stage: null,
-                        updating: false,
                     },
 
                     stages: @json($pipeline->stages->toArray()),
@@ -385,23 +284,6 @@
                         '#DCFCE7': '#16A34A',
                     },
                 };
-            },
-
-            computed: {
-                /**
-                 * Computes the total amount of leads across all stages.
-                 *
-                 * @return {number} The total amount of leads.
-                 */
-                totalStagesAmount() {
-                    let totalAmount = 0;
-
-                    for (let [key, stage] of Object.entries(this.stageLeads)) {
-                        totalAmount += parseFloat(stage.lead_value);
-                    }
-
-                    return totalAmount;
-                }
             },
 
             mounted () {
@@ -444,6 +326,42 @@
 
                 toggleCardActions(id) {
                     this.actionOpenId = this.actionOpenId === id ? null : id;
+                },
+
+                leadCompanyName(lead) {
+                    return lead.organization?.name
+                        || lead.person?.organization?.name
+                        || '—';
+                },
+
+                leadContacts(lead) {
+                    let contacts = Array.isArray(lead.persons) ? lead.persons : [];
+
+                    if (! contacts.length && lead.person) {
+                        contacts = [lead.person];
+                    }
+
+                    return contacts
+                        .map(contact => contact?.name)
+                        .filter(Boolean);
+                },
+
+                contactSummary(lead) {
+                    const contacts = this.leadContacts(lead);
+
+                    if (! contacts.length) {
+                        return '—';
+                    }
+
+                    const more = contacts.length - 1;
+
+                    return more > 0
+                        ? `${contacts[0]} & ${more} More`
+                        : contacts[0];
+                },
+
+                contactTooltip(lead) {
+                    return this.leadContacts(lead).join(', ');
                 },
 
                 goToLead(id) {
@@ -617,20 +535,6 @@
                         return;
                     }
 
-                    if (
-                        (stage.code === "won" || stage.code === "lost")
-                        && event.added
-                        && event.added.element
-                    ) {
-                        this.finalized.lead = event.added.element;
-
-                        this.finalized.stage = stage;
-
-                        this.toggleStageUpdateModal();
-
-                        return;
-                    }
-
                     if (event.removed) {
                         stage.lead_value = parseFloat(stage.lead_value) - parseFloat(event.removed.element.lead_value);
 
@@ -664,76 +568,6 @@
                  */
                 updateStage(url, params) {
                     return this.$axios.put(url, params);
-                },
-
-                handleFormSubmit(params) {
-                    this.finalized.updating = true;
-
-                    this.updateStage("{{ route('admin.leads.stage.update', '__LEAD_ID__') }}".replace('__LEAD_ID__', this.finalized.lead.id), {
-                        ...params,
-                        lead_pipeline_stage_id: this.finalized.stage.id,
-                    })
-                        .then(response => {
-                            this.toggleStageUpdateModal();
-
-                            this.resetFinalized();
-
-                            this.get()
-                                .then(response => {
-                                    for (let [sortOrder, data] of Object.entries(response.data)) {
-                                        this.stageLeads[sortOrder] = data;
-                                    }
-                                });
-
-                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-                        })
-                        .catch(error => {
-                            this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
-                        }).finally(() => {
-                            this.finalized.updating = false;
-                        });
-                },
-
-                /**
-                 * Resets the finalized lead and stage data.
-                 *
-                 * @returns {void}
-                 */
-                resetFinalized() {
-                    this.finalized = {
-                        lead: null,
-                        stage: null,
-                        updating: false,
-                    };
-                },
-
-                /**
-                 * Handles the close event of the modal.
-                 *
-                 * @returns {void}
-                 */
-                handleCloseModal(state) {
-                    if (state.isActive) {
-                        return;
-                    }
-
-                    this.resetFinalized();
-
-                    this.get()
-                        .then(response => {
-                            for (let [sortOrder, data] of Object.entries(response.data)) {
-                                this.stageLeads[sortOrder] = data;
-                            }
-                        });
-                },
-
-                /**
-                 * Toggles the stage update modal.
-                 *
-                 * @returns {void}
-                 */
-                toggleStageUpdateModal() {
-                    this.$refs.stageUpdateModal.toggle();
                 },
 
                 /**

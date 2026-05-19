@@ -67,51 +67,7 @@
 
                 {!! view_render_event('admin.settings.pipelines.create.form.name.after') !!}
 
-                {!! view_render_event('admin.settings.pipelines.create.form.rotten_days.before') !!}
-
-                <!-- Rotten-Days -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.pipelines.create.rotten-days')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="rotten_days"
-                        id="rotten_days"
-                        rules="required|numeric|min_value:1"
-                        :label="trans('admin::app.settings.pipelines.create.rotten-days')"
-                        :placeholder="trans('admin::app.settings.pipelines.create.rotten-days')"
-                        value="{{ old('rotten_days') ?? 30 }}"
-                    />
-
-                    <x-admin::form.control-group.error control-name="rotten_days" />
-                </x-admin::form.control-group>
-
-                {!! view_render_event('admin.settings.pipelines.create.form.rotten_days.after') !!}
-
-                {!! view_render_event('admin.settings.pipelines.create.form.is_default.before') !!}
-
-                <!-- Mark as Default -->
-                <x-admin::form.control-group class="!mb-0 flex items-center gap-4">
-                    <x-admin::form.control-group.label class="!mb-0">
-                        @lang('admin::app.settings.pipelines.create.mark-as-default')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.control
-                        type="switch"
-                        class="cursor-pointer"
-                        name="is_default"
-                        id="is_default"
-                        value="1"
-                        for="is_default"
-                        :label="trans('admin::app.settings.pipelines.create.mark-as-default')"
-                    />
-
-                    <x-admin::form.control-group.error control-name="is_default" />
-                </x-admin::form.control-group>
-
-                {!! view_render_event('admin.settings.pipelines.create.form.is_default.after') !!}
+                <input type="hidden" name="rotten_days" value="{{ old('rotten_days') ?? 30 }}">
             </div>
         </div>
 
@@ -130,6 +86,26 @@
     {!! view_render_event('admin.settings.pipelines.create.form.after') !!}
 
     @pushOnce('scripts')
+        @php
+            $initialStages = $pipeline?->stages
+                ? $pipeline->stages->values()->map(fn ($stage, $index) => [
+                    'id'          => 'stage_' . ($index + 1),
+                    'code'        => $stage->code,
+                    'name'        => $stage->name,
+                    'probability' => $stage->probability,
+                ])->all()
+                : [];
+
+            if (empty($initialStages)) {
+                $initialStages = [[
+                    'id'          => 'stage_1',
+                    'code'        => 'new',
+                    'name'        => trans('admin::app.settings.pipelines.create.new-stage'),
+                    'probability' => 100,
+                ]];
+            }
+        @endphp
+
         <script
             type="text/x-template"
             id="v-stages-component-template"
@@ -173,7 +149,7 @@
                                         <input
                                             type="hidden"
                                             id="slug"
-                                            :value="slugify(element.name)"
+                                            :value="slugify(element.code ? element.code : element.name)"
                                             :name="'stages[' + element.id + '][code]'"
                                         />
 
@@ -205,26 +181,11 @@
                                             :name="'stages[' + element.id + '][sort_order]'"
                                         />
 
-                                        {!! view_render_event('admin.settings.pipelines.create.form.stages.probability.before') !!}
-
-                                        <!-- Probabilty -->
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label class="required">
-                                                @lang('admin::app.settings.pipelines.create.probability')
-                                            </x-admin::form.control-group.label>
-
-                                            <x-admin::form.control-group.control
-                                                type="text"
-                                                ::name="'stages[' + element.id + '][probability]'"
-                                                v-model="element['probability']"
-                                                rules="required|numeric|min_value:0|max_value:100"
-                                                ::readonly="element?.code != 'new' && ! isDragable(element)"
-                                                :label="trans('admin::app.settings.pipelines.create.probability')"
-                                            />
-                                            <x-admin::form.control-group.error ::name="'stages[' + element.id + '][probability]'" />
-                                        </x-admin::form.control-group>
-
-                                        {!! view_render_event('admin.settings.pipelines.create.form.stages.probability.after') !!}
+                                        <input
+                                            type="hidden"
+                                            :name="'stages[' + element.id + '][probability]'"
+                                            :value="element['probability'] ?? 0"
+                                        />
                                     </div>
                                 </div>
                                 
@@ -233,7 +194,7 @@
                                 <div
                                     class="flex cursor-pointer items-center gap-2 border-t border-gray-200 p-2 text-red-600 dark:border-gray-800" 
                                     @click="removeStage(element)" 
-                                    v-if="isDragable(element)"
+                                    v-if="stages.length > 1"
                                 >
                                     <i class="icon-delete text-2xl"></i>
                                     
@@ -285,29 +246,9 @@
 
                 data() {
                     return {
-                        stages: [{
-                            'id': 'stage_1',
-                            'code': 'new', 
-                            'name': "@lang('admin::app.settings.pipelines.create.new-stage')",
-                            'probability': 100
-                        }, {
-                            'id': 'stage_2',
-                            'code': '',
-                            'name': '',
-                            'probability': 100
-                        }, {
-                            'id': 'stage_99',
-                            'code': 'won',
-                            'name': "@lang('admin::app.settings.pipelines.create.won-stage')",
-                            'probability': 100
-                        }, {
-                            'id': 'stage_100',
-                            'code': 'lost',
-                            'name': "@lang('admin::app.settings.pipelines.create.lost-stage')",
-                            'probability': 0
-                        }],
+                        stages: @json($initialStages),
 
-                        stageCount: 3,
+                        stageCount: {{ count($initialStages) + 1 }},
 
                         isAnyDraggable: true,
                     }
@@ -328,7 +269,7 @@
 
                 methods: {
                     addStage () {
-                        this.stages.splice((this.stages.length - 2), 0, {
+                        this.stages.push({
                             'id': 'stage_' + this.stageCount++,
                             'code': '',
                             'name': '',
@@ -352,11 +293,7 @@
                         });
                     },
 
-                    isDragable (stage) {
-                        if (stage.code == 'new' || stage.code == 'won' || stage.code == 'lost') {
-                            return false;
-                        }
-
+                    isDragable () {
                         return true;
                     },
 
