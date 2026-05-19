@@ -66,9 +66,9 @@ return [
     //     'sort'       => 2,
     //     'icon-class' => '',
     // ],
-     [
+      [
         'key'        => 'erp_operations.vendor_quotes',
-        'name'       => 'Vendor Quotes / RFQs',
+          'name'       => 'Vendor Quotes',
         'route'      => 'admin.vendor_quotes.index',
         'sort'       => 3,
         'icon-class' => '',
@@ -80,7 +80,7 @@ return [
         'icon-class' => '',
     ], [
         'key'        => 'erp_operations.goods_receipts',
-        'name'       => 'Goods Receipts / Payables',
+        'name'       => 'Goods Receipts',
         'route'      => 'admin.goods_receipts.index',
         'sort'       => 5,
         'icon-class' => '',
