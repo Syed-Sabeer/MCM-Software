@@ -50,7 +50,7 @@ class PipelineController extends Controller
             ? $this->pipelineRepository->find(request('pipeline_id'))
             : $this->pipelineRepository->getDefaultPipeline();
 
-        $pipeline?->load('stages');
+        $pipeline?->load(['stages' => fn ($query) => $query->withCount('leads')]);
 
         return view('admin::settings.pipelines.create', compact('pipeline'));
     }
