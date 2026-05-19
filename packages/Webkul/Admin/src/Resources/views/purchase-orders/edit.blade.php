@@ -35,7 +35,7 @@
                     <div class="text-xl font-bold dark:text-white">Edit Vendor Purchase Order</div>
                     <div class="text-sm text-gray-500">{{ $purchaseOrder->po_number }}</div>
                 </div>
-                <button class="primary-button" data-loading-submit data-loading-text="Updating...">Update Purchase Order</button>
+                <button type="submit" class="primary-button" data-loading-submit data-loading-text="Updating...">Update Purchase Order</button>
             </div>
 
             <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
