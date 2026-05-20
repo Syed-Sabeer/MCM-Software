@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.3
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Apr 15, 2026 at 02:35 PM
--- Server version: 8.4.3
--- PHP Version: 8.2.28
+-- Generation Time: May 20, 2026 at 01:03 AM
+-- Server version: 10.5.29-MariaDB-cll-lve
+-- PHP Version: 8.4.21
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `laravel-crm`
+-- Database: `deveonin_mcm_software`
 --
 
 -- --------------------------------------------------------
@@ -28,21 +28,21 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `activities` (
-  `id` int UNSIGNED NOT NULL,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `additional` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `id` int(10) UNSIGNED NOT NULL,
+  `title` varchar(191) DEFAULT NULL,
+  `type` varchar(191) NOT NULL,
+  `comment` text DEFAULT NULL,
+  `additional` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `schedule_from` datetime DEFAULT NULL,
   `schedule_to` datetime DEFAULT NULL,
-  `is_done` tinyint(1) NOT NULL DEFAULT '0',
-  `user_id` int UNSIGNED DEFAULT NULL,
-  `entity_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `entity_id` bigint UNSIGNED DEFAULT NULL,
+  `is_done` tinyint(1) NOT NULL DEFAULT 0,
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
+  `entity_type` varchar(191) DEFAULT NULL,
+  `entity_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `location` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `location` varchar(191) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `activities`
@@ -213,23 +213,154 @@ INSERT INTO `activities` (`id`, `title`, `type`, `comment`, `additional`, `sched
 (287, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 18:59:02', '2026-04-14 18:59:02', NULL),
 (288, 'Updated Organization', 'system', NULL, '{\"attribute\":\"Organization\",\"new\":{\"value\":3,\"label\":\"Deveon\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 18:59:02', '2026-04-14 18:59:02', NULL),
 (289, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"sadsad\",\"label\":\"sadsad\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 20:42:58', '2026-04-14 20:42:58', NULL),
-(314, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 20:55:12', '2026-04-14 20:55:12', NULL),
-(315, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Cotton Tote Bag\",\"label\":\"Cotton Tote Bag\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 20:55:12', '2026-04-14 20:55:12', NULL),
-(316, 'Updated SKU', 'system', NULL, '{\"attribute\":\"SKU\",\"new\":{\"value\":\"Test\",\"label\":\"Test\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 20:55:12', '2026-04-14 20:55:12', NULL),
-(317, 'Updated Price', 'system', NULL, '{\"attribute\":\"Price\",\"new\":{\"value\":4.72,\"label\":\"$4.72\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 20:55:12', '2026-04-14 20:55:12', NULL),
-(318, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 20:59:56', '2026-04-14 20:59:56', NULL),
-(319, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Cotton Tote Bag\",\"label\":\"Cotton Tote Bag\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 20:59:56', '2026-04-14 20:59:56', NULL),
-(320, 'Updated SKU', 'system', NULL, '{\"attribute\":\"SKU\",\"new\":{\"value\":\"dsds\",\"label\":\"dsds\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 20:59:56', '2026-04-14 20:59:56', NULL),
-(321, 'Updated Price', 'system', NULL, '{\"attribute\":\"Price\",\"new\":{\"value\":4.72,\"label\":\"$4.72\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 20:59:56', '2026-04-14 20:59:56', NULL),
 (322, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"sdsdsd\",\"label\":\"sdsdsd\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 21:21:42', '2026-04-14 21:21:42', NULL),
 (323, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":[{\"city\":\"sad\",\"country\":\"sad\",\"postcode\":\"sad\",\"state\":\"sad\",\"street\":\"sadsa\",\"type\":\"billing\"},{\"city\":\"sad\",\"country\":\"sad\",\"postcode\":\"sad\",\"state\":\"sad\",\"street\":\"sadsa\",\"type\":\"shipping\"}],\"label\":\"<br>  <br><br><br>\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 21:21:42', '2026-04-14 21:21:42', NULL),
-(324, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":[{\"city\":\"Ottawa\",\"country\":\"Canada\",\"postcode\":\"K1Z 7T1\",\"state\":\"Ontario\",\"street\":\"Suite 391 - 1505 Laperriere Avenue\",\"type\":\"billing\"},{\"city\":\"Ottawa\",\"country\":\"Canada\",\"postcode\":\"K1Z 7T1\",\"state\":\"Ontario\",\"street\":\"Suite 391 - 1505 Laperriere Avenue\",\"type\":\"shipping\"}],\"label\":\"<br>  <br><br><br>\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-15 10:49:43', '2026-04-15 10:49:43', NULL),
-(325, 'Updated Industry', 'system', NULL, '{\"attribute\":\"Industry\",\"new\":{\"value\":\"\",\"label\":null},\"old\":{\"value\":0,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-15 10:49:43', '2026-04-15 10:49:43', NULL),
-(326, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":[{\"city\":\"Ottawa\",\"country\":\"Canada\",\"postcode\":\"K1Z 7T1\",\"state\":\"Ontario\",\"street\":\"Suite 391 - 1505 Laperriere Avenue\",\"type\":\"billing\"},{\"city\":\"Ottawa\",\"country\":\"Canada\",\"postcode\":\"K1Z 7T1\",\"state\":\"Ontario\",\"street\":\"Suite 391 - 1505 Laperriere Avenue\",\"type\":\"shipping\"},{\"city\":\"Karachi\",\"country\":\"Pakistan\",\"postcode\":\"75400\",\"state\":\"Sindh\",\"street\":\"71A Street 3, Block A, (SMCHS)\",\"type\":\"other\"}],\"label\":\"<br>  <br><br><br>\"},\"old\":{\"value\":[{\"city\":\"Ottawa\",\"country\":\"Canada\",\"postcode\":\"K1Z 7T1\",\"state\":\"Ontario\",\"street\":\"Suite 391 - 1505 Laperriere Avenue\",\"type\":\"billing\"},{\"city\":\"Ottawa\",\"country\":\"Canada\",\"postcode\":\"K1Z 7T1\",\"state\":\"Ontario\",\"street\":\"Suite 391 - 1505 Laperriere Avenue\",\"type\":\"shipping\"}],\"label\":\"<br>  <br><br><br>\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-15 10:50:39', '2026-04-15 10:50:39', NULL),
-(327, 'Updated Industry', 'system', NULL, '{\"attribute\":\"Industry\",\"new\":{\"value\":\"\",\"label\":null},\"old\":{\"value\":0,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-15 10:50:39', '2026-04-15 10:50:39', NULL),
-(328, 'Updated weight', 'system', NULL, '{\"attribute\":\"weight\",\"new\":{\"value\":23,\"label\":23},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-15 11:13:08', '2026-04-15 11:13:08', NULL),
-(329, 'Updated weight_unit', 'system', NULL, '{\"attribute\":\"weight_unit\",\"new\":{\"value\":\"gsm\",\"label\":\"gsm\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-15 11:13:08', '2026-04-15 11:13:08', NULL),
-(330, 'Updated weight', 'system', NULL, '{\"attribute\":\"weight\",\"new\":{\"value\":25,\"label\":25},\"old\":{\"value\":23,\"label\":23}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-15 11:13:20', '2026-04-15 11:13:20', NULL);
+(324, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"sdsd\",\"label\":\"sdsd\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 21:50:54', '2026-04-14 21:50:54', NULL),
+(325, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":[{\"city\":\"sd\",\"country\":\"sd\",\"postcode\":\"sd\",\"state\":\"sd\",\"street\":\"sd\",\"type\":\"billing\"},{\"city\":\"sd\",\"country\":\"sd\",\"postcode\":\"sd\",\"state\":\"sd\",\"street\":\"sd\",\"type\":\"shipping\"},{\"city\":\"sd\",\"country\":\"dsf\",\"postcode\":\"dsfdsf\",\"state\":\"dsfdsfds\",\"street\":\"sd\",\"type\":\"other\"}],\"label\":\"<br>  <br><br><br>\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-14 21:50:54', '2026-04-14 21:50:54', NULL),
+(326, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"abc\",\"label\":\"abc\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:54:08', '2026-04-16 18:54:08', NULL),
+(327, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Ashton Pitts\",\"label\":\"Ashton Pitts\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:57:24', '2026-04-16 18:57:24', NULL),
+(328, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":[{\"city\":\"Ratione et deserunt\",\"country\":\"Rerum qui commodo ra\",\"postcode\":\"Consequuntur in aut\",\"state\":\"Laboriosam perspici\",\"street\":\"Excepteur porro simi\",\"type\":\"billing\"},{\"city\":\"In odit ut quisquam\",\"country\":\"Aut atque cillum con\",\"postcode\":\"Adipisci omnis cupid\",\"state\":\"Elit illum consequ\",\"street\":\"Est consequat Dolor\",\"type\":\"shipping\"},{\"city\":\"Enim nesciunt quo d\",\"country\":\"Vel qui sunt laboris\",\"postcode\":\"Reprehenderit aut n\",\"state\":\"Aliquam modi saepe c\",\"street\":\"Eius sit eveniet s\",\"type\":\"shipping\"},{\"city\":\"Inventore nostrud di\",\"country\":\"Eius eaque alias ad\",\"postcode\":\"Et eum minima quas d\",\"state\":\"Error esse quis sed\",\"street\":\"Totam natus consequa\",\"type\":\"shipping\"}],\"label\":\"<br>  <br><br><br>\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:57:25', '2026-04-16 18:57:25', NULL),
+(329, 'Updated Industry', 'system', NULL, '{\"attribute\":\"Industry\",\"new\":{\"value\":\"home_apparel\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:57:25', '2026-04-16 18:57:25', NULL),
+(330, 'Updated Employees', 'system', NULL, '{\"attribute\":\"Employees\",\"new\":{\"value\":46,\"label\":46},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:57:25', '2026-04-16 18:57:25', NULL),
+(331, 'Updated Annual Revenue', 'system', NULL, '{\"attribute\":\"Annual Revenue\",\"new\":{\"value\":30,\"label\":\"$30.00\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:57:25', '2026-04-16 18:57:25', NULL),
+(332, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"dsfsd\",\"label\":\"dsfsd\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:57:46', '2026-04-16 18:57:46', NULL),
+(333, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:57:46', '2026-04-16 18:57:46', NULL),
+(334, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"sfdsfdsf\",\"label\":\"sfdsfdsf\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:57:56', '2026-04-16 18:57:56', NULL),
+(335, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:57:56', '2026-04-16 18:57:56', NULL),
+(336, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"XYZ\",\"label\":\"XYZ\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:58:12', '2026-04-16 18:58:12', NULL),
+(337, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-16 18:58:12', '2026-04-16 18:58:12', NULL),
+(345, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Company 2\",\"label\":\"Company 2\"},\"old\":{\"value\":\"sadsad\",\"label\":\"sadsad\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 09:41:33', '2026-04-18 09:41:33', NULL),
+(346, 'Updated Employees', 'system', NULL, '{\"attribute\":\"Employees\",\"new\":{\"value\":\"0\",\"label\":\"0\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 09:41:33', '2026-04-18 09:41:33', NULL),
+(347, 'Updated Annual Revenue', 'system', NULL, '{\"attribute\":\"Annual Revenue\",\"new\":{\"value\":\"0.00\",\"label\":\"$0.00\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 09:41:33', '2026-04-18 09:41:33', NULL),
+(348, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Company 5\",\"label\":\"Company 5\"},\"old\":{\"value\":\"sdsd\",\"label\":\"sdsd\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 09:41:56', '2026-04-18 09:41:56', NULL),
+(349, 'Updated Industry', 'system', NULL, '{\"attribute\":\"Industry\",\"new\":{\"value\":\"\",\"label\":null},\"old\":{\"value\":0,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 09:41:56', '2026-04-18 09:41:56', NULL),
+(350, 'Updated Employees', 'system', NULL, '{\"attribute\":\"Employees\",\"new\":{\"value\":\"0\",\"label\":\"0\"},\"old\":{\"value\":\"\",\"label\":\"\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 09:41:56', '2026-04-18 09:41:56', NULL),
+(351, 'Updated Annual Revenue', 'system', NULL, '{\"attribute\":\"Annual Revenue\",\"new\":{\"value\":\"0.00\",\"label\":\"$0.00\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 09:41:56', '2026-04-18 09:41:56', NULL),
+(352, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Metro Cotton Mill (PVT) LTD\",\"label\":\"Metro Cotton Mill (PVT) LTD\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 11:40:15', '2026-04-18 11:40:15', NULL),
+(353, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 11:40:16', '2026-04-18 11:40:16', NULL),
+(354, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Ian Ford\",\"label\":\"Ian Ford\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 11:40:16', '2026-04-18 11:40:16', NULL),
+(355, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":2,\"label\":\"Ian Ford\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 11:40:16', '2026-04-18 11:40:16', NULL),
+(356, 'Updated Organization', 'system', NULL, '{\"attribute\":\"Organization\",\"new\":{\"value\":13,\"label\":\"Metro Cotton Mill (PVT) LTD\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 11:40:16', '2026-04-18 11:40:16', NULL),
+(357, 'test', 'call', 'test', NULL, NULL, NULL, 0, 1, 'organizations', 3, '2026-04-18 13:22:28', '2026-04-18 13:22:28', NULL),
+(359, 'df', 'file', NULL, NULL, NULL, NULL, 0, 1, 'organizations', 3, '2026-04-18 13:32:28', '2026-04-18 13:32:28', NULL),
+(365, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 21:22:50', '2026-04-18 21:22:50', NULL),
+(366, 'Updated Subject', 'system', NULL, '{\"attribute\":\"Subject\",\"new\":{\"value\":\"tesssssssss\",\"label\":\"tesssssssss\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 21:22:50', '2026-04-18 21:22:50', NULL),
+(367, 'Updated Case Origin', 'system', NULL, '{\"attribute\":\"Case Origin\",\"new\":{\"value\":2,\"label\":\"Web\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 21:22:50', '2026-04-18 21:22:50', NULL),
+(368, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 21:22:50', '2026-04-18 21:22:50', NULL),
+(369, 'Updated Pipeline', 'system', NULL, '{\"attribute\":\"Pipeline\",\"new\":{\"value\":1,\"label\":\"Default Pipeline\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 21:22:50', '2026-04-18 21:22:50', NULL),
+(370, 'Updated Stage', 'system', NULL, '{\"attribute\":\"Stage\",\"new\":{\"value\":3,\"label\":\"Prospect\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 21:22:50', '2026-04-18 21:22:50', NULL),
+(371, 'Updated Priority', 'system', NULL, '{\"attribute\":\"Priority\",\"new\":{\"value\":\"medium\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-18 21:22:50', '2026-04-18 21:22:50', NULL),
+(381, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 22:59:32', '2026-04-25 22:59:32', NULL),
+(382, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Muhammad Asad Ullah\",\"label\":\"Muhammad Asad Ullah\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 22:59:32', '2026-04-25 22:59:32', NULL),
+(383, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":3,\"label\":\"Muhammad Asad Ullah\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 22:59:32', '2026-04-25 22:59:32', NULL),
+(384, 'Updated Organization', 'system', NULL, '{\"attribute\":\"Organization\",\"new\":{\"value\":13,\"label\":\"Metro Cotton Mill (PVT) LTD\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 22:59:32', '2026-04-25 22:59:32', NULL),
+(385, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Asad Bashir Customer\",\"label\":\"Asad Bashir Customer\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 23:12:41', '2026-04-25 23:12:41', NULL),
+(386, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":[{\"city\":\"Lahore\",\"country\":\"Pakistan\",\"postcode\":\"54000\",\"state\":\"Ounjab\",\"street\":\"Pars Ram 34KM Ferozepur Rd, Opposite Unique College\",\"type\":\"billing\"},{\"city\":\"Lahore\",\"country\":\"Pakistan\",\"postcode\":\"54000\",\"state\":\"Ounjab\",\"street\":\"Pars Ram 34KM Ferozepur Rd, Opposite Unique College\",\"type\":\"shipping\"}],\"label\":\"<br>  <br><br><br>\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 23:12:41', '2026-04-25 23:12:41', NULL),
+(387, 'Updated Industry', 'system', NULL, '{\"attribute\":\"Industry\",\"new\":{\"value\":\"home_apparel\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 23:12:41', '2026-04-25 23:12:41', NULL),
+(388, 'Updated Employees', 'system', NULL, '{\"attribute\":\"Employees\",\"new\":{\"value\":50,\"label\":50},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 23:12:41', '2026-04-25 23:12:41', NULL),
+(389, 'Need to give Box info of TM405 to Mehboob sb', 'task', NULL, NULL, '2026-04-27 00:00:00', '2026-04-27 00:00:00', 0, 1, 'organizations', 14, '2026-04-25 23:26:54', '2026-04-25 23:26:54', NULL),
+(390, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 23:31:17', '2026-04-25 23:31:17', NULL),
+(391, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Mehboob Ali\",\"label\":\"Mehboob Ali\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 23:31:17', '2026-04-25 23:31:17', NULL),
+(392, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 23:31:17', '2026-04-25 23:31:17', NULL),
+(393, 'Updated type', 'system', NULL, '{\"attribute\":\"type\",\"new\":{\"value\":\"vendor\",\"label\":\"vendor\"},\"old\":{\"value\":\"customer\",\"label\":\"customer\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 23:35:16', '2026-04-25 23:35:16', NULL),
+(394, 'Updated birth_date', 'system', NULL, '{\"attribute\":\"birth_date\",\"new\":{\"value\":\"1970-11-01 00:00:00\",\"label\":\"1970-11-01 00:00:00\"},\"old\":{\"value\":\"-000001-11-29T18:06:32.000000Z\",\"label\":\"Tue Nov 30, -0001 00:00 AM\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 23:35:16', '2026-04-25 23:35:16', NULL),
+(395, 'Updated email', 'system', NULL, '{\"attribute\":\"email\",\"new\":{\"value\":\"production@metrocottonmill.com\",\"label\":\"production@metrocottonmill.com\"},\"old\":{\"value\":\"asadullah.mtc01@gmail.com\",\"label\":\"asadullah.mtc01@gmail.com\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-04-25 23:35:17', '2026-04-25 23:35:17', NULL),
+(397, 'Updated cover_image', 'system', NULL, '{\"attribute\":\"cover_image\",\"new\":{\"value\":\"product-images\\/F2U01SL5Goyy7162JmB3wjKc15rQyUMcySzF1lKS.jpg\",\"label\":\"product-images\\/F2U01SL5Goyy7162JmB3wjKc15rQyUMcySzF1lKS.jpg\"},\"old\":{\"value\":\"product-images\\/Gt8rXILv7TUouhxluLD2waYPDC9FxQYtVfHpff6j.jpg\",\"label\":\"product-images\\/Gt8rXILv7TUouhxluLD2waYPDC9FxQYtVfHpff6j.jpg\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 08:37:06', '2026-05-16 08:37:06', NULL),
+(398, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Test Company Mike\",\"label\":\"Test Company Mike\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 09:48:09', '2026-05-16 09:48:09', NULL),
+(399, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 09:48:09', '2026-05-16 09:48:09', NULL),
+(400, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 09:48:41', '2026-05-16 09:48:41', NULL),
+(401, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"John Myers\",\"label\":\"John Myers\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 09:48:41', '2026-05-16 09:48:41', NULL),
+(402, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 09:48:41', '2026-05-16 09:48:41', NULL),
+(403, 'Updated Organization', 'system', NULL, '{\"attribute\":\"Organization\",\"new\":{\"value\":15,\"label\":\"Test Company Mike\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 09:48:41', '2026-05-16 09:48:41', NULL),
+(404, 'Updated weight', 'system', NULL, '{\"attribute\":\"weight\",\"new\":{\"value\":15,\"label\":15},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 09:52:05', '2026-05-16 09:52:05', NULL),
+(405, 'Updated weight_unit', 'system', NULL, '{\"attribute\":\"weight_unit\",\"new\":{\"value\":\"gsm\",\"label\":\"gsm\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 09:52:05', '2026-05-16 09:52:05', NULL),
+(406, 'Updated customer_organization_id', 'system', NULL, '{\"attribute\":\"customer_organization_id\",\"new\":{\"value\":15,\"label\":15},\"old\":{\"value\":3,\"label\":3}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 09:52:36', '2026-05-16 09:52:36', NULL),
+(407, 'Updated weight', 'system', NULL, '{\"attribute\":\"weight\",\"new\":{\"value\":155,\"label\":155},\"old\":{\"value\":15,\"label\":15}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 09:52:36', '2026-05-16 09:52:36', NULL),
+(408, 'Need to Call them.', 'task', NULL, NULL, '2026-05-18 00:00:00', '2026-05-18 00:00:00', 0, 1, 'organizations', 15, '2026-05-16 10:22:57', '2026-05-16 10:22:57', NULL),
+(409, 'Meeting call customer', 'meeting', 'Call customer to follow up', NULL, '2026-05-18 10:00:00', '2026-05-18 11:26:00', 0, 1, 'organizations', 15, '2026-05-16 10:56:33', '2026-05-16 10:56:33', NULL),
+(410, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Barrel Makers Inc.\",\"label\":\"Barrel Makers Inc.\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:02:30', '2026-05-16 11:02:30', NULL);
+INSERT INTO `activities` (`id`, `title`, `type`, `comment`, `additional`, `schedule_from`, `schedule_to`, `is_done`, `user_id`, `entity_type`, `entity_id`, `created_at`, `updated_at`, `location`) VALUES
+(411, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":[{\"city\":\"Buffalo Grove\",\"country\":\"USA\",\"postcode\":\"60089\",\"state\":\"IL\",\"street\":\"1435 Busch Pkwy\",\"type\":\"billing\"},{\"city\":\"Buffalo Grove\",\"country\":\"USA\",\"postcode\":\"60089\",\"state\":\"IL\",\"street\":\"1435 Busch Pkwy\",\"type\":\"shipping\"}],\"label\":\"<br>  <br><br><br>\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:02:30', '2026-05-16 11:02:30', NULL),
+(412, 'Updated Industry', 'system', NULL, '{\"attribute\":\"Industry\",\"new\":{\"value\":\"home_apparel\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:02:30', '2026-05-16 11:02:30', NULL),
+(413, 'Updated Employees', 'system', NULL, '{\"attribute\":\"Employees\",\"new\":{\"value\":30,\"label\":30},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:02:30', '2026-05-16 11:02:30', NULL),
+(414, 'Updated Industry', 'system', NULL, '{\"attribute\":\"Industry\",\"new\":{\"value\":\"\",\"label\":null},\"old\":{\"value\":\"0\",\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:02:38', '2026-05-16 11:02:38', NULL),
+(415, 'Updated Annual Revenue', 'system', NULL, '{\"attribute\":\"Annual Revenue\",\"new\":{\"value\":\"0.00\",\"label\":\"$0.00\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:02:38', '2026-05-16 11:02:38', NULL),
+(416, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:03:27', '2026-05-16 11:03:27', NULL),
+(417, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Justin Moore\",\"label\":\"Justin Moore\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:03:27', '2026-05-16 11:03:27', NULL),
+(418, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:03:27', '2026-05-16 11:03:27', NULL),
+(419, 'Updated Organization', 'system', NULL, '{\"attribute\":\"Organization\",\"new\":{\"value\":16,\"label\":\"Barrel Makers Inc.\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:03:27', '2026-05-16 11:03:27', NULL),
+(420, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:05:28', '2026-05-16 11:05:28', NULL),
+(421, 'Updated Subject', 'system', NULL, '{\"attribute\":\"Subject\",\"new\":{\"value\":\"Fabric Complain\",\"label\":\"Fabric Complain\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:05:28', '2026-05-16 11:05:28', NULL),
+(422, 'Updated Description', 'system', NULL, '{\"attribute\":\"Description\",\"new\":{\"value\":\"Customer complained \\r\\n\\r\\nHi Zee,\\r\\n\\r\\nWe just had a customer reject 400 bags.  He mentioned that there are bags that are too rough to print on or adhere to the platens and that the inventory is a mix of different fabrics. We are having our fulfillment sort through to throw away the bad ones so there\'s not any future issues.\\r\\n\\r\\nInfo from customer that im trying to understand:\\r\\n\\r\\n\\\" it looks like the Good ones are packed at 75pcs per box, while the bad ones have 80. The bad ones also have the box wrapped in plastic, and have the word \\\"BALCK\\\" on the box! \\r\\nthe box wrapped in plastic is a box of bad ones. looks like all the bad ones are 2409762 written on the box anything from that batch does not have the pink tag, and the material is rougher.\\\"\\r\\n\\r\\nThese are the ones that are bad and unusable: https:\\/\\/prnt.sc\\/n4W9EKxqYP5r \\r\\n(I think this was an early order because i remember telling you they all had the wrong dimensions too and we\'ve been trying to just give them away, obviously a big money loss, but i didn\'t know the fabric was different.) Can you confirm why these are different and if they are old or new and if the container coming are way uses this same fabric? \\r\\n\\r\\nThese are apparently the good ones: https:\\/\\/prnt.sc\\/a1e2XHBTBjGJ \\r\\nTrying to understand if these are \\\"Newer\\\" and if everything coming are way is idential to this. \\r\\n\\r\\nThanks,\",\"label\":\"Customer complained \\r\\n\\r\\nHi Zee,\\r\\n\\r\\nWe just had a customer reject 400 bags.  He mentioned that there are bags that are too rough to print on or adhere to the platens and that the inventory is a mix of different fabrics. We are having our fulfillment sort through to throw away the bad ones so there\'s not any future issues.\\r\\n\\r\\nInfo from customer that im trying to understand:\\r\\n\\r\\n\\\" it looks like the Good ones are packed at 75pcs per box, while the bad ones have 80. The bad ones also have the box wrapped in plastic, and have the word \\\"BALCK\\\" on the box! \\r\\nthe box wrapped in plastic is a box of bad ones. looks like all the bad ones are 2409762 written on the box anything from that batch does not have the pink tag, and the material is rougher.\\\"\\r\\n\\r\\nThese are the ones that are bad and unusable: https:\\/\\/prnt.sc\\/n4W9EKxqYP5r \\r\\n(I think this was an early order because i remember telling you they all had the wrong dimensions too and we\'ve been trying to just give them away, obviously a big money loss, but i didn\'t know the fabric was different.) Can you confirm why these are different and if they are old or new and if the container coming are way uses this same fabric? \\r\\n\\r\\nThese are apparently the good ones: https:\\/\\/prnt.sc\\/a1e2XHBTBjGJ \\r\\nTrying to understand if these are \\\"Newer\\\" and if everything coming are way is idential to this. \\r\\n\\r\\nThanks,\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:05:28', '2026-05-16 11:05:28', NULL),
+(423, 'Updated Case Origin', 'system', NULL, '{\"attribute\":\"Case Origin\",\"new\":{\"value\":1,\"label\":\"Email\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:05:28', '2026-05-16 11:05:28', NULL),
+(424, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:05:28', '2026-05-16 11:05:28', NULL),
+(425, 'Updated Pipeline', 'system', NULL, '{\"attribute\":\"Pipeline\",\"new\":{\"value\":1,\"label\":\"Default Pipeline\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:05:28', '2026-05-16 11:05:28', NULL),
+(426, 'Updated Stage', 'system', NULL, '{\"attribute\":\"Stage\",\"new\":{\"value\":1,\"label\":\"New\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:05:28', '2026-05-16 11:05:28', NULL),
+(427, 'Updated Priority', 'system', NULL, '{\"attribute\":\"Priority\",\"new\":{\"value\":\"high\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:05:28', '2026-05-16 11:05:28', NULL),
+(428, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:35:06', '2026-05-16 11:35:06', NULL),
+(429, 'Updated Subject', 'system', NULL, '{\"attribute\":\"Subject\",\"new\":{\"value\":\"issue.. com[lain.. samples\",\"label\":\"issue.. com[lain.. samples\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:35:06', '2026-05-16 11:35:06', NULL),
+(430, 'Updated Description', 'system', NULL, '{\"attribute\":\"Description\",\"new\":{\"value\":\"sapmles needed faster.\",\"label\":\"sapmles needed faster.\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:35:06', '2026-05-16 11:35:06', NULL),
+(431, 'Updated Case Origin', 'system', NULL, '{\"attribute\":\"Case Origin\",\"new\":{\"value\":1,\"label\":\"Email\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:35:06', '2026-05-16 11:35:06', NULL),
+(432, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:35:06', '2026-05-16 11:35:06', NULL),
+(433, 'Updated Pipeline', 'system', NULL, '{\"attribute\":\"Pipeline\",\"new\":{\"value\":1,\"label\":\"Default Pipeline\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:35:06', '2026-05-16 11:35:06', NULL),
+(434, 'Updated Stage', 'system', NULL, '{\"attribute\":\"Stage\",\"new\":{\"value\":1,\"label\":\"New\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:35:06', '2026-05-16 11:35:06', NULL),
+(435, 'Updated Priority', 'system', NULL, '{\"attribute\":\"Priority\",\"new\":{\"value\":\"high\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-16 11:35:06', '2026-05-16 11:35:06', NULL),
+(436, 'This is a test Task', 'task', NULL, NULL, '2026-05-18 00:00:00', '2026-05-18 00:00:00', 0, 1, 'organizations', 16, '2026-05-16 11:36:04', '2026-05-19 23:58:17', NULL),
+(437, 'bag pic.', 'file', 'pic.', NULL, NULL, NULL, 0, 1, 'persons', 17, '2026-05-16 11:37:28', '2026-05-16 11:37:28', NULL),
+(450, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":[{\"city\":\"Ottawa\",\"country\":\"Canada\",\"postcode\":\"K1Z 7T1\",\"state\":\"Ontario\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"type\":\"billing\"},{\"city\":\"Ottawa\",\"country\":\"Canada\",\"postcode\":\"K1Z 7T1\",\"state\":\"Ontario\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"type\":\"shipping\"},{\"city\":\"TEst\",\"country\":\"Test\",\"postcode\":\"Test\",\"state\":\"Test\",\"street\":\"Test\",\"type\":\"other\"}],\"label\":\"<br>  <br><br><br>\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-17 01:38:28', '2026-05-17 01:38:28', NULL),
+(451, 'Updated Industry', 'system', NULL, '{\"attribute\":\"Industry\",\"new\":{\"value\":\"\",\"label\":null},\"old\":{\"value\":\"0\",\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-17 01:38:28', '2026-05-17 01:38:28', NULL),
+(452, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-05-18 03:25:10', '2026-05-18 03:25:10', NULL),
+(453, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Street Bundle\",\"label\":\"Street Bundle\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-18 03:25:10', '2026-05-18 03:25:10', NULL),
+(454, 'Updated SKU', 'system', NULL, '{\"attribute\":\"SKU\",\"new\":{\"value\":\"ST00\",\"label\":\"ST00\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-18 03:25:10', '2026-05-18 03:25:10', NULL),
+(455, 'Updated Price', 'system', NULL, '{\"attribute\":\"Price\",\"new\":{\"value\":0.99,\"label\":\"$0.99\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-18 03:25:10', '2026-05-18 03:25:10', NULL),
+(456, 'Updated customer_organization_id', 'system', NULL, '{\"attribute\":\"customer_organization_id\",\"new\":{\"value\":3,\"label\":3},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-18 03:31:37', '2026-05-18 03:31:37', NULL),
+(457, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 15:00:23', '2026-05-19 15:00:23', NULL),
+(458, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Street Bundle abc\",\"label\":\"Street Bundle abc\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 15:00:23', '2026-05-19 15:00:23', NULL),
+(459, 'Updated SKU', 'system', NULL, '{\"attribute\":\"SKU\",\"new\":{\"value\":\"abc\",\"label\":\"abc\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 15:00:23', '2026-05-19 15:00:23', NULL),
+(460, 'Updated Price', 'system', NULL, '{\"attribute\":\"Price\",\"new\":{\"value\":0.99,\"label\":\"$0.99\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 15:00:23', '2026-05-19 15:00:23', NULL),
+(461, '', 'file', '', NULL, NULL, NULL, 0, 1, 'persons', 12, '2026-05-19 15:01:13', '2026-05-19 15:01:13', NULL),
+(462, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 15:14:01', '2026-05-19 15:14:01', NULL),
+(463, 'Updated Subject', 'system', NULL, '{\"attribute\":\"Subject\",\"new\":{\"value\":\"Check Test\",\"label\":\"Check Test\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 15:14:01', '2026-05-19 15:14:01', NULL),
+(464, 'Updated Description', 'system', NULL, '{\"attribute\":\"Description\",\"new\":{\"value\":\"Check Test 1q3\",\"label\":\"Check Test 1q3\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 15:14:01', '2026-05-19 15:14:01', NULL),
+(465, 'Updated Sales Owner', 'system', NULL, '{\"attribute\":\"Sales Owner\",\"new\":{\"value\":1,\"label\":\"Admin\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 15:14:01', '2026-05-19 15:14:01', NULL),
+(466, 'Updated Pipeline', 'system', NULL, '{\"attribute\":\"Pipeline\",\"new\":{\"value\":1,\"label\":\"Default Pipeline\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 15:14:01', '2026-05-19 15:14:01', NULL),
+(467, 'Updated Stage', 'system', NULL, '{\"attribute\":\"Stage\",\"new\":{\"value\":1,\"label\":\"New\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 15:14:01', '2026-05-19 15:14:01', NULL),
+(468, 'Updated Stage', 'system', NULL, '{\"attribute\":\"Stage\",\"new\":{\"value\":4,\"label\":\"Negotiation\"},\"old\":{\"value\":3,\"label\":\"Prospect\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 23:32:49', '2026-05-19 23:32:49', NULL),
+(477, 'Updated Industry', 'system', NULL, '{\"attribute\":\"Industry\",\"new\":{\"value\":\"\",\"label\":null},\"old\":{\"value\":\"0\",\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-19 23:53:29', '2026-05-19 23:53:29', NULL),
+(478, 'Task', 'task', NULL, NULL, '2026-05-26 00:00:00', '2026-05-26 00:00:00', 0, 1, 'organizations', 3, '2026-05-19 23:53:47', '2026-05-20 00:01:21', NULL),
+(479, 'dsffdsfdsf', 'meeting', '', NULL, '2026-05-22 19:24:00', '2026-05-26 19:24:00', 0, 1, 'organizations', 3, '2026-05-19 23:54:08', '2026-05-19 23:54:08', NULL),
+(480, 'Updated closed_at', 'system', NULL, '{\"attribute\":\"closed_at\",\"new\":{\"value\":\"2026-05-19T14:59:39.881078Z\",\"label\":\"Tue May 19, 2026 20:29 PM\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 00:29:39', '2026-05-20 00:29:39', NULL),
+(481, 'Updated Stage', 'system', NULL, '{\"attribute\":\"Stage\",\"new\":{\"value\":5,\"label\":\"Won\"},\"old\":{\"value\":1,\"label\":\"New\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 00:29:39', '2026-05-20 00:29:39', NULL),
+(482, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Alex Real LLC\",\"label\":\"Alex Real LLC\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 10:58:35', '2026-05-20 10:58:35', NULL),
+(483, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 10:58:35', '2026-05-20 10:58:35', NULL),
+(484, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Smart K LLC\",\"label\":\"Smart K LLC\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 10:58:49', '2026-05-20 10:58:49', NULL),
+(485, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 10:58:49', '2026-05-20 10:58:49', NULL),
+(486, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Metro Textile Inc.\",\"label\":\"Metro Textile Inc.\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 10:59:03', '2026-05-20 10:59:03', NULL),
+(487, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 10:59:03', '2026-05-20 10:59:03', NULL),
+(488, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Qis Packaging\",\"label\":\"Qis Packaging\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:38:23', '2026-05-20 11:38:23', NULL),
+(489, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:38:23', '2026-05-20 11:38:23', NULL),
+(490, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Wovin Brands\",\"label\":\"Wovin Brands\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:38:38', '2026-05-20 11:38:38', NULL),
+(491, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:38:38', '2026-05-20 11:38:38', NULL),
+(492, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Fey International\",\"label\":\"Fey International\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:38:50', '2026-05-20 11:38:50', NULL),
+(493, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:38:50', '2026-05-20 11:38:50', NULL),
+(494, 'Created', 'system', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:42:27', '2026-05-20 11:42:27', NULL),
+(495, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Jumbo Tote Bag\",\"label\":\"Jumbo Tote Bag\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:42:27', '2026-05-20 11:42:27', NULL),
+(496, 'Updated SKU', 'system', NULL, '{\"attribute\":\"SKU\",\"new\":{\"value\":\"SBQ600\",\"label\":\"SBQ600\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:42:27', '2026-05-20 11:42:27', NULL),
+(497, 'Updated Price', 'system', NULL, '{\"attribute\":\"Price\",\"new\":{\"value\":0.69,\"label\":\"$0.69\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:42:27', '2026-05-20 11:42:27', NULL),
+(498, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Naveed Brothers Textile\",\"label\":\"Naveed Brothers Textile\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:43:00', '2026-05-20 11:43:00', NULL),
+(499, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:43:00', '2026-05-20 11:43:00', NULL),
+(500, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Millenium Textiles\",\"label\":\"Millenium Textiles\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:43:15', '2026-05-20 11:43:15', NULL),
+(501, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:43:15', '2026-05-20 11:43:15', NULL),
+(502, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Mustafa Enterprise\",\"label\":\"Mustafa Enterprise\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:43:23', '2026-05-20 11:43:23', NULL),
+(503, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:43:23', '2026-05-20 11:43:23', NULL),
+(504, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Nishat Mills (Pvt) Ltd.\",\"label\":\"Nishat Mills (Pvt) Ltd.\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:43:41', '2026-05-20 11:43:41', NULL),
+(505, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:43:41', '2026-05-20 11:43:41', NULL),
+(506, 'Updated Name', 'system', NULL, '{\"attribute\":\"Name\",\"new\":{\"value\":\"Golden Industries\",\"label\":\"Golden Industries\"},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:43:51', '2026-05-20 11:43:51', NULL),
+(507, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":\"[]\",\"label\":null},\"old\":{\"value\":null,\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 11:43:51', '2026-05-20 11:43:51', NULL),
+(508, 'Updated Billing Address', 'system', NULL, '{\"attribute\":\"Billing Address\",\"new\":{\"value\":[{\"city\":\"jjk\",\"country\":\"jkj\",\"postcode\":\"jkj\",\"state\":\"jkjk\",\"street\":\"djj\",\"type\":\"billing\"},{\"city\":\"jkjk\",\"country\":\"j\",\"postcode\":\"jkjk\",\"state\":\"jkj\",\"street\":\"jkjk\",\"type\":\"shipping\"}],\"label\":\"<br>  <br><br><br>\"},\"old\":{\"value\":[],\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 13:05:24', '2026-05-20 13:05:24', NULL),
+(509, 'Updated Industry', 'system', NULL, '{\"attribute\":\"Industry\",\"new\":{\"value\":\"\",\"label\":null},\"old\":{\"value\":\"0\",\"label\":null}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 13:05:24', '2026-05-20 13:05:24', NULL),
+(510, 'Updated Employees', 'system', NULL, '{\"attribute\":\"Employees\",\"new\":{\"value\":\"0\",\"label\":\"0\"},\"old\":{\"value\":\"\",\"label\":\"\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 13:05:24', '2026-05-20 13:05:24', NULL),
+(511, 'Updated Annual Revenue', 'system', NULL, '{\"attribute\":\"Annual Revenue\",\"new\":{\"value\":\"0.00\",\"label\":\"$0.00\"},\"old\":{\"value\":null,\"label\":\"$0.00\"}}', NULL, NULL, 1, 1, NULL, NULL, '2026-05-20 13:05:24', '2026-05-20 13:05:24', NULL);
 
 -- --------------------------------------------------------
 
@@ -238,10 +369,10 @@ INSERT INTO `activities` (`id`, `title`, `type`, `comment`, `additional`, `sched
 --
 
 CREATE TABLE `activity_files` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `activity_id` int UNSIGNED NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `path` varchar(191) NOT NULL,
+  `activity_id` int(10) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -271,7 +402,10 @@ INSERT INTO `activity_files` (`id`, `name`, `path`, `activity_id`, `created_at`,
 (18, 'test image.jpeg', 'activities/144/pzxvZUnhA5usZnn8kZAnaLvMQJxgRVT8pR7o2Xq2.jpg', 144, '2026-02-23 17:41:44', '2026-02-23 17:41:44'),
 (20, 'test image.jpeg', 'activities/164/1FG3LafXOf73WoWQbGQImiSPKmm79jSK0AuS3aqg.jpg', 164, '2026-02-23 18:39:36', '2026-02-23 18:39:36'),
 (21, '📘 RENTAL WIZARD - WORKFORCE FINANCIAL MODULE – FINAL SSOT (v1.0).pdf', 'activities/172/N2eGvJPHAx1nahBGWTxuqSFUOCnvmGy7OKgVwaY7.pdf', 172, '2026-02-23 19:01:51', '2026-02-23 19:01:51'),
-(22, 'test image.jpeg', 'activities/207/hfg5LTJ2avDYT32IgB5kbjMg0cAyDETm6FHDqYd2.jpg', 207, '2026-02-23 20:25:51', '2026-02-23 20:25:51');
+(22, 'test image.jpeg', 'activities/207/hfg5LTJ2avDYT32IgB5kbjMg0cAyDETm6FHDqYd2.jpg', 207, '2026-02-23 20:25:51', '2026-02-23 20:25:51'),
+(23, 'test image.jpeg', 'activities/359/WZbrOaTiHucA0sLkbhz0dGw5tx1xP2Kb1G94CFCU.jpg', 359, '2026-04-18 13:32:29', '2026-04-18 13:32:29'),
+(25, 'tb600', 'activities/437/kbq3byCIbOSyfIcbYiAKCwIJephucKSwOjnrCj6K.jpg', 437, '2026-05-16 11:37:29', '2026-05-16 11:37:29'),
+(26, 'cc.png', 'activities/461/gbHrw6QjQ6vNUvrglOwfaVfQx3XuoG5CFzyO5PmU.png', 461, '2026-05-19 15:01:13', '2026-05-19 15:01:13');
 
 -- --------------------------------------------------------
 
@@ -280,10 +414,10 @@ INSERT INTO `activity_files` (`id`, `name`, `path`, `activity_id`, `created_at`,
 --
 
 CREATE TABLE `activity_participants` (
-  `id` int UNSIGNED NOT NULL,
-  `activity_id` int UNSIGNED NOT NULL,
-  `user_id` int UNSIGNED DEFAULT NULL,
-  `person_id` int UNSIGNED DEFAULT NULL
+  `id` int(10) UNSIGNED NOT NULL,
+  `activity_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
+  `person_id` int(10) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -292,7 +426,16 @@ CREATE TABLE `activity_participants` (
 
 INSERT INTO `activity_participants` (`id`, `activity_id`, `user_id`, `person_id`) VALUES
 (1, 113, NULL, 1),
-(2, 146, NULL, 1);
+(2, 146, NULL, 1),
+(3, 357, NULL, 12),
+(8, 389, 1, NULL),
+(9, 389, 3, NULL),
+(10, 408, 1, NULL),
+(11, 409, 1, NULL),
+(15, 479, 1, NULL),
+(16, 436, 1, NULL),
+(17, 436, NULL, 1),
+(26, 478, 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -301,18 +444,18 @@ INSERT INTO `activity_participants` (`id`, `activity_id`, `user_id`, `person_id`
 --
 
 CREATE TABLE `attributes` (
-  `id` int UNSIGNED NOT NULL,
-  `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `lookup_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `entity_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort_order` int DEFAULT NULL,
-  `validation` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_required` tinyint(1) NOT NULL DEFAULT '0',
-  `is_unique` tinyint(1) NOT NULL DEFAULT '0',
-  `quick_add` tinyint(1) NOT NULL DEFAULT '0',
-  `is_user_defined` tinyint(1) NOT NULL DEFAULT '1',
+  `id` int(10) UNSIGNED NOT NULL,
+  `code` varchar(191) NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `type` varchar(191) NOT NULL,
+  `lookup_type` varchar(191) DEFAULT NULL,
+  `entity_type` varchar(191) NOT NULL,
+  `sort_order` int(11) DEFAULT NULL,
+  `validation` varchar(191) DEFAULT NULL,
+  `is_required` tinyint(1) NOT NULL DEFAULT 0,
+  `is_unique` tinyint(1) NOT NULL DEFAULT 0,
+  `quick_add` tinyint(1) NOT NULL DEFAULT 0,
+  `is_user_defined` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -384,10 +527,10 @@ INSERT INTO `attributes` (`id`, `code`, `name`, `type`, `lookup_type`, `entity_t
 --
 
 CREATE TABLE `attribute_options` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `sort_order` int DEFAULT NULL,
-  `attribute_id` int UNSIGNED NOT NULL
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) DEFAULT NULL,
+  `sort_order` int(11) DEFAULT NULL,
+  `attribute_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -412,19 +555,19 @@ INSERT INTO `attribute_options` (`id`, `name`, `sort_order`, `attribute_id`) VAL
 --
 
 CREATE TABLE `attribute_values` (
-  `id` int UNSIGNED NOT NULL,
-  `entity_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'leads',
-  `text_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `id` int(10) UNSIGNED NOT NULL,
+  `entity_type` varchar(191) NOT NULL DEFAULT 'leads',
+  `text_value` text DEFAULT NULL,
   `boolean_value` tinyint(1) DEFAULT NULL,
-  `integer_value` int DEFAULT NULL,
+  `integer_value` int(11) DEFAULT NULL,
   `float_value` double DEFAULT NULL,
   `datetime_value` datetime DEFAULT NULL,
   `date_value` date DEFAULT NULL,
-  `json_value` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `entity_id` int UNSIGNED NOT NULL,
-  `attribute_id` int UNSIGNED NOT NULL,
-  `unique_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `json_value` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `entity_id` int(10) UNSIGNED NOT NULL,
+  `attribute_id` int(10) UNSIGNED NOT NULL,
+  `unique_id` varchar(191) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `attribute_values`
@@ -471,7 +614,7 @@ INSERT INTO `attribute_values` (`id`, `entity_type`, `text_value`, `boolean_valu
 (55, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 24, NULL),
 (56, 'leads', NULL, NULL, NULL, NULL, NULL, '2026-02-28', NULL, 3, 25, NULL),
 (57, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 26, NULL),
-(58, 'leads', NULL, NULL, 3, NULL, NULL, NULL, NULL, 3, 27, NULL),
+(58, 'leads', NULL, NULL, 4, NULL, NULL, NULL, NULL, 3, 27, NULL),
 (59, 'leads', 'Quis dicta id facili', NULL, NULL, NULL, NULL, NULL, NULL, 4, 19, NULL),
 (60, 'leads', 'Vero eum rerum bland', NULL, NULL, NULL, NULL, NULL, NULL, 4, 20, NULL),
 (61, 'leads', NULL, NULL, NULL, 6, NULL, NULL, NULL, 4, 21, NULL),
@@ -586,34 +729,233 @@ INSERT INTO `attribute_values` (`id`, `entity_type`, `text_value`, `boolean_valu
 (242, 'quotes', NULL, NULL, NULL, 64.57, NULL, NULL, NULL, 11, 52, NULL),
 (243, 'persons', NULL, NULL, 1, NULL, NULL, NULL, NULL, 12, 32, NULL),
 (244, 'persons', NULL, NULL, 3, NULL, NULL, NULL, NULL, 12, 33, NULL),
-(245, 'organizations', 'sadsad', NULL, NULL, NULL, NULL, NULL, NULL, 5, 34, NULL),
-(246, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[{\"type\":\"billing\",\"street\":\"sad\",\"city\":\"sd\",\"state\":\"sad\",\"postcode\":\"sd\",\"country\":\"sad\"},{\"type\":\"shipping\",\"street\":\"sad\",\"city\":\"sd\",\"state\":\"sad\",\"postcode\":\"sd\",\"country\":\"sad\"}]', 5, 35, NULL),
-(267, 'products', 'Cotton Tote Bag', NULL, NULL, NULL, NULL, NULL, NULL, 28, 37, NULL),
-(268, 'products', 'Test', NULL, NULL, NULL, NULL, NULL, NULL, 28, 39, NULL),
-(269, 'products', NULL, NULL, NULL, 4.72, NULL, NULL, NULL, 28, 41, NULL),
-(270, 'products', 'Cotton Tote Bag', NULL, NULL, NULL, NULL, NULL, NULL, 29, 37, NULL),
-(271, 'products', 'dsds', NULL, NULL, NULL, NULL, NULL, NULL, 29, 39, NULL),
-(272, 'products', NULL, NULL, NULL, 4.72, NULL, NULL, NULL, 29, 41, NULL),
 (273, 'organizations', 'sdsdsd', NULL, NULL, NULL, NULL, NULL, NULL, 6, 34, NULL),
 (274, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[{\"type\":\"billing\",\"street\":\"sadsa\",\"city\":\"sad\",\"state\":\"sad\",\"postcode\":\"sad\",\"country\":\"sad\"},{\"type\":\"shipping\",\"street\":\"sadsa\",\"city\":\"sad\",\"state\":\"sad\",\"postcode\":\"sad\",\"country\":\"sad\"}]', 6, 35, NULL),
 (275, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 6, 68, NULL),
 (276, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 6, 69, NULL),
 (277, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 6, 70, NULL),
-(278, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 12, 42, NULL),
-(279, 'quotes', 'Quote 000002', NULL, NULL, NULL, NULL, NULL, NULL, 12, 43, NULL),
-(280, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 12, 48, NULL),
-(281, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 12, 49, NULL),
-(282, 'quotes', NULL, NULL, NULL, 34.5664, NULL, NULL, NULL, 12, 50, NULL),
-(283, 'quotes', NULL, NULL, NULL, 4.72, NULL, NULL, NULL, 12, 51, NULL),
-(284, 'quotes', NULL, NULL, NULL, 39.286, NULL, NULL, NULL, 12, 52, NULL),
-(285, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 14, 42, NULL),
-(286, 'quotes', 'Quote 000003', NULL, NULL, NULL, NULL, NULL, NULL, 14, 43, NULL),
-(287, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 14, 48, NULL),
-(288, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 14, 49, NULL),
-(289, 'quotes', NULL, NULL, NULL, 0.5664, NULL, NULL, NULL, 14, 50, NULL),
-(290, 'quotes', NULL, NULL, NULL, 4.72, NULL, NULL, NULL, 14, 51, NULL),
-(291, 'quotes', NULL, NULL, NULL, 5.286, NULL, NULL, NULL, 14, 52, NULL),
-(292, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[{\"type\":\"billing\",\"street\":\"Suite 391 - 1505 Laperriere Avenue\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"},{\"type\":\"shipping\",\"street\":\"Suite 391 - 1505 Laperriere Avenue\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"},{\"type\":\"other\",\"street\":\"71A Street 3, Block A, (SMCHS)\",\"city\":\"Karachi\",\"state\":\"Sindh\",\"postcode\":\"75400\",\"country\":\"Pakistan\"}]', 3, 35, NULL);
+(283, 'organizations', 'abc', NULL, NULL, NULL, NULL, NULL, NULL, 8, 34, NULL),
+(284, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 8, 35, NULL),
+(285, 'organizations', 'Ashton Pitts', NULL, NULL, NULL, NULL, NULL, NULL, 9, 34, NULL),
+(286, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[{\"type\":\"billing\",\"street\":\"Excepteur porro simi\",\"city\":\"Ratione et deserunt\",\"state\":\"Laboriosam perspici\",\"postcode\":\"Consequuntur in aut\",\"country\":\"Rerum qui commodo ra\"},{\"type\":\"shipping\",\"street\":\"Est consequat Dolor\",\"city\":\"In odit ut quisquam\",\"state\":\"Elit illum consequ\",\"postcode\":\"Adipisci omnis cupid\",\"country\":\"Aut atque cillum con\"},{\"type\":\"shipping\",\"street\":\"Eius sit eveniet s\",\"city\":\"Enim nesciunt quo d\",\"state\":\"Aliquam modi saepe c\",\"postcode\":\"Reprehenderit aut n\",\"country\":\"Vel qui sunt laboris\"},{\"type\":\"shipping\",\"street\":\"Totam natus consequa\",\"city\":\"Inventore nostrud di\",\"state\":\"Error esse quis sed\",\"postcode\":\"Et eum minima quas d\",\"country\":\"Eius eaque alias ad\"}]', 9, 35, NULL),
+(287, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 9, 68, NULL),
+(288, 'organizations', '46', NULL, NULL, NULL, NULL, NULL, NULL, 9, 69, NULL),
+(289, 'organizations', NULL, NULL, NULL, 30, NULL, NULL, NULL, 9, 70, NULL),
+(290, 'organizations', 'dsfsd', NULL, NULL, NULL, NULL, NULL, NULL, 10, 34, NULL),
+(291, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 10, 35, NULL),
+(292, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 10, 68, NULL),
+(293, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 10, 69, NULL),
+(294, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 10, 70, NULL),
+(295, 'organizations', 'sfdsfdsf', NULL, NULL, NULL, NULL, NULL, NULL, 11, 34, NULL),
+(296, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 11, 35, NULL),
+(297, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 11, 68, NULL),
+(298, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 11, 69, NULL),
+(299, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11, 70, NULL),
+(300, 'organizations', 'XYZ', NULL, NULL, NULL, NULL, NULL, NULL, 12, 34, NULL),
+(301, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 12, 35, NULL),
+(302, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 12, 68, NULL),
+(303, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 12, 69, NULL),
+(304, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 12, 70, NULL),
+(310, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 12, 42, NULL),
+(311, 'quotes', 'Quote 000002', NULL, NULL, NULL, NULL, NULL, NULL, 12, 43, NULL),
+(312, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 12, 48, NULL),
+(313, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 12, 49, NULL),
+(314, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 12, 50, NULL),
+(315, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 12, 51, NULL),
+(316, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 12, 52, NULL),
+(317, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 14, 42, NULL),
+(318, 'quotes', 'Quote 000003', NULL, NULL, NULL, NULL, NULL, NULL, 14, 43, NULL),
+(319, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 14, 48, NULL),
+(320, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 14, 49, NULL),
+(321, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 14, 50, NULL),
+(322, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 14, 51, NULL),
+(323, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 14, 52, NULL),
+(327, 'organizations', 'Metro Cotton Mill (PVT) LTD', NULL, NULL, NULL, NULL, NULL, NULL, 13, 34, NULL),
+(328, 'persons', 'Ian Ford', NULL, NULL, NULL, NULL, NULL, NULL, 13, 28, NULL),
+(329, 'persons', NULL, NULL, 2, NULL, NULL, NULL, NULL, 13, 32, NULL),
+(330, 'persons', NULL, NULL, 13, NULL, NULL, NULL, NULL, 13, 33, NULL),
+(334, 'leads', 'tesssssssss', NULL, NULL, NULL, NULL, NULL, NULL, 10, 19, NULL),
+(335, 'leads', '', NULL, NULL, NULL, NULL, NULL, NULL, 10, 20, NULL),
+(336, 'leads', NULL, NULL, 2, NULL, NULL, NULL, NULL, 10, 22, NULL),
+(337, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 10, 24, NULL),
+(338, 'leads', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 10, 25, NULL),
+(339, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 10, 26, NULL),
+(340, 'leads', NULL, NULL, 3, NULL, NULL, NULL, NULL, 10, 27, NULL),
+(341, 'leads', NULL, NULL, 0, NULL, NULL, NULL, NULL, 10, 73, NULL),
+(353, 'persons', 'Muhammad Asad Ullah', NULL, NULL, NULL, NULL, NULL, NULL, 14, 28, NULL),
+(354, 'persons', NULL, NULL, 3, NULL, NULL, NULL, NULL, 14, 32, NULL),
+(355, 'persons', NULL, NULL, 13, NULL, NULL, NULL, NULL, 14, 33, NULL),
+(361, 'persons', 'Mehboob Ali', NULL, NULL, NULL, NULL, NULL, NULL, 15, 28, NULL),
+(362, 'persons', NULL, NULL, 1, NULL, NULL, NULL, NULL, 15, 32, NULL),
+(363, 'persons', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 33, NULL),
+(364, 'organizations', 'Test Company Mike', NULL, NULL, NULL, NULL, NULL, NULL, 15, 34, NULL),
+(365, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 15, 35, NULL),
+(366, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 15, 68, NULL),
+(367, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 15, 69, NULL),
+(368, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 70, NULL),
+(369, 'persons', 'John Myers', NULL, NULL, NULL, NULL, NULL, NULL, 16, 28, NULL),
+(370, 'persons', NULL, NULL, 1, NULL, NULL, NULL, NULL, 16, 32, NULL),
+(371, 'persons', NULL, NULL, 15, NULL, NULL, NULL, NULL, 16, 33, NULL),
+(372, 'organizations', 'Barrel Makers Inc.', NULL, NULL, NULL, NULL, NULL, NULL, 16, 34, NULL),
+(373, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[{\"type\":\"billing\",\"street\":\"1435 Busch Pkwy\",\"city\":\"Buffalo Grove\",\"state\":\"IL\",\"postcode\":\"60089\",\"country\":\"USA\"},{\"type\":\"shipping\",\"street\":\"1435 Busch Pkwy\",\"city\":\"Buffalo Grove\",\"state\":\"IL\",\"postcode\":\"60089\",\"country\":\"USA\"}]', 16, 35, NULL),
+(374, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 16, 68, NULL),
+(375, 'organizations', '30', NULL, NULL, NULL, NULL, NULL, NULL, 16, 69, NULL),
+(376, 'organizations', NULL, NULL, NULL, 0, NULL, NULL, NULL, 16, 70, NULL),
+(377, 'persons', 'Justin Moore', NULL, NULL, NULL, NULL, NULL, NULL, 17, 28, NULL),
+(378, 'persons', NULL, NULL, 1, NULL, NULL, NULL, NULL, 17, 32, NULL),
+(379, 'persons', NULL, NULL, 16, NULL, NULL, NULL, NULL, 17, 33, NULL),
+(380, 'leads', 'Fabric Complain', NULL, NULL, NULL, NULL, NULL, NULL, 14, 19, NULL),
+(381, 'leads', 'Customer complained \r\n\r\nHi Zee,\r\n\r\nWe just had a customer reject 400 bags.  He mentioned that there are bags that are too rough to print on or adhere to the platens and that the inventory is a mix of different fabrics. We are having our fulfillment sort through to throw away the bad ones so there\'s not any future issues.\r\n\r\nInfo from customer that im trying to understand:\r\n\r\n\" it looks like the Good ones are packed at 75pcs per box, while the bad ones have 80. The bad ones also have the box wrapped in plastic, and have the word \"BALCK\" on the box! \r\nthe box wrapped in plastic is a box of bad ones. looks like all the bad ones are 2409762 written on the box anything from that batch does not have the pink tag, and the material is rougher.\"\r\n\r\nThese are the ones that are bad and unusable: https://prnt.sc/n4W9EKxqYP5r \r\n(I think this was an early order because i remember telling you they all had the wrong dimensions too and we\'ve been trying to just give them away, obviously a big money loss, but i didn\'t know the fabric was different.) Can you confirm why these are different and if they are old or new and if the container coming are way uses this same fabric? \r\n\r\nThese are apparently the good ones: https://prnt.sc/a1e2XHBTBjGJ \r\nTrying to understand if these are \"Newer\" and if everything coming are way is idential to this. \r\n\r\nThanks,', NULL, NULL, NULL, NULL, NULL, NULL, 14, 20, NULL),
+(382, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 14, 22, NULL),
+(383, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 14, 24, NULL),
+(384, 'leads', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 14, 25, NULL),
+(385, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 14, 26, NULL),
+(386, 'leads', NULL, NULL, 5, NULL, NULL, NULL, NULL, 14, 27, NULL),
+(387, 'leads', NULL, NULL, 0, NULL, NULL, NULL, NULL, 14, 73, NULL),
+(388, 'leads', 'issue.. com[lain.. samples', NULL, NULL, NULL, NULL, NULL, NULL, 15, 19, NULL),
+(389, 'leads', 'sapmles needed faster.', NULL, NULL, NULL, NULL, NULL, NULL, 15, 20, NULL),
+(390, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 15, 22, NULL),
+(391, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 15, 24, NULL),
+(392, 'leads', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 25, NULL),
+(393, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 15, 26, NULL),
+(394, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 15, 27, NULL),
+(395, 'leads', NULL, NULL, 0, NULL, NULL, NULL, NULL, 15, 73, NULL),
+(405, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[{\"type\":\"billing\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"},{\"type\":\"shipping\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"},{\"type\":\"other\",\"street\":\"Test\",\"city\":\"TEst\",\"state\":\"Test\",\"postcode\":\"Test\",\"country\":\"Test\"}]', 3, 35, NULL),
+(406, 'products', 'Street Bundle', NULL, NULL, NULL, NULL, NULL, NULL, 37, 37, NULL),
+(407, 'products', 'ST00', NULL, NULL, NULL, NULL, NULL, NULL, 37, 39, NULL),
+(408, 'products', NULL, NULL, NULL, 0.99, NULL, NULL, NULL, 37, 41, NULL),
+(409, 'products', 'Street Bundle abc', NULL, NULL, NULL, NULL, NULL, NULL, 38, 37, NULL),
+(410, 'products', 'abc', NULL, NULL, NULL, NULL, NULL, NULL, 38, 39, NULL),
+(411, 'products', NULL, NULL, NULL, 0.99, NULL, NULL, NULL, 38, 41, NULL),
+(412, 'leads', 'Check Test', NULL, NULL, NULL, NULL, NULL, NULL, 16, 19, NULL),
+(413, 'leads', 'Check Test 1q3', NULL, NULL, NULL, NULL, NULL, NULL, 16, 20, NULL),
+(414, 'leads', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 16, 22, NULL),
+(415, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 16, 24, NULL),
+(416, 'leads', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 16, 25, NULL),
+(417, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 16, 26, NULL),
+(418, 'leads', NULL, NULL, 1, NULL, NULL, NULL, NULL, 16, 27, NULL),
+(419, 'leads', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 16, 73, NULL),
+(420, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 15, 42, NULL),
+(421, 'quotes', 'Quote 000004', NULL, NULL, NULL, NULL, NULL, NULL, 15, 43, NULL),
+(422, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 15, 45, NULL),
+(423, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 15, 46, NULL),
+(424, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 15, 48, NULL),
+(425, 'quotes', NULL, NULL, NULL, 184.704, NULL, NULL, NULL, 15, 49, NULL),
+(426, 'quotes', NULL, NULL, NULL, 400, NULL, NULL, NULL, 15, 50, NULL),
+(427, 'quotes', NULL, NULL, NULL, 1154.4, NULL, NULL, NULL, 15, 51, NULL),
+(428, 'quotes', NULL, NULL, NULL, 1739.104, NULL, NULL, NULL, 15, 52, NULL),
+(435, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 16, 42, NULL),
+(436, 'quotes', 'Quote 000001', NULL, NULL, NULL, NULL, NULL, NULL, 16, 43, NULL),
+(437, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 16, 45, NULL),
+(438, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 16, 46, NULL),
+(439, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 16, 48, NULL),
+(440, 'quotes', NULL, NULL, NULL, 247.9488, NULL, NULL, NULL, 16, 49, NULL),
+(441, 'quotes', NULL, NULL, NULL, 200, NULL, NULL, NULL, 16, 50, NULL),
+(442, 'quotes', NULL, NULL, NULL, 2066.24, NULL, NULL, NULL, 16, 51, NULL),
+(443, 'quotes', NULL, NULL, NULL, 2514.189, NULL, NULL, NULL, 16, 52, NULL),
+(444, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 17, 42, NULL),
+(445, 'quotes', 'Quote 000002', NULL, NULL, NULL, NULL, NULL, NULL, 17, 43, NULL),
+(446, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 17, 45, NULL),
+(447, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 17, 46, NULL),
+(448, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 17, 48, NULL),
+(449, 'quotes', NULL, NULL, NULL, 239.6184, NULL, NULL, NULL, 17, 49, NULL),
+(450, 'quotes', NULL, NULL, NULL, 200, NULL, NULL, NULL, 17, 50, NULL),
+(451, 'quotes', NULL, NULL, NULL, 1996.82, NULL, NULL, NULL, 17, 51, NULL),
+(452, 'quotes', NULL, NULL, NULL, 2436.438, NULL, NULL, NULL, 17, 52, NULL),
+(453, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 18, 42, NULL),
+(454, 'quotes', 'Quote 000003', NULL, NULL, NULL, NULL, NULL, NULL, 18, 43, NULL),
+(455, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 18, 45, NULL),
+(456, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 18, 46, NULL),
+(457, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 18, 48, NULL),
+(458, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 18, 49, NULL),
+(459, 'quotes', NULL, NULL, NULL, 6.804, NULL, NULL, NULL, 18, 50, NULL),
+(460, 'quotes', NULL, NULL, NULL, 56.7, NULL, NULL, NULL, 18, 51, NULL),
+(461, 'quotes', NULL, NULL, NULL, 63.504, NULL, NULL, NULL, 18, 52, NULL),
+(462, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 19, 42, NULL),
+(463, 'quotes', 'Quote 000001', NULL, NULL, NULL, NULL, NULL, NULL, 19, 43, NULL),
+(464, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 19, 45, NULL),
+(465, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 19, 46, NULL),
+(466, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 19, 48, NULL),
+(467, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 19, 49, NULL),
+(468, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 19, 50, NULL),
+(469, 'quotes', NULL, NULL, NULL, 1101.04, NULL, NULL, NULL, 19, 51, NULL),
+(470, 'quotes', NULL, NULL, NULL, 1101.04, NULL, NULL, NULL, 19, 52, NULL),
+(471, 'organizations', 'Alex Real LLC', NULL, NULL, NULL, NULL, NULL, NULL, 17, 34, NULL),
+(472, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[{\"type\":\"billing\",\"street\":\"djj\",\"city\":\"jjk\",\"state\":\"jkjk\",\"postcode\":\"jkj\",\"country\":\"jkj\"},{\"type\":\"shipping\",\"street\":\"jkjk\",\"city\":\"jkjk\",\"state\":\"jkj\",\"postcode\":\"jkjk\",\"country\":\"j\"}]', 17, 35, NULL),
+(473, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 17, 68, NULL),
+(474, 'organizations', '0', NULL, NULL, NULL, NULL, NULL, NULL, 17, 69, NULL),
+(475, 'organizations', NULL, NULL, NULL, 0, NULL, NULL, NULL, 17, 70, NULL),
+(476, 'organizations', 'Smart K LLC', NULL, NULL, NULL, NULL, NULL, NULL, 18, 34, NULL),
+(477, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 18, 35, NULL),
+(478, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 18, 68, NULL),
+(479, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 18, 69, NULL),
+(480, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 18, 70, NULL),
+(481, 'organizations', 'Metro Textile Inc.', NULL, NULL, NULL, NULL, NULL, NULL, 19, 34, NULL),
+(482, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 19, 35, NULL),
+(483, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 19, 68, NULL),
+(484, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 19, 69, NULL),
+(485, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 19, 70, NULL),
+(486, 'organizations', 'Qis Packaging', NULL, NULL, NULL, NULL, NULL, NULL, 20, 34, NULL),
+(487, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 20, 35, NULL),
+(488, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 20, 68, NULL),
+(489, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 20, 69, NULL),
+(490, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 20, 70, NULL),
+(491, 'organizations', 'Wovin Brands', NULL, NULL, NULL, NULL, NULL, NULL, 21, 34, NULL),
+(492, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 21, 35, NULL),
+(493, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 21, 68, NULL),
+(494, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 21, 69, NULL),
+(495, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 21, 70, NULL),
+(496, 'organizations', 'Fey International', NULL, NULL, NULL, NULL, NULL, NULL, 22, 34, NULL),
+(497, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 22, 35, NULL),
+(498, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 22, 68, NULL),
+(499, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 22, 69, NULL),
+(500, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 22, 70, NULL),
+(501, 'products', 'Jumbo Tote Bag', NULL, NULL, NULL, NULL, NULL, NULL, 41, 37, NULL),
+(502, 'products', 'SBQ600', NULL, NULL, NULL, NULL, NULL, NULL, 41, 39, NULL),
+(503, 'products', NULL, NULL, NULL, 0.69, NULL, NULL, NULL, 41, 41, NULL),
+(504, 'organizations', 'Naveed Brothers Textile', NULL, NULL, NULL, NULL, NULL, NULL, 23, 34, NULL),
+(505, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 23, 35, NULL),
+(506, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 23, 68, NULL),
+(507, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 23, 69, NULL),
+(508, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 23, 70, NULL),
+(509, 'organizations', 'Millenium Textiles', NULL, NULL, NULL, NULL, NULL, NULL, 24, 34, NULL),
+(510, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 24, 35, NULL),
+(511, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 24, 68, NULL),
+(512, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 24, 69, NULL),
+(513, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 24, 70, NULL),
+(514, 'organizations', 'Mustafa Enterprise', NULL, NULL, NULL, NULL, NULL, NULL, 25, 34, NULL),
+(515, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 25, 35, NULL),
+(516, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 25, 68, NULL),
+(517, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 25, 69, NULL),
+(518, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25, 70, NULL),
+(519, 'organizations', 'Nishat Mills (Pvt) Ltd.', NULL, NULL, NULL, NULL, NULL, NULL, 26, 34, NULL),
+(520, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 26, 35, NULL),
+(521, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 26, 68, NULL),
+(522, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 26, 69, NULL),
+(523, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 26, 70, NULL),
+(524, 'organizations', 'Golden Industries', NULL, NULL, NULL, NULL, NULL, NULL, 27, 34, NULL),
+(525, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, '[]', 27, 35, NULL),
+(526, 'organizations', NULL, NULL, 0, NULL, NULL, NULL, NULL, 27, 68, NULL),
+(527, 'organizations', '', NULL, NULL, NULL, NULL, NULL, NULL, 27, 69, NULL),
+(528, 'organizations', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 27, 70, NULL),
+(529, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 20, 42, NULL),
+(530, 'quotes', 'Quote 000002', NULL, NULL, NULL, NULL, NULL, NULL, 20, 43, NULL),
+(531, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 20, 45, NULL),
+(532, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 20, 46, NULL),
+(533, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 20, 48, NULL),
+(534, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 20, 49, NULL),
+(535, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 20, 50, NULL),
+(536, 'quotes', NULL, NULL, NULL, 0.82, NULL, NULL, NULL, 20, 51, NULL),
+(537, 'quotes', NULL, NULL, NULL, 0.82, NULL, NULL, NULL, 20, 52, NULL),
+(538, 'quotes', NULL, NULL, 1, NULL, NULL, NULL, NULL, 21, 42, NULL),
+(539, 'quotes', 'Quote 000002', NULL, NULL, NULL, NULL, NULL, NULL, 21, 43, NULL),
+(540, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"djj\\njjk, jkjk, jkj, jkj\",\"street\":\"djj\",\"city\":\"jjk\",\"state\":\"jkjk\",\"postcode\":\"jkj\",\"country\":\"jkj\"}', 21, 45, NULL),
+(541, 'quotes', NULL, NULL, NULL, NULL, NULL, NULL, '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"jkjk\\njkjk, jkj, jkjk, j\",\"street\":\"jkjk\",\"city\":\"jkjk\",\"state\":\"jkj\",\"postcode\":\"jkjk\",\"country\":\"j\"}', 21, 46, NULL),
+(542, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 21, 48, NULL),
+(543, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 21, 49, NULL),
+(544, 'quotes', NULL, NULL, NULL, 0, NULL, NULL, NULL, 21, 50, NULL),
+(545, 'quotes', NULL, NULL, NULL, 0.69, NULL, NULL, NULL, 21, 51, NULL),
+(546, 'quotes', NULL, NULL, NULL, 0.69, NULL, NULL, NULL, 21, 52, NULL);
 
 -- --------------------------------------------------------
 
@@ -622,20 +964,22 @@ INSERT INTO `attribute_values` (`id`, `entity_type`, `text_value`, `boolean_valu
 --
 
 CREATE TABLE `color_references` (
-  `id` bigint UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
   `code` varchar(20) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `color_references`
 --
 
 INSERT INTO `color_references` (`id`, `name`, `code`, `created_at`, `updated_at`) VALUES
-(1, 'red', '#FF0000', '2026-04-15 14:03:41', '2026-04-15 14:03:41'),
-(2, 'White', '#FFFFFF', '2026-04-15 14:04:40', '2026-04-15 14:04:40');
+(1, 'Red', '#CC1E1E', '2026-04-16 19:39:29', '2026-05-20 11:45:38'),
+(2, 'Royal', '#163FBB', '2026-05-20 11:44:51', '2026-05-20 11:45:11'),
+(3, 'Black', '#360', '2026-05-20 11:45:22', '2026-05-20 11:45:22'),
+(4, 'Natural', '#8F6E14', '2026-05-20 11:46:07', '2026-05-20 11:46:07');
 
 -- --------------------------------------------------------
 
@@ -644,9 +988,9 @@ INSERT INTO `color_references` (`id`, `name`, `code`, `created_at`, `updated_at`
 --
 
 CREATE TABLE `core_config` (
-  `id` int UNSIGNED NOT NULL,
-  `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `code` varchar(191) NOT NULL,
+  `value` text NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -675,19 +1019,19 @@ INSERT INTO `core_config` (`id`, `code`, `value`, `created_at`, `updated_at`) VA
 (17, 'general.settings.menu.configuration', 'Configuration', '2025-11-15 14:42:22', '2025-11-15 14:42:22'),
 (18, 'general.settings.menu_color.brand_color', '#aa1e25', '2025-11-15 14:42:22', '2025-11-18 08:44:16'),
 (19, 'general.general.locale_settings.locale', 'en', '2025-11-15 14:45:20', '2025-11-15 14:45:20'),
-(20, 'general.general.admin_logo.logo_image', 'configuration/dcgu03AMYeGFkvyI1cq9EMwwOxZr4TSfhSX2oxx4.webp', '2025-11-15 14:45:20', '2026-02-27 14:32:38'),
-(21, 'email.imap.account.host', 'webhosting2024.is.cc', '2026-02-22 11:52:20', '2026-04-15 11:08:57'),
+(20, 'general.general.admin_logo.logo_image', 'configuration/5GYLmGrQA9FwA3wacip1JOPn5z6pY0jYNT2XJu0p.webp', '2025-11-15 14:45:20', '2026-04-21 05:13:02'),
+(21, 'email.imap.account.host', 'mail.deveoninc.com', '2026-02-22 11:52:20', '2026-02-22 11:52:20'),
 (22, 'email.imap.account.port', '993', '2026-02-22 11:52:20', '2026-02-22 11:52:20'),
-(23, 'email.imap.account.encryption', 'SSL/TLS', '2026-02-22 11:52:20', '2026-04-15 11:08:57'),
+(23, 'email.imap.account.encryption', 'ssl', '2026-02-22 11:52:20', '2026-02-22 11:53:37'),
 (24, 'email.imap.account.validate_cert', '1', '2026-02-22 11:52:20', '2026-02-22 11:52:20'),
-(25, 'email.imap.account.username', 'sabeer@deveoninc.com', '2026-02-22 11:52:20', '2026-04-15 11:08:57'),
-(26, 'email.imap.account.password', 'sabeer@eveoninc@000', '2026-02-22 11:52:20', '2026-04-15 11:08:57'),
+(25, 'email.imap.account.username', 'test@deveoninc.com', '2026-02-22 11:52:20', '2026-02-22 11:52:20'),
+(26, 'email.imap.account.password', 'JDu$]w;FhnP;[r4w', '2026-02-22 11:52:20', '2026-02-22 11:52:20'),
 (27, 'general.general.company_info.company_name', 'Metro Cotton Mill (PVT) LTD', '2026-02-27 14:31:35', '2026-02-27 14:31:43'),
-(28, 'general.general.company_info.address', '4327 Summerfield Blvd', '2026-02-27 14:31:35', '2026-02-27 14:32:04'),
-(29, 'general.general.company_info.telephone', '03176198517', '2026-02-27 14:31:35', '2026-02-27 14:32:04'),
-(30, 'general.general.company_info.cell', '03176198517', '2026-02-27 14:31:35', '2026-02-27 14:32:04'),
-(31, 'general.general.company_info.email', 'syedsabeer6198@gmail.com', '2026-02-27 14:31:35', '2026-02-27 14:32:04'),
-(32, 'general.general.company_info.website', 'deveoninc.com', '2026-02-27 14:31:35', '2026-02-27 14:32:04');
+(28, 'general.general.company_info.address', 'Pars Ram 34KM Ferouzpur Road\r\nBehind Unique College', '2026-02-27 14:31:35', '2026-05-20 11:54:19'),
+(29, 'general.general.company_info.telephone', '+92.300.220.0219', '2026-02-27 14:31:35', '2026-05-20 11:54:19'),
+(30, 'general.general.company_info.cell', '+92.300.825.0219', '2026-02-27 14:31:35', '2026-05-20 11:54:19'),
+(31, 'general.general.company_info.email', 'info@metrocottonmill.com', '2026-02-27 14:31:35', '2026-05-20 11:54:19'),
+(32, 'general.general.company_info.website', 'www.metrocottonmill.com', '2026-02-27 14:31:35', '2026-05-20 11:54:19');
 
 -- --------------------------------------------------------
 
@@ -696,9 +1040,9 @@ INSERT INTO `core_config` (`id`, `code`, `value`, `created_at`, `updated_at`) VA
 --
 
 CREATE TABLE `countries` (
-  `id` int UNSIGNED NOT NULL,
-  `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL
+  `id` int(10) UNSIGNED NOT NULL,
+  `code` varchar(191) NOT NULL,
+  `name` varchar(191) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -969,11 +1313,11 @@ INSERT INTO `countries` (`id`, `code`, `name`) VALUES
 --
 
 CREATE TABLE `country_states` (
-  `id` int UNSIGNED NOT NULL,
-  `country_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `country_id` int UNSIGNED NOT NULL
+  `id` int(10) UNSIGNED NOT NULL,
+  `country_code` varchar(191) NOT NULL,
+  `code` varchar(191) NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `country_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -1557,14 +1901,14 @@ INSERT INTO `country_states` (`id`, `country_code`, `code`, `name`, `country_id`
 --
 
 CREATE TABLE `datagrid_saved_filters` (
-  `id` bigint UNSIGNED NOT NULL,
-  `user_id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `src` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `src` varchar(191) NOT NULL,
   `applied` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1573,25 +1917,51 @@ CREATE TABLE `datagrid_saved_filters` (
 --
 
 CREATE TABLE `document_charges` (
-  `id` bigint UNSIGNED NOT NULL,
-  `chargeable_id` bigint UNSIGNED NOT NULL,
-  `chargeable_type` varchar(255) NOT NULL,
-  `name` varchar(255) NOT NULL,
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `chargeable_id` bigint(20) UNSIGNED NOT NULL,
+  `chargeable_type` varchar(191) NOT NULL,
+  `name` varchar(191) NOT NULL,
   `type` varchar(20) NOT NULL,
-  `value` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `sort_order` int UNSIGNED NOT NULL DEFAULT '0',
+  `value` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `sort_order` int(10) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `document_charges`
 --
 
 INSERT INTO `document_charges` (`id`, `chargeable_id`, `chargeable_type`, `name`, `type`, `value`, `amount`, `sort_order`, `created_at`, `updated_at`) VALUES
-(1, 14, 'quotes', 'sdsdsd', 'percentage', 12.0000, 0.5664, 0, '2026-04-15 09:53:27', '2026-04-15 09:53:27'),
-(2, 1, 'Webkul\\Quote\\Models\\ProformaInvoice', 'sdsdsd', 'percentage', 12.0000, 0.5664, 0, '2026-04-15 10:17:55', '2026-04-15 10:17:55');
+(1, 8, 'Webkul\\Quote\\Models\\ProformaInvoice', 'Tariff', 'percentage', 5.0000, 0.0000, 0, '2026-04-16 20:02:54', '2026-04-16 20:02:54'),
+(2, 8, 'Webkul\\Quote\\Models\\ProformaInvoice', 'Freight', 'percentage', 9.0000, 0.0000, 1, '2026-04-16 20:02:54', '2026-04-16 20:02:54'),
+(3, 9, 'Webkul\\Quote\\Models\\ProformaInvoice', 'Tariff', 'percentage', 5.0000, 2.8320, 0, '2026-04-16 20:29:37', '2026-04-16 20:29:37'),
+(4, 9, 'Webkul\\Quote\\Models\\ProformaInvoice', 'Freight', 'percentage', 9.0000, 5.0976, 1, '2026-04-16 20:29:37', '2026-04-16 20:29:37'),
+(5, 15, 'quotes', 'Shipping', 'value', 400.0000, 400.0000, 0, '2026-05-19 23:02:48', '2026-05-19 23:02:48'),
+(6, 15, 'quotes', 'Tarrif', 'percentage', 16.0000, 184.7040, 1, '2026-05-19 23:02:48', '2026-05-19 23:02:48'),
+(7, 10, 'Webkul\\Quote\\Models\\ProformaInvoice', 'Shipping', 'value', 400.0000, 400.0000, 0, '2026-05-19 23:03:15', '2026-05-19 23:03:15'),
+(8, 10, 'Webkul\\Quote\\Models\\ProformaInvoice', 'Tarrif', 'percentage', 16.0000, 184.7040, 1, '2026-05-19 23:03:15', '2026-05-19 23:03:15'),
+(9, 4, 'Webkul\\PurchaseOrder\\Models\\VendorQuote', 'abc', 'percentage', 12.0000, 211583.4163, 0, '2026-05-19 23:10:09', '2026-05-19 23:10:09'),
+(12, 6, 'Webkul\\PurchaseOrder\\Models\\PurchaseOrder', 'Shipping', 'value', 20000.0000, 20000.0000, 0, '2026-05-19 23:31:26', '2026-05-19 23:31:26'),
+(13, 7, 'Webkul\\PurchaseOrder\\Models\\PurchaseOrder', 'Shipping', 'value', 20000.0000, 20000.0000, 0, '2026-05-19 23:31:26', '2026-05-19 23:31:26'),
+(14, 8, 'Webkul\\PurchaseOrder\\Models\\PurchaseOrder', 'Shipping', 'value', 20000.0000, 20000.0000, 0, '2026-05-19 23:31:26', '2026-05-19 23:31:26'),
+(15, 16, 'quotes', 'Shipping', 'value', 200.0000, 200.0000, 0, '2026-05-19 23:43:07', '2026-05-19 23:43:07'),
+(16, 16, 'quotes', 'Tarrif', 'percentage', 12.0000, 247.9488, 1, '2026-05-19 23:43:07', '2026-05-19 23:43:07'),
+(17, 11, 'Webkul\\Quote\\Models\\ProformaInvoice', 'Shipping', 'value', 200.0000, 200.0000, 0, '2026-05-19 23:43:16', '2026-05-19 23:43:16'),
+(18, 11, 'Webkul\\Quote\\Models\\ProformaInvoice', 'Tarrif', 'percentage', 12.0000, 247.9488, 1, '2026-05-19 23:43:16', '2026-05-19 23:43:16'),
+(19, 17, 'quotes', 'Shipping', 'value', 200.0000, 200.0000, 0, '2026-05-19 23:46:16', '2026-05-19 23:46:16'),
+(20, 17, 'quotes', 'Tarrif', 'percentage', 12.0000, 239.6184, 1, '2026-05-19 23:46:16', '2026-05-19 23:46:16'),
+(21, 12, 'Webkul\\Quote\\Models\\ProformaInvoice', 'Shipping', 'value', 200.0000, 200.0000, 0, '2026-05-19 23:46:22', '2026-05-19 23:46:22'),
+(22, 12, 'Webkul\\Quote\\Models\\ProformaInvoice', 'Tarrif', 'percentage', 12.0000, 239.6184, 1, '2026-05-19 23:46:22', '2026-05-19 23:46:22'),
+(27, 9, 'Webkul\\PurchaseOrder\\Models\\PurchaseOrder', 'Shipping', 'value', 10500.0000, 10500.0000, 0, '2026-05-19 23:47:52', '2026-05-19 23:47:52'),
+(28, 9, 'Webkul\\PurchaseOrder\\Models\\PurchaseOrder', 'Tax', 'percentage', 4.0000, 197.4336, 1, '2026-05-19 23:47:52', '2026-05-19 23:47:52'),
+(29, 10, 'Webkul\\PurchaseOrder\\Models\\PurchaseOrder', 'Shipping', 'value', 10500.0000, 10500.0000, 0, '2026-05-19 23:47:52', '2026-05-19 23:47:52'),
+(30, 10, 'Webkul\\PurchaseOrder\\Models\\PurchaseOrder', 'Tax', 'percentage', 4.0000, 90892.2000, 1, '2026-05-19 23:47:53', '2026-05-19 23:47:53'),
+(31, 11, 'Webkul\\PurchaseOrder\\Models\\PurchaseOrder', 'Shipping', 'value', 10500.0000, 10500.0000, 0, '2026-05-19 23:47:53', '2026-05-19 23:47:53'),
+(32, 11, 'Webkul\\PurchaseOrder\\Models\\PurchaseOrder', 'Tax', 'percentage', 4.0000, 7.0267, 1, '2026-05-19 23:47:53', '2026-05-19 23:47:53'),
+(33, 18, 'quotes', 'sss', 'percentage', 12.0000, 6.8040, 0, '2026-05-20 00:30:38', '2026-05-20 00:30:38'),
+(34, 13, 'Webkul\\Quote\\Models\\ProformaInvoice', 'sss', 'percentage', 12.0000, 6.8040, 0, '2026-05-20 00:31:16', '2026-05-20 00:31:16');
 
 -- --------------------------------------------------------
 
@@ -1600,28 +1970,28 @@ INSERT INTO `document_charges` (`id`, `chargeable_id`, `chargeable_type`, `name`
 --
 
 CREATE TABLE `emails` (
-  `id` int UNSIGNED NOT NULL,
-  `subject` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `source` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `user_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `reply` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `is_read` tinyint(1) NOT NULL DEFAULT '0',
-  `folders` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `from` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `sender` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `reply_to` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `cc` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `bcc` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `unique_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `message_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `reference_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `person_id` int UNSIGNED DEFAULT NULL,
-  `lead_id` int UNSIGNED DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `subject` varchar(191) DEFAULT NULL,
+  `source` varchar(191) NOT NULL,
+  `user_type` varchar(191) NOT NULL,
+  `name` varchar(191) DEFAULT NULL,
+  `reply` text DEFAULT NULL,
+  `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `folders` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `from` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `sender` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `reply_to` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `cc` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `bcc` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `unique_id` varchar(191) DEFAULT NULL,
+  `message_id` varchar(191) NOT NULL,
+  `reference_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `person_id` int(10) UNSIGNED DEFAULT NULL,
+  `lead_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `parent_id` int UNSIGNED DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `parent_id` int(10) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `emails`
@@ -1641,13 +2011,13 @@ INSERT INTO `emails` (`id`, `subject`, `source`, `user_type`, `name`, `reply`, `
 --
 
 CREATE TABLE `email_attachments` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `size` int DEFAULT NULL,
-  `content_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `content_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `email_id` int UNSIGNED NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) DEFAULT NULL,
+  `path` varchar(191) NOT NULL,
+  `size` int(11) DEFAULT NULL,
+  `content_type` varchar(191) DEFAULT NULL,
+  `content_id` varchar(191) DEFAULT NULL,
+  `email_id` int(10) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1659,8 +2029,8 @@ CREATE TABLE `email_attachments` (
 --
 
 CREATE TABLE `email_tags` (
-  `tag_id` int UNSIGNED NOT NULL,
-  `email_id` int UNSIGNED NOT NULL
+  `tag_id` int(10) UNSIGNED NOT NULL,
+  `email_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1670,10 +2040,10 @@ CREATE TABLE `email_tags` (
 --
 
 CREATE TABLE `email_templates` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `subject` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `subject` varchar(191) NOT NULL,
+  `content` text NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1694,13 +2064,13 @@ INSERT INTO `email_templates` (`id`, `name`, `subject`, `content`, `created_at`,
 --
 
 CREATE TABLE `failed_jobs` (
-  `id` bigint UNSIGNED NOT NULL,
-  `uuid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `connection` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `queue` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `exception` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `failed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `uuid` varchar(191) NOT NULL,
+  `connection` text NOT NULL,
+  `queue` text NOT NULL,
+  `payload` longtext NOT NULL,
+  `exception` longtext NOT NULL,
+  `failed_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1710,15 +2080,15 @@ CREATE TABLE `failed_jobs` (
 --
 
 CREATE TABLE `goods_receipts` (
-  `id` int UNSIGNED NOT NULL,
-  `goods_receipt_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `purchase_order_id` int UNSIGNED NOT NULL,
-  `vendor_id` int UNSIGNED DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `goods_receipt_number` varchar(191) NOT NULL,
+  `purchase_order_id` int(10) UNSIGNED NOT NULL,
+  `vendor_id` int(10) UNSIGNED DEFAULT NULL,
   `receipt_date` date NOT NULL,
-  `received_by` int UNSIGNED DEFAULT NULL,
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `attachment_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'posted',
+  `received_by` int(10) UNSIGNED DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `attachment_path` varchar(191) DEFAULT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'posted',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1730,15 +2100,15 @@ CREATE TABLE `goods_receipts` (
 --
 
 CREATE TABLE `goods_receipt_items` (
-  `id` int UNSIGNED NOT NULL,
-  `goods_receipt_id` int UNSIGNED NOT NULL,
-  `purchase_order_item_id` int UNSIGNED NOT NULL,
-  `requirement_id` int UNSIGNED DEFAULT NULL,
-  `material_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `received_qty` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `unit` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `unit_price` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `line_total` decimal(12,4) NOT NULL DEFAULT '0.0000',
+  `id` int(10) UNSIGNED NOT NULL,
+  `goods_receipt_id` int(10) UNSIGNED NOT NULL,
+  `purchase_order_item_id` int(10) UNSIGNED NOT NULL,
+  `requirement_id` int(10) UNSIGNED DEFAULT NULL,
+  `material_name` varchar(191) NOT NULL,
+  `received_qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `unit` varchar(100) DEFAULT NULL,
+  `unit_price` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `line_total` decimal(12,4) NOT NULL DEFAULT 0.0000,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1750,9 +2120,9 @@ CREATE TABLE `goods_receipt_items` (
 --
 
 CREATE TABLE `groups` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `description` varchar(191) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1764,26 +2134,26 @@ CREATE TABLE `groups` (
 --
 
 CREATE TABLE `imports` (
-  `id` int UNSIGNED NOT NULL,
-  `state` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
-  `process_in_queue` tinyint(1) NOT NULL DEFAULT '1',
-  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `action` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `validation_strategy` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `allowed_errors` int NOT NULL DEFAULT '0',
-  `processed_rows_count` int NOT NULL DEFAULT '0',
-  `invalid_rows_count` int NOT NULL DEFAULT '0',
-  `errors_count` int NOT NULL DEFAULT '0',
-  `errors` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `field_separator` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `file_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `error_file_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `summary` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `id` int(10) UNSIGNED NOT NULL,
+  `state` varchar(191) NOT NULL DEFAULT 'pending',
+  `process_in_queue` tinyint(1) NOT NULL DEFAULT 1,
+  `type` varchar(191) NOT NULL,
+  `action` varchar(191) NOT NULL,
+  `validation_strategy` varchar(191) NOT NULL,
+  `allowed_errors` int(11) NOT NULL DEFAULT 0,
+  `processed_rows_count` int(11) NOT NULL DEFAULT 0,
+  `invalid_rows_count` int(11) NOT NULL DEFAULT 0,
+  `errors_count` int(11) NOT NULL DEFAULT 0,
+  `errors` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `field_separator` varchar(191) NOT NULL,
+  `file_path` varchar(191) NOT NULL,
+  `error_file_path` varchar(191) DEFAULT NULL,
+  `summary` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `started_at` datetime DEFAULT NULL,
   `completed_at` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1792,12 +2162,12 @@ CREATE TABLE `imports` (
 --
 
 CREATE TABLE `import_batches` (
-  `id` int UNSIGNED NOT NULL,
-  `state` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `id` int(10) UNSIGNED NOT NULL,
+  `state` varchar(191) NOT NULL DEFAULT 'pending',
   `data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `summary` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `import_id` int UNSIGNED NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `summary` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `import_id` int(10) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1806,13 +2176,13 @@ CREATE TABLE `import_batches` (
 --
 
 CREATE TABLE `jobs` (
-  `id` bigint UNSIGNED NOT NULL,
-  `queue` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `attempts` tinyint UNSIGNED NOT NULL,
-  `reserved_at` int UNSIGNED DEFAULT NULL,
-  `available_at` int UNSIGNED NOT NULL,
-  `created_at` int UNSIGNED NOT NULL
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `queue` varchar(191) NOT NULL,
+  `payload` longtext NOT NULL,
+  `attempts` tinyint(3) UNSIGNED NOT NULL,
+  `reserved_at` int(10) UNSIGNED DEFAULT NULL,
+  `available_at` int(10) UNSIGNED NOT NULL,
+  `created_at` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1822,16 +2192,16 @@ CREATE TABLE `jobs` (
 --
 
 CREATE TABLE `job_batches` (
-  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `total_jobs` int NOT NULL,
-  `pending_jobs` int NOT NULL,
-  `failed_jobs` int NOT NULL,
-  `failed_job_ids` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `options` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `cancelled_at` int DEFAULT NULL,
-  `created_at` int NOT NULL,
-  `finished_at` int DEFAULT NULL
+  `id` varchar(191) NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `total_jobs` int(11) NOT NULL,
+  `pending_jobs` int(11) NOT NULL,
+  `failed_jobs` int(11) NOT NULL,
+  `failed_job_ids` text NOT NULL,
+  `options` mediumtext DEFAULT NULL,
+  `cancelled_at` int(11) DEFAULT NULL,
+  `created_at` int(11) NOT NULL,
+  `finished_at` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1841,14 +2211,14 @@ CREATE TABLE `job_batches` (
 --
 
 CREATE TABLE `job_cards` (
-  `id` int UNSIGNED NOT NULL,
-  `job_order_id` int UNSIGNED NOT NULL,
-  `job_order_item_id` int UNSIGNED DEFAULT NULL,
-  `product_id` int UNSIGNED DEFAULT NULL,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open',
-  `remarks` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `created_by` int UNSIGNED DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `job_order_id` int(10) UNSIGNED NOT NULL,
+  `job_order_item_id` int(10) UNSIGNED DEFAULT NULL,
+  `product_id` int(10) UNSIGNED DEFAULT NULL,
+  `title` varchar(191) DEFAULT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'open',
+  `remarks` text DEFAULT NULL,
+  `created_by` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1862,7 +2232,14 @@ INSERT INTO `job_cards` (`id`, `job_order_id`, `job_order_item_id`, `product_id`
 (2, 2, 2, 21, 'JO-00001 - Cotton Tote Bag', 'open', NULL, 1, '2026-03-18 17:15:19', '2026-03-18 17:15:19'),
 (3, 3, 3, 21, 'JO-00001 - MQTB', 'open', NULL, 1, '2026-03-18 18:45:03', '2026-03-18 18:45:03'),
 (4, 4, 4, 21, 'JO-00001 - MQTB', 'open', NULL, 1, '2026-03-18 21:46:53', '2026-03-18 21:46:53'),
-(5, 5, 5, 21, 'JO-00001 - MQTB', 'open', NULL, 1, '2026-04-15 10:18:21', '2026-04-15 10:18:21');
+(9, 7, 9, 31, 'JO-00001 - Test2', 'open', NULL, 1, '2026-04-16 19:58:00', '2026-04-16 19:58:00'),
+(10, 7, 10, 30, 'JO-00001 - Test1', 'open', NULL, 1, '2026-04-16 19:58:00', '2026-04-16 19:58:00'),
+(11, 8, 11, 31, 'JO-00002 - Test2', 'open', NULL, 1, '2026-04-16 20:03:13', '2026-04-16 20:03:13'),
+(12, 8, 12, 30, 'JO-00002 - Test1', 'open', NULL, 1, '2026-04-16 20:03:13', '2026-04-16 20:03:13'),
+(13, 9, 13, 38, 'JO-00003 - abc', 'open', NULL, 1, '2026-05-19 23:03:55', '2026-05-19 23:03:55'),
+(14, 10, 15, 38, 'JO-00001 - abc', 'open', NULL, 1, '2026-05-19 23:46:43', '2026-05-19 23:46:43'),
+(15, 11, 17, 38, 'JO-00002 - abc', 'open', NULL, 1, '2026-05-20 00:31:41', '2026-05-20 00:31:41'),
+(16, 12, 19, 38, 'JO-00001 - abc', 'open', NULL, 1, '2026-05-20 02:37:25', '2026-05-20 02:37:25');
 
 -- --------------------------------------------------------
 
@@ -1871,12 +2248,12 @@ INSERT INTO `job_cards` (`id`, `job_order_id`, `job_order_item_id`, `product_id`
 --
 
 CREATE TABLE `job_card_sections` (
-  `id` int UNSIGNED NOT NULL,
-  `job_card_id` int UNSIGNED NOT NULL,
-  `source_product_section_id` int UNSIGNED DEFAULT NULL,
-  `section_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort_order` int DEFAULT NULL,
-  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'not_started',
+  `id` int(10) UNSIGNED NOT NULL,
+  `job_card_id` int(10) UNSIGNED NOT NULL,
+  `source_product_section_id` int(10) UNSIGNED DEFAULT NULL,
+  `section_name` varchar(191) NOT NULL,
+  `sort_order` int(11) DEFAULT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'not_started',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1901,11 +2278,10 @@ INSERT INTO `job_card_sections` (`id`, `job_card_id`, `source_product_section_id
 (13, 4, 9, 'Finishing', 2, 'not_started', '2026-03-18 21:46:53', '2026-03-18 21:46:53'),
 (14, 4, 10, 'Quality', 3, 'not_started', '2026-03-18 21:46:53', '2026-03-18 21:46:53'),
 (15, 4, 11, 'Packing', 4, 'not_started', '2026-03-18 21:46:53', '2026-03-18 21:46:53'),
-(16, 5, 7, 'Cutting', 0, 'not_started', '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(17, 5, 8, 'Stitching', 1, 'not_started', '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(18, 5, 9, 'Finishing', 2, 'not_started', '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(19, 5, 10, 'Quality', 3, 'not_started', '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(20, 5, 11, 'Packing', 4, 'not_started', '2026-04-15 10:18:21', '2026-04-15 10:18:21');
+(16, 13, 60, 'Brendan Kane', 0, 'not_started', '2026-05-19 23:03:55', '2026-05-19 23:03:55'),
+(17, 14, 60, 'Brendan Kane', 0, 'not_started', '2026-05-19 23:46:43', '2026-05-19 23:46:43'),
+(18, 15, 60, 'Brendan Kane', 0, 'not_started', '2026-05-20 00:31:41', '2026-05-20 00:31:41'),
+(19, 16, 60, 'Brendan Kane', 0, 'not_started', '2026-05-20 02:37:25', '2026-05-20 02:37:25');
 
 -- --------------------------------------------------------
 
@@ -1914,13 +2290,13 @@ INSERT INTO `job_card_sections` (`id`, `job_card_id`, `source_product_section_id
 --
 
 CREATE TABLE `job_card_section_items` (
-  `id` int UNSIGNED NOT NULL,
-  `job_card_section_id` int UNSIGNED NOT NULL,
-  `source_product_section_item_id` int UNSIGNED DEFAULT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `job_card_section_id` int(10) UNSIGNED NOT NULL,
+  `source_product_section_item_id` int(10) UNSIGNED DEFAULT NULL,
+  `name` varchar(191) NOT NULL,
   `qty` decimal(12,4) DEFAULT NULL,
-  `unit` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `sort_order` int DEFAULT NULL,
+  `unit` varchar(100) DEFAULT NULL,
+  `sort_order` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1951,13 +2327,10 @@ INSERT INTO `job_card_section_items` (`id`, `job_card_section_id`, `source_produ
 (19, 13, 11, 'Iron Pass', 1.0000, 'Pass', 0, '2026-03-18 21:46:53', '2026-03-18 21:46:53'),
 (20, 14, 12, 'QC Check', 1.0000, 'Check', 0, '2026-03-18 21:46:53', '2026-03-18 21:46:53'),
 (21, 15, 13, 'Pieces Per Carton', 100.0000, 'Piece', 0, '2026-03-18 21:46:53', '2026-03-18 21:46:53'),
-(22, 16, 7, 'Fabric Width', 66.0000, 'Inch', 0, '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(23, 16, 8, 'Cutting', 40.0000, 'Inch', 1, '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(24, 17, 9, 'Thread Usage', 5.0000, 'Meter', 0, '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(25, 17, 10, 'Machine Type', 1.0000, 'Unit', 1, '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(26, 18, 11, 'Iron Pass', 1.0000, 'Pass', 0, '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(27, 19, 12, 'QC Check', 1.0000, 'Check', 0, '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(28, 20, 13, 'Pieces Per Carton', 100.0000, 'Piece', 0, '2026-04-15 10:18:21', '2026-04-15 10:18:21');
+(22, 16, 80, 'Samson Cantu', 981.0000, 'Est aut molestiae do', 0, '2026-05-19 23:03:55', '2026-05-19 23:03:55'),
+(23, 17, 80, 'Samson Cantu', 981.0000, 'Est aut molestiae do', 0, '2026-05-19 23:46:43', '2026-05-19 23:46:43'),
+(24, 18, 80, 'Samson Cantu', 981.0000, 'Est aut molestiae do', 0, '2026-05-20 00:31:41', '2026-05-20 00:31:41'),
+(25, 19, 80, 'Samson Cantu', 981.0000, 'Est aut molestiae do', 0, '2026-05-20 02:37:25', '2026-05-20 02:37:25');
 
 -- --------------------------------------------------------
 
@@ -1966,20 +2339,20 @@ INSERT INTO `job_card_section_items` (`id`, `job_card_section_id`, `source_produ
 --
 
 CREATE TABLE `job_orders` (
-  `id` int UNSIGNED NOT NULL,
-  `job_order_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `proforma_invoice_id` int UNSIGNED NOT NULL,
-  `organization_id` int UNSIGNED NOT NULL,
-  `person_id` int UNSIGNED DEFAULT NULL,
-  `customer_po_reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `subject` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `job_order_number` varchar(191) NOT NULL,
+  `proforma_invoice_id` int(10) UNSIGNED NOT NULL,
+  `organization_id` int(10) UNSIGNED NOT NULL,
+  `person_id` int(10) UNSIGNED DEFAULT NULL,
+  `customer_po_reference` varchar(191) DEFAULT NULL,
+  `subject` varchar(191) DEFAULT NULL,
   `issue_date` date NOT NULL,
   `required_delivery_date` date DEFAULT NULL,
-  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open',
-  `total_order_qty` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `remarks` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `created_by` int UNSIGNED DEFAULT NULL,
-  `approved_by` int UNSIGNED DEFAULT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'open',
+  `total_order_qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `remarks` text DEFAULT NULL,
+  `created_by` int(10) UNSIGNED DEFAULT NULL,
+  `approved_by` int(10) UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -1990,7 +2363,7 @@ CREATE TABLE `job_orders` (
 --
 
 INSERT INTO `job_orders` (`id`, `job_order_number`, `proforma_invoice_id`, `organization_id`, `person_id`, `customer_po_reference`, `subject`, `issue_date`, `required_delivery_date`, `status`, `total_order_qty`, `remarks`, `created_by`, `approved_by`, `approved_at`, `created_at`, `updated_at`) VALUES
-(5, 'JO-00001', 1, 3, 0, NULL, 'Quote 000003', '2026-04-15', '0000-00-00', 'open', 1.0000, '', 1, NULL, NULL, '2026-04-15 10:18:21', '2026-04-15 10:18:21');
+(12, 'JO-00001', 14, 3, 0, NULL, 'Quote 000001', '2026-05-19', '0000-00-00', 'open', 1333.0000, '', 1, NULL, NULL, '2026-05-20 02:37:15', '2026-05-20 02:37:15');
 
 -- --------------------------------------------------------
 
@@ -1999,18 +2372,18 @@ INSERT INTO `job_orders` (`id`, `job_order_number`, `proforma_invoice_id`, `orga
 --
 
 CREATE TABLE `job_order_items` (
-  `id` int UNSIGNED NOT NULL,
-  `job_order_id` int UNSIGNED NOT NULL,
-  `proforma_invoice_item_id` bigint UNSIGNED DEFAULT NULL,
-  `product_id` int UNSIGNED DEFAULT NULL,
-  `item_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `item_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `qty` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `unit` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `job_order_id` int(10) UNSIGNED NOT NULL,
+  `proforma_invoice_item_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `product_id` int(10) UNSIGNED DEFAULT NULL,
+  `item_name` varchar(191) NOT NULL,
+  `item_code` varchar(191) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `unit` varchar(100) DEFAULT NULL,
   `unit_price` decimal(12,4) DEFAULT NULL,
   `line_total` decimal(12,4) DEFAULT NULL,
-  `sort_order` int DEFAULT NULL,
+  `sort_order` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2024,7 +2397,18 @@ INSERT INTO `job_order_items` (`id`, `job_order_id`, `proforma_invoice_item_id`,
 (2, 2, NULL, 21, 'Cotton Tote Bag', NULL, NULL, 12.0000, NULL, NULL, NULL, 0, '2026-03-18 17:15:19', '2026-03-18 17:15:19'),
 (3, 3, NULL, 21, 'Cotton Tote Bag', NULL, NULL, 1.0000, NULL, NULL, NULL, 0, '2026-03-18 18:45:03', '2026-03-18 18:45:03'),
 (4, 4, NULL, 21, 'Cotton Tote Bag', NULL, NULL, 12.0000, NULL, NULL, NULL, 0, '2026-03-18 21:46:53', '2026-03-18 21:46:53'),
-(5, 5, 6, 21, 'Cotton Tote Bag', 'MQTB', '', 1.0000, 'PCS', 4.7200, 4.7200, 0, '2026-04-15 10:18:21', '2026-04-15 10:18:21');
+(9, 7, 6, 31, 'test22', 'Test2', '', 1.0000, 'PCS', 0.0000, 0.0000, 0, '2026-04-16 19:58:00', '2026-04-16 19:58:00'),
+(10, 7, 7, 30, 'testtt', 'Test1', '', 1.0000, 'PCS', 0.0000, 0.0000, 1, '2026-04-16 19:58:00', '2026-04-16 19:58:00'),
+(11, 8, 8, 31, 'test22', 'Test2', '', 1.0000, 'PCS', 0.0000, 0.0000, 0, '2026-04-16 20:03:13', '2026-04-16 20:03:13'),
+(12, 8, 9, 30, 'testtt', 'Test1', '', 1.0000, 'PCS', 0.0000, 0.0000, 1, '2026-04-16 20:03:13', '2026-04-16 20:03:13'),
+(13, 9, 11, 38, 'Street Bundle abc', 'abc', '', 1200.0000, 'PCS', 0.8800, 1056.0000, 0, '2026-05-19 23:03:55', '2026-05-19 23:03:55'),
+(14, 9, 12, 38, 'Street Bundle abc', 'abc', '', 120.0000, 'PCS', 0.8200, 98.4000, 1, '2026-05-19 23:03:55', '2026-05-19 23:03:55'),
+(15, 10, 15, 38, 'Street Bundle abc', 'abc', '', 1113.0000, 'PCS', 0.8200, 912.6600, 0, '2026-05-19 23:46:43', '2026-05-19 23:46:43'),
+(16, 10, 16, 38, 'Street Bundle abc', 'abc', '', 1232.0000, 'PCS', 0.8800, 1084.1600, 1, '2026-05-19 23:46:43', '2026-05-19 23:46:43'),
+(17, 11, 17, 38, 'Street Bundle abc', 'abc', '', 43.0000, 'PCS', 0.8800, 37.8400, 0, '2026-05-20 00:31:41', '2026-05-20 00:31:41'),
+(18, 11, 18, 38, 'Street Bundle abc', 'abc', '', 23.0000, 'PCS', 0.8200, 18.8600, 1, '2026-05-20 00:31:41', '2026-05-20 00:31:41'),
+(19, 12, 19, 38, 'Street Bundle abc', 'abc', '', 1200.0000, 'PCS', 0.8200, 984.0000, 0, '2026-05-20 02:37:25', '2026-05-20 02:37:25'),
+(20, 12, 20, 38, 'Street Bundle abc', 'abc', '', 133.0000, 'PCS', 0.8800, 117.0400, 1, '2026-05-20 02:37:25', '2026-05-20 02:37:25');
 
 -- --------------------------------------------------------
 
@@ -2033,19 +2417,24 @@ INSERT INTO `job_order_items` (`id`, `job_order_id`, `proforma_invoice_item_id`,
 --
 
 CREATE TABLE `job_order_requirements` (
-  `id` int UNSIGNED NOT NULL,
-  `job_order_id` int UNSIGNED NOT NULL,
-  `job_order_item_id` int UNSIGNED DEFAULT NULL,
-  `product_id` int UNSIGNED DEFAULT NULL,
-  `material_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `unit` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `qty_per_unit` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `ordered_qty` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `required_qty` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `received_qty` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `balance_qty` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
-  `sort_order` int DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `job_order_id` int(10) UNSIGNED NOT NULL,
+  `job_order_item_id` int(10) UNSIGNED DEFAULT NULL,
+  `product_id` int(10) UNSIGNED DEFAULT NULL,
+  `item_codes` text DEFAULT NULL,
+  `material_reference_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `material_name` varchar(191) NOT NULL,
+  `unit` varchar(100) DEFAULT NULL,
+  `vendor_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`vendor_ids`)),
+  `color_name` varchar(191) DEFAULT NULL,
+  `color_code` varchar(20) DEFAULT NULL,
+  `qty_per_unit` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `ordered_qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `required_qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `received_qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `balance_qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `status` varchar(50) NOT NULL DEFAULT 'pending',
+  `sort_order` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2054,11 +2443,33 @@ CREATE TABLE `job_order_requirements` (
 -- Dumping data for table `job_order_requirements`
 --
 
-INSERT INTO `job_order_requirements` (`id`, `job_order_id`, `job_order_item_id`, `product_id`, `material_name`, `unit`, `qty_per_unit`, `ordered_qty`, `required_qty`, `received_qty`, `balance_qty`, `status`, `sort_order`, `created_at`, `updated_at`) VALUES
-(13, 5, 5, 21, 'Cotton Fabric', 'Meter', 0.3500, 1.0000, 0.3500, 0.0000, 0.3500, 'pending', 0, '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(14, 5, 5, 21, 'Handle', 'Inch', 20.0000, 1.0000, 20.0000, 0.0000, 20.0000, 'pending', 1, '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(15, 5, 5, 21, 'Label', 'Piece', 1.0000, 1.0000, 1.0000, 0.0000, 1.0000, 'pending', 2, '2026-04-15 10:18:21', '2026-04-15 10:18:21'),
-(16, 5, 5, 21, 'Thread', 'Meter', 5.0000, 1.0000, 5.0000, 0.0000, 5.0000, 'pending', 3, '2026-04-15 10:18:21', '2026-04-15 10:18:21');
+INSERT INTO `job_order_requirements` (`id`, `job_order_id`, `job_order_item_id`, `product_id`, `item_codes`, `material_reference_id`, `material_name`, `unit`, `vendor_ids`, `color_name`, `color_code`, `qty_per_unit`, `ordered_qty`, `required_qty`, `received_qty`, `balance_qty`, `status`, `sort_order`, `created_at`, `updated_at`) VALUES
+(15, 8, 11, 31, 'Test2, Test1', 3, '20x20 / 60x66 - 66\" | 150gsm', 'METER', '[6, 9]', 'red', '#FF0000', 0.3120, 2.0000, 0.6240, 0.0000, 0.6240, 'pending', 0, '2026-04-16 20:03:13', '2026-04-16 20:03:13'),
+(16, 8, 11, 31, 'Test2', 7, 'Cartons (240 pcs / Box)', 'INCH', NULL, 'green', NULL, 0.0420, 1.0000, 0.0420, 0.0000, 0.0420, 'pending', 1, '2026-04-16 20:03:13', '2026-04-16 20:03:13'),
+(17, 8, 12, 30, 'Test1', 7, 'Cartons (240 pcs / Box)', 'INCH', '[10]', 'yellow', NULL, 0.0420, 1.0000, 0.0420, 0.0000, 0.0420, 'pending', 2, '2026-04-16 20:03:13', '2026-04-16 20:03:13'),
+(18, 7, 9, 31, 'Test2, Test1', 3, '20x20 / 60x66 - 66\" | 150gsm', 'METER', '[6, 9]', 'red', '#FF0000', 0.3120, 2.0000, 0.6240, 0.0000, 0.6240, 'pending', 0, '2026-04-16 20:03:41', '2026-04-16 20:03:41'),
+(19, 7, 9, 31, 'Test2', 7, 'Cartons (240 pcs / Box)', 'INCH', NULL, 'green', NULL, 0.0420, 1.0000, 0.0420, 0.0000, 0.0420, 'pending', 1, '2026-04-16 20:03:41', '2026-04-16 20:03:41'),
+(20, 7, 10, 30, 'Test1', 7, 'Cartons (240 pcs / Box)', 'INCH', '[10]', 'yellow', NULL, 0.0420, 1.0000, 0.0420, 0.0000, 0.0420, 'pending', 2, '2026-04-16 20:03:41', '2026-04-16 20:03:41'),
+(21, 9, 13, 38, 'abc', 7, 'Cartons (240 pcs / Box)', 'Do sed quidem animi', '[10]', 'Byron Ramos', '#B9B1BF', 323.0000, 1320.0000, 426360.0000, 0.0000, 426360.0000, 'pending', 0, '2026-05-19 23:03:55', '2026-05-19 23:03:55'),
+(22, 9, 13, 38, 'abc', 3, '20x20 / 60x66 - 66\" | 150gsm', 'METER', '[6,9]', 'red', NULL, 0.3120, 1200.0000, 374.4000, 0.0000, 374.4000, 'pending', 1, '2026-05-19 23:03:55', '2026-05-19 23:03:55'),
+(23, 9, 13, 38, 'abc', 5, 'Oekotex Label', 'INCH', '[4]', 'red', NULL, 1.0000, 1200.0000, 1200.0000, 0.0000, 1200.0000, 'pending', 2, '2026-05-19 23:03:55', '2026-05-19 23:03:55'),
+(24, 9, 14, 38, 'abc', 3, '20x20 / 60x66 - 66\" | 150gsm', 'METER', '[6,9]', 'black', NULL, 0.3120, 120.0000, 37.4400, 0.0000, 37.4400, 'pending', 3, '2026-05-19 23:03:55', '2026-05-19 23:03:55'),
+(25, 9, 14, 38, 'abc', 5, 'Oekotex Label', 'INCH', '[4]', 'black', NULL, 1.0000, 120.0000, 120.0000, 0.0000, 120.0000, 'pending', 4, '2026-05-19 23:03:55', '2026-05-19 23:03:55'),
+(26, 10, 15, 38, 'abc', 7, 'Cartons (240 pcs / Box)', 'Do sed quidem animi', '[10]', 'Byron Ramos', '#B9B1BF', 323.0000, 2345.0000, 757435.0000, 0.0000, 757435.0000, 'pending', 0, '2026-05-19 23:46:43', '2026-05-19 23:46:43'),
+(27, 10, 15, 38, 'abc', 3, '20x20 / 60x66 - 66\" | 150gsm', 'METER', '[6,9]', 'black', NULL, 0.3120, 1113.0000, 347.2560, 0.0000, 347.2560, 'pending', 1, '2026-05-19 23:46:43', '2026-05-19 23:46:43'),
+(28, 10, 15, 38, 'abc', 5, 'Oekotex Label', 'INCH', '[4]', 'black', NULL, 1.0000, 1113.0000, 1113.0000, 0.0000, 1113.0000, 'pending', 2, '2026-05-19 23:46:43', '2026-05-19 23:46:43'),
+(29, 10, 16, 38, 'abc', 3, '20x20 / 60x66 - 66\" | 150gsm', 'METER', '[6,9]', 'red', NULL, 0.3120, 1232.0000, 384.3840, 0.0000, 384.3840, 'pending', 3, '2026-05-19 23:46:43', '2026-05-19 23:46:43'),
+(30, 10, 16, 38, 'abc', 5, 'Oekotex Label', 'INCH', '[4]', 'red', NULL, 1.0000, 1232.0000, 1232.0000, 0.0000, 1232.0000, 'pending', 4, '2026-05-19 23:46:43', '2026-05-19 23:46:43'),
+(31, 11, 17, 38, 'abc', 7, 'Cartons (240 pcs / Box)', 'Do sed quidem animi', '[10]', 'Byron Ramos', '#B9B1BF', 323.0000, 66.0000, 21318.0000, 0.0000, 21318.0000, 'pending', 0, '2026-05-20 00:31:41', '2026-05-20 00:31:41'),
+(32, 11, 17, 38, 'abc', 3, '20x20 / 60x66 - 66\" | 150gsm', 'METER', '[6,9]', 'red', NULL, 0.3120, 43.0000, 13.4160, 0.0000, 13.4160, 'pending', 1, '2026-05-20 00:31:41', '2026-05-20 00:31:41'),
+(33, 11, 17, 38, 'abc', 5, 'Oekotex Label', 'INCH', '[4]', 'red', NULL, 1.0000, 43.0000, 43.0000, 0.0000, 43.0000, 'pending', 2, '2026-05-20 00:31:41', '2026-05-20 00:31:41'),
+(34, 11, 18, 38, 'abc', 3, '20x20 / 60x66 - 66\" | 150gsm', 'METER', '[6,9]', 'black', NULL, 0.3120, 23.0000, 7.1760, 0.0000, 7.1760, 'pending', 3, '2026-05-20 00:31:41', '2026-05-20 00:31:41'),
+(35, 11, 18, 38, 'abc', 5, 'Oekotex Label', 'INCH', '[4]', 'black', NULL, 1.0000, 23.0000, 23.0000, 0.0000, 23.0000, 'pending', 4, '2026-05-20 00:31:41', '2026-05-20 00:31:41'),
+(36, 12, 19, 38, 'abc', 7, 'Cartons (240 pcs / Box)', 'Do sed quidem animi', '[10]', 'Byron Ramos', '#B9B1BF', 323.0000, 1333.0000, 430559.0000, 0.0000, 430559.0000, 'pending', 0, '2026-05-20 02:37:25', '2026-05-20 02:37:25'),
+(37, 12, 19, 38, 'abc', 3, '20x20 / 60x66 - 66\" | 150gsm', 'METER', '[6,9]', 'black', NULL, 0.3120, 1200.0000, 374.4000, 0.0000, 374.4000, 'pending', 1, '2026-05-20 02:37:25', '2026-05-20 02:37:25'),
+(38, 12, 19, 38, 'abc', 5, 'Oekotex Label', 'INCH', '[4]', 'black', NULL, 1.0000, 1200.0000, 1200.0000, 0.0000, 1200.0000, 'pending', 2, '2026-05-20 02:37:25', '2026-05-20 02:37:25'),
+(39, 12, 20, 38, 'abc', 3, '20x20 / 60x66 - 66\" | 150gsm', 'METER', '[6,9]', 'red', NULL, 0.3120, 133.0000, 41.4960, 0.0000, 41.4960, 'pending', 3, '2026-05-20 02:37:25', '2026-05-20 02:37:25'),
+(40, 12, 20, 38, 'abc', 5, 'Oekotex Label', 'INCH', '[4]', 'red', NULL, 1.0000, 133.0000, 133.0000, 0.0000, 133.0000, 'pending', 4, '2026-05-20 02:37:25', '2026-05-20 02:37:25');
 
 -- --------------------------------------------------------
 
@@ -2067,22 +2478,22 @@ INSERT INTO `job_order_requirements` (`id`, `job_order_id`, `job_order_item_id`,
 --
 
 CREATE TABLE `leads` (
-  `id` int UNSIGNED NOT NULL,
-  `case_no` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `id` int(10) UNSIGNED NOT NULL,
+  `case_no` varchar(20) NOT NULL,
+  `title` varchar(191) NOT NULL,
+  `description` text DEFAULT NULL,
   `lead_value` decimal(12,4) DEFAULT NULL,
   `status` tinyint(1) DEFAULT NULL,
-  `lost_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `lost_reason` text DEFAULT NULL,
   `closed_at` datetime DEFAULT NULL,
-  `user_id` int UNSIGNED DEFAULT NULL,
-  `person_id` int UNSIGNED DEFAULT NULL,
-  `organization_id` int UNSIGNED DEFAULT NULL,
-  `priority` enum('low','medium','high','urgent') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'medium',
-  `lead_source_id` int UNSIGNED DEFAULT NULL,
-  `lead_type_id` int UNSIGNED DEFAULT NULL,
-  `lead_pipeline_id` int UNSIGNED DEFAULT NULL,
-  `lead_pipeline_stage_id` int UNSIGNED DEFAULT NULL,
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
+  `person_id` int(10) UNSIGNED DEFAULT NULL,
+  `organization_id` int(10) UNSIGNED DEFAULT NULL,
+  `priority` enum('low','medium','high','urgent') DEFAULT 'medium',
+  `lead_source_id` int(10) UNSIGNED DEFAULT NULL,
+  `lead_type_id` int(10) UNSIGNED DEFAULT NULL,
+  `lead_pipeline_id` int(10) UNSIGNED DEFAULT NULL,
+  `lead_pipeline_stage_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `expected_close_date` date DEFAULT NULL
@@ -2095,9 +2506,13 @@ CREATE TABLE `leads` (
 INSERT INTO `leads` (`id`, `case_no`, `title`, `description`, `lead_value`, `status`, `lost_reason`, `closed_at`, `user_id`, `person_id`, `organization_id`, `priority`, `lead_source_id`, `lead_type_id`, `lead_pipeline_id`, `lead_pipeline_stage_id`, `created_at`, `updated_at`, `expected_close_date`) VALUES
 (1, '00001', 'Accusamus atque earu', 'Necessitatibus reici', 23.0000, 1, NULL, NULL, 1, 1, NULL, 'medium', 2, 2, 1, 2, '2025-11-15 14:36:48', '2026-02-21 18:24:44', NULL),
 (2, '00002', 'dsf', '', 45.0000, 1, NULL, NULL, 1, 1, NULL, 'medium', 1, 1, 1, 2, '2026-02-16 19:17:55', '2026-02-24 12:18:23', NULL),
-(3, '00003', 'Occaecat quas qui al', 'Amet minima ut sed', 78.0000, 1, NULL, NULL, 1, 1, NULL, 'medium', 5, 2, 1, 3, '2026-02-21 15:37:49', '2026-02-23 20:28:26', NULL),
-(4, '00004', '\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta i', 'Vero eum rerum bland', 6.0000, 1, NULL, NULL, 1, 1, 2, 'medium', 5, 1, 1, 3, '2026-02-21 18:16:51', '2026-02-26 13:39:02', NULL),
-(5, '00012', '\"gfdgfgfdgfgfd', 'gfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgf', NULL, 1, NULL, NULL, 1, 1, 2, 'low', 3, NULL, 1, 2, '2026-02-23 20:11:53', '2026-02-26 12:06:07', NULL);
+(3, '00003', 'Occaecat quas qui al', 'Amet minima ut sed', 78.0000, 1, NULL, NULL, 1, 1, NULL, 'medium', 5, 2, 1, 4, '2026-02-21 15:37:49', '2026-05-19 23:32:49', NULL),
+(4, '00004', '\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id facili\"\"Quis dicta id ', 'Vero eum rerum bland', 6.0000, 1, NULL, NULL, 1, 1, 2, 'medium', 5, 1, 1, 3, '2026-02-21 18:16:51', '2026-02-26 13:39:02', NULL),
+(5, '00012', '\"gfdgfgfdgfgfd', 'gfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgfgfdgf', NULL, 1, NULL, NULL, 1, 1, 2, 'low', 3, NULL, 1, 2, '2026-02-23 20:11:53', '2026-02-26 12:06:07', NULL),
+(10, '00013', 'tesssssssss', '', NULL, 1, NULL, NULL, 1, 11, 3, 'medium', 2, NULL, 1, 3, '2026-04-18 21:22:50', '2026-04-18 21:22:50', NULL),
+(14, '00015', 'Fabric Complain', 'Customer complained \r\n\r\nHi Zee,\r\n\r\nWe just had a customer reject 400 bags.  He mentioned that there are bags that are too rough to print on or adhere to the platens and that the inventory is a mix of different fabrics. We are having our fulfillment sort through to throw away the bad ones so there\'s not any future issues.\r\n\r\nInfo from customer that im trying to understand:\r\n\r\n\" it looks like the Good ones are packed at 75pcs per box, while the bad ones have 80. The bad ones also have the box wrapped in plastic, and have the word \"BALCK\" on the box! \r\nthe box wrapped in plastic is a box of bad ones. looks like all the bad ones are 2409762 written on the box anything from that batch does not have the pink tag, and the material is rougher.\"\r\n\r\nThese are the ones that are bad and unusable: https://prnt.sc/n4W9EKxqYP5r \r\n(I think this was an early order because i remember telling you they all had the wrong dimensions too and we\'ve been trying to just give them away, obviously a big money loss, but i didn\'t know the fabric was different.) Can you confirm why these are different and if they are old or new and if the container coming are way uses this same fabric? \r\n\r\nThese are apparently the good ones: https://prnt.sc/a1e2XHBTBjGJ \r\nTrying to understand if these are \"Newer\" and if everything coming are way is idential to this. \r\n\r\nThanks,', NULL, 1, NULL, '2026-05-19 20:29:39', 1, 17, 16, 'high', 1, NULL, 1, 5, '2026-05-16 11:05:28', '2026-05-20 00:29:39', NULL),
+(15, '00016', 'issue.. com[lain.. samples', 'sapmles needed faster.', NULL, 1, NULL, NULL, 1, 17, 16, 'high', 1, NULL, 1, 1, '2026-05-16 11:35:06', '2026-05-16 11:35:06', NULL),
+(16, '00017', 'Check Test', 'Check Test 1q3', NULL, 1, NULL, NULL, 1, 12, 3, NULL, NULL, NULL, 1, 1, '2026-05-19 15:14:01', '2026-05-19 15:14:01', NULL);
 
 -- --------------------------------------------------------
 
@@ -2106,8 +2521,8 @@ INSERT INTO `leads` (`id`, `case_no`, `title`, `description`, `lead_value`, `sta
 --
 
 CREATE TABLE `lead_activities` (
-  `activity_id` int UNSIGNED NOT NULL,
-  `lead_id` int UNSIGNED NOT NULL
+  `activity_id` int(10) UNSIGNED NOT NULL,
+  `lead_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -2174,7 +2589,70 @@ INSERT INTO `lead_activities` (`activity_id`, `lead_id`) VALUES
 (246, 5),
 (247, 5),
 (248, 5),
-(249, 4);
+(249, 4),
+(365, 10),
+(366, 10),
+(367, 10),
+(368, 10),
+(369, 10),
+(370, 10),
+(371, 10),
+(420, 14),
+(421, 14),
+(422, 14),
+(423, 14),
+(424, 14),
+(425, 14),
+(426, 14),
+(427, 14),
+(428, 15),
+(429, 15),
+(430, 15),
+(431, 15),
+(432, 15),
+(433, 15),
+(434, 15),
+(435, 15),
+(436, 1),
+(462, 16),
+(463, 16),
+(464, 16),
+(465, 16),
+(466, 16),
+(467, 16),
+(468, 3),
+(480, 14),
+(481, 14);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `lead_persons`
+--
+
+CREATE TABLE `lead_persons` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `lead_id` int(10) UNSIGNED NOT NULL,
+  `person_id` int(10) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `lead_persons`
+--
+
+INSERT INTO `lead_persons` (`id`, `lead_id`, `person_id`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, '2025-11-15 14:36:48', '2026-02-21 18:24:44'),
+(2, 2, 1, '2026-02-16 19:17:55', '2026-02-24 12:18:23'),
+(3, 3, 1, '2026-02-21 15:37:49', '2026-02-23 20:28:26'),
+(4, 4, 1, '2026-02-21 18:16:51', '2026-02-26 13:39:02'),
+(5, 5, 1, '2026-02-23 20:11:53', '2026-02-26 12:06:07'),
+(6, 10, 11, '2026-04-18 21:22:50', '2026-04-18 21:22:50'),
+(7, 14, 17, '2026-05-16 11:05:28', '2026-05-16 11:05:28'),
+(8, 15, 17, '2026-05-16 11:35:06', '2026-05-16 11:35:06'),
+(9, 16, 12, '2026-05-19 15:14:01', '2026-05-19 15:14:01'),
+(10, 16, 2, '2026-05-19 15:14:01', '2026-05-19 15:14:01');
 
 -- --------------------------------------------------------
 
@@ -2183,10 +2661,10 @@ INSERT INTO `lead_activities` (`activity_id`, `lead_id`) VALUES
 --
 
 CREATE TABLE `lead_pipelines` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `is_default` tinyint(1) NOT NULL DEFAULT '0',
-  `rotten_days` int NOT NULL DEFAULT '30',
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `is_default` tinyint(1) NOT NULL DEFAULT 0,
+  `rotten_days` int(11) NOT NULL DEFAULT 30,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2205,12 +2683,12 @@ INSERT INTO `lead_pipelines` (`id`, `name`, `is_default`, `rotten_days`, `create
 --
 
 CREATE TABLE `lead_pipeline_stages` (
-  `id` int UNSIGNED NOT NULL,
-  `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `probability` int NOT NULL DEFAULT '0',
-  `sort_order` int NOT NULL DEFAULT '0',
-  `lead_pipeline_id` int UNSIGNED NOT NULL
+  `id` int(10) UNSIGNED NOT NULL,
+  `code` varchar(191) DEFAULT NULL,
+  `name` varchar(191) DEFAULT NULL,
+  `probability` int(11) NOT NULL DEFAULT 0,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `lead_pipeline_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -2219,8 +2697,8 @@ CREATE TABLE `lead_pipeline_stages` (
 
 INSERT INTO `lead_pipeline_stages` (`id`, `code`, `name`, `probability`, `sort_order`, `lead_pipeline_id`) VALUES
 (1, 'new', 'New', 100, 1, 1),
-(2, 'follow-up', 'Follow Up', 100, 2, 1),
-(3, 'prospect', 'Prospect', 100, 3, 1),
+(2, 'follow-up', 'Follow Up', 100, 3, 1),
+(3, 'prospect', 'Prospect', 100, 2, 1),
 (4, 'negotiation', 'Negotiation', 100, 4, 1),
 (5, 'won', 'Won', 100, 5, 1),
 (6, 'lost', 'Lost', 0, 6, 1);
@@ -2232,8 +2710,8 @@ INSERT INTO `lead_pipeline_stages` (`id`, `code`, `name`, `probability`, `sort_o
 --
 
 CREATE TABLE `lead_priorities` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2255,12 +2733,12 @@ INSERT INTO `lead_priorities` (`id`, `name`, `created_at`, `updated_at`) VALUES
 --
 
 CREATE TABLE `lead_products` (
-  `id` int UNSIGNED NOT NULL,
-  `quantity` int NOT NULL DEFAULT '0',
+  `id` int(10) UNSIGNED NOT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 0,
   `price` decimal(12,4) DEFAULT NULL,
   `amount` decimal(12,4) DEFAULT NULL,
-  `lead_id` int UNSIGNED NOT NULL,
-  `product_id` int UNSIGNED NOT NULL,
+  `lead_id` int(10) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2272,8 +2750,8 @@ CREATE TABLE `lead_products` (
 --
 
 CREATE TABLE `lead_quotes` (
-  `quote_id` int UNSIGNED NOT NULL,
-  `lead_id` int UNSIGNED NOT NULL
+  `quote_id` int(10) UNSIGNED NOT NULL,
+  `lead_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2283,8 +2761,8 @@ CREATE TABLE `lead_quotes` (
 --
 
 CREATE TABLE `lead_sources` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2307,10 +2785,10 @@ INSERT INTO `lead_sources` (`id`, `name`, `created_at`, `updated_at`) VALUES
 --
 
 CREATE TABLE `lead_stages` (
-  `id` int UNSIGNED NOT NULL,
-  `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `is_user_defined` tinyint(1) NOT NULL DEFAULT '1',
+  `id` int(10) UNSIGNED NOT NULL,
+  `code` varchar(191) NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `is_user_defined` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2322,8 +2800,8 @@ CREATE TABLE `lead_stages` (
 --
 
 CREATE TABLE `lead_tags` (
-  `tag_id` int UNSIGNED NOT NULL,
-  `lead_id` int UNSIGNED NOT NULL
+  `tag_id` int(10) UNSIGNED NOT NULL,
+  `lead_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2333,8 +2811,8 @@ CREATE TABLE `lead_tags` (
 --
 
 CREATE TABLE `lead_types` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2354,15 +2832,15 @@ INSERT INTO `lead_types` (`id`, `name`, `created_at`, `updated_at`) VALUES
 --
 
 CREATE TABLE `marketing_campaigns` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `subject` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT '0',
-  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `mail_to` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `spooling` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `marketing_template_id` int UNSIGNED DEFAULT NULL,
-  `marketing_event_id` int UNSIGNED DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `subject` varchar(191) NOT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT 0,
+  `type` varchar(191) NOT NULL,
+  `mail_to` varchar(191) NOT NULL,
+  `spooling` varchar(191) DEFAULT NULL,
+  `marketing_template_id` int(10) UNSIGNED DEFAULT NULL,
+  `marketing_event_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2374,10 +2852,79 @@ CREATE TABLE `marketing_campaigns` (
 --
 
 CREATE TABLE `marketing_events` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `description` varchar(191) NOT NULL,
   `date` date NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `material_references`
+--
+
+CREATE TABLE `material_references` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `unit` varchar(100) NOT NULL,
+  `color_name` varchar(191) DEFAULT NULL,
+  `color_code` varchar(20) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `material_references`
+--
+
+INSERT INTO `material_references` (`id`, `name`, `qty`, `unit`, `color_name`, `color_code`, `created_at`, `updated_at`) VALUES
+(3, '20x20 / 60x66 - 66\" | 150gsm', 0.3120, 'METER', NULL, NULL, '2026-04-16 19:46:21', '2026-04-16 19:46:21'),
+(4, 'Thread 40/2 - 30 Meters', 0.0060, 'METER', NULL, NULL, '2026-04-16 19:46:57', '2026-04-16 19:46:57'),
+(5, 'Oekotex Label', 1.0000, 'INCH', NULL, NULL, '2026-04-16 19:47:18', '2026-04-16 19:47:18'),
+(6, 'Main Label (2 sided)', 1.0000, 'INCH', NULL, NULL, '2026-04-16 19:47:33', '2026-04-16 19:47:33'),
+(7, 'Cartons (240 pcs / Box)', 0.0420, 'INCH', NULL, NULL, '2026-04-16 19:48:35', '2026-04-16 19:48:35');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `material_reference_vendor`
+--
+
+CREATE TABLE `material_reference_vendor` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `material_reference_id` bigint(20) UNSIGNED NOT NULL,
+  `organization_id` int(10) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `material_reference_vendor`
+--
+
+INSERT INTO `material_reference_vendor` (`id`, `material_reference_id`, `organization_id`, `created_at`, `updated_at`) VALUES
+(7, 3, 6, '2026-04-16 19:46:21', '2026-04-16 19:46:21'),
+(8, 3, 9, '2026-04-16 19:46:21', '2026-04-16 19:46:21'),
+(9, 4, 10, '2026-04-16 19:46:57', '2026-04-16 19:46:57'),
+(10, 4, 12, '2026-04-16 19:46:57', '2026-04-16 19:46:57'),
+(11, 5, 4, '2026-04-16 19:47:18', '2026-04-16 19:47:18'),
+(12, 6, 12, '2026-04-16 19:47:33', '2026-04-16 19:47:33'),
+(13, 6, 8, '2026-04-16 19:47:33', '2026-04-16 19:47:33'),
+(14, 7, 10, '2026-04-16 19:48:35', '2026-04-16 19:48:35');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `material_units`
+--
+
+CREATE TABLE `material_units` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(100) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2389,9 +2936,9 @@ CREATE TABLE `marketing_events` (
 --
 
 CREATE TABLE `migrations` (
-  `id` int UNSIGNED NOT NULL,
-  `migration` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `batch` int NOT NULL
+  `id` int(10) UNSIGNED NOT NULL,
+  `migration` varchar(191) NOT NULL,
+  `batch` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -2506,7 +3053,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (105, '2026_03_12_000013_create_missing_erp_tables', 20),
 (106, '2026_03_18_000001_add_commercial_fields_to_quotes_table', 21),
 (107, '2026_03_19_000001_extend_vendor_quotes_for_document_flow', 22),
-(108, '2026_03_19_000002_add_terms_to_purchase_orders', 23);
+(108, '2026_03_19_000002_add_terms_to_purchase_orders', 23),
+(109, '2026_04_16_000003_create_material_units_table', 24),
+(110, '2026_05_17_000001_create_lead_persons_table', 25);
 
 -- --------------------------------------------------------
 
@@ -2515,42 +3064,60 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 --
 
 CREATE TABLE `organizations` (
-  `id` int UNSIGNED NOT NULL,
-  `parent_organization_id` int UNSIGNED DEFAULT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `fax` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `website` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `industry` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `employees` int DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `parent_organization_id` int(10) UNSIGNED DEFAULT NULL,
+  `name` varchar(191) NOT NULL,
+  `address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `phone` varchar(191) DEFAULT NULL,
+  `fax` varchar(191) DEFAULT NULL,
+  `website` varchar(191) DEFAULT NULL,
+  `type` varchar(191) DEFAULT NULL,
+  `industry` varchar(191) DEFAULT NULL,
+  `employees` int(11) DEFAULT NULL,
   `annual_revenue` decimal(12,2) DEFAULT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `billing_street` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `billing_city` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `billing_state` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `billing_postcode` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `billing_country` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `shipping_street` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `shipping_city` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `shipping_state` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `shipping_postcode` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `shipping_country` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `billing_street` varchar(191) DEFAULT NULL,
+  `billing_city` varchar(191) DEFAULT NULL,
+  `billing_state` varchar(191) DEFAULT NULL,
+  `billing_postcode` varchar(191) DEFAULT NULL,
+  `billing_country` varchar(191) DEFAULT NULL,
+  `shipping_street` varchar(191) DEFAULT NULL,
+  `shipping_city` varchar(191) DEFAULT NULL,
+  `shipping_state` varchar(191) DEFAULT NULL,
+  `shipping_postcode` varchar(191) DEFAULT NULL,
+  `shipping_country` varchar(191) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `user_id` int UNSIGNED DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `user_id` int(10) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `organizations`
 --
 
 INSERT INTO `organizations` (`id`, `parent_organization_id`, `name`, `address`, `phone`, `fax`, `website`, `type`, `industry`, `employees`, `annual_revenue`, `description`, `billing_street`, `billing_city`, `billing_state`, `billing_postcode`, `billing_country`, `shipping_street`, `shipping_city`, `shipping_state`, `shipping_postcode`, `shipping_country`, `created_at`, `updated_at`, `user_id`) VALUES
-(3, NULL, 'Deveon', '[{\"type\":\"billing\",\"street\":\"Suite 391 - 1505 Laperriere Avenue\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"},{\"type\":\"shipping\",\"street\":\"Suite 391 - 1505 Laperriere Avenue\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"},{\"type\":\"other\",\"street\":\"71A Street 3, Block A, (SMCHS)\",\"city\":\"Karachi\",\"state\":\"Sindh\",\"postcode\":\"75400\",\"country\":\"Pakistan\"}]', '(905)514-8474', '', 'https://deveoninc.com', 'customer', '', 50, 10000.00, 'Software Company', 'Suite 391 - 1505 Laperriere Avenue', 'Ottawa', 'Ontario', 'K1Z 7T1', 'Canada', 'Suite 391 - 1505 Laperriere Avenue', 'Ottawa', 'Ontario', 'K1Z 7T1', 'Canada', '2026-03-18 16:49:24', '2026-04-15 10:50:39', NULL),
+(3, NULL, 'Deveon', '[{\"type\":\"billing\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"},{\"type\":\"shipping\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"},{\"type\":\"other\",\"street\":\"Test\",\"city\":\"TEst\",\"state\":\"Test\",\"postcode\":\"Test\",\"country\":\"Test\"}]', '(905)514-8474', '', 'https://deveoninc.com', 'customer', '', 50, 10000.00, 'Software Company abc', 'Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,', 'Ottawa', 'Ontario', 'K1Z 7T1', 'Canada', 'Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,', 'Ottawa', 'Ontario', 'K1Z 7T1', 'Canada', '2026-03-18 16:49:24', '2026-05-19 23:53:29', NULL),
 (4, NULL, 'XYS Enterprise', NULL, '(123) 456-4783', '', 'https://www.google.com', 'vendor', 'home_apparel', 0, 0.00, 'One of out best vendors in Canada', '4327 Summerfield Blvd', 'Toronto', 'Ontario', 'M5V 3L9', 'Canada', '4327 Summerfield Blvd', 'Toronto', 'Ontario', 'M5V 3L9', 'Canada', '2026-03-18 17:22:38', '2026-03-18 17:22:38', NULL),
-(5, NULL, 'sadsad', '[{\"type\":\"billing\",\"street\":\"sad\",\"city\":\"sd\",\"state\":\"sad\",\"postcode\":\"sd\",\"country\":\"sad\"},{\"type\":\"shipping\",\"street\":\"sad\",\"city\":\"sd\",\"state\":\"sad\",\"postcode\":\"sd\",\"country\":\"sad\"}]', '', '', '', 'customer', '', 0, 0.00, '', 'sad', 'sd', 'sad', 'sd', 'sad', 'sad', 'sd', 'sad', 'sd', 'sad', '2026-04-14 20:42:57', '2026-04-14 20:42:57', NULL),
-(6, NULL, 'sdsdsd', '[{\"type\":\"billing\",\"street\":\"sadsa\",\"city\":\"sad\",\"state\":\"sad\",\"postcode\":\"sad\",\"country\":\"sad\"},{\"type\":\"shipping\",\"street\":\"sadsa\",\"city\":\"sad\",\"state\":\"sad\",\"postcode\":\"sad\",\"country\":\"sad\"}]', '', '', '', 'vendor', '', 0, 0.00, '', 'sadsa', 'sad', 'sad', 'sad', 'sad', 'sadsa', 'sad', 'sad', 'sad', 'sad', '2026-04-14 21:21:42', '2026-04-14 21:21:42', NULL);
+(6, NULL, 'Vendor 4', '[{\"type\":\"billing\",\"street\":\"sadsa\",\"city\":\"sad\",\"state\":\"sad\",\"postcode\":\"sad\",\"country\":\"sad\"},{\"type\":\"shipping\",\"street\":\"sadsa\",\"city\":\"sad\",\"state\":\"sad\",\"postcode\":\"sad\",\"country\":\"sad\"}]', '', '', '', 'vendor', '', 0, 0.00, '', 'sadsa', 'sad', 'sad', 'sad', 'sad', 'sadsa', 'sad', 'sad', 'sad', 'sad', '2026-04-14 21:21:42', '2026-04-14 21:21:42', NULL),
+(8, NULL, 'Vendor 6', '[]', '', '', '', 'vendor', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-04-16 18:54:08', '2026-04-16 18:54:08', NULL),
+(9, NULL, 'Vendor 7', '[{\"type\":\"billing\",\"street\":\"Excepteur porro simi\",\"city\":\"Ratione et deserunt\",\"state\":\"Laboriosam perspici\",\"postcode\":\"Consequuntur in aut\",\"country\":\"Rerum qui commodo ra\"},{\"type\":\"shipping\",\"street\":\"Est consequat Dolor\",\"city\":\"In odit ut quisquam\",\"state\":\"Elit illum consequ\",\"postcode\":\"Adipisci omnis cupid\",\"country\":\"Aut atque cillum con\"},{\"type\":\"shipping\",\"street\":\"Eius sit eveniet s\",\"city\":\"Enim nesciunt quo d\",\"state\":\"Aliquam modi saepe c\",\"postcode\":\"Reprehenderit aut n\",\"country\":\"Vel qui sunt laboris\"},{\"type\":\"shipping\",\"street\":\"Totam natus consequa\",\"city\":\"Inventore nostrud di\",\"state\":\"Error esse quis sed\",\"postcode\":\"Et eum minima quas d\",\"country\":\"Eius eaque alias ad\"}]', '+1 (779) 617-5941', '+1 (241) 659-1575', 'https://www.xugutepenos.co', 'vendor', 'home_apparel', 46, 30.00, 'Fugit et esse eiusm', 'Excepteur porro simi', 'Ratione et deserunt', 'Laboriosam perspici', 'Consequuntur in aut', 'Rerum qui commodo ra', 'Est consequat Dolor', 'In odit ut quisquam', 'Elit illum consequ', 'Adipisci omnis cupid', 'Aut atque cillum con', '2026-04-16 18:57:24', '2026-04-16 18:57:24', NULL),
+(10, NULL, 'Vendor 8', '[]', '', '', '', 'vendor', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-04-16 18:57:46', '2026-04-16 18:57:46', NULL),
+(11, NULL, 'Vendor 9', '[]', '', '', '', 'vendor', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-04-16 18:57:56', '2026-04-16 18:57:56', NULL),
+(12, NULL, 'Vendor 10', '[]', '', '', '', 'vendor', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-04-16 18:58:12', '2026-04-16 18:58:12', NULL),
+(13, NULL, 'Metro Cotton Mill (PVT) LTD', NULL, '03176198517', NULL, 'deveoninc.com', NULL, NULL, NULL, NULL, 'Software company', '4327 Summerfield Blvd', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-18 11:40:15', '2026-04-18 11:40:15', NULL),
+(15, NULL, 'Test Company Mike', '[]', '', '', '', 'customer', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-16 09:48:09', '2026-05-16 09:48:09', NULL),
+(16, NULL, 'Barrel Makers Inc.', '[{\"type\":\"billing\",\"street\":\"1435 Busch Pkwy\",\"city\":\"Buffalo Grove\",\"state\":\"IL\",\"postcode\":\"60089\",\"country\":\"USA\"},{\"type\":\"shipping\",\"street\":\"1435 Busch Pkwy\",\"city\":\"Buffalo Grove\",\"state\":\"IL\",\"postcode\":\"60089\",\"country\":\"USA\"}]', '847-840-8918', '', '', 'customer', '', 30, 0.00, '', '1435 Busch Pkwy', 'Buffalo Grove', 'IL', '60089', 'USA', '1435 Busch Pkwy', 'Buffalo Grove', 'IL', '60089', 'USA', '2026-05-16 11:02:30', '2026-05-16 11:02:38', NULL),
+(17, NULL, 'Alex Real LLC', '[{\"type\":\"billing\",\"street\":\"djj\",\"city\":\"jjk\",\"state\":\"jkjk\",\"postcode\":\"jkj\",\"country\":\"jkj\"},{\"type\":\"shipping\",\"street\":\"jkjk\",\"city\":\"jkjk\",\"state\":\"jkj\",\"postcode\":\"jkjk\",\"country\":\"j\"}]', '', '', '', 'customer', '', 0, 0.00, '', 'djj', 'jjk', 'jkjk', 'jkj', 'jkj', 'jkjk', 'jkjk', 'jkj', 'jkjk', 'j', '2026-05-20 10:58:35', '2026-05-20 13:05:24', NULL),
+(18, NULL, 'Smart K LLC', '[]', '', '', '', 'customer', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-20 10:58:49', '2026-05-20 10:58:49', NULL),
+(19, NULL, 'Metro Textile Inc.', '[]', '', '', '', 'customer', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-20 10:59:03', '2026-05-20 10:59:03', NULL),
+(20, NULL, 'Qis Packaging', '[]', '', '', '', 'customer', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-20 11:38:23', '2026-05-20 11:38:23', NULL),
+(21, NULL, 'Wovin Brands', '[]', '', '', '', 'customer', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-20 11:38:38', '2026-05-20 11:38:38', NULL),
+(22, NULL, 'Fey International', '[]', '', '', '', 'customer', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-20 11:38:50', '2026-05-20 11:38:50', NULL),
+(23, NULL, 'Naveed Brothers Textile', '[]', '', '', '', 'vendor', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-20 11:43:00', '2026-05-20 11:43:00', NULL),
+(24, NULL, 'Millenium Textiles', '[]', '', '', '', 'vendor', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-20 11:43:15', '2026-05-20 11:43:15', NULL),
+(25, NULL, 'Mustafa Enterprise', '[]', '', '', '', 'vendor', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-20 11:43:23', '2026-05-20 11:43:23', NULL),
+(26, NULL, 'Nishat Mills (Pvt) Ltd.', '[]', '', '', '', 'vendor', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-20 11:43:41', '2026-05-20 11:43:41', NULL),
+(27, NULL, 'Golden Industries', '[]', '', '', '', 'vendor', '', 0, 0.00, '', '', '', '', '', '', '', '', '', '', '', '2026-05-20 11:43:51', '2026-05-20 11:43:51', NULL);
 
 -- --------------------------------------------------------
 
@@ -2559,8 +3126,8 @@ INSERT INTO `organizations` (`id`, `parent_organization_id`, `name`, `address`, 
 --
 
 CREATE TABLE `organization_activities` (
-  `activity_id` int UNSIGNED NOT NULL,
-  `organization_id` bigint UNSIGNED NOT NULL
+  `activity_id` int(10) UNSIGNED NOT NULL,
+  `organization_id` bigint(20) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -2603,10 +3170,77 @@ INSERT INTO `organization_activities` (`activity_id`, `organization_id`) VALUES
 (289, 5),
 (322, 6),
 (323, 6),
-(324, 3),
-(325, 3),
-(326, 3),
-(327, 3);
+(324, 7),
+(325, 7),
+(326, 8),
+(327, 9),
+(328, 9),
+(329, 9),
+(330, 9),
+(331, 9),
+(332, 10),
+(333, 10),
+(334, 11),
+(335, 11),
+(336, 12),
+(337, 12),
+(345, 5),
+(346, 5),
+(347, 5),
+(348, 7),
+(349, 7),
+(350, 7),
+(351, 7),
+(352, 13),
+(357, 3),
+(359, 3),
+(385, 14),
+(386, 14),
+(387, 14),
+(388, 14),
+(389, 14),
+(398, 15),
+(399, 15),
+(408, 15),
+(409, 15),
+(410, 16),
+(411, 16),
+(412, 16),
+(413, 16),
+(414, 16),
+(415, 16),
+(436, 16),
+(450, 3),
+(451, 3),
+(477, 3),
+(478, 3),
+(479, 3),
+(482, 17),
+(483, 17),
+(484, 18),
+(485, 18),
+(486, 19),
+(487, 19),
+(488, 20),
+(489, 20),
+(490, 21),
+(491, 21),
+(492, 22),
+(493, 22),
+(498, 23),
+(499, 23),
+(500, 24),
+(501, 24),
+(502, 25),
+(503, 25),
+(504, 26),
+(505, 26),
+(506, 27),
+(507, 27),
+(508, 17),
+(509, 17),
+(510, 17),
+(511, 17);
 
 -- --------------------------------------------------------
 
@@ -2615,15 +3249,15 @@ INSERT INTO `organization_activities` (`activity_id`, `organization_id`) VALUES
 --
 
 CREATE TABLE `organization_files` (
-  `id` int UNSIGNED NOT NULL,
-  `organization_id` int UNSIGNED NOT NULL,
-  `user_id` int UNSIGNED DEFAULT NULL,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `original_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `mime_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `size` int DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `organization_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
+  `title` varchar(191) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `path` varchar(191) NOT NULL,
+  `original_name` varchar(191) NOT NULL,
+  `mime_type` varchar(191) DEFAULT NULL,
+  `size` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2643,12 +3277,12 @@ INSERT INTO `organization_files` (`id`, `organization_id`, `user_id`, `title`, `
 --
 
 CREATE TABLE `personal_access_tokens` (
-  `id` bigint UNSIGNED NOT NULL,
-  `tokenable_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `tokenable_id` bigint UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `token` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `abilities` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `tokenable_type` varchar(191) NOT NULL,
+  `tokenable_id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `token` varchar(64) NOT NULL,
+  `abilities` text DEFAULT NULL,
   `last_used_at` timestamp NULL DEFAULT NULL,
   `expires_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -2662,39 +3296,39 @@ CREATE TABLE `personal_access_tokens` (
 --
 
 CREATE TABLE `persons` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'customer',
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `type` varchar(191) DEFAULT 'customer',
+  `notes` text DEFAULT NULL,
   `completion_date` date DEFAULT NULL,
   `last_delivery_date` date DEFAULT NULL,
-  `payment_term` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `shipping_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `emails` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `contact_numbers` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `organization_id` int UNSIGNED DEFAULT NULL,
+  `payment_term` varchar(191) DEFAULT NULL,
+  `shipping_method` varchar(191) DEFAULT NULL,
+  `emails` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `contact_numbers` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `organization_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `job_title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `user_id` int UNSIGNED DEFAULT NULL,
-  `unique_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `salutation` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `first_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `last_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `cell_phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `direct_phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `email_secondary` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `job_title` varchar(191) DEFAULT NULL,
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
+  `unique_id` varchar(191) DEFAULT NULL,
+  `salutation` varchar(191) DEFAULT NULL,
+  `first_name` varchar(191) DEFAULT NULL,
+  `last_name` varchar(191) DEFAULT NULL,
+  `title` varchar(191) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `cell_phone` varchar(191) DEFAULT NULL,
+  `direct_phone` varchar(191) DEFAULT NULL,
+  `email_secondary` varchar(191) DEFAULT NULL,
   `birth_date` date DEFAULT NULL,
-  `phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `mailing_street` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `mailing_city` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `mailing_state` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `mailing_postcode` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `mailing_country` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `phone` varchar(191) DEFAULT NULL,
+  `email` varchar(191) DEFAULT NULL,
+  `mailing_street` varchar(191) DEFAULT NULL,
+  `mailing_city` varchar(191) DEFAULT NULL,
+  `mailing_state` varchar(191) DEFAULT NULL,
+  `mailing_postcode` varchar(191) DEFAULT NULL,
+  `mailing_country` varchar(191) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `persons`
@@ -2707,7 +3341,12 @@ INSERT INTO `persons` (`id`, `name`, `type`, `notes`, `completion_date`, `last_d
 (9, '', 'customer', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-16 18:43:13', '2026-02-26 14:47:40', NULL, 1, NULL, '', 'fdg', 'dfsgfg', 'fdkjdfjkg', 'kjiljoi', '43534543543', 'difgkjv', 'testuser@gmail.com', '1901-11-22', '+1 (475) 445-8871', 'testuser@gmail.com', 'Odit est sed perspi', 'Ducimus ea dicta au', 'Quia dolor exercitat', 'Nostrum ut aliquip s', 'Minima similique eve'),
 (10, '', 'customer', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-16 18:43:53', '2026-02-16 18:58:07', NULL, 1, NULL, '', 'dfds', 'dsfdf', '', '', '0000000', '', 'test@gmail.com', '1901-11-15', '+1 (475) 445-8871', '', 'Odit est sed perspi', 'Ducimus ea dicta au', 'Quia dolor exercitat', 'Nostrum ut aliquip s', 'Minima similique eve'),
 (11, '', 'vendor', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-27 15:15:16', '2026-02-27 15:15:16', NULL, 1, NULL, '', 'Steel', 'Wong', 'Aliqua Rerum culpa', 'Debitis officia est', '+1 (242) 653-2194', '+1 (861) 453-7789', '+1 (861) 453-7789', '1997-01-01', '+1 (846) 853-3684', 'xybinohexu@mailinator.com', 'Non delectus adipis', 'Consectetur pariatu', 'Ex eveniet sit debi', 'Omnis consectetur d', 'Eligendi debitis par'),
-(12, '', 'customer', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, '2026-04-14 18:59:02', '2026-04-14 18:59:02', NULL, 1, NULL, '', 'Freya', 'Benjamin', 'Magna obcaecati accu', 'Aliquip dolor quia d', '+1 (399) 709-7948', '+1 (231) 592-5775', '+1 (231) 592-5775', '2009-01-01', '+1 (525) 299-3773', 'tuhymys@mailinator.com', 'Est esse omnis ea e', 'Velit architecto inc', 'Odio alias atque dig', 'Hic similique ut tem', 'Quia do aut dolore p');
+(12, '', 'customer', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, '2026-04-14 18:59:02', '2026-04-14 18:59:02', NULL, 1, NULL, '', 'Freya', 'Benjamin', 'Magna obcaecati accu', 'Aliquip dolor quia d', '+1 (399) 709-7948', '+1 (231) 592-5775', '+1 (231) 592-5775', '2009-01-01', '+1 (525) 299-3773', 'tuhymys@mailinator.com', 'Est esse omnis ea e', 'Velit architecto inc', 'Odio alias atque dig', 'Hic similique ut tem', 'Quia do aut dolore p'),
+(13, 'Ian Ford', 'employee', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 13, '2026-04-18 11:40:16', '2026-04-18 11:40:16', NULL, 2, NULL, NULL, 'Ian', 'Ford', NULL, NULL, NULL, NULL, NULL, '1990-01-01', '+1 (738) 226-9395', 'kogik@mailinator.com', 'Sapiente ipsum praes', 'Est qui labore conse', 'Est voluptates sint', 'Ratione aliquid reru', 'Reprehenderit enim i'),
+(14, 'Muhammad Asad Ullah', 'employee', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 13, '2026-04-25 22:59:32', '2026-04-25 22:59:32', NULL, 3, NULL, NULL, 'Muhammad', 'Asad Ullah', NULL, NULL, NULL, NULL, NULL, '2001-06-18', '03002200219', 'asadullah.mtc01@gmail.com', 'Pars Ram 34KM Ferozepur Rd, Opposite Unique College', 'Lahore', 'Punjab', '54000', 'Pakistan'),
+(15, 'Mehboob Ali', 'vendor', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-25 23:31:17', '2026-04-25 23:35:16', NULL, 1, NULL, '', 'Mehboob', 'Ali', 'Production Manager', '', '0309 4443317', '', '', '1970-11-01', '309 4443317', 'production@metrocottonmill.com', 'Pars Ram 34KM Ferozepur Rd, Opposite Unique College', 'Lahore', 'Punjab', '54000', 'Pakistan'),
+(16, 'John Myers', 'customer', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, '2026-05-16 09:48:41', '2026-05-16 09:48:41', NULL, 1, NULL, '', 'John', 'Myers', '', '', '', '', '', '0000-00-00', '', 'zubairmaya@gmail.com', '', '', '', '', ''),
+(17, 'Justin Moore', 'customer', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 16, '2026-05-16 11:03:27', '2026-05-16 11:03:27', NULL, 1, NULL, '', 'Justin', 'Moore', 'Owner', '', '847-840-8918', '', '', '0000-00-00', '847-840-8918', '', '1435 Busch Pkwy', 'Buffalo Grove', 'IL', '60089', 'USA');
 
 -- --------------------------------------------------------
 
@@ -2716,8 +3355,8 @@ INSERT INTO `persons` (`id`, `name`, `type`, `notes`, `completion_date`, `last_d
 --
 
 CREATE TABLE `person_activities` (
-  `activity_id` int UNSIGNED NOT NULL,
-  `person_id` int UNSIGNED NOT NULL
+  `activity_id` int(10) UNSIGNED NOT NULL,
+  `person_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -2758,7 +3397,33 @@ INSERT INTO `person_activities` (`activity_id`, `person_id`) VALUES
 (255, 11),
 (286, 12),
 (287, 12),
-(288, 12);
+(288, 12),
+(353, 13),
+(354, 13),
+(355, 13),
+(356, 13),
+(381, 14),
+(382, 14),
+(383, 14),
+(384, 14),
+(390, 15),
+(391, 15),
+(392, 15),
+(393, 15),
+(394, 15),
+(395, 15),
+(400, 16),
+(401, 16),
+(402, 16),
+(403, 16),
+(408, 16),
+(409, 16),
+(416, 17),
+(417, 17),
+(418, 17),
+(419, 17),
+(437, 17),
+(461, 12);
 
 -- --------------------------------------------------------
 
@@ -2767,8 +3432,8 @@ INSERT INTO `person_activities` (`activity_id`, `person_id`) VALUES
 --
 
 CREATE TABLE `person_tags` (
-  `tag_id` int UNSIGNED NOT NULL,
-  `person_id` int UNSIGNED NOT NULL
+  `tag_id` int(10) UNSIGNED NOT NULL,
+  `person_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2778,26 +3443,26 @@ CREATE TABLE `person_tags` (
 --
 
 CREATE TABLE `products` (
-  `id` int UNSIGNED NOT NULL,
-  `sku` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `internal_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `customer_organization_id` int UNSIGNED DEFAULT NULL,
-  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `quantity` int NOT NULL DEFAULT '0',
-  `publish_on_website` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  `id` int(10) UNSIGNED NOT NULL,
+  `sku` varchar(191) NOT NULL,
+  `internal_code` varchar(191) DEFAULT NULL,
+  `name` varchar(191) DEFAULT NULL,
+  `customer_organization_id` int(10) UNSIGNED DEFAULT NULL,
+  `slug` varchar(191) DEFAULT NULL,
+  `description` varchar(191) DEFAULT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 0,
+  `publish_on_website` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
   `price` decimal(12,4) DEFAULT NULL,
   `cost_price` decimal(12,4) DEFAULT NULL,
   `selling_price` decimal(12,4) DEFAULT NULL,
-  `category_id` int UNSIGNED DEFAULT NULL,
-  `style` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `size` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `category_id` int(10) UNSIGNED DEFAULT NULL,
+  `style` varchar(191) DEFAULT NULL,
+  `size` varchar(100) DEFAULT NULL,
   `weight` decimal(12,4) DEFAULT NULL,
-  `weight_unit` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `cover_image` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `additional_info` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `shipping_info` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `weight_unit` varchar(10) DEFAULT NULL,
+  `cover_image` varchar(500) DEFAULT NULL,
+  `additional_info` longtext DEFAULT NULL,
+  `shipping_info` longtext DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2807,9 +3472,10 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `sku`, `internal_code`, `name`, `customer_organization_id`, `slug`, `description`, `quantity`, `publish_on_website`, `price`, `cost_price`, `selling_price`, `category_id`, `style`, `size`, `weight`, `weight_unit`, `cover_image`, `additional_info`, `shipping_info`, `created_at`, `updated_at`) VALUES
-(21, 'MQTB', 'MQTB', 'Cotton Tote Bag', 3, 'cotton-tote-bag', NULL, 0, 0, 4.7200, 3.5000, 4.7200, NULL, NULL, '15\"W x 16\"H', NULL, NULL, 'product-images/Gt8rXILv7TUouhxluLD2waYPDC9FxQYtVfHpff6j.jpg', NULL, NULL, '2026-03-18 16:50:41', '2026-03-18 16:53:27'),
-(28, 'Test', 'Test', 'Cotton Tote Bag', 3, 'cotton-tote-bag-1', NULL, 0, 0, 4.7200, 3.5000, 4.7200, NULL, NULL, '15\"W x 16\"H', NULL, NULL, 'product-images/69dea2a8abe2c.jpg', NULL, NULL, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(29, 'dsds', 'dsds', 'Cotton Tote Bag', 3, 'cotton-tote-bag-2', NULL, 0, 0, 4.7200, 3.5000, 4.7200, NULL, NULL, '15\"W x 16\"H', 25.0000, 'gsm', 'product-images/69dea3c473aa1.jpg', NULL, NULL, '2026-04-14 20:59:56', '2026-04-15 11:13:20');
+(21, 'MQTB', 'MQTB', 'Cotton Tote Bag', 15, 'cotton-tote-bag', NULL, 0, 0, 4.7200, 3.5000, 4.7200, NULL, NULL, '15\"W x 16\"H', 155.0000, 'gsm', 'product-images/F2U01SL5Goyy7162JmB3wjKc15rQyUMcySzF1lKS.jpg', NULL, NULL, '2026-03-18 16:50:41', '2026-05-16 09:52:36'),
+(37, 'ST00', 'ST00', 'Street Bundle', 3, 'street-bundle', NULL, 0, 0, 0.9900, 0.7500, 0.9900, NULL, NULL, '14 \'\' x 34 \'\' x 3\'', 91.0000, 'gsm', 'product-images/mScraONN0lFmQvHfWNy1YlEdXdS5xPBM0Wi0hedT.jpg', NULL, NULL, '2026-05-18 03:25:10', '2026-05-18 03:31:37'),
+(38, 'abc', 'abc', 'Street Bundle abc', 3, 'street-bundle-abc', NULL, 0, 0, 0.9900, 0.7500, 0.9900, NULL, NULL, '14 \'\' x 34 \'\' x 3\'', 91.0000, 'gsm', 'product-images/6a0bf56fd4f6c.jpg', NULL, NULL, '2026-05-19 15:00:23', '2026-05-19 15:00:23'),
+(41, 'SBQ600', 'Q600', 'Jumbo Tote Bag', 17, 'jumbo-tote-bag', NULL, 0, 0, 0.6900, 0.6600, 0.6900, NULL, NULL, '15\"W x 16\"H', 300.0000, 'gsm', 'product-images/kOK7F8xuoTBmoQpUzbDNrbzsOZdel8ZgB3H6GQfn.jpg', NULL, NULL, '2026-05-20 11:42:27', '2026-05-20 11:42:27');
 
 -- --------------------------------------------------------
 
@@ -2818,8 +3484,8 @@ INSERT INTO `products` (`id`, `sku`, `internal_code`, `name`, `customer_organiza
 --
 
 CREATE TABLE `product_activities` (
-  `activity_id` int UNSIGNED NOT NULL,
-  `product_id` int UNSIGNED NOT NULL
+  `activity_id` int(10) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -2832,17 +3498,24 @@ INSERT INTO `product_activities` (`activity_id`, `product_id`) VALUES
 (281, 21),
 (282, 21),
 (283, 21),
-(314, 28),
-(315, 28),
-(316, 28),
-(317, 28),
-(318, 29),
-(319, 29),
-(320, 29),
-(321, 29),
-(328, 29),
-(329, 29),
-(330, 29);
+(397, 21),
+(404, 21),
+(405, 21),
+(406, 21),
+(407, 21),
+(452, 37),
+(453, 37),
+(454, 37),
+(455, 37),
+(456, 37),
+(457, 38),
+(458, 38),
+(459, 38),
+(460, 38),
+(494, 41),
+(495, 41),
+(496, 41),
+(497, 41);
 
 -- --------------------------------------------------------
 
@@ -2851,8 +3524,8 @@ INSERT INTO `product_activities` (`activity_id`, `product_id`) VALUES
 --
 
 CREATE TABLE `product_categories` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2871,13 +3544,13 @@ INSERT INTO `product_categories` (`id`, `name`, `created_at`, `updated_at`) VALU
 --
 
 CREATE TABLE `product_colors` (
-  `id` int UNSIGNED NOT NULL,
-  `product_id` int UNSIGNED NOT NULL,
-  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `color_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `color_code` varchar(20) NOT NULL,
   `cost_price` decimal(12,4) DEFAULT NULL,
   `selling_price` decimal(12,4) DEFAULT NULL,
-  `sort_order` smallint UNSIGNED NOT NULL DEFAULT '0',
+  `sort_order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2887,15 +3560,17 @@ CREATE TABLE `product_colors` (
 --
 
 INSERT INTO `product_colors` (`id`, `product_id`, `name`, `color_code`, `cost_price`, `selling_price`, `sort_order`, `created_at`, `updated_at`) VALUES
-(879, 21, 'red', '#ff0000', NULL, NULL, 0, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(880, 21, 'Navy', '#4b00d6', NULL, NULL, 1, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(881, 21, 'Hot Pink', '#d6009d', NULL, NULL, 2, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(885, 28, 'red', '#ff0000', NULL, NULL, 0, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(886, 28, 'Navy', '#4b00d6', NULL, NULL, 1, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(887, 28, 'Hot Pink', '#d6009d', NULL, NULL, 2, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(894, 29, 'red', '#ff0000', NULL, NULL, 0, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(895, 29, 'Navy', '#4b00d6', NULL, NULL, 1, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(896, 29, 'Hot Pink', '#d6009d', NULL, NULL, 2, '2026-04-15 11:13:20', '2026-04-15 11:13:20');
+(916, 21, 'red', '#FF0000', NULL, NULL, 0, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(917, 21, 'Navy', '#4b00d6', NULL, NULL, 1, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(918, 21, 'Hot Pink', '#d6009d', NULL, NULL, 2, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(921, 37, 'red', '#FF0000', 0.7500, 0.8800, 0, '2026-05-18 03:31:37', '2026-05-18 03:31:37'),
+(922, 37, 'black', '#000000', 0.7500, 0.8200, 1, '2026-05-18 03:31:37', '2026-05-18 03:31:37'),
+(923, 38, 'red', '#FF0000', 0.7500, 0.8800, 0, '2026-05-19 15:00:23', '2026-05-19 15:00:23'),
+(924, 38, 'black', '#000000', 0.7500, 0.8200, 1, '2026-05-19 15:00:23', '2026-05-19 15:00:23'),
+(927, 41, 'red', '#FF0000', 0.8400, 0.9300, 0, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(928, 41, 'Navy', '#4b00d6', 0.8400, 0.9300, 1, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(929, 41, 'Hot Pink', '#d6009d', 0.8400, 0.9300, 2, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(930, 41, 'Natural', '600', 0.6600, 0.6900, 3, '2026-05-20 11:42:27', '2026-05-20 11:42:27');
 
 -- --------------------------------------------------------
 
@@ -2904,12 +3579,16 @@ INSERT INTO `product_colors` (`id`, `product_id`, `name`, `color_code`, `cost_pr
 --
 
 CREATE TABLE `product_consumptions` (
-  `id` bigint UNSIGNED NOT NULL,
-  `product_id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `qty` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `unit` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort_order` int UNSIGNED NOT NULL DEFAULT '0',
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL,
+  `material_reference_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `name` varchar(191) NOT NULL,
+  `qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `unit` varchar(191) NOT NULL,
+  `vendor_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`vendor_ids`)),
+  `color_name` varchar(191) DEFAULT NULL,
+  `color_code` varchar(20) DEFAULT NULL,
+  `sort_order` int(10) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2918,19 +3597,21 @@ CREATE TABLE `product_consumptions` (
 -- Dumping data for table `product_consumptions`
 --
 
-INSERT INTO `product_consumptions` (`id`, `product_id`, `name`, `qty`, `unit`, `sort_order`, `created_at`, `updated_at`) VALUES
-(11, 21, 'Cotton Fabric', 0.3500, 'Meter', 0, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(12, 21, 'Handle', 20.0000, 'Inch', 1, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(13, 21, 'Label', 1.0000, 'Piece', 2, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(14, 21, 'Thread', 5.0000, 'Meter', 3, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(19, 28, 'Cotton Fabric', 0.3500, 'Meter', 0, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(20, 28, 'Handle', 20.0000, 'Inch', 1, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(21, 28, 'Label', 1.0000, 'Piece', 2, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(22, 28, 'Thread', 5.0000, 'Meter', 3, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(31, 29, 'Cotton Fabric', 0.3500, 'Meter', 0, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(32, 29, 'Handle', 20.0000, 'Inch', 1, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(33, 29, 'Label', 1.0000, 'Piece', 2, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(34, 29, 'Thread', 5.0000, 'Meter', 3, '2026-04-15 11:13:20', '2026-04-15 11:13:20');
+INSERT INTO `product_consumptions` (`id`, `product_id`, `material_reference_id`, `name`, `qty`, `unit`, `vendor_ids`, `color_name`, `color_code`, `sort_order`, `created_at`, `updated_at`) VALUES
+(55, 21, 3, '20x20 / 60x66 - 66\" | 150gsm', 0.3500, 'Meter', NULL, NULL, NULL, 0, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(56, 21, 5, 'Oekotex Label', 20.0000, 'Inch', NULL, NULL, NULL, 1, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(57, 21, 7, 'Cartons (240 pcs / Box)', 1.0000, 'Piece', NULL, NULL, NULL, 2, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(58, 21, 4, 'Thread 40/2 - 30 Meters', 5.0000, 'Meter', NULL, NULL, NULL, 3, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(62, 37, 7, 'Cartons (240 pcs / Box)', 323.0000, 'Do sed quidem animi', '[10]', 'Byron Ramos', '#B9B1BF', 0, '2026-05-18 03:31:37', '2026-05-18 03:31:37'),
+(63, 37, 3, '20x20 / 60x66 - 66\" | 150gsm', 0.3120, 'METER', '[6,9]', NULL, NULL, 1, '2026-05-18 03:31:37', '2026-05-18 03:31:37'),
+(64, 37, 5, 'Oekotex Label', 1.0000, 'INCH', '[4]', NULL, NULL, 2, '2026-05-18 03:31:37', '2026-05-18 03:31:37'),
+(65, 38, 7, 'Cartons (240 pcs / Box)', 323.0000, 'Do sed quidem animi', '[10]', 'Byron Ramos', '#B9B1BF', 0, '2026-05-19 15:00:23', '2026-05-19 15:00:23'),
+(66, 38, 3, '20x20 / 60x66 - 66\" | 150gsm', 0.3120, 'METER', '[6,9]', NULL, NULL, 1, '2026-05-19 15:00:23', '2026-05-19 15:00:23'),
+(67, 38, 5, 'Oekotex Label', 1.0000, 'INCH', '[4]', NULL, NULL, 2, '2026-05-19 15:00:23', '2026-05-19 15:00:23'),
+(70, 41, 3, '20x20 / 60x66 - 66\" | 150gsm', 0.3500, 'Meter', '[6,9]', NULL, NULL, 0, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(71, 41, 5, 'Oekotex Label', 20.0000, 'Inch', '[4]', NULL, NULL, 1, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(72, 41, 7, 'Cartons (240 pcs / Box)', 1.0000, 'Piece', '[10]', NULL, NULL, 2, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(73, 41, 4, 'Thread 40/2 - 30 Meters', 5.0000, 'Meter', '[12,10]', NULL, NULL, 3, '2026-05-20 11:42:27', '2026-05-20 11:42:27');
 
 -- --------------------------------------------------------
 
@@ -2939,12 +3620,12 @@ INSERT INTO `product_consumptions` (`id`, `product_id`, `name`, `qty`, `unit`, `
 --
 
 CREATE TABLE `product_inventories` (
-  `id` int UNSIGNED NOT NULL,
-  `in_stock` int NOT NULL DEFAULT '0',
-  `allocated` int NOT NULL DEFAULT '0',
-  `product_id` int UNSIGNED NOT NULL,
-  `warehouse_id` int UNSIGNED DEFAULT NULL,
-  `warehouse_location_id` int UNSIGNED DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `in_stock` int(11) NOT NULL DEFAULT 0,
+  `allocated` int(11) NOT NULL DEFAULT 0,
+  `product_id` int(10) UNSIGNED NOT NULL,
+  `warehouse_id` int(10) UNSIGNED DEFAULT NULL,
+  `warehouse_location_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2956,11 +3637,11 @@ CREATE TABLE `product_inventories` (
 --
 
 CREATE TABLE `product_key_points` (
-  `id` int UNSIGNED NOT NULL,
-  `product_id` int UNSIGNED NOT NULL,
-  `key_heading` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `key_point` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort_order` smallint UNSIGNED NOT NULL DEFAULT '0',
+  `id` int(10) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL,
+  `key_heading` varchar(191) NOT NULL,
+  `key_point` text NOT NULL,
+  `sort_order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2972,12 +3653,12 @@ CREATE TABLE `product_key_points` (
 --
 
 CREATE TABLE `product_other_images` (
-  `id` int UNSIGNED NOT NULL,
-  `product_id` int UNSIGNED NOT NULL,
-  `path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `original_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `sort_order` smallint UNSIGNED NOT NULL DEFAULT '0',
-  `color_id` int UNSIGNED DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL,
+  `path` varchar(500) NOT NULL,
+  `original_name` varchar(191) DEFAULT NULL,
+  `sort_order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
+  `color_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2987,15 +3668,18 @@ CREATE TABLE `product_other_images` (
 --
 
 INSERT INTO `product_other_images` (`id`, `product_id`, `path`, `original_name`, `sort_order`, `color_id`, `created_at`, `updated_at`) VALUES
-(29, 21, 'product-other-images/G1IkWq1s5Cf8jwRm2Av13rGcgpzQv3ku5X6dRMo5.jpg', 'MQTB-Red (1).jpg', 1, 879, '2026-03-18 16:53:27', '2026-03-18 16:58:20'),
-(30, 21, 'product-other-images/YlTgoP11V8dXT6nSAM0KkHZuwZ3LgdkbBUo5e4BI.jpg', 'MQTB-Navy (1).jpg', 3, 880, '2026-03-18 16:53:27', '2026-03-18 16:58:20'),
-(31, 21, 'product-other-images/p9KkHMcVDvS4235OcskCJENrwJLDoTsHOP2D60Sq.jpg', 'MQTB-Hot-Pink.jpg', 4, 881, '2026-03-18 16:55:06', '2026-03-18 16:58:20'),
-(35, 28, 'product-other-images/69dea2a8ad35e.jpg', 'MQTB-Red (1).jpg', 0, 885, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(36, 28, 'product-other-images/69dea2a8add99.jpg', 'MQTB-Navy (1).jpg', 1, 886, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(37, 28, 'product-other-images/69dea2a8ae532.jpg', 'MQTB-Hot-Pink.jpg', 2, 887, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(38, 29, 'product-other-images/69dea3c474dfe.jpg', 'MQTB-Red (1).jpg', 0, 894, '2026-04-14 20:59:56', '2026-04-15 11:13:20'),
-(39, 29, 'product-other-images/69dea3c47d2de.jpg', 'MQTB-Navy (1).jpg', 1, 895, '2026-04-14 20:59:56', '2026-04-15 11:13:20'),
-(40, 29, 'product-other-images/69dea3c47d991.jpg', 'MQTB-Hot-Pink.jpg', 2, 896, '2026-04-14 20:59:56', '2026-04-15 11:13:20');
+(29, 21, 'product-other-images/G1IkWq1s5Cf8jwRm2Av13rGcgpzQv3ku5X6dRMo5.jpg', 'MQTB-Red (1).jpg', 1, 916, '2026-03-18 16:53:27', '2026-05-18 03:20:25'),
+(30, 21, 'product-other-images/YlTgoP11V8dXT6nSAM0KkHZuwZ3LgdkbBUo5e4BI.jpg', 'MQTB-Navy (1).jpg', 3, 917, '2026-03-18 16:53:27', '2026-05-18 03:20:25'),
+(31, 21, 'product-other-images/p9KkHMcVDvS4235OcskCJENrwJLDoTsHOP2D60Sq.jpg', 'MQTB-Hot-Pink.jpg', 4, 918, '2026-03-18 16:55:06', '2026-05-18 03:20:25'),
+(52, 37, 'product-other-images/THAIw80C2cu8s360RGAJNEyGccRXfTdzrMnl6PWM.jpg', 'abc.jpg', 0, 921, '2026-05-18 03:25:10', '2026-05-18 03:31:37'),
+(53, 37, 'product-other-images/aVTmotPX2tJnvNhhqeIqVqxdaUMbJKvzKTD0eR9y.jpg', 'abc.jpg', 1, 922, '2026-05-18 03:25:10', '2026-05-18 03:31:37'),
+(54, 38, 'product-other-images/6a0bf56fd5b95.jpg', 'abc.jpg', 0, 923, '2026-05-19 15:00:23', '2026-05-19 15:00:23'),
+(55, 38, 'product-other-images/6a0bf56fd5f9a.jpg', 'abc.jpg', 1, 924, '2026-05-19 15:00:23', '2026-05-19 15:00:23'),
+(56, 41, 'product-other-images/RRg6qhfYkReUg8B0H8oicBOYJC8U7hy2Ty9A29rc.jpg', 'TB600-Light-Pink.jpg', 0, 927, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(57, 41, 'product-other-images/IsGUHnahyhO1kVgCNWtXzN2on909D6rUPezapXDd.jpg', 'TB600-Royal.jpg', 1, 928, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(58, 41, 'product-other-images/G1IkWq1s5Cf8jwRm2Av13rGcgpzQv3ku5X6dRMo5.jpg', 'MQTB-Red (1).jpg', 2, 927, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(59, 41, 'product-other-images/YlTgoP11V8dXT6nSAM0KkHZuwZ3LgdkbBUo5e4BI.jpg', 'MQTB-Navy (1).jpg', 3, 928, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(60, 41, 'product-other-images/p9KkHMcVDvS4235OcskCJENrwJLDoTsHOP2D60Sq.jpg', 'MQTB-Hot-Pink.jpg', 4, 929, '2026-05-20 11:42:27', '2026-05-20 11:42:27');
 
 -- --------------------------------------------------------
 
@@ -3004,11 +3688,11 @@ INSERT INTO `product_other_images` (`id`, `product_id`, `path`, `original_name`,
 --
 
 CREATE TABLE `product_pricing_charts` (
-  `id` int UNSIGNED NOT NULL,
-  `product_id` int UNSIGNED NOT NULL,
-  `heading` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort_order` smallint UNSIGNED NOT NULL DEFAULT '0',
+  `id` int(10) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL,
+  `heading` varchar(191) NOT NULL,
+  `type` varchar(100) NOT NULL,
+  `sort_order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3020,12 +3704,12 @@ CREATE TABLE `product_pricing_charts` (
 --
 
 CREATE TABLE `product_pricing_chart_tiers` (
-  `id` int UNSIGNED NOT NULL,
-  `product_pricing_chart_id` int UNSIGNED NOT NULL,
-  `product_pricing_chart_type_id` int UNSIGNED DEFAULT NULL,
-  `quantity` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `price` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `sort_order` smallint UNSIGNED NOT NULL DEFAULT '0',
+  `id` int(10) UNSIGNED NOT NULL,
+  `product_pricing_chart_id` int(10) UNSIGNED NOT NULL,
+  `product_pricing_chart_type_id` int(10) UNSIGNED DEFAULT NULL,
+  `quantity` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `price` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `sort_order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3037,10 +3721,10 @@ CREATE TABLE `product_pricing_chart_tiers` (
 --
 
 CREATE TABLE `product_pricing_chart_types` (
-  `id` int UNSIGNED NOT NULL,
-  `product_pricing_chart_id` int UNSIGNED NOT NULL,
-  `type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort_order` smallint UNSIGNED NOT NULL DEFAULT '0',
+  `id` int(10) UNSIGNED NOT NULL,
+  `product_pricing_chart_id` int(10) UNSIGNED NOT NULL,
+  `type` varchar(100) NOT NULL,
+  `sort_order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3052,10 +3736,10 @@ CREATE TABLE `product_pricing_chart_types` (
 --
 
 CREATE TABLE `product_production_sections` (
-  `id` bigint UNSIGNED NOT NULL,
-  `product_id` int UNSIGNED NOT NULL,
-  `section_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort_order` int UNSIGNED NOT NULL DEFAULT '0',
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL,
+  `section_name` varchar(191) NOT NULL,
+  `sort_order` int(10) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3065,21 +3749,18 @@ CREATE TABLE `product_production_sections` (
 --
 
 INSERT INTO `product_production_sections` (`id`, `product_id`, `section_name`, `sort_order`, `created_at`, `updated_at`) VALUES
-(7, 21, 'Cutting', 0, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(8, 21, 'Stitching', 1, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(9, 21, 'Finishing', 2, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(10, 21, 'Quality', 3, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(11, 21, 'Packing', 4, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(17, 28, 'Cutting', 0, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(18, 28, 'Stitching', 1, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(19, 28, 'Finishing', 2, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(20, 28, 'Quality', 3, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(21, 28, 'Packing', 4, '2026-04-14 20:55:13', '2026-04-14 20:55:13'),
-(32, 29, 'Cutting', 0, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(33, 29, 'Stitching', 1, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(34, 29, 'Finishing', 2, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(35, 29, 'Quality', 3, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(36, 29, 'Packing', 4, '2026-04-15 11:13:20', '2026-04-15 11:13:20');
+(53, 21, 'Cutting', 0, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(54, 21, 'Stitching', 1, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(55, 21, 'Finishing', 2, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(56, 21, 'Quality', 3, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(57, 21, 'Packing', 4, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(59, 37, 'Brendan Kane', 0, '2026-05-18 03:31:37', '2026-05-18 03:31:37'),
+(60, 38, 'Brendan Kane', 0, '2026-05-19 15:00:23', '2026-05-19 15:00:23'),
+(63, 41, 'Cutting', 0, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(64, 41, 'Stitching', 1, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(65, 41, 'Finishing', 2, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(66, 41, 'Quality', 3, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(67, 41, 'Packing', 4, '2026-05-20 11:42:27', '2026-05-20 11:42:27');
 
 -- --------------------------------------------------------
 
@@ -3088,12 +3769,12 @@ INSERT INTO `product_production_sections` (`id`, `product_id`, `section_name`, `
 --
 
 CREATE TABLE `product_production_section_items` (
-  `id` bigint UNSIGNED NOT NULL,
-  `product_production_section_id` bigint UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `qty` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `unit` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort_order` int UNSIGNED NOT NULL DEFAULT '0',
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `product_production_section_id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `unit` varchar(191) NOT NULL,
+  `sort_order` int(10) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3103,27 +3784,22 @@ CREATE TABLE `product_production_section_items` (
 --
 
 INSERT INTO `product_production_section_items` (`id`, `product_production_section_id`, `name`, `qty`, `unit`, `sort_order`, `created_at`, `updated_at`) VALUES
-(7, 7, 'Fabric Width', 66.0000, 'Inch', 0, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(8, 7, 'Cutting', 40.0000, 'Inch', 1, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(9, 8, 'Thread Usage', 5.0000, 'Meter', 0, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(10, 8, 'Machine Type', 1.0000, 'Unit', 1, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(11, 9, 'Iron Pass', 1.0000, 'Pass', 0, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(12, 10, 'QC Check', 1.0000, 'Check', 0, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(13, 11, 'Pieces Per Carton', 100.0000, 'Piece', 0, '2026-03-18 16:58:20', '2026-03-18 16:58:20'),
-(21, 17, 'Fabric Width', 66.0000, 'Inch', 0, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(22, 17, 'Cutting', 40.0000, 'Inch', 1, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(23, 18, 'Thread Usage', 5.0000, 'Meter', 0, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(24, 18, 'Machine Type', 1.0000, 'Unit', 1, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(25, 19, 'Iron Pass', 1.0000, 'Pass', 0, '2026-04-14 20:55:12', '2026-04-14 20:55:12'),
-(26, 20, 'QC Check', 1.0000, 'Check', 0, '2026-04-14 20:55:13', '2026-04-14 20:55:13'),
-(27, 21, 'Pieces Per Carton', 100.0000, 'Piece', 0, '2026-04-14 20:55:13', '2026-04-14 20:55:13'),
-(42, 32, 'Fabric Width', 66.0000, 'Inch', 0, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(43, 32, 'Cutting', 40.0000, 'Inch', 1, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(44, 33, 'Thread Usage', 5.0000, 'Meter', 0, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(45, 33, 'Machine Type', 1.0000, 'Unit', 1, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(46, 34, 'Iron Pass', 1.0000, 'Pass', 0, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(47, 35, 'QC Check', 1.0000, 'Check', 0, '2026-04-15 11:13:20', '2026-04-15 11:13:20'),
-(48, 36, 'Pieces Per Carton', 100.0000, 'Piece', 0, '2026-04-15 11:13:20', '2026-04-15 11:13:20');
+(71, 53, 'Fabric Width', 66.0000, 'Inch', 0, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(72, 53, 'Cutting', 40.0000, 'Inch', 1, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(73, 54, 'Thread Usage', 5.0000, 'Meter', 0, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(74, 54, 'Machine Type', 1.0000, 'Unit', 1, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(75, 55, 'Iron Pass', 1.0000, 'Pass', 0, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(76, 56, 'QC Check', 1.0000, 'Check', 0, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(77, 57, 'Pieces Per Carton', 100.0000, 'Piece', 0, '2026-05-18 03:20:25', '2026-05-18 03:20:25'),
+(79, 59, 'Samson Cantu', 981.0000, 'Est aut molestiae do', 0, '2026-05-18 03:31:37', '2026-05-18 03:31:37'),
+(80, 60, 'Samson Cantu', 981.0000, 'Est aut molestiae do', 0, '2026-05-19 15:00:23', '2026-05-19 15:00:23'),
+(83, 63, 'Fabric Width', 66.0000, 'Inch', 0, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(84, 63, 'Cutting', 40.0000, 'Inch', 1, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(85, 64, 'Thread Usage', 5.0000, 'Meter', 0, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(86, 64, 'Machine Type', 1.0000, 'Unit', 1, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(87, 65, 'Iron Pass', 1.0000, 'Pass', 0, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(88, 66, 'QC Check', 1.0000, 'Check', 0, '2026-05-20 11:42:27', '2026-05-20 11:42:27'),
+(89, 67, 'Pieces Per Carton', 100.0000, 'Piece', 0, '2026-05-20 11:42:27', '2026-05-20 11:42:27');
 
 -- --------------------------------------------------------
 
@@ -3132,8 +3808,8 @@ INSERT INTO `product_production_section_items` (`id`, `product_production_sectio
 --
 
 CREATE TABLE `product_tags` (
-  `tag_id` int UNSIGNED NOT NULL,
-  `product_id` int UNSIGNED NOT NULL
+  `tag_id` int(10) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -3143,46 +3819,46 @@ CREATE TABLE `product_tags` (
 --
 
 CREATE TABLE `proforma_invoices` (
-  `id` bigint UNSIGNED NOT NULL,
-  `proforma_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `quote_id` int UNSIGNED DEFAULT NULL,
-  `organization_id` int UNSIGNED NOT NULL,
-  `person_id` int UNSIGNED DEFAULT NULL,
-  `sales_owner_id` int UNSIGNED DEFAULT NULL,
-  `subject` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `proforma_number` varchar(191) NOT NULL,
+  `quote_id` int(10) UNSIGNED DEFAULT NULL,
+  `organization_id` int(10) UNSIGNED NOT NULL,
+  `person_id` int(10) UNSIGNED DEFAULT NULL,
+  `sales_owner_id` int(10) UNSIGNED DEFAULT NULL,
+  `subject` varchar(191) DEFAULT NULL,
   `issue_date` date NOT NULL,
   `due_date` date DEFAULT NULL,
-  `billing_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `shipping_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `subtotal` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `discount_percent` decimal(12,4) DEFAULT '0.0000',
-  `discount_amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `tax_amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `adjustment_amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `grand_total` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `received_amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `remaining_amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `terms` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `payment_term` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `customer_po_reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `source_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `converted_to_invoice_id` bigint UNSIGNED DEFAULT NULL,
-  `created_by` int UNSIGNED DEFAULT NULL,
-  `approved_by` int UNSIGNED DEFAULT NULL,
+  `billing_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `shipping_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `subtotal` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `discount_percent` decimal(12,4) DEFAULT 0.0000,
+  `discount_amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `tax_amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `adjustment_amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `grand_total` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `received_amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `remaining_amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `status` varchar(191) NOT NULL DEFAULT 'draft',
+  `notes` text DEFAULT NULL,
+  `terms` text DEFAULT NULL,
+  `payment_term` varchar(191) DEFAULT NULL,
+  `customer_po_reference` varchar(191) DEFAULT NULL,
+  `source_type` varchar(191) DEFAULT NULL,
+  `converted_to_invoice_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_by` int(10) UNSIGNED DEFAULT NULL,
+  `approved_by` int(10) UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `attachment_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `attachment_path` varchar(191) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `proforma_invoices`
 --
 
 INSERT INTO `proforma_invoices` (`id`, `proforma_number`, `quote_id`, `organization_id`, `person_id`, `sales_owner_id`, `subject`, `issue_date`, `due_date`, `billing_address`, `shipping_address`, `subtotal`, `discount_percent`, `discount_amount`, `tax_amount`, `adjustment_amount`, `grand_total`, `received_amount`, `remaining_amount`, `status`, `notes`, `terms`, `payment_term`, `customer_po_reference`, `source_type`, `converted_to_invoice_id`, `created_by`, `approved_by`, `approved_at`, `attachment_path`, `created_at`, `updated_at`) VALUES
-(1, 'PF-00001', 14, 3, NULL, 1, 'Quote 000003', '2026-04-15', NULL, '{\"address\":\"\"}', '{\"address\":\"\"}', 4.7200, 0.0000, 0.0000, 0.0000, 0.5664, 5.2864, 0.0000, 5.2864, 'issued', '', '', '', NULL, 'quote', NULL, 1, NULL, NULL, NULL, '2026-04-15 10:17:55', '2026-04-15 10:17:55');
+(14, 'PF-00001', 19, 3, NULL, 1, 'Quote 000001', '2026-05-19', NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 1101.0400, 0.0000, 0.0000, 0.0000, 0.0000, 1101.0400, 0.0000, 1101.0400, 'issued', '', '', '', NULL, 'quote', NULL, 1, NULL, NULL, NULL, '2026-05-20 02:37:01', '2026-05-20 02:37:01');
 
 -- --------------------------------------------------------
 
@@ -3191,25 +3867,25 @@ INSERT INTO `proforma_invoices` (`id`, `proforma_number`, `quote_id`, `organizat
 --
 
 CREATE TABLE `proforma_invoice_items` (
-  `id` bigint UNSIGNED NOT NULL,
-  `proforma_invoice_id` bigint UNSIGNED NOT NULL,
-  `product_id` int UNSIGNED DEFAULT NULL,
-  `color_variant_id` bigint UNSIGNED DEFAULT NULL,
-  `color_variant_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `preview_image` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `item_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `item_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `qty` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `unit` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `unit_price` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `discount_percent` decimal(12,4) DEFAULT '0.0000',
-  `discount_amount` decimal(12,4) DEFAULT '0.0000',
-  `tax_percent` decimal(12,4) DEFAULT '0.0000',
-  `tax_amount` decimal(12,4) DEFAULT '0.0000',
-  `line_subtotal` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `line_total` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `sort_order` int DEFAULT NULL,
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `proforma_invoice_id` bigint(20) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED DEFAULT NULL,
+  `color_variant_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `color_variant_name` varchar(191) DEFAULT NULL,
+  `preview_image` text DEFAULT NULL,
+  `item_name` varchar(191) NOT NULL,
+  `item_code` varchar(191) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `qty` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `unit` varchar(191) DEFAULT NULL,
+  `unit_price` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `discount_percent` decimal(12,4) DEFAULT 0.0000,
+  `discount_amount` decimal(12,4) DEFAULT 0.0000,
+  `tax_percent` decimal(12,4) DEFAULT 0.0000,
+  `tax_amount` decimal(12,4) DEFAULT 0.0000,
+  `line_subtotal` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `line_total` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `sort_order` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3219,7 +3895,8 @@ CREATE TABLE `proforma_invoice_items` (
 --
 
 INSERT INTO `proforma_invoice_items` (`id`, `proforma_invoice_id`, `product_id`, `color_variant_id`, `color_variant_name`, `preview_image`, `item_name`, `item_code`, `description`, `qty`, `unit`, `unit_price`, `discount_percent`, `discount_amount`, `tax_percent`, `tax_amount`, `line_subtotal`, `line_total`, `sort_order`, `created_at`, `updated_at`) VALUES
-(6, 1, 21, 0, '', 'https://localhost/MCM-Software/public/storage/product-images/Gt8rXILv7TUouhxluLD2waYPDC9FxQYtVfHpff6j.jpg', 'Cotton Tote Bag', 'MQTB', NULL, 1.0000, '', 4.7200, 0.0000, 0.0000, 0.0000, 0.0000, 4.7200, 4.7200, 0, '2026-04-15 10:17:55', '2026-04-15 10:17:55');
+(19, 14, 38, 924, 'black', 'https://mcm.deveoninc.com/public/storage/product-images/6a0bf56fd4f6c.jpg', 'Street Bundle abc', 'abc', NULL, 1200.0000, '', 0.8200, 0.0000, 0.0000, 0.0000, 0.0000, 984.0000, 984.0000, 0, '2026-05-20 02:37:01', '2026-05-20 02:37:01'),
+(20, 14, 38, 923, 'red', 'https://mcm.deveoninc.com/public/storage/product-images/6a0bf56fd4f6c.jpg', 'Street Bundle abc', 'abc', NULL, 133.0000, '', 0.8800, 0.0000, 0.0000, 0.0000, 0.0000, 117.0400, 117.0400, 1, '2026-05-20 02:37:01', '2026-05-20 02:37:01');
 
 -- --------------------------------------------------------
 
@@ -3228,16 +3905,16 @@ INSERT INTO `proforma_invoice_items` (`id`, `proforma_invoice_id`, `product_id`,
 --
 
 CREATE TABLE `proforma_receipts` (
-  `id` bigint UNSIGNED NOT NULL,
-  `proforma_invoice_id` bigint UNSIGNED NOT NULL,
-  `receipt_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `proforma_invoice_id` bigint(20) UNSIGNED NOT NULL,
+  `receipt_number` varchar(191) DEFAULT NULL,
   `payment_date` date NOT NULL,
   `amount` decimal(12,4) NOT NULL,
-  `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `reference_no` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `received_by` int UNSIGNED DEFAULT NULL,
-  `attachment_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payment_method` varchar(191) DEFAULT NULL,
+  `reference_no` varchar(191) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `received_by` int(10) UNSIGNED DEFAULT NULL,
+  `attachment_path` varchar(191) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3249,41 +3926,36 @@ CREATE TABLE `proforma_receipts` (
 --
 
 CREATE TABLE `purchase_orders` (
-  `id` int UNSIGNED NOT NULL,
-  `po_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `job_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `job_order_id` int UNSIGNED DEFAULT NULL,
-  `vendor_quote_id` int UNSIGNED DEFAULT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `terms` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `attachment_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `po_number` varchar(191) NOT NULL,
+  `job_number` varchar(191) DEFAULT NULL,
+  `job_order_id` int(10) UNSIGNED DEFAULT NULL,
+  `vendor_quote_id` int(10) UNSIGNED DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `terms` text DEFAULT NULL,
+  `attachment_path` varchar(191) DEFAULT NULL,
   `closed_at` timestamp NULL DEFAULT NULL,
-  `closed_by` int UNSIGNED DEFAULT NULL,
+  `closed_by` int(10) UNSIGNED DEFAULT NULL,
   `completion_date` date DEFAULT NULL,
   `last_delivery_date` date DEFAULT NULL,
   `expected_receive_date` date DEFAULT NULL,
-  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
-  `payment_term` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `shipping_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `sales_tax_percent` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `freight` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `sub_total` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `tax_amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `grand_total` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `person_id` int UNSIGNED DEFAULT NULL,
-  `organization_id` int UNSIGNED DEFAULT NULL,
-  `user_id` int UNSIGNED DEFAULT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'draft',
+  `payment_term` varchar(191) DEFAULT NULL,
+  `shipping_method` varchar(191) DEFAULT NULL,
+  `sales_tax_percent` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `freight` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `sub_total` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `tax_amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `grand_total` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `person_id` int(10) UNSIGNED DEFAULT NULL,
+  `organization_id` int(10) UNSIGNED DEFAULT NULL,
+  `billing_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`billing_address`)),
+  `shipping_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`shipping_address`)),
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `purchase_orders`
---
-
-INSERT INTO `purchase_orders` (`id`, `po_number`, `job_number`, `job_order_id`, `vendor_quote_id`, `description`, `notes`, `terms`, `attachment_path`, `closed_at`, `closed_by`, `completion_date`, `last_delivery_date`, `expected_receive_date`, `status`, `payment_term`, `shipping_method`, `sales_tax_percent`, `freight`, `sub_total`, `tax_amount`, `grand_total`, `person_id`, `organization_id`, `user_id`, `created_at`, `updated_at`) VALUES
-(5, 'PO-00001', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'issued', 'df', 'df', 0.0000, 0.0000, 299.0000, 0.0000, 299.0000, NULL, 4, 1, '2026-03-19 19:39:22', '2026-03-19 19:39:22');
 
 -- --------------------------------------------------------
 
@@ -3292,32 +3964,25 @@ INSERT INTO `purchase_orders` (`id`, `po_number`, `job_number`, `job_order_id`, 
 --
 
 CREATE TABLE `purchase_order_items` (
-  `id` int UNSIGNED NOT NULL,
-  `item` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `material_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `quantity` int NOT NULL DEFAULT '1',
-  `ordered_quantity` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `received_quantity` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `pending_quantity` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `unit` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `item` varchar(191) DEFAULT NULL,
+  `material_name` varchar(191) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 1,
+  `ordered_quantity` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `received_quantity` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `pending_quantity` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `unit` varchar(100) DEFAULT NULL,
   `expected_receive_date` date DEFAULT NULL,
-  `line_status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open',
-  `price` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `total` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `purchase_order_id` int UNSIGNED NOT NULL,
-  `requirement_id` int UNSIGNED DEFAULT NULL,
-  `product_id` int UNSIGNED DEFAULT NULL,
+  `line_status` varchar(50) NOT NULL DEFAULT 'open',
+  `price` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `total` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `purchase_order_id` int(10) UNSIGNED NOT NULL,
+  `requirement_id` int(10) UNSIGNED DEFAULT NULL,
+  `product_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `purchase_order_items`
---
-
-INSERT INTO `purchase_order_items` (`id`, `item`, `material_name`, `description`, `quantity`, `ordered_quantity`, `received_quantity`, `pending_quantity`, `unit`, `expected_receive_date`, `line_status`, `price`, `total`, `purchase_order_id`, `requirement_id`, `product_id`, `created_at`, `updated_at`) VALUES
-(16, 'dfdf', 'dfdf', NULL, 13, 13.0000, 0.0000, 13.0000, 'PCS', NULL, 'open', 23.0000, 299.0000, 5, NULL, NULL, '2026-03-19 19:39:22', '2026-03-19 19:39:22');
 
 -- --------------------------------------------------------
 
@@ -3326,47 +3991,46 @@ INSERT INTO `purchase_order_items` (`id`, `item`, `material_name`, `description`
 --
 
 CREATE TABLE `quotes` (
-  `id` int UNSIGNED NOT NULL,
-  `quote_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `subject` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `quote_number` varchar(191) DEFAULT NULL,
+  `subject` varchar(191) NOT NULL,
   `quote_date` date DEFAULT NULL,
-  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `terms` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `payment_term` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `shipping_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `production_time` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `transit_time` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` varchar(191) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `terms` text DEFAULT NULL,
+  `payment_term` varchar(191) DEFAULT NULL,
+  `shipping_method` varchar(191) DEFAULT NULL,
+  `production_time` varchar(191) DEFAULT NULL,
+  `transit_time` varchar(191) DEFAULT NULL,
   `etd` date DEFAULT NULL,
   `eta` date DEFAULT NULL,
-  `attachment_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `billing_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `shipping_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `discount_percent` decimal(12,4) DEFAULT '0.0000',
-  `tariff_percent` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `freight_percent` decimal(12,4) NOT NULL DEFAULT '0.0000',
+  `attachment_path` varchar(191) DEFAULT NULL,
+  `billing_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `shipping_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `discount_percent` decimal(12,4) DEFAULT 0.0000,
+  `tariff_percent` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `freight_percent` decimal(12,4) NOT NULL DEFAULT 0.0000,
   `discount_amount` decimal(12,4) DEFAULT NULL,
   `tax_amount` decimal(12,4) DEFAULT NULL,
   `adjustment_amount` decimal(12,4) DEFAULT NULL,
   `sub_total` decimal(12,4) DEFAULT NULL,
   `grand_total` decimal(12,4) DEFAULT NULL,
-  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `status` varchar(191) NOT NULL DEFAULT 'draft',
   `expired_at` datetime DEFAULT NULL,
-  `person_id` int UNSIGNED DEFAULT NULL,
-  `organization_id` int UNSIGNED DEFAULT NULL,
-  `user_id` int UNSIGNED NOT NULL,
+  `person_id` int(10) UNSIGNED DEFAULT NULL,
+  `organization_id` int(10) UNSIGNED DEFAULT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `quotes`
 --
 
 INSERT INTO `quotes` (`id`, `quote_number`, `subject`, `quote_date`, `description`, `notes`, `terms`, `payment_term`, `shipping_method`, `production_time`, `transit_time`, `etd`, `eta`, `attachment_path`, `billing_address`, `shipping_address`, `discount_percent`, `tariff_percent`, `freight_percent`, `discount_amount`, `tax_amount`, `adjustment_amount`, `sub_total`, `grand_total`, `status`, `expired_at`, `person_id`, `organization_id`, `user_id`, `created_at`, `updated_at`) VALUES
-(11, '000001', 'Quote 000001', '2026-03-19', NULL, '', '', '', '', '', '', '0000-00-00', '0000-00-00', NULL, NULL, NULL, 0.0000, 5.0000, 9.0000, 0.0000, 2.8320, 5.0980, 56.6400, 64.5700, 'approved', NULL, NULL, 3, 1, '2026-03-19 01:29:31', '2026-03-19 01:29:31'),
-(12, '000002', 'Quote 000002', '2026-04-15', NULL, '', '', '', '', '', '', '0000-00-00', '0000-00-00', NULL, NULL, NULL, 0.0000, 0.0000, 12.0000, 0.0000, 0.0000, 34.5664, 4.7200, 39.2860, 'approved', NULL, NULL, 3, 1, '2026-04-15 09:52:18', '2026-04-15 09:52:18'),
-(14, '000003', 'Quote 000003', '2026-04-15', NULL, '', '', '', '', '', '', '0000-00-00', '0000-00-00', NULL, NULL, NULL, 0.0000, 0.0000, 12.0000, 0.0000, 0.0000, 0.5664, 4.7200, 5.2860, 'approved', NULL, NULL, 3, 1, '2026-04-15 09:53:27', '2026-04-15 09:53:27');
+(19, '000001', 'Quote 000001', '2026-05-19', NULL, '', '', '', '', '', '', '0000-00-00', '0000-00-00', NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 1101.0400, 1101.0400, 'closed', NULL, NULL, 3, 1, '2026-05-20 02:36:16', '2026-05-20 02:37:01'),
+(21, '000002', 'Quote 000002', '2026-05-20', NULL, '', '', '', '', '', '', '0000-00-00', '0000-00-00', NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"djj\\njjk, jkjk, jkj, jkj\",\"street\":\"djj\",\"city\":\"jjk\",\"state\":\"jkjk\",\"postcode\":\"jkj\",\"country\":\"jkj\"}', '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"jkjk\\njkjk, jkj, jkjk, j\",\"street\":\"jkjk\",\"city\":\"jkjk\",\"state\":\"jkj\",\"postcode\":\"jkjk\",\"country\":\"j\"}', 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.6900, 0.6900, 'open', NULL, NULL, 17, 1, '2026-05-20 13:05:43', '2026-05-20 13:05:43');
 
 -- --------------------------------------------------------
 
@@ -3375,29 +4039,29 @@ INSERT INTO `quotes` (`id`, `quote_number`, `subject`, `quote_date`, `descriptio
 --
 
 CREATE TABLE `quote_items` (
-  `id` int UNSIGNED NOT NULL,
-  `sku` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `item_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `item_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `quantity` int DEFAULT '0',
-  `unit` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `price` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `unit_price` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `coupon_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `discount_percent` decimal(12,4) DEFAULT '0.0000',
-  `discount_amount` decimal(12,4) DEFAULT '0.0000',
-  `tax_percent` decimal(12,4) DEFAULT '0.0000',
-  `tax_amount` decimal(12,4) DEFAULT '0.0000',
-  `line_subtotal` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `line_total` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `sort_order` int DEFAULT NULL,
-  `total` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `product_id` int UNSIGNED DEFAULT NULL,
-  `color_variant_id` bigint UNSIGNED DEFAULT NULL,
-  `color_variant_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `preview_image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `quote_id` int UNSIGNED NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `sku` varchar(191) DEFAULT NULL,
+  `item_code` varchar(191) DEFAULT NULL,
+  `name` varchar(191) DEFAULT NULL,
+  `item_name` varchar(191) DEFAULT NULL,
+  `quantity` int(11) DEFAULT 0,
+  `unit` varchar(191) DEFAULT NULL,
+  `price` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `unit_price` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `coupon_code` varchar(191) DEFAULT NULL,
+  `discount_percent` decimal(12,4) DEFAULT 0.0000,
+  `discount_amount` decimal(12,4) DEFAULT 0.0000,
+  `tax_percent` decimal(12,4) DEFAULT 0.0000,
+  `tax_amount` decimal(12,4) DEFAULT 0.0000,
+  `line_subtotal` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `line_total` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `sort_order` int(11) DEFAULT NULL,
+  `total` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `product_id` int(10) UNSIGNED DEFAULT NULL,
+  `color_variant_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `color_variant_name` varchar(191) DEFAULT NULL,
+  `preview_image` varchar(191) DEFAULT NULL,
+  `quote_id` int(10) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3407,9 +4071,9 @@ CREATE TABLE `quote_items` (
 --
 
 INSERT INTO `quote_items` (`id`, `sku`, `item_code`, `name`, `item_name`, `quantity`, `unit`, `price`, `unit_price`, `coupon_code`, `discount_percent`, `discount_amount`, `tax_percent`, `tax_amount`, `line_subtotal`, `line_total`, `sort_order`, `total`, `product_id`, `color_variant_id`, `color_variant_name`, `preview_image`, `quote_id`, `created_at`, `updated_at`) VALUES
-(10, 'MQTB', 'MQTB', 'Cotton Tote Bag', 'Cotton Tote Bag', 12, NULL, 4.7200, 4.7200, NULL, 0.0000, 0.0000, 0.0000, 0.0000, 56.6400, 56.6400, NULL, 56.6400, 21, 0, '', 'https://localhost/crm/public/storage/product-images/Gt8rXILv7TUouhxluLD2waYPDC9FxQYtVfHpff6j.jpg', 11, '2026-03-19 01:29:32', '2026-03-19 01:29:32'),
-(11, 'MQTB', 'MQTB', 'Cotton Tote Bag', 'Cotton Tote Bag', 1, NULL, 4.7200, 4.7200, NULL, 0.0000, 0.0000, 0.0000, 0.0000, 4.7200, 4.7200, NULL, 4.7200, 21, 0, '', 'https://localhost/MCM-Software/public/storage/product-images/Gt8rXILv7TUouhxluLD2waYPDC9FxQYtVfHpff6j.jpg', 12, '2026-04-15 09:52:18', '2026-04-15 09:52:18'),
-(12, 'MQTB', 'MQTB', 'Cotton Tote Bag', 'Cotton Tote Bag', 1, NULL, 4.7200, 4.7200, NULL, 0.0000, 0.0000, 0.0000, 0.0000, 4.7200, 4.7200, NULL, 4.7200, 21, 0, '', 'https://localhost/MCM-Software/public/storage/product-images/Gt8rXILv7TUouhxluLD2waYPDC9FxQYtVfHpff6j.jpg', 14, '2026-04-15 09:53:27', '2026-04-15 09:53:27');
+(23, 'abc', 'abc', 'Street Bundle abc', 'Street Bundle abc', 1200, NULL, 0.8200, 0.8200, NULL, 0.0000, 0.0000, 0.0000, 0.0000, 984.0000, 984.0000, NULL, 984.0000, 38, 924, 'black', 'https://mcm.deveoninc.com/public/storage/product-images/6a0bf56fd4f6c.jpg', 19, '2026-05-20 02:36:16', '2026-05-20 02:36:16'),
+(24, 'abc', 'abc', 'Street Bundle abc', 'Street Bundle abc', 133, NULL, 0.8800, 0.8800, NULL, 0.0000, 0.0000, 0.0000, 0.0000, 117.0400, 117.0400, NULL, 117.0400, 38, 923, 'red', 'https://mcm.deveoninc.com/public/storage/product-images/6a0bf56fd4f6c.jpg', 19, '2026-05-20 02:36:16', '2026-05-20 02:36:16'),
+(26, 'SBQ600', 'SBQ600', 'Jumbo Tote Bag', 'Jumbo Tote Bag', 1, NULL, 0.6900, 0.6900, NULL, 0.0000, 0.0000, 0.0000, 0.0000, 0.6900, 0.6900, NULL, 0.6900, 41, NULL, NULL, 'https://mcm.deveoninc.com/public/storage/product-images/kOK7F8xuoTBmoQpUzbDNrbzsOZdel8ZgB3H6GQfn.jpg', 21, '2026-05-20 13:05:43', '2026-05-20 13:05:43');
 
 -- --------------------------------------------------------
 
@@ -3418,21 +4082,25 @@ INSERT INTO `quote_items` (`id`, `sku`, `item_code`, `name`, `item_name`, `quant
 --
 
 CREATE TABLE `roles` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `permission_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `permissions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `description` varchar(191) DEFAULT NULL,
+  `permission_type` varchar(191) NOT NULL,
+  `permissions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `roles`
 --
 
 INSERT INTO `roles` (`id`, `name`, `description`, `permission_type`, `permissions`, `created_at`, `updated_at`) VALUES
-(1, 'Administrator', 'Administrator Role', 'all', NULL, NULL, NULL);
+(1, 'Administrator', 'Administrator Role', 'all', NULL, NULL, NULL),
+(3, 'Sales', 'Sales Employee', 'all', NULL, '2026-04-18 11:17:22', '2026-04-18 11:17:22'),
+(4, 'Customer', 'Customer Role', 'custom', '[\"dashboard\",\"leads\",\"leads.view\",\"employees\",\"employees.persons\",\"employees.persons.view\",\"mail\",\"mail.view\"]', '2026-04-18 11:17:39', '2026-05-20 12:00:42'),
+(5, 'Vendor', 'Vendor Company', 'all', NULL, '2026-04-18 11:17:53', '2026-04-18 11:17:53'),
+(7, 'Purchasing', 'Purchasing Employee', 'all', NULL, '2026-04-18 11:19:18', '2026-04-18 11:19:18');
 
 -- --------------------------------------------------------
 
@@ -3441,13 +4109,37 @@ INSERT INTO `roles` (`id`, `name`, `description`, `permission_type`, `permission
 --
 
 CREATE TABLE `tags` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `user_id` int UNSIGNED NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `color` varchar(191) DEFAULT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `unit_references`
+--
+
+CREATE TABLE `unit_references` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `meter_conversion` decimal(16,8) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `unit_references`
+--
+
+INSERT INTO `unit_references` (`id`, `name`, `meter_conversion`, `created_at`, `updated_at`) VALUES
+(1, 'METERS', 1.00000000, '2026-04-16 17:25:23', '2026-04-16 19:48:57'),
+(2, 'INCH', 0.02540000, '2026-04-16 17:25:31', '2026-04-16 17:25:31'),
+(3, 'PCS', NULL, '2026-04-16 19:49:03', '2026-04-16 19:49:03'),
+(4, 'CONES', NULL, '2026-04-16 19:49:11', '2026-04-16 19:49:11');
 
 -- --------------------------------------------------------
 
@@ -3456,17 +4148,17 @@ CREATE TABLE `tags` (
 --
 
 CREATE TABLE `users` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT '0',
-  `view_permission` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'global',
-  `role_id` int UNSIGNED NOT NULL,
-  `remember_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `email` varchar(191) NOT NULL,
+  `password` varchar(191) DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT 0,
+  `view_permission` varchar(191) DEFAULT 'global',
+  `role_id` int(10) UNSIGNED NOT NULL,
+  `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `image` varchar(191) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -3474,7 +4166,10 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `status`, `view_permission`, `role_id`, `remember_token`, `created_at`, `updated_at`, `image`) VALUES
-(1, 'Admin', 'admin@gmail.com', '$2y$10$DeTM8iUvVZBsVgxH3OnT9OYVTTZqTNAop4Yjpmrb0lqfbQ/kXcmEG', 1, 'global', 1, NULL, '2025-11-15 14:24:54', '2025-11-15 14:24:54', NULL);
+(1, 'Admin', 'admin@gmail.com', '$2y$10$DeTM8iUvVZBsVgxH3OnT9OYVTTZqTNAop4Yjpmrb0lqfbQ/kXcmEG', 1, 'global', 1, NULL, '2025-11-15 14:24:54', '2025-11-15 14:24:54', NULL),
+(2, 'Ian Ford', 'kogik@mailinator.com', '$2y$10$atQosO0qxTDTRzpC1nNEQOLJxZk2c5ocJaJgt9bccw4VeNu.akB2y', 1, 'global', 7, NULL, '2026-04-18 11:40:16', '2026-04-18 11:40:16', NULL),
+(3, 'Muhammad Asad Ullah', 'asadullah.mtc01@gmail.com', '$2y$10$l54t4D4SlwxyeYHHauYEW.zYX645dobWGGMSeYz.qTdprQtHk7rRC', 1, 'global', 3, NULL, '2026-04-25 22:59:32', '2026-04-25 22:59:32', NULL),
+(4, 'John Myers', 'zubairmaya@gmail.com', '$2y$10$POyu73tS7V2qPPCNKLBbMugraLDiDGXeRPTAr78nkIeMUbZtAXou6', 1, 'global', 4, NULL, '2026-05-20 11:55:01', '2026-05-20 11:57:00', NULL);
 
 -- --------------------------------------------------------
 
@@ -3483,8 +4178,8 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `status`, `view_permissi
 --
 
 CREATE TABLE `user_groups` (
-  `group_id` int UNSIGNED NOT NULL,
-  `user_id` int UNSIGNED NOT NULL
+  `group_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -3494,8 +4189,8 @@ CREATE TABLE `user_groups` (
 --
 
 CREATE TABLE `user_password_resets` (
-  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(191) NOT NULL,
+  `token` varchar(191) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -3506,17 +4201,17 @@ CREATE TABLE `user_password_resets` (
 --
 
 CREATE TABLE `vendor_payables` (
-  `id` int UNSIGNED NOT NULL,
-  `purchase_order_id` int UNSIGNED DEFAULT NULL,
-  `goods_receipt_id` int UNSIGNED DEFAULT NULL,
-  `organization_id` int UNSIGNED NOT NULL,
-  `payable_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `purchase_order_id` int(10) UNSIGNED DEFAULT NULL,
+  `goods_receipt_id` int(10) UNSIGNED DEFAULT NULL,
+  `organization_id` int(10) UNSIGNED NOT NULL,
+  `payable_number` varchar(191) DEFAULT NULL,
   `payable_date` date NOT NULL,
-  `total_amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `paid_amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `remaining_amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open',
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `total_amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `paid_amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `remaining_amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `status` varchar(50) NOT NULL DEFAULT 'open',
+  `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3528,30 +4223,39 @@ CREATE TABLE `vendor_payables` (
 --
 
 CREATE TABLE `vendor_quotes` (
-  `id` int UNSIGNED NOT NULL,
-  `vendor_quote_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `job_order_id` int UNSIGNED DEFAULT NULL,
-  `organization_id` int UNSIGNED NOT NULL,
-  `person_id` int UNSIGNED DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `vendor_quote_number` varchar(191) NOT NULL,
+  `job_order_id` int(10) UNSIGNED DEFAULT NULL,
+  `organization_id` int(10) UNSIGNED NOT NULL,
+  `person_id` int(10) UNSIGNED DEFAULT NULL,
+  `billing_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`billing_address`)),
+  `shipping_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`shipping_address`)),
   `issue_date` date NOT NULL,
   `expected_response_date` date DEFAULT NULL,
-  `payment_term` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `shipping_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payment_term` varchar(191) DEFAULT NULL,
+  `shipping_method` varchar(191) DEFAULT NULL,
   `first_delivery_date` date DEFAULT NULL,
   `last_delivery_date` date DEFAULT NULL,
-  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `terms` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `subtotal` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `sales_tax_percent` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `sales_tax_amount` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `freight` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `grand_total` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `attachment_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `created_by` int UNSIGNED DEFAULT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'draft',
+  `notes` text DEFAULT NULL,
+  `terms` text DEFAULT NULL,
+  `subtotal` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `sales_tax_percent` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `sales_tax_amount` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `freight` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `grand_total` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `attachment_path` varchar(191) DEFAULT NULL,
+  `created_by` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `vendor_quotes`
+--
+
+INSERT INTO `vendor_quotes` (`id`, `vendor_quote_number`, `job_order_id`, `organization_id`, `person_id`, `billing_address`, `shipping_address`, `issue_date`, `expected_response_date`, `payment_term`, `shipping_method`, `first_delivery_date`, `last_delivery_date`, `status`, `notes`, `terms`, `subtotal`, `sales_tax_percent`, `sales_tax_amount`, `freight`, `grand_total`, `attachment_path`, `created_by`, `created_at`, `updated_at`) VALUES
+(9, 'VQ-00001', 12, 3, NULL, '{\"key\":\"billing\",\"label\":\"Billing Address\",\"type\":\"billing\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', '{\"key\":\"shipping\",\"label\":\"Shipping Address\",\"type\":\"shipping\",\"address\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\\nOttawa, Ontario, K1Z 7T1, Canada\",\"street\":\"Suite 391 - 1505 Laperriere Avenue, Ottawa, Ontario K1Z 7T1,\",\"city\":\"Ottawa\",\"state\":\"Ontario\",\"postcode\":\"K1Z 7T1\",\"country\":\"Canada\"}', '2026-05-19', NULL, '', '', '0000-00-00', '0000-00-00', 'draft', '', '', 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, NULL, 1, '2026-05-20 02:37:54', '2026-05-20 02:37:54');
 
 -- --------------------------------------------------------
 
@@ -3560,21 +4264,34 @@ CREATE TABLE `vendor_quotes` (
 --
 
 CREATE TABLE `vendor_quote_items` (
-  `id` int UNSIGNED NOT NULL,
-  `vendor_quote_id` int UNSIGNED NOT NULL,
-  `requirement_id` int UNSIGNED DEFAULT NULL,
-  `material_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `quantity` decimal(12,4) NOT NULL DEFAULT '0.0000',
-  `unit` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `vendor_quote_id` int(10) UNSIGNED NOT NULL,
+  `requirement_id` int(10) UNSIGNED DEFAULT NULL,
+  `vendor_id` int(10) UNSIGNED DEFAULT NULL,
+  `material_name` varchar(191) NOT NULL,
+  `color` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `quantity` decimal(12,4) NOT NULL DEFAULT 0.0000,
+  `unit` varchar(100) DEFAULT NULL,
   `unit_price` decimal(12,4) DEFAULT NULL,
   `total` decimal(12,4) DEFAULT NULL,
-  `vendor_lead_time` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `vendor_lead_time` varchar(191) DEFAULT NULL,
   `expected_receive_date` date DEFAULT NULL,
-  `sort_order` int DEFAULT NULL,
+  `sort_order` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `vendor_quote_items`
+--
+
+INSERT INTO `vendor_quote_items` (`id`, `vendor_quote_id`, `requirement_id`, `vendor_id`, `material_name`, `color`, `description`, `quantity`, `unit`, `unit_price`, `total`, `vendor_lead_time`, `expected_receive_date`, `sort_order`, `created_at`, `updated_at`) VALUES
+(39, 9, 37, 6, '20x20 / 60x66 - 66\" | 150gsm', 'black', NULL, 374.4000, 'METER', 0.0000, 0.0000, NULL, NULL, 0, '2026-05-20 02:37:57', '2026-05-20 02:37:57'),
+(40, 9, 39, 6, '20x20 / 60x66 - 66\" | 150gsm', 'red', NULL, 41.4960, 'METER', 0.0000, 0.0000, NULL, NULL, 1, '2026-05-20 02:37:58', '2026-05-20 02:37:58'),
+(41, 9, 36, 10, 'Cartons (240 pcs / Box)', 'Byron Ramos', NULL, 430559.0000, 'DO SED QUIDEM ANIMI', 0.0000, 0.0000, NULL, NULL, 2, '2026-05-20 02:37:58', '2026-05-20 02:37:58'),
+(42, 9, 38, 4, 'Oekotex Label', 'black', NULL, 30.4800, 'METER', 0.0000, 0.0000, NULL, NULL, 3, '2026-05-20 02:37:58', '2026-05-20 02:37:58'),
+(43, 9, 40, 4, 'Oekotex Label', 'red', NULL, 3.3782, 'METER', 0.0000, 0.0000, NULL, NULL, 4, '2026-05-20 02:37:58', '2026-05-20 02:37:58');
 
 -- --------------------------------------------------------
 
@@ -3583,16 +4300,16 @@ CREATE TABLE `vendor_quote_items` (
 --
 
 CREATE TABLE `warehouses` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `contact_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `description` text DEFAULT NULL,
+  `contact_name` varchar(191) NOT NULL,
   `contact_emails` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `contact_numbers` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `contact_address` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -3601,8 +4318,8 @@ CREATE TABLE `warehouses` (
 --
 
 CREATE TABLE `warehouse_activities` (
-  `activity_id` int UNSIGNED NOT NULL,
-  `warehouse_id` int UNSIGNED NOT NULL
+  `activity_id` int(10) UNSIGNED NOT NULL,
+  `warehouse_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -3612,9 +4329,9 @@ CREATE TABLE `warehouse_activities` (
 --
 
 CREATE TABLE `warehouse_locations` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `warehouse_id` int UNSIGNED NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `warehouse_id` int(10) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3626,8 +4343,8 @@ CREATE TABLE `warehouse_locations` (
 --
 
 CREATE TABLE `warehouse_tags` (
-  `tag_id` int UNSIGNED NOT NULL,
-  `warehouse_id` int UNSIGNED NOT NULL
+  `tag_id` int(10) UNSIGNED NOT NULL,
+  `warehouse_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -3637,20 +4354,20 @@ CREATE TABLE `warehouse_tags` (
 --
 
 CREATE TABLE `webhooks` (
-  `id` bigint UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `entity_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `end_point` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `query_params` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `headers` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `payload_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `raw_payload_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `entity_type` varchar(191) NOT NULL,
+  `description` varchar(191) DEFAULT NULL,
+  `method` varchar(191) NOT NULL,
+  `end_point` varchar(191) NOT NULL,
+  `query_params` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `headers` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `payload_type` varchar(191) NOT NULL,
+  `raw_payload_type` varchar(191) NOT NULL,
+  `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -3659,19 +4376,19 @@ CREATE TABLE `webhooks` (
 --
 
 CREATE TABLE `web_forms` (
-  `id` int UNSIGNED NOT NULL,
-  `form_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `submit_button_label` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `submit_success_action` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `submit_success_content` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `create_lead` tinyint(1) NOT NULL DEFAULT '0',
-  `background_color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `form_background_color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `form_title_color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `form_submit_button_color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `attribute_label_color` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `form_id` varchar(191) NOT NULL,
+  `title` varchar(191) NOT NULL,
+  `description` text DEFAULT NULL,
+  `submit_button_label` text NOT NULL,
+  `submit_success_action` varchar(191) NOT NULL,
+  `submit_success_content` varchar(191) NOT NULL,
+  `create_lead` tinyint(1) NOT NULL DEFAULT 0,
+  `background_color` varchar(191) DEFAULT NULL,
+  `form_background_color` varchar(191) DEFAULT NULL,
+  `form_title_color` varchar(191) DEFAULT NULL,
+  `form_submit_button_color` varchar(191) DEFAULT NULL,
+  `attribute_label_color` varchar(191) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3683,14 +4400,14 @@ CREATE TABLE `web_forms` (
 --
 
 CREATE TABLE `web_form_attributes` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `placeholder` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_required` tinyint(1) NOT NULL DEFAULT '0',
-  `is_hidden` tinyint(1) NOT NULL DEFAULT '0',
-  `sort_order` int DEFAULT NULL,
-  `attribute_id` int UNSIGNED NOT NULL,
-  `web_form_id` int UNSIGNED NOT NULL
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) DEFAULT NULL,
+  `placeholder` varchar(191) DEFAULT NULL,
+  `is_required` tinyint(1) NOT NULL DEFAULT 0,
+  `is_hidden` tinyint(1) NOT NULL DEFAULT 0,
+  `sort_order` int(11) DEFAULT NULL,
+  `attribute_id` int(10) UNSIGNED NOT NULL,
+  `web_form_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -3700,17 +4417,17 @@ CREATE TABLE `web_form_attributes` (
 --
 
 CREATE TABLE `workflows` (
-  `id` int UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `entity_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `event` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `condition_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'and',
-  `conditions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
-  `actions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(191) NOT NULL,
+  `description` varchar(191) DEFAULT NULL,
+  `entity_type` varchar(191) NOT NULL,
+  `event` varchar(191) NOT NULL,
+  `condition_type` varchar(191) NOT NULL DEFAULT 'and',
+  `conditions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `actions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `workflows`
@@ -3753,7 +4470,7 @@ ALTER TABLE `activity_participants`
 --
 ALTER TABLE `attributes`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `attributes_code_entity_type_unique` (`code`,`entity_type`);
+  ADD UNIQUE KEY `attributes_code_entity_type_unique` (`code`(124),`entity_type`(124));
 
 --
 -- Indexes for table `attribute_options`
@@ -3802,13 +4519,14 @@ ALTER TABLE `country_states`
 --
 ALTER TABLE `datagrid_saved_filters`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `datagrid_saved_filters_user_id_name_src_unique` (`user_id`,`name`,`src`);
+  ADD UNIQUE KEY `datagrid_saved_filters_user_id_name_src_unique` (`user_id`,`name`(124),`src`(124));
 
 --
 -- Indexes for table `document_charges`
 --
 ALTER TABLE `document_charges`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_chargeable` (`chargeable_id`,`chargeable_type`);
 
 --
 -- Indexes for table `emails`
@@ -3953,6 +4671,14 @@ ALTER TABLE `lead_activities`
   ADD KEY `lead_activities_lead_id_foreign` (`lead_id`);
 
 --
+-- Indexes for table `lead_persons`
+--
+ALTER TABLE `lead_persons`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `lead_persons_lead_id_person_id_unique` (`lead_id`,`person_id`),
+  ADD KEY `lead_persons_person_id_foreign` (`person_id`);
+
+--
 -- Indexes for table `lead_pipelines`
 --
 ALTER TABLE `lead_pipelines`
@@ -4027,6 +4753,28 @@ ALTER TABLE `marketing_campaigns`
 --
 ALTER TABLE `marketing_events`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `material_references`
+--
+ALTER TABLE `material_references`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indexes for table `material_reference_vendor`
+--
+ALTER TABLE `material_reference_vendor`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `material_reference_vendor_unique` (`material_reference_id`,`organization_id`),
+  ADD KEY `fk_material_reference_vendor_org` (`organization_id`);
+
+--
+-- Indexes for table `material_units`
+--
+ALTER TABLE `material_units`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `material_units_name_unique` (`name`);
 
 --
 -- Indexes for table `migrations`
@@ -4255,6 +5003,13 @@ ALTER TABLE `tags`
   ADD KEY `tags_user_id_foreign` (`user_id`);
 
 --
+-- Indexes for table `unit_references`
+--
+ALTER TABLE `unit_references`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -4298,7 +5053,8 @@ ALTER TABLE `vendor_quotes`
 --
 ALTER TABLE `vendor_quote_items`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `vendor_quote_items_vendor_quote_id_foreign` (`vendor_quote_id`);
+  ADD KEY `vendor_quote_items_vendor_quote_id_foreign` (`vendor_quote_id`),
+  ADD KEY `vendor_quote_items_vendor_id_foreign` (`vendor_id`);
 
 --
 -- Indexes for table `warehouses`
@@ -4362,433 +5118,463 @@ ALTER TABLE `workflows`
 -- AUTO_INCREMENT for table `activities`
 --
 ALTER TABLE `activities`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=331;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=512;
 
 --
 -- AUTO_INCREMENT for table `activity_files`
 --
 ALTER TABLE `activity_files`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `activity_participants`
 --
 ALTER TABLE `activity_participants`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `attributes`
 --
 ALTER TABLE `attributes`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT for table `attribute_options`
 --
 ALTER TABLE `attribute_options`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `attribute_values`
 --
 ALTER TABLE `attribute_values`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=293;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=547;
 
 --
 -- AUTO_INCREMENT for table `color_references`
 --
 ALTER TABLE `color_references`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `core_config`
 --
 ALTER TABLE `core_config`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `countries`
 --
 ALTER TABLE `countries`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=256;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=256;
 
 --
 -- AUTO_INCREMENT for table `country_states`
 --
 ALTER TABLE `country_states`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=569;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=569;
 
 --
 -- AUTO_INCREMENT for table `datagrid_saved_filters`
 --
 ALTER TABLE `datagrid_saved_filters`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `document_charges`
 --
 ALTER TABLE `document_charges`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT for table `emails`
 --
 ALTER TABLE `emails`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `email_attachments`
 --
 ALTER TABLE `email_attachments`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `email_templates`
 --
 ALTER TABLE `email_templates`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `goods_receipts`
 --
 ALTER TABLE `goods_receipts`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `goods_receipt_items`
 --
 ALTER TABLE `goods_receipt_items`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `groups`
 --
 ALTER TABLE `groups`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `imports`
 --
 ALTER TABLE `imports`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `import_batches`
 --
 ALTER TABLE `import_batches`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `job_cards`
 --
 ALTER TABLE `job_cards`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `job_card_sections`
 --
 ALTER TABLE `job_card_sections`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `job_card_section_items`
 --
 ALTER TABLE `job_card_section_items`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `job_orders`
 --
 ALTER TABLE `job_orders`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `job_order_items`
 --
 ALTER TABLE `job_order_items`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `job_order_requirements`
 --
 ALTER TABLE `job_order_requirements`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `leads`
 --
 ALTER TABLE `leads`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
+-- AUTO_INCREMENT for table `lead_persons`
+--
+ALTER TABLE `lead_persons`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `lead_pipelines`
 --
 ALTER TABLE `lead_pipelines`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `lead_pipeline_stages`
 --
 ALTER TABLE `lead_pipeline_stages`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `lead_priorities`
 --
 ALTER TABLE `lead_priorities`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `lead_products`
 --
 ALTER TABLE `lead_products`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `lead_sources`
 --
 ALTER TABLE `lead_sources`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `lead_stages`
 --
 ALTER TABLE `lead_stages`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `lead_types`
 --
 ALTER TABLE `lead_types`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `marketing_campaigns`
 --
 ALTER TABLE `marketing_campaigns`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `marketing_events`
 --
 ALTER TABLE `marketing_events`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `material_references`
+--
+ALTER TABLE `material_references`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `material_reference_vendor`
+--
+ALTER TABLE `material_reference_vendor`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `material_units`
+--
+ALTER TABLE `material_units`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=109;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=111;
 
 --
 -- AUTO_INCREMENT for table `organizations`
 --
 ALTER TABLE `organizations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `persons`
 --
 ALTER TABLE `persons`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `product_colors`
 --
 ALTER TABLE `product_colors`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=897;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=931;
 
 --
 -- AUTO_INCREMENT for table `product_consumptions`
 --
 ALTER TABLE `product_consumptions`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- AUTO_INCREMENT for table `product_inventories`
 --
 ALTER TABLE `product_inventories`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `product_key_points`
 --
 ALTER TABLE `product_key_points`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=206;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=206;
 
 --
 -- AUTO_INCREMENT for table `product_other_images`
 --
 ALTER TABLE `product_other_images`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 
 --
 -- AUTO_INCREMENT for table `product_pricing_charts`
 --
 ALTER TABLE `product_pricing_charts`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- AUTO_INCREMENT for table `product_pricing_chart_tiers`
 --
 ALTER TABLE `product_pricing_chart_tiers`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=506;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=506;
 
 --
 -- AUTO_INCREMENT for table `product_pricing_chart_types`
 --
 ALTER TABLE `product_pricing_chart_types`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
 
 --
 -- AUTO_INCREMENT for table `product_production_sections`
 --
 ALTER TABLE `product_production_sections`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
 
 --
 -- AUTO_INCREMENT for table `product_production_section_items`
 --
 ALTER TABLE `product_production_section_items`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
 
 --
 -- AUTO_INCREMENT for table `proforma_invoices`
 --
 ALTER TABLE `proforma_invoices`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `proforma_invoice_items`
 --
 ALTER TABLE `proforma_invoice_items`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `proforma_receipts`
 --
 ALTER TABLE `proforma_receipts`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `purchase_orders`
 --
 ALTER TABLE `purchase_orders`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `purchase_order_items`
 --
 ALTER TABLE `purchase_order_items`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `quotes`
 --
 ALTER TABLE `quotes`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `quote_items`
 --
 ALTER TABLE `quote_items`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `tags`
 --
 ALTER TABLE `tags`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `unit_references`
+--
+ALTER TABLE `unit_references`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `vendor_payables`
 --
 ALTER TABLE `vendor_payables`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `vendor_quotes`
 --
 ALTER TABLE `vendor_quotes`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `vendor_quote_items`
 --
 ALTER TABLE `vendor_quote_items`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `warehouses`
 --
 ALTER TABLE `warehouses`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `warehouse_locations`
 --
 ALTER TABLE `warehouse_locations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `webhooks`
 --
 ALTER TABLE `webhooks`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `web_forms`
 --
 ALTER TABLE `web_forms`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `web_form_attributes`
 --
 ALTER TABLE `web_form_attributes`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `workflows`
 --
 ALTER TABLE `workflows`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables
@@ -4910,6 +5696,13 @@ ALTER TABLE `lead_tags`
 ALTER TABLE `marketing_campaigns`
   ADD CONSTRAINT `marketing_campaigns_marketing_event_id_foreign` FOREIGN KEY (`marketing_event_id`) REFERENCES `marketing_events` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `marketing_campaigns_marketing_template_id_foreign` FOREIGN KEY (`marketing_template_id`) REFERENCES `email_templates` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `material_reference_vendor`
+--
+ALTER TABLE `material_reference_vendor`
+  ADD CONSTRAINT `fk_material_reference_vendor_material` FOREIGN KEY (`material_reference_id`) REFERENCES `material_references` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_material_reference_vendor_org` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `organizations`
@@ -5115,6 +5908,7 @@ ALTER TABLE `vendor_quotes`
 -- Constraints for table `vendor_quote_items`
 --
 ALTER TABLE `vendor_quote_items`
+  ADD CONSTRAINT `vendor_quote_items_vendor_id_foreign` FOREIGN KEY (`vendor_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `vendor_quote_items_vendor_quote_id_foreign` FOREIGN KEY (`vendor_quote_id`) REFERENCES `vendor_quotes` (`id`) ON DELETE CASCADE;
 
 --
