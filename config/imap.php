@@ -16,6 +16,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | IMAP sync window
+    |--------------------------------------------------------------------------
+    |
+    | Leave this value empty to backfill all available messages from the IMAP
+    | account. Set IMAP_SYNC_SINCE_DAYS to a positive number if a smaller
+    | rolling sync window is needed later.
+    |
+    */
+
+    'sync_since_days' => env('IMAP_SYNC_SINCE_DAYS'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default date format
     |--------------------------------------------------------------------------
     |

@@ -124,4 +124,33 @@ class Email extends Model implements EmailContract
     {
         return $this->created_at->diffForHumans();
     }
+
+    public function getSubjectAttribute($value): ?string
+    {
+        return $this->decodeMimeHeader($value);
+    }
+
+    public function getNameAttribute($value): ?string
+    {
+        return $this->decodeMimeHeader($value);
+    }
+
+    protected function decodeMimeHeader($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value, " \t\n\r\0\x0B\"'");
+
+        if ($value === '') {
+            return $value;
+        }
+
+        $decoded = function_exists('mb_decode_mimeheader')
+            ? mb_decode_mimeheader($value)
+            : iconv_mime_decode($value, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8');
+
+        return trim($decoded ?: $value, " \t\n\r\0\x0B\"'");
+    }
 }

@@ -73,9 +73,7 @@ class EmailDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'closure'    => function ($row) {
-                return $row->name
-                    ? trim($row->name, '"')
-                    : trim($row->from, '"');
+                return $this->decodeMimeHeader($row->name ?: $row->from);
             },
         ]);
 
@@ -86,6 +84,7 @@ class EmailDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
+            'closure'    => fn ($row) => $this->decodeMimeHeader($row->subject),
         ]);
 
         $this->addColumn([
@@ -95,6 +94,7 @@ class EmailDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
+            'closure'    => fn ($row) => $this->plainTextPreview($row->reply),
         ]);
 
         $this->addColumn([
@@ -208,5 +208,29 @@ class EmailDataGrid extends DataGrid
                     : 'trash',
             ]),
         ]);
+    }
+
+    protected function decodeMimeHeader($value): string
+    {
+        $value = trim((string) $value, " \t\n\r\0\x0B\"'");
+
+        if ($value === '') {
+            return '--';
+        }
+
+        $decoded = function_exists('mb_decode_mimeheader')
+            ? mb_decode_mimeheader($value)
+            : iconv_mime_decode($value, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8');
+
+        return trim($decoded ?: $value, " \t\n\r\0\x0B\"'");
+    }
+
+    protected function plainTextPreview($value): string
+    {
+        $text = html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/\b[A-Z]\s*\{[^}]*\}\s*/', '', $text);
+        $text = preg_replace('/\s+/', ' ', $text);
+
+        return trim($text) ?: '--';
     }
 }

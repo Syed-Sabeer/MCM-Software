@@ -2,6 +2,7 @@
 
 namespace Webkul\Email\InboundEmailProcessor;
 
+use Illuminate\Support\Facades\Log;
 use Webklex\IMAP\Facades\Client;
 use Webkul\Email\Enums\SupportedFolderEnum;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
@@ -49,7 +50,7 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
         try {
             $rootFolders = $this->client->getFolders();
 
-            $this->processMessagesFromLeafFolders($rootFolders);
+            $this->processMessagesFromFolders($rootFolders);
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
@@ -128,8 +129,8 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
 
         $email = $this->emailRepository->create([
             'from'          => $attributes['from']->first()->mail,
-            'subject'       => $attributes['subject']->first(),
-            'name'          => $attributes['from']->first()->personal,
+            'subject'       => $this->decodeMimeHeader($attributes['subject']->first()),
+            'name'          => $this->decodeMimeHeader($attributes['from']->first()->personal),
             'reply'         => $message->bodies['html'] ?? $message->bodies['text'],
             'is_read'       => (int) $message->flags()->has('seen'),
             'folders'       => [$folderName],
@@ -158,23 +159,59 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
      *
      * @param  \Webklex\IMAP\Support\FolderCollection  $rootFoldersCollection
      */
-    protected function processMessagesFromLeafFolders($rootFoldersCollection = null): void
+    protected function processMessagesFromFolders($rootFoldersCollection = null): void
     {
         $rootFoldersCollection->each(function ($folder) {
+            if (! $this->shouldSkipFolder($folder)) {
+                $query = $folder->query();
+                $syncSinceDays = config('imap.sync_since_days');
+
+                if (is_numeric($syncSinceDays) && (int) $syncSinceDays > 0) {
+                    $query->since(now()->subDays((int) $syncSinceDays));
+                } else {
+                    $query->all();
+                }
+
+                $query->get()->each(function ($message) use ($folder) {
+                    try {
+                        $this->processMessage($message);
+                    } catch (\Throwable $exception) {
+                        Log::warning('Unable to process IMAP message.', [
+                            'folder'  => $folder->name,
+                            'error'   => $exception->getMessage(),
+                        ]);
+                    }
+                });
+            }
+
             if (! $folder->children->isEmpty()) {
-                $this->processMessagesFromLeafFolders($folder->children);
-
-                return;
+                $this->processMessagesFromFolders($folder->children);
             }
-
-            if (in_array($folder->name, ['All Mail'])) {
-                return;
-            }
-
-            return $folder->query()->since(now()->subDays(10))->get()->each(function ($message) {
-                $this->processMessage($message);
-            });
         });
+    }
+
+    protected function shouldSkipFolder($folder): bool
+    {
+        return in_array($folder->name, ['All Mail'], true);
+    }
+
+    protected function decodeMimeHeader($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value, " \t\n\r\0\x0B\"'");
+
+        if ($value === '') {
+            return $value;
+        }
+
+        $decoded = function_exists('mb_decode_mimeheader')
+            ? mb_decode_mimeheader($value)
+            : iconv_mime_decode($value, ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8');
+
+        return trim($decoded ?: $value, " \t\n\r\0\x0B\"'");
     }
 
     /**
@@ -217,7 +254,8 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
 
         $defaultConfig['encryption'] = core()->getConfigData('email.imap.account.encryption') ?: $defaultConfig['encryption'];
 
-        $defaultConfig['validate_cert'] = (bool) core()->getConfigData('email.imap.account.validate_cert');
+        $validateCert = core()->getConfigData('email.imap.account.validate_cert');
+        $defaultConfig['validate_cert'] = $validateCert === null ? $defaultConfig['validate_cert'] : (bool) $validateCert;
 
         $defaultConfig['username'] = core()->getConfigData('email.imap.account.username') ?: $defaultConfig['username'];
 
