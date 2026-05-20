@@ -220,7 +220,7 @@
             <h3 class="mb-3 text-lg font-semibold dark:text-white">Add Advance Receipt</h3>
             <x-admin::form :action="route('admin.proforma_invoices.receipts.store', $proformaInvoice->id)" method="POST">
                 <div class="grid gap-3">
-                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label class="required">Payment Date</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="payment_date" rules="required" value="{{ now()->toDateString() }}" /></x-admin::form.control-group>
+                    <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label class="required">Payment Date</x-admin::form.control-group.label><input type="date" name="payment_date" value="{{ now()->toDateString() }}" class="custom-input" required></x-admin::form.control-group>
                     <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label class="required">Amount</x-admin::form.control-group.label><x-admin::form.control-group.control type="number" name="amount" step="0.0001" min="0.0001" rules="required" /></x-admin::form.control-group>
                     <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Payment Method</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="payment_method" /></x-admin::form.control-group>
                     <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Reference No</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="reference_no" /></x-admin::form.control-group>
@@ -271,7 +271,7 @@
 
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label class="required">Issue Date</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="date" name="issue_date" v-model="form.issue_date" rules="required" />
+                            <input type="date" name="issue_date" v-model="form.issue_date" class="custom-input" required>
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group class="!mb-0">
@@ -307,8 +307,8 @@
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Shipping Method</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="shipping_method" v-model="form.shipping_method" /></x-admin::form.control-group>
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Production Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="production_time" v-model="form.production_time" /></x-admin::form.control-group>
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Transit Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="transit_time" v-model="form.transit_time" /></x-admin::form.control-group>
-                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETD</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="etd" v-model="form.etd" /></x-admin::form.control-group>
-                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETA</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="eta" v-model="form.eta" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETD</x-admin::form.control-group.label><input type="date" name="etd" v-model="form.etd" class="custom-input"></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETA</x-admin::form.control-group.label><input type="date" name="eta" v-model="form.eta" class="custom-input"></x-admin::form.control-group>
                     </div>
 
                     <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; margin-top: 16px;">
@@ -723,5 +723,4 @@
         <style>.custom-input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.45rem 0.6rem; font-size: 0.875rem; background: transparent; } .custom-select { width: 100%; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.45rem 0.6rem; font-size: 0.875rem; background: transparent; }</style>
     @endPushOnce
 </x-admin::layouts>
-
 
