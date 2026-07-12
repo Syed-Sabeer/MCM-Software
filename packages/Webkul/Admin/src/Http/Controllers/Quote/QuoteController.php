@@ -68,6 +68,8 @@ class QuoteController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse
     {
+        $this->prepareAddressInput($request);
+
         $this->validateQuote($request);
 
         Event::dispatch('quote.create.before');
@@ -120,6 +122,8 @@ class QuoteController extends Controller
      */
     public function update(AttributeForm $request, int $id): RedirectResponse
     {
+        $this->prepareAddressInput($request);
+
         $this->validateQuote($request, $id);
 
         Event::dispatch('quote.update.before', $id);
@@ -398,6 +402,37 @@ class QuoteController extends Controller
                     'person_id' => 'Selected person does not belong to selected customer.',
                 ]);
             }
+        }
+    }
+
+    /**
+     * Keep quotes creatable for customers that do not have saved addresses.
+     */
+    protected function prepareAddressInput(AttributeForm $request): void
+    {
+        foreach (['billing', 'shipping'] as $type) {
+            $key = $type . '_address';
+            $address = $request->input($key);
+
+            if (! is_array($address)) {
+                $address = [];
+            }
+
+            $request->merge([
+                $key => array_merge([
+                    'key'      => null,
+                    'label'    => null,
+                    'type'     => $type,
+                    'address'  => '',
+                    'street'   => null,
+                    'city'     => null,
+                    'state'    => null,
+                    'postcode' => null,
+                    'country'  => null,
+                ], $address, [
+                    'type' => $address['type'] ?? $type,
+                ]),
+            ]);
         }
     }
 }

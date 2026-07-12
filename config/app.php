@@ -55,7 +55,7 @@ return [
     |
      */
 
-    'url' => env('APP_URL', 'http://localhost/MCM-Software'),
+    'url' => env('APP_URL', 'https://localhost/mcm-software'),
 
     /*
     |--------------------------------------------------------------------------
@@ -69,7 +69,7 @@ return [
 
     'admin_path' => env('APP_ADMIN_PATH', 'admin'),
 
-    'asset_url' => env('ASSET_URL', "http://localhost/MCM-Software/public"),
+    'asset_url' => env('ASSET_URL', "https://localhost/mcm-software/public"),
 
     /*
     |--------------------------------------------------------------------------

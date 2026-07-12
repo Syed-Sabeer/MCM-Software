@@ -14,6 +14,8 @@ use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\OrganizationResource;
+use Webkul\Contact\Models\Industry;
+use Webkul\Contact\Models\Organization as OrganizationModel;
 use Webkul\Contact\Repositories\OrganizationRepository;
 use Webkul\PurchaseOrder\Models\JobOrder;
 use Webkul\PurchaseOrder\Models\PurchaseOrder;
@@ -76,9 +78,11 @@ class OrganizationController extends Controller
     public function create(): View
     {
         $routeType = $this->getRouteType();
+        $industries = Industry::query()->orderBy('name')->get();
 
         return view('admin::contacts.organizations.create', [
             'routeType' => $routeType,
+            'industries' => $industries,
         ]);
     }
 
@@ -94,8 +98,19 @@ class OrganizationController extends Controller
         }
 
         return response()->json([
-            'id'   => $organization->id,
-            'name' => $organization->name,
+            'id'                => $organization->id,
+            'name'              => $organization->name,
+            'phone'             => $organization->phone,
+            'billing_street'    => $organization->billing_street,
+            'billing_city'      => $organization->billing_city,
+            'billing_state'     => $organization->billing_state,
+            'billing_postcode'  => $organization->billing_postcode,
+            'billing_country'   => $organization->billing_country,
+            'shipping_street'   => $organization->shipping_street,
+            'shipping_city'     => $organization->shipping_city,
+            'shipping_state'    => $organization->shipping_state,
+            'shipping_postcode' => $organization->shipping_postcode,
+            'shipping_country'  => $organization->shipping_country,
         ]);
     }
 
@@ -111,6 +126,44 @@ class OrganizationController extends Controller
             ->get();
 
         return OrganizationResource::collection($organizations);
+    }
+
+    /**
+     * Create a customer/vendor from inline pickers without leaving the current form.
+     */
+    public function quickCreate(AttributeForm $request): JsonResponse
+    {
+        $routeType = $this->getRouteType();
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'type' => ['nullable', 'in:customer,vendor,Customer,Vendor'],
+        ]);
+
+        $type = $this->normalizeOrganizationType($data['type'] ?? $routeType) ?: 'customer';
+
+        $organization = OrganizationModel::query()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($data['name'])])
+            ->first();
+
+        if (! $organization) {
+            $organization = $this->organizationRepository->create([
+                'entity_type' => 'organizations',
+                'name'        => $data['name'],
+                'type'        => $type,
+            ]);
+        } elseif (strtolower((string) $organization->type) !== $type) {
+            return response()->json([
+                'message' => 'A company with this name already exists as ' . ($organization->type ?: 'another type') . '.',
+            ], 422);
+        }
+
+        return response()->json([
+            'id'      => $organization->id,
+            'name'    => $organization->name,
+            'type'    => $organization->type,
+            'message' => ucfirst($type) . ' created successfully.',
+        ], 201);
     }
 
     /**
@@ -250,6 +303,7 @@ class OrganizationController extends Controller
             'addresses.*.state' => ['nullable', 'string', 'max:100'],
             'addresses.*.postcode' => ['nullable', 'string', 'max:100'],
             'addresses.*.country' => ['nullable', 'string', 'max:100'],
+            'industry'         => ['nullable', 'string', 'max:255'],
             'organization_type' => ['required_without:type', 'in:customer,vendor,Customer,Vendor'],
             'type'             => ['nullable', 'in:customer,vendor,Customer,Vendor'],
         ]);
@@ -297,8 +351,9 @@ class OrganizationController extends Controller
     {
         $organization = $this->organizationRepository->findOrFail($id);
         $routeType = $this->getRouteType();
+        $industries = Industry::query()->orderBy('name')->get();
 
-        return view('admin::contacts.organizations.edit', compact('organization', 'routeType'));
+        return view('admin::contacts.organizations.edit', compact('organization', 'routeType', 'industries'));
     }
 
     /**
@@ -325,6 +380,7 @@ class OrganizationController extends Controller
             'addresses.*.state' => ['nullable', 'string', 'max:100'],
             'addresses.*.postcode' => ['nullable', 'string', 'max:100'],
             'addresses.*.country' => ['nullable', 'string', 'max:100'],
+            'industry'         => ['nullable', 'string', 'max:255'],
             'organization_type' => ['required_without:type', 'in:customer,vendor,Customer,Vendor'],
             'type'             => ['nullable', 'in:customer,vendor,Customer,Vendor'],
         ]);

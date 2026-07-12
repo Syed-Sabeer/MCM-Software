@@ -72,6 +72,31 @@
                 {!! view_render_event('admin.persons.create.form_controls.before') !!}
 
                 @unless ($isEmployeeRoute)
+                    <div class="mb-4 grid gap-4 md:grid-cols-2">
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.contacts.persons.create.type')
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="select"
+                                id="type"
+                                name="type"
+                                :value="old('type', $routeType ?? 'customer')"
+                                :disabled="(bool) $routeType"
+                            >
+                                <option value="customer" {{ old('type', $routeType ?? 'customer') == 'customer' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.customer')</option>
+                                <option value="vendor" {{ old('type', $routeType) == 'vendor' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.vendor')</option>
+                            </x-admin::form.control-group.control>
+
+                            @if ($routeType)
+                                <input type="hidden" name="type" value="{{ $routeType }}">
+                            @endif
+                        </x-admin::form.control-group>
+                    </div>
+                @endunless
+
+                @unless ($isEmployeeRoute)
                     <x-admin::attributes
                         :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
                             ['code', 'NOTIN', ['organization_id', 'name', 'emails', 'contact_numbers', 'job_title', 'user_id']],
@@ -164,29 +189,6 @@
                                     <option>Prof.</option>
                                     <option>Mx.</option>
                                 </x-admin::form.control-group.control>
-                            </x-admin::form.control-group>
-
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.contacts.persons.create.type')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.control
-                                    type="select"
-                                    id="type"
-                                    name="type"
-                                    :value="old('type', $routeType ?? 'customer')"
-                                    :disabled="(bool) $routeType"
-                                >
-                                    <option value="customer" {{ old('type', $routeType ?? 'customer') == 'customer' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.customer')</option>
-                                    <option value="vendor" {{ old('type', $routeType) == 'vendor' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.vendor')</option>
-                                    <option value="employee" {{ old('type') == 'employee' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.employee')</option>
-                                    <option value="partner" {{ old('type') == 'partner' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.partner')</option>
-                                    <option value="other" {{ old('type') == 'other' ? 'selected' : '' }}>@lang('admin::app.contacts.persons.create.types.other')</option>
-                                </x-admin::form.control-group.control>
-                                @if ($routeType)
-                                    <input type="hidden" name="type" value="{{ $routeType }}">
-                                @endif
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group>
@@ -345,7 +347,7 @@
                                 type="text"
                                 id="mailing_street"
                                 name="mailing_street"
-                                :value="$organization?->billing_street ?? old('mailing_street')"
+                                :value="old('mailing_street', $organization?->billing_street)"
                             />
                         </x-admin::form.control-group>
 
@@ -356,7 +358,7 @@
                                 type="text"
                                 id="mailing_city"
                                 name="mailing_city"
-                                :value="$organization?->billing_city ?? old('mailing_city')"
+                                :value="old('mailing_city', $organization?->billing_city)"
                             />
                         </x-admin::form.control-group>
 
@@ -367,7 +369,7 @@
                                 type="text"
                                 id="mailing_state"
                                 name="mailing_state"
-                                :value="$organization?->billing_state ?? old('mailing_state')"
+                                :value="old('mailing_state', $organization?->billing_state)"
                             />
                         </x-admin::form.control-group>
 
@@ -378,7 +380,7 @@
                                 type="text"
                                 id="mailing_postcode"
                                 name="mailing_postcode"
-                                :value="$organization?->billing_postcode ?? old('mailing_postcode')"
+                                :value="old('mailing_postcode', $organization?->billing_postcode)"
                             />
                         </x-admin::form.control-group>
 
@@ -389,7 +391,7 @@
                                 type="text"
                                 id="mailing_country"
                                 name="mailing_country"
-                                :value="$organization?->billing_country ?? old('mailing_country')"
+                                :value="old('mailing_country', $organization?->billing_country)"
                             />
                         </x-admin::form.control-group>
                     </div>
@@ -501,6 +503,43 @@
                         }
 
                         this.organizationName = event?.name || event?.label || null;
+
+                        if (event?.id) {
+                            this.fetchOrganizationAddress(event.id);
+                        }
+                    },
+
+                    fetchOrganizationAddress(id) {
+                        fetch("{{ route('admin.' . ($routePrefix === 'employees' ? 'contacts' : $routePrefix) . '.organizations.fetch', 0) }}".replace(/0$/, id), {
+                            headers: {
+                                'Accept': 'application/json',
+                            },
+                        })
+                            .then((response) => response.ok ? response.json() : null)
+                            .then((organization) => {
+                                if (organization) {
+                                    this.applyOrganizationAddress(organization);
+                                }
+                            })
+                            .catch(() => {});
+                    },
+
+                    applyOrganizationAddress(organization) {
+                        const mapping = {
+                            mailing_street: organization.billing_street || organization.shipping_street || '',
+                            mailing_city: organization.billing_city || organization.shipping_city || '',
+                            mailing_state: organization.billing_state || organization.shipping_state || '',
+                            mailing_postcode: organization.billing_postcode || organization.shipping_postcode || '',
+                            mailing_country: organization.billing_country || organization.shipping_country || '',
+                        };
+
+                        Object.keys(mapping).forEach((fieldId) => {
+                            const field = document.getElementById(fieldId);
+
+                            if (field && ! field.value) {
+                                field.value = mapping[fieldId] || '';
+                            }
+                        });
                     },
                 },
             });

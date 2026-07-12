@@ -44,7 +44,7 @@
                     <tr><td class="meta-label">Job Order #</td><td>{{ $jobOrder->job_order_number }}</td></tr>
                     <tr><td class="meta-label">Customer</td><td>{{ optional($jobOrder->organization)->name ?: '-' }}</td></tr>
                     <tr><td class="meta-label">Issue Date</td><td>{{ optional($jobOrder->issue_date)->format('Y-m-d') ?: '-' }}</td></tr>
-                    <tr><td class="meta-label">Required Delivery</td><td>{{ optional($jobOrder->required_delivery_date)->format('Y-m-d') ?: '-' }}</td></tr>
+                    <tr><td class="meta-label">ETD</td><td>{{ optional($jobOrder->required_delivery_date)->format('Y-m-d') ?: '-' }}</td></tr>
                 </table>
             </td>
         </tr>

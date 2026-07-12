@@ -104,6 +104,7 @@
                                     input-name="customer_organization_id"
                                     :customers='@json($customersForSearch)'
                                     :value='@json($selectedCustomerId ? ['id' => $selectedCustomerId, 'name' => $selectedCustomerName] : null)'
+                                    create-url="{{ route('admin.customers.organizations.quick_create') }}"
                                 ></v-customer-lookup>
                                 <x-admin::form.control-group.error control-name="customer_organization_id" />
                             </div>
@@ -215,6 +216,24 @@
         </div>
     </x-admin::form>
 
+    <div id="product-quick-organization-modal" class="hidden" style="display: none; position: fixed; inset: 0; z-index: 100000; align-items: center; justify-content: center; padding: 24px; background: rgba(15, 23, 42, 0.45);">
+        <div class="dark:bg-gray-900" style="width: 100%; max-width: 480px; max-height: calc(100vh - 48px); overflow-y: auto; border-radius: 8px; background: #fff; padding: 24px; box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);">
+            <div style="margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                <p id="product-quick-organization-title" class="text-lg font-bold text-gray-800 dark:text-white" style="font-size: 18px; font-weight: 700;">Add Company</p>
+                <button type="button" class="text-gray-500" style="border: 0; background: transparent; font-size: 28px; line-height: 1; cursor: pointer;" onclick="window.closeProductQuickOrganizationModal && window.closeProductQuickOrganizationModal(event)">&times;</button>
+            </div>
+
+            <label id="product-quick-organization-label" class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white" style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600;">Company Name</label>
+            <input type="text" id="product_quick_organization_name" class="dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" style="width: 100%; border: 1px solid #d9dee7; border-radius: 6px; padding: 10px 12px; font-size: 14px; outline: none;">
+            <p id="product_quick_organization_error" class="hidden text-xs text-red-600" style="margin-top: 8px; font-size: 12px; color: #dc2626;"></p>
+
+            <div style="margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="secondary-button" onclick="window.closeProductQuickOrganizationModal && window.closeProductQuickOrganizationModal(event)">Cancel</button>
+                <button type="button" class="primary-button" id="product_quick_organization_save" onclick="window.saveProductQuickOrganization && window.saveProductQuickOrganization(event)">Save</button>
+            </div>
+        </div>
+    </div>
+
     @if ($duplicateDraftJson)
         <x-admin::modal ref="productDuplicateModal" is-active="true">
             <x-slot:header>
@@ -249,6 +268,181 @@
             </x-slot:footer>
         </x-admin::modal>
     @endif
+
+    <script>
+        window.productQuickOrganizationState = {
+            type: '',
+            url: '',
+            onSaved: null,
+        };
+
+        window.openProductQuickOrganizationModal = function (options) {
+            options = options || {};
+
+            var modal = document.getElementById('product-quick-organization-modal');
+            var title = document.getElementById('product-quick-organization-title');
+            var label = document.getElementById('product-quick-organization-label');
+            var input = document.getElementById('product_quick_organization_name');
+            var error = document.getElementById('product_quick_organization_error');
+            var saveButton = document.getElementById('product_quick_organization_save');
+            var type = options.type === 'vendor' ? 'vendor' : 'customer';
+            var name = type === 'vendor' ? 'Vendor' : 'Customer';
+
+            window.productQuickOrganizationState = {
+                type: type,
+                url: options.url || '',
+                onSaved: typeof options.onSaved === 'function' ? options.onSaved : null,
+            };
+
+            if (title) {
+                title.textContent = 'Add ' + name;
+            }
+
+            if (label) {
+                label.textContent = name + ' Company Name';
+            }
+
+            if (saveButton) {
+                saveButton.textContent = 'Save ' + name;
+                saveButton.disabled = false;
+            }
+
+            if (input) {
+                input.value = '';
+            }
+
+            if (error) {
+                error.textContent = '';
+                error.classList.add('hidden');
+            }
+
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            if (input) {
+                setTimeout(function () {
+                    input.focus();
+                }, 0);
+            }
+        };
+
+        window.closeProductQuickOrganizationModal = function (event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            var modal = document.getElementById('product-quick-organization-modal');
+
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        };
+
+        window.saveProductQuickOrganization = function (event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            var state = window.productQuickOrganizationState || {};
+            var input = document.getElementById('product_quick_organization_name');
+            var error = document.getElementById('product_quick_organization_error');
+            var saveButton = document.getElementById('product_quick_organization_save');
+            var type = state.type === 'vendor' ? 'vendor' : 'customer';
+            var label = type === 'vendor' ? 'Vendor' : 'Customer';
+            var name = input && input.value ? input.value.replace(/^\s+|\s+$/g, '') : '';
+
+            if (error) {
+                error.textContent = '';
+                error.classList.add('hidden');
+            }
+
+            if (! name) {
+                if (error) {
+                    error.textContent = 'Company name is required.';
+                    error.classList.remove('hidden');
+                }
+
+                return false;
+            }
+
+            if (! state.url) {
+                if (error) {
+                    error.textContent = 'Unable to save ' + label.toLowerCase() + '.';
+                    error.classList.remove('hidden');
+                }
+
+                return false;
+            }
+
+            if (saveButton) {
+                saveButton.disabled = true;
+                saveButton.textContent = 'Saving...';
+            }
+
+            var request = new XMLHttpRequest();
+
+            request.open('POST', state.url, true);
+            request.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+            request.setRequestHeader('Accept', 'application/json');
+            request.setRequestHeader('X-CSRF-TOKEN', "{{ csrf_token() }}");
+
+            request.onreadystatechange = function () {
+                if (request.readyState !== 4) {
+                    return;
+                }
+
+                var payload = {};
+
+                try {
+                    payload = JSON.parse(request.responseText || '{}');
+                } catch (e) {
+                    payload = {};
+                }
+
+                if (request.status < 200 || request.status >= 300) {
+                    var message = payload.message || (
+                        payload.errors && payload.errors.name && payload.errors.name[0]
+                            ? payload.errors.name[0]
+                            : 'Unable to save ' + label.toLowerCase() + '.'
+                    );
+
+                    if (error) {
+                        error.textContent = message;
+                        error.classList.remove('hidden');
+                    }
+
+                    if (saveButton) {
+                        saveButton.disabled = false;
+                        saveButton.textContent = 'Save ' + label;
+                    }
+
+                    return;
+                }
+
+                if (state.onSaved) {
+                    state.onSaved(payload);
+                }
+
+                window.closeProductQuickOrganizationModal();
+
+                if (saveButton) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'Save ' + label;
+                }
+            };
+
+            request.send(JSON.stringify({ name: name, type: type }));
+
+            return false;
+        };
+    </script>
 
     @pushOnce('scripts')
         <script type="module">
@@ -310,6 +504,12 @@
                                     No results
                                 </li>
                             </ul>
+
+                            <div class="mt-2 border-t border-gray-100 pt-2 dark:border-gray-700">
+                                <button type="button" class="text-xs font-medium text-brandColor hover:underline" @click.stop="openCreateCustomerModal">
+                                    Add Customer
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `,
@@ -327,6 +527,10 @@
                         type: Object,
                         default: null,
                     },
+                    createUrl: {
+                        type: String,
+                        default: '',
+                    },
                 },
 
                 data() {
@@ -335,6 +539,7 @@
                         searchTerm: '',
                         isSearching: false,
                         selectedItem: this.value || { id: '', name: '' },
+                        localCustomers: this.customers.slice(),
                     };
                 },
 
@@ -343,10 +548,10 @@
                         const query = (this.searchTerm || '').toLowerCase().trim();
 
                         if (! query) {
-                            return this.customers;
+                            return this.localCustomers;
                         }
 
-                        return this.customers.filter((item) => (item.name || '').toLowerCase().includes(query));
+                        return this.localCustomers.filter((item) => (item.name || '').toLowerCase().includes(query));
                     },
                 },
 
@@ -378,6 +583,24 @@
                         this.searchTerm = '';
                     },
 
+                    openCreateCustomerModal() {
+                        window.openProductQuickOrganizationModal({
+                            type: 'customer',
+                            url: this.createUrl,
+                            onSaved: (customer) => {
+                                const item = { id: String(customer.id), name: customer.name };
+                                const exists = this.localCustomers.some((existing) => String(existing.id) === String(item.id));
+
+                                if (! exists) {
+                                    this.localCustomers.push(item);
+                                    this.localCustomers.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+                                }
+
+                                this.selectItem(item);
+                            },
+                        });
+                    },
+
                     handleFocusOut(event) {
                         const lookup = this.$refs.lookup;
 
@@ -407,6 +630,7 @@
                 var colorReferences = @json($colorReferenceOptions);
                 var materialReferences = @json($materialReferenceOptions);
                 var vendorOptions = @json($vendorOptions);
+                var vendorQuickCreateUrl = "{{ route('admin.vendors.organizations.quick_create') }}";
                 var lastAutoInternalCode = internalCodeInput ? (internalCodeInput.value || '') : '';
                 var colorReferenceMap = {};
                 var materialReferenceMap = {};
@@ -441,6 +665,28 @@
                     }
 
                     return fallback;
+                }
+
+                function confirmProductRemoval(message, onAgree) {
+                    var confirmConfig = {
+                        title: 'Confirm Removal',
+                        message: message || 'Are you sure you want to remove this item?',
+                        options: {
+                            btnDisagree: 'Cancel',
+                            btnAgree: 'Remove',
+                        },
+                        agree: onAgree,
+                    };
+
+                    if (window.emitter) {
+                        window.emitter.emit('open-confirm-modal', confirmConfig);
+
+                        return;
+                    }
+
+                    if (confirm(confirmConfig.message)) {
+                        onAgree();
+                    }
                 }
 
                 function updateInternalCodeFromItemCode() {
@@ -638,6 +884,9 @@
                         + '        <div class="consumption-vendor-options mt-2 max-h-44 overflow-y-auto rounded border border-gray-200 p-1 dark:border-gray-700"></div>'
                         + '        <p class="consumption-vendor-summary mt-2 text-xs font-medium text-gray-600 dark:text-gray-300">No vendor selected.</p>'
                         + '        <p class="consumption-vendor-empty mt-1 hidden text-xs text-amber-600">No vendors available. Add vendors in Contacts first.</p>'
+                        + '        <div class="mt-2 border-t border-gray-100 pt-2 dark:border-gray-700">'
+                        + '          <button type="button" class="consumption-vendor-create-toggle text-xs font-medium text-brandColor hover:underline">Add Vendor</button>'
+                        + '        </div>'
                         + '      </div>'
                         + '      <div class="consumption-vendor-hidden"></div>'
                         + '    </div>'
@@ -705,6 +954,11 @@
                     var vendorSelected = row.querySelector('.consumption-vendor-selected');
                     var vendorSummary = row.querySelector('.consumption-vendor-summary');
                     var vendorEmptyState = row.querySelector('.consumption-vendor-empty');
+                    var vendorCreateToggle = row.querySelector('.consumption-vendor-create-toggle');
+                    var vendorCreatePanel = row.querySelector('.consumption-vendor-create-panel');
+                    var vendorCreateName = row.querySelector('.consumption-vendor-create-name');
+                    var vendorCreateError = row.querySelector('.consumption-vendor-create-error');
+                    var vendorCreateSave = row.querySelector('.consumption-vendor-create-save');
                     var colorNameInput = row.querySelector('.consumption-color-name');
                     var colorCodeInput = row.querySelector('.consumption-color-code');
                     var colorPicker = row.querySelector('.consumption-color-picker');
@@ -870,6 +1124,87 @@
                         syncVendorDisplay();
                     }
 
+                    function setVendorCreateError(message) {
+                        if (!vendorCreateError) {
+                            return;
+                        }
+
+                        vendorCreateError.textContent = message || '';
+                        vendorCreateError.classList.toggle('hidden', !message);
+                    }
+
+                    function createVendor() {
+                        var name = String(vendorCreateName ? vendorCreateName.value : '').trim();
+
+                        if (!name) {
+                            setVendorCreateError('Company name is required.');
+                            return;
+                        }
+
+                        if (vendorCreateSave) {
+                            vendorCreateSave.disabled = true;
+                            vendorCreateSave.textContent = 'Saving...';
+                        }
+
+                        setVendorCreateError('');
+
+                        fetch(vendorQuickCreateUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                            },
+                            body: JSON.stringify({ name: name, type: 'vendor' }),
+                        })
+                            .then(function (response) {
+                                return response.json().catch(function () { return {}; }).then(function (payload) {
+                                    if (!response.ok) {
+                                        throw new Error(payload && (payload.message || (payload.errors && payload.errors.name && payload.errors.name[0])) || 'Unable to save vendor.');
+                                    }
+
+                                    return payload;
+                                });
+                            })
+                            .then(function (vendor) {
+                                var item = { id: Number(vendor.id), name: vendor.name };
+                                var exists = vendorOptions.some(function (existing) {
+                                    return Number(existing.id) === Number(item.id);
+                                });
+
+                                if (!exists) {
+                                    vendorOptions.push(item);
+                                    vendorOptions.sort(function (a, b) {
+                                        return String(a.name).localeCompare(String(b.name));
+                                    });
+                                }
+
+                                var selected = getSelectedVendorIds();
+                                if (!selected.includes(String(item.id))) {
+                                    selected.push(String(item.id));
+                                }
+
+                                setSelectedVendorIds(selected);
+                                if (vendorCreateName) {
+                                    vendorCreateName.value = '';
+                                }
+                                if (vendorCreatePanel) {
+                                    vendorCreatePanel.classList.add('hidden');
+                                    vendorCreatePanel.classList.remove('flex');
+                                }
+                                renderVendorOptions(vendorSearch ? vendorSearch.value : '');
+                            })
+                            .catch(function (error) {
+                                setVendorCreateError(error.message);
+                            })
+                            .finally(function () {
+                                if (vendorCreateSave) {
+                                    vendorCreateSave.disabled = false;
+                                    vendorCreateSave.textContent = 'Save Vendor';
+                                }
+                            });
+                    }
+
                     if (referenceToggle) {
                         referenceToggle.addEventListener('click', function () {
                             if (referencePopup) {
@@ -938,6 +1273,40 @@
 
                             setSelectedVendorIds(selected);
                             renderVendorOptions(vendorSearch ? vendorSearch.value : '');
+                        });
+                    }
+
+                    if (vendorCreateToggle) {
+                        vendorCreateToggle.addEventListener('click', function (event) {
+                            event.preventDefault();
+                            event.stopPropagation();
+
+                            window.openProductQuickOrganizationModal({
+                                type: 'vendor',
+                                url: vendorQuickCreateUrl,
+                                onSaved: function (vendor) {
+                                    var item = { id: Number(vendor.id), name: vendor.name };
+                                    var exists = vendorOptions.some(function (existing) {
+                                        return Number(existing.id) === Number(item.id);
+                                    });
+
+                                    if (!exists) {
+                                        vendorOptions.push(item);
+                                        vendorOptions.sort(function (a, b) {
+                                            return String(a.name).localeCompare(String(b.name));
+                                        });
+                                    }
+
+                                    var selected = getSelectedVendorIds();
+
+                                    if (!selected.includes(String(item.id))) {
+                                        selected.push(String(item.id));
+                                    }
+
+                                    setSelectedVendorIds(selected);
+                                    renderVendorOptions(vendorSearch ? vendorSearch.value : '');
+                                },
+                            });
                         });
                     }
 
@@ -1202,28 +1571,60 @@
                 document.body.addEventListener('click', function (event) {
                     var removeColor = event.target.closest('.remove-color');
                     if (removeColor) {
-                        removeColor.closest('.color-row').remove();
-                        renumber();
+                        event.preventDefault();
+                        confirmProductRemoval('Remove this color variant?', function () {
+                            var row = removeColor.closest('.color-row');
+
+                            if (row) {
+                                row.remove();
+                                renumber();
+                            }
+                        });
+
                         return;
                     }
 
                     var removeOtherImage = event.target.closest('.remove-other-image');
                     if (removeOtherImage) {
-                        removeOtherImage.closest('.other-image-row').remove();
+                        event.preventDefault();
+                        confirmProductRemoval('Remove this image row?', function () {
+                            var row = removeOtherImage.closest('.other-image-row');
+
+                            if (row) {
+                                row.remove();
+                            }
+                        });
+
                         return;
                     }
 
                     var removeConsumption = event.target.closest('.remove-consumption');
                     if (removeConsumption) {
-                        removeConsumption.closest('.consumption-row').remove();
-                        renumber();
+                        event.preventDefault();
+                        confirmProductRemoval('Remove this material consumption row?', function () {
+                            var row = removeConsumption.closest('.consumption-row');
+
+                            if (row) {
+                                row.remove();
+                                renumber();
+                            }
+                        });
+
                         return;
                     }
 
                     var removeSection = event.target.closest('.remove-section');
                     if (removeSection) {
-                        removeSection.closest('.production-section').remove();
-                        renumber();
+                        event.preventDefault();
+                        confirmProductRemoval('Remove this production section and its rows?', function () {
+                            var section = removeSection.closest('.production-section');
+
+                            if (section) {
+                                section.remove();
+                                renumber();
+                            }
+                        });
+
                         return;
                     }
 
@@ -1238,12 +1639,15 @@
 
                     var removeSectionItem = event.target.closest('.remove-section-item');
                     if (removeSectionItem) {
+                        event.preventDefault();
                         var item = removeSectionItem.closest('.section-item');
                         var container = item.closest('.section-items');
 
                         if (container.querySelectorAll('.section-item').length > 1) {
-                            item.remove();
-                            renumber();
+                            confirmProductRemoval('Remove this section row?', function () {
+                                item.remove();
+                                renumber();
+                            });
                         }
 
                         return;
