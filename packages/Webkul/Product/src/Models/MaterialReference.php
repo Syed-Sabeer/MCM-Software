@@ -17,7 +17,7 @@ class MaterialReference extends Model
     ];
 
     protected $casts = [
-        'qty' => 'decimal:4',
+        'qty' => 'decimal:3',
     ];
 
     public function vendors(): BelongsToMany

@@ -61,7 +61,7 @@ class MaterialReferenceDataGrid extends DataGrid
             'type'       => 'float',
             'sortable'   => true,
             'filterable' => false,
-            'closure'    => fn ($row) => number_format((float) $row->qty, 4, '.', ''),
+            'closure'    => fn ($row) => rtrim(rtrim(number_format((float) $row->qty, 3, '.', ''), '0'), '.') ?: '0',
         ]);
 
         $this->addColumn([
@@ -98,7 +98,7 @@ class MaterialReferenceDataGrid extends DataGrid
             'index'  => 'edit',
             'icon'   => 'icon-edit',
             'title'  => 'Edit',
-            'method' => 'GET',
+            'method' => 'MODAL',
             'url'    => fn ($row) => route('admin.settings.material_references.edit', $row->id),
         ]);
 
