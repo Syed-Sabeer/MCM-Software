@@ -242,7 +242,7 @@
 
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label class="required">Quote Date</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="date" name="quote_date" value="{{ old('quote_date', $quote->quote_date?->format('Y-m-d')) }}" rules="required" />
+                            <input type="date" name="quote_date" value="{{ old('quote_date', $quote->quote_date?->format('Y-m-d')) }}" class="custom-input" required>
                             <x-admin::form.control-group.error control-name="quote_date" />
                         </x-admin::form.control-group>
                     </div>
@@ -295,8 +295,8 @@
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Shipping Method</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="shipping_method" value="{{ old('shipping_method', $quote->shipping_method) }}" /><x-admin::form.control-group.error control-name="shipping_method" /></x-admin::form.control-group>
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Production Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="production_time" value="{{ old('production_time', $quote->production_time) }}" /><x-admin::form.control-group.error control-name="production_time" /></x-admin::form.control-group>
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Transit Time</x-admin::form.control-group.label><x-admin::form.control-group.control type="text" name="transit_time" value="{{ old('transit_time', $quote->transit_time) }}" /><x-admin::form.control-group.error control-name="transit_time" /></x-admin::form.control-group>
-                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETD</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="etd" value="{{ old('etd', $quote->etd?->format('Y-m-d')) }}" /><x-admin::form.control-group.error control-name="etd" /></x-admin::form.control-group>
-                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETA</x-admin::form.control-group.label><x-admin::form.control-group.control type="date" name="eta" value="{{ old('eta', $quote->eta?->format('Y-m-d')) }}" /><x-admin::form.control-group.error control-name="eta" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETD</x-admin::form.control-group.label><input type="date" name="etd" value="{{ old('etd', $quote->etd?->format('Y-m-d')) }}" class="custom-input"><x-admin::form.control-group.error control-name="etd" /></x-admin::form.control-group>
+                        <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>ETA</x-admin::form.control-group.label><input type="date" name="eta" value="{{ old('eta', $quote->eta?->format('Y-m-d')) }}" class="custom-input"><x-admin::form.control-group.error control-name="eta" /></x-admin::form.control-group>
                     </div>
 
                     <div class="document-form-row-2 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; margin-top: 16px;">
@@ -966,7 +966,6 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
-
 
 
 

@@ -41,6 +41,8 @@ class AttributeForm extends FormRequest
      */
     public function rules()
     {
+        $excludedAttributeCodes = $this->excludedAttributeCodes();
+
         $attributes = $this->attributeRepository->scopeQuery(function ($query) {
             $query = $query->whereIn('code', array_keys(request()->all()))
                 ->where('entity_type', request('entity_type'));
@@ -50,7 +52,8 @@ class AttributeForm extends FormRequest
             }
 
             return $query;
-        })->get();
+        })->get()
+            ->reject(fn ($attribute) => in_array($attribute->code, $excludedAttributeCodes, true));
 
         foreach ($attributes as $attribute) {
             $validations = [];
@@ -116,5 +119,19 @@ class AttributeForm extends FormRequest
         }
 
         return $this->rules;
+    }
+
+    /**
+     * Attribute codes handled by module tables instead of the custom attribute flow.
+     */
+    protected function excludedAttributeCodes(): array
+    {
+        return match (request('entity_type')) {
+            'quotes' => [
+                'billing_address',
+                'shipping_address',
+            ],
+            default => [],
+        };
     }
 }

@@ -82,6 +82,71 @@ class VendorQuoteController extends Controller
 
         if ($request->filled('job_order_id')) {
             $jobOrder = $this->jobOrderRepository->with('requirements')->findOrFail($request->input('job_order_id'));
+            $requirementsById = $jobOrder->requirements->keyBy('id');
+
+            $payload['items'] = collect($payload['items'] ?? [])->map(function ($item) use ($requirementsById, $payload) {
+                $vendorId = (int) ($item['vendor_id'] ?? 0);
+
+                if ($vendorId <= 0) {
+                    $requirementId = (int) ($item['requirement_id'] ?? 0);
+                    $requirement = $requirementsById->get($requirementId);
+
+                    if ($requirement) {
+                        $vendorId = (int) collect((array) ($requirement->vendor_ids ?? []))
+                            ->filter()
+                            ->map(fn ($id) => (int) $id)
+                            ->first();
+                    }
+                }
+
+                if ($vendorId <= 0 && ! empty($payload['organization_id'])) {
+                    $vendorId = (int) $payload['organization_id'];
+                }
+
+                $item['vendor_id'] = $vendorId > 0 ? $vendorId : null;
+
+                return $item;
+            })->values()->all();
+
+            $groupedItems = collect($payload['items'] ?? [])
+                ->groupBy(fn ($item) => (int) ($item['vendor_id'] ?? 0))
+                ->filter(fn ($items, $vendorId) => $vendorId > 0);
+
+            if ($groupedItems->count() > 1) {
+                $createdVendorQuotes = [];
+
+                foreach ($groupedItems as $vendorId => $items) {
+                    $vendorPayload = $payload;
+                    $vendorPayload['vendor_quote_number'] = VendorQuote::generateNextNumber();
+                    $vendorPayload['organization_id'] = (int) $vendorId;
+                    $vendorPayload['items'] = collect($items)->values()->all();
+
+                    $createdVendorQuotes[] = $this->vendorQuoteRepository->createFromJobOrder($jobOrder, $vendorPayload);
+                }
+
+                foreach ($createdVendorQuotes as $createdVendorQuote) {
+                    Event::dispatch('vendor_quote.create.after', $createdVendorQuote);
+                }
+
+                session()->flash('success', 'Vendor quotes created successfully for ' . count($createdVendorQuotes) . ' vendors.');
+
+                return redirect()->route('admin.vendor_quotes.index');
+            }
+
+            $singleVendorId = (int) $groupedItems->keys()->first();
+
+            if ($singleVendorId > 0) {
+                $payload['organization_id'] = $singleVendorId;
+            }
+
+            if ($singleVendorId <= 0 && empty($payload['organization_id'])) {
+                session()->flash('error', 'Please select at least one vendor in Vendor Quote Items.');
+
+                return redirect()->back()->withInput();
+            }
+
+            $payload['items'] = collect($payload['items'] ?? [])->values()->all();
+
             $quote = $this->vendorQuoteRepository->createFromJobOrder($jobOrder, $payload);
         } else {
             $quote = $this->vendorQuoteRepository->create($payload);

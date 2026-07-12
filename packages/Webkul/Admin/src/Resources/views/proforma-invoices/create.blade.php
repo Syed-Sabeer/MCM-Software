@@ -218,7 +218,7 @@
 
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label class="required">Issue Date</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="date" name="issue_date" v-model="form.issue_date" rules="required" />
+                            <input type="date" name="issue_date" v-model="form.issue_date" class="custom-input" required>
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group class="!mb-0">
@@ -265,12 +265,12 @@
 
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label>ETD</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="date" name="etd" v-model="form.etd" />
+                            <input type="date" name="etd" v-model="form.etd" class="custom-input">
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label>ETA</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="date" name="eta" v-model="form.eta" />
+                            <input type="date" name="eta" v-model="form.eta" class="custom-input">
                         </x-admin::form.control-group>
                     </div>
 
