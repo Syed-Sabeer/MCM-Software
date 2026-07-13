@@ -194,6 +194,34 @@
                         <x-admin::form.control-group.error control-name="organization_type" />
                     </x-admin::form.control-group>
 
+                    @if ($routePrefix !== 'vendors')
+                        <!-- Customer Portal User -->
+                        <x-admin::form.control-group style="margin: 0 !important;">
+                            <x-admin::form.control-group.label>
+                                Portal User
+                            </x-admin::form.control-group.label>
+
+                            @php
+                                $selectedPortalUser = old('user_id');
+                            @endphp
+
+                            <select
+                                id="user_id"
+                                name="user_id"
+                                class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:ring-1 focus:ring-brandColor dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                            >
+                                <option value="">No portal access</option>
+                                @foreach (($portalUsers ?? collect()) as $portalUser)
+                                    <option value="{{ $portalUser->id }}" @selected((string) $selectedPortalUser === (string) $portalUser->id)>
+                                        {{ $portalUser->name }} ({{ $portalUser->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <x-admin::form.control-group.error control-name="user_id" />
+                        </x-admin::form.control-group>
+                    @endif
+
                     <!-- Industry -->
                     <x-admin::form.control-group style="margin: 0 !important;">
                         <div class="mb-1.5 flex items-center justify-between gap-3">
