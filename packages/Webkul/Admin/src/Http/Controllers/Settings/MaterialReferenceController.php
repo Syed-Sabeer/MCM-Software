@@ -21,6 +21,11 @@ class MaterialReferenceController extends Controller
             return datagrid(MaterialReferenceDataGrid::class)->process();
         }
 
+        return $this->renderIndex();
+    }
+
+    protected function renderIndex(?int $editId = null): View
+    {
         $vendors = Organization::query()
             ->whereIn('type', ['vendor', 'Vendor'])
             ->orderBy('name')
@@ -30,7 +35,7 @@ class MaterialReferenceController extends Controller
             ->orderBy('name')
             ->get(['name']);
 
-        return view('admin::settings.material-references.index', compact('vendors', 'units'));
+        return view('admin::settings.material-references.index', compact('vendors', 'units', 'editId'));
     }
 
     public function store(): JsonResponse
@@ -50,12 +55,17 @@ class MaterialReferenceController extends Controller
         ]);
     }
 
-    public function edit(int $id): JsonResponse
+    public function edit(int $id): View|JsonResponse
     {
+        if (! request()->expectsJson() && ! request()->ajax()) {
+            return $this->renderIndex($id);
+        }
+
         $materialReference = MaterialReference::with('vendors')->findOrFail($id);
 
         return response()->json([
             'data' => array_merge($materialReference->toArray(), [
+                'qty' => $this->formatQty($materialReference->qty),
                 'vendor_ids' => $materialReference->vendors->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
             ]),
         ]);
@@ -119,5 +129,10 @@ class MaterialReferenceController extends Controller
             'qty' => round((float) $data['qty'], 3),
             'unit' => trim((string) $data['unit']),
         ];
+    }
+
+    protected function formatQty(mixed $qty): string
+    {
+        return rtrim(rtrim(number_format((float) $qty, 3, '.', ''), '0'), '.') ?: '0';
     }
 }

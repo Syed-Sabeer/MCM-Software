@@ -40,7 +40,7 @@
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-sm font-medium dark:text-white">Required Delivery Date</label>
+                            <label class="mb-1 block text-sm font-medium dark:text-white">ETD</label>
                             <input type="date" name="required_delivery_date" value="{{ old('required_delivery_date', optional($jobOrder->required_delivery_date)->toDateString()) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                         </div>
                     </div>
@@ -166,7 +166,6 @@
         </div>
     </x-admin::form>
 </x-admin::layouts>
-
 
 
 

@@ -415,14 +415,16 @@
                 props: ['errors', 'customers', 'initialCustomerId', 'initialBillingAddress', 'initialShippingAddress'],
                 data() {
                     const initialCustomerId = this.initialCustomerId || '';
+                    const blankAddress = (kind) => ({ key: '', label: '', type: kind, address: '', street: '', city: '', state: '', postcode: '', country: '' });
+                    const normalizeAddress = (address, kind) => ({ ...blankAddress(kind), ...(address || {}), type: address?.type || kind });
 
                     return {
                         customerName: '',
                         customerSearchTerm: '',
                         showCustomerLookup: false,
                         selectedOrganizationId: initialCustomerId ? String(initialCustomerId) : '',
-                        billingAddress: this.initialBillingAddress || { key: '', label: '', type: 'billing', address: '' },
-                        shippingAddress: this.initialShippingAddress || { key: '', label: '', type: 'shipping', address: '' },
+                        billingAddress: normalizeAddress(this.initialBillingAddress, 'billing'),
+                        shippingAddress: normalizeAddress(this.initialShippingAddress, 'shipping'),
                     }
                 },
                 computed: {
@@ -443,6 +445,12 @@
                     }
                 },
                 methods: {
+                    blankAddress(kind) {
+                        return { key: '', label: '', type: kind, address: '', street: '', city: '', state: '', postcode: '', country: '' };
+                    },
+                    normalizeAddress(address, kind) {
+                        return { ...this.blankAddress(kind), ...(address || {}), type: address?.type || kind };
+                    },
                     toggleCustomerLookup() {
                         this.showCustomerLookup = ! this.showCustomerLookup;
 
@@ -454,8 +462,8 @@
                         this.customerName = customer?.name || '';
                         this.selectedOrganizationId = customer?.id ? String(customer.id) : '';
 
-                        this.billingAddress = { ...(customer?.default_billing_address || { key: '', label: '', type: 'billing', address: '', street: '', city: '', state: '', postcode: '', country: '' }) };
-                        this.shippingAddress = { ...(customer?.default_shipping_address || { key: '', label: '', type: 'shipping', address: '', street: '', city: '', state: '', postcode: '', country: '' }) };
+                        this.billingAddress = this.normalizeAddress(customer?.default_billing_address, 'billing');
+                        this.shippingAddress = this.normalizeAddress(customer?.default_shipping_address, 'shipping');
                         this.customerSearchTerm = '';
                         this.showCustomerLookup = false;
                     },
@@ -463,19 +471,19 @@
                         this.customerName = '';
                         this.selectedOrganizationId = '';
                         this.customerSearchTerm = '';
-                        this.billingAddress = { key: '', label: '', type: 'billing', address: '', street: '', city: '', state: '', postcode: '', country: '' };
-                        this.shippingAddress = { key: '', label: '', type: 'shipping', address: '', street: '', city: '', state: '', postcode: '', country: '' };
+                        this.billingAddress = this.blankAddress('billing');
+                        this.shippingAddress = this.blankAddress('shipping');
                     },
                     applyAddressSelection(kind, key) {
                         const option = this.addressOptions.find(address => String(address.key) === String(key));
 
                         if (! option) {
-                            this[kind === 'billing' ? 'billingAddress' : 'shippingAddress'] = { key: '', label: '', type: kind, address: '', street: '', city: '', state: '', postcode: '', country: '' };
+                            this[kind === 'billing' ? 'billingAddress' : 'shippingAddress'] = this.blankAddress(kind);
 
                             return;
                         }
 
-                        this[kind === 'billing' ? 'billingAddress' : 'shippingAddress'] = { ...option };
+                        this[kind === 'billing' ? 'billingAddress' : 'shippingAddress'] = this.normalizeAddress(option, kind);
                     },
                     syncCustomerId() {
                         const exact = this.customers.find(customer => customer.name === this.customerName);
@@ -496,12 +504,12 @@
                         const selected = this.customers.find(customer => String(customer.id) === String(this.selectedOrganizationId));
                         this.customerName = selected ? selected.name : '';
 
-                            if ((! this.billingAddress?.address) && selected?.default_billing_address) {
-                            this.billingAddress = { ...selected.default_billing_address };
+                        if ((! this.billingAddress?.address) && selected?.default_billing_address) {
+                            this.billingAddress = this.normalizeAddress(selected.default_billing_address, 'billing');
                         }
 
                         if ((! this.shippingAddress?.address) && selected?.default_shipping_address) {
-                            this.shippingAddress = { ...selected.default_shipping_address };
+                            this.shippingAddress = this.normalizeAddress(selected.default_shipping_address, 'shipping');
                         }
                     }
                 },
@@ -865,6 +873,7 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
+
 
 
 

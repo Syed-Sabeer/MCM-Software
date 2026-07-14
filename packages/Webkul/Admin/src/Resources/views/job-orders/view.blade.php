@@ -45,7 +45,7 @@
                     @endif
                 </div>
                 <div><strong>Issue Date:</strong> {{ optional($jobOrder->issue_date)->format('Y-m-d') }}</div>
-                <div><strong>Required Delivery:</strong> {{ optional($jobOrder->required_delivery_date)->format('Y-m-d') ?: '-' }}</div>
+                <div><strong>ETD:</strong> {{ optional($jobOrder->required_delivery_date)->format('Y-m-d') ?: '-' }}</div>
             </div>
 
         </div>

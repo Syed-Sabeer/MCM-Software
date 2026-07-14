@@ -35,7 +35,7 @@ class JobOrderDataGrid extends DataGrid
             ['job_order_number', 'Job Order #', 'string'],
             ['customer_name', 'Customer', 'string'],
             ['proforma_number', 'Proforma', 'string'],
-            ['required_delivery_date', 'Required Delivery', 'date'],
+            ['required_delivery_date', 'ETD', 'date'],
             ['status', 'Status', 'string'],
         ] as [$index, $label, $type]) {
             $closure = fn ($row) => $row->{$index} ?: '--';

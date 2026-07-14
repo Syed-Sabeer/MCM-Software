@@ -16,14 +16,20 @@ class SessionController extends Controller
     public function create(): RedirectResponse|View
     {
         if (auth()->guard('user')->check()) {
+            if ($this->isCustomerPortalUser(auth()->guard('user')->user())) {
+                return redirect()->route('customer_portal.dashboard');
+            }
+
             return redirect()->route('admin.dashboard.index');
         }
 
         $previousUrl = url()->previous();
 
-        $intendedUrl = str_contains($previousUrl, 'admin')
+        $intendedUrl = str_contains($previousUrl, 'customer-portal')
             ? $previousUrl
-            : route('admin.dashboard.index');
+            : (str_contains($previousUrl, 'admin')
+            ? $previousUrl
+            : route('admin.dashboard.index'));
 
         session()->put('url.intended', $intendedUrl);
 
@@ -52,6 +58,18 @@ class SessionController extends Controller
             auth()->guard('user')->logout();
 
             return redirect()->route('admin.session.create');
+        }
+
+        if ($this->isCustomerPortalUser(auth()->guard('user')->user())) {
+            $intendedUrl = session('url.intended');
+
+            if ($intendedUrl && str_contains($intendedUrl, 'customer-portal')) {
+                return redirect()->intended(route('customer_portal.dashboard'));
+            }
+
+            session()->forget('url.intended');
+
+            return redirect()->route('customer_portal.dashboard');
         }
 
         $menus = menu()->getItems('admin');
@@ -113,5 +131,16 @@ class SessionController extends Controller
         }
 
         return null;
+    }
+
+    protected function isCustomerPortalUser($user): bool
+    {
+        $roleName = strtolower((string) ($user->role?->name ?? ''));
+
+        if (str_contains($roleName, 'customer') || str_contains($roleName, 'portal') || str_contains($roleName, 'client')) {
+            return true;
+        }
+
+        return in_array('customer_portal.access', $user->role?->permissions ?? [], true);
     }
 }

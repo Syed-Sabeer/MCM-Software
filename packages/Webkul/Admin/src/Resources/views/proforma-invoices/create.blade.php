@@ -58,8 +58,8 @@
             'notes' => $quoteRow->notes,
             'terms' => $quoteRow->terms,
             'payment_term' => $quoteRow->payment_term ?? '',
-            'billing_address' => $quoteRow->billing_address ?: ['address' => ''],
-            'shipping_address' => $quoteRow->shipping_address ?: ['address' => ''],
+            'billing_address' => $quoteRow->billing_address ?: $addressManager->getDefaultAddress($quoteRow->organization, 'billing'),
+            'shipping_address' => $quoteRow->shipping_address ?: $addressManager->getDefaultAddress($quoteRow->organization, 'shipping'),
             'address_options' => $addressManager->getOptions($quoteRow->organization),
             'default_billing_address' => $addressManager->getDefaultAddress($quoteRow->organization, 'billing'),
             'default_shipping_address' => $addressManager->getDefaultAddress($quoteRow->organization, 'shipping'),
@@ -126,8 +126,8 @@
         'notes' => $selectedQuote['notes'] ?? '',
         'terms' => $selectedQuote['terms'] ?? '',
         'payment_term' => $selectedQuote['payment_term'] ?? '',
-        'billing_address' => $selectedQuote['billing_address'] ?? ['address' => ''],
-        'shipping_address' => $selectedQuote['shipping_address'] ?? ['address' => ''],
+        'billing_address' => $selectedQuote['billing_address'] ?? ['key' => null, 'label' => null, 'type' => 'billing', 'address' => '', 'street' => null, 'city' => null, 'state' => null, 'postcode' => null, 'country' => null],
+        'shipping_address' => $selectedQuote['shipping_address'] ?? ['key' => null, 'label' => null, 'type' => 'shipping', 'address' => '', 'street' => null, 'city' => null, 'state' => null, 'postcode' => null, 'country' => null],
         'items' => $selectedQuote['items'] ?? [],
     ];
 @endphp
@@ -181,10 +181,20 @@
                 <input type="hidden" name="billing_address[label]" :value="form.billing_address?.label || ''">
                 <input type="hidden" name="billing_address[type]" :value="form.billing_address?.type || ''">
                 <input type="hidden" name="billing_address[address]" :value="form.billing_address?.address || ''">
+                <input type="hidden" name="billing_address[street]" :value="form.billing_address?.street || ''">
+                <input type="hidden" name="billing_address[city]" :value="form.billing_address?.city || ''">
+                <input type="hidden" name="billing_address[state]" :value="form.billing_address?.state || ''">
+                <input type="hidden" name="billing_address[postcode]" :value="form.billing_address?.postcode || ''">
+                <input type="hidden" name="billing_address[country]" :value="form.billing_address?.country || ''">
                 <input type="hidden" name="shipping_address[key]" :value="form.shipping_address?.key || ''">
                 <input type="hidden" name="shipping_address[label]" :value="form.shipping_address?.label || ''">
                 <input type="hidden" name="shipping_address[type]" :value="form.shipping_address?.type || ''">
                 <input type="hidden" name="shipping_address[address]" :value="form.shipping_address?.address || ''">
+                <input type="hidden" name="shipping_address[street]" :value="form.shipping_address?.street || ''">
+                <input type="hidden" name="shipping_address[city]" :value="form.shipping_address?.city || ''">
+                <input type="hidden" name="shipping_address[state]" :value="form.shipping_address?.state || ''">
+                <input type="hidden" name="shipping_address[postcode]" :value="form.shipping_address?.postcode || ''">
+                <input type="hidden" name="shipping_address[country]" :value="form.shipping_address?.country || ''">
 
                 <div class="mt-4 space-y-4">
                     <div class="document-form-row-4 quote-meta-block" style="display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 16px;">
@@ -458,6 +468,12 @@
                     },
                 },
                 methods: {
+                    blankAddress(kind) {
+                        return { key: '', label: '', type: kind, address: '', street: '', city: '', state: '', postcode: '', country: '' };
+                    },
+                    normalizeAddress(address, kind) {
+                        return { ...this.blankAddress(kind), ...(address || {}), type: address?.type || kind };
+                    },
                     applyQuoteDetails() {
                         const selected = this.quotes.find(q => String(q.id) === String(this.form.quote_id));
                         if (! selected) return;
@@ -476,16 +492,16 @@
                         this.form.charges = (selected.charges || []).map(charge => ({ ...charge }));
                         this.form.notes = selected.notes || '';
                         this.form.terms = selected.terms || '';
-                        this.form.billing_address = selected.billing_address || selected.default_billing_address || { address: '' };
-                        this.form.shipping_address = selected.shipping_address || selected.default_shipping_address || { address: '' };
+                        this.form.billing_address = this.normalizeAddress(selected.billing_address || selected.default_billing_address, 'billing');
+                        this.form.shipping_address = this.normalizeAddress(selected.shipping_address || selected.default_shipping_address, 'shipping');
                         this.form.items = (selected.items || []).map(item => ({ ...item }));
                     },
                     applyAddressSelection(kind, key) {
                         const option = this.addressOptions.find(address => String(address.key) === String(key));
 
                         this.form[kind === 'billing' ? 'billing_address' : 'shipping_address'] = option
-                            ? { ...option }
-                            : { key: '', label: '', type: kind, address: '' };
+                            ? this.normalizeAddress(option, kind)
+                            : this.blankAddress(kind);
                     },
                 },
             });

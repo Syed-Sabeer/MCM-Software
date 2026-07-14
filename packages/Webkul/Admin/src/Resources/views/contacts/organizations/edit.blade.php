@@ -194,26 +194,65 @@
                         <x-admin::form.control-group.error control-name="organization_type" />
                     </x-admin::form.control-group>
 
-                    <!-- Industry -->
-                    <x-admin::form.control-group style="margin: 0 !important;">
-                        <x-admin::form.control-group.label>
-                            Industry
-                        </x-admin::form.control-group.label>
+                    @if ($routePrefix !== 'vendors')
+                        <!-- Customer Portal User -->
+                        <x-admin::form.control-group style="margin: 0 !important;">
+                            <x-admin::form.control-group.label>
+                                Portal User
+                            </x-admin::form.control-group.label>
 
-                        <x-admin::form.control-group.control
-                            type="select"
-                            id="industry"
-                            name="industry"
-                            label="Industry"
-                        >
                             @php
-                                $selectedIndustry = old('industry', $organization->industry);
+                                $selectedPortalUser = old('user_id', $organization->user_id);
                             @endphp
 
+                            <select
+                                id="user_id"
+                                name="user_id"
+                                class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:ring-1 focus:ring-brandColor dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                            >
+                                <option value="">No portal access</option>
+                                @foreach (($portalUsers ?? collect()) as $portalUser)
+                                    <option value="{{ $portalUser->id }}" @selected((string) $selectedPortalUser === (string) $portalUser->id)>
+                                        {{ $portalUser->name }} ({{ $portalUser->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <x-admin::form.control-group.error control-name="user_id" />
+                        </x-admin::form.control-group>
+                    @endif
+
+                    <!-- Industry -->
+                    <x-admin::form.control-group style="margin: 0 !important;">
+                        <div class="mb-1.5 flex items-center justify-between gap-3">
+                            <x-admin::form.control-group.label class="!mb-0">
+                                Industry
+                            </x-admin::form.control-group.label>
+
+                            <div class="flex items-center gap-3 text-xs">
+                                <button type="button" class="text-brandColor hover:underline" onclick="event.preventDefault(); var modal = document.getElementById('industry-create-modal'); var input = document.getElementById('quick_industry_name'); var error = document.getElementById('quick_industry_error'); if (input) input.value = ''; if (error) { error.textContent = ''; error.classList.add('hidden'); } if (modal) { modal.style.display = 'flex'; modal.classList.remove('hidden'); modal.classList.add('flex'); } if (input) setTimeout(function () { input.focus(); }, 0);">Add Industry</button>
+                                <a href="{{ route('admin.' . $routePrefix . '.organizations.industries.index') }}" class="text-brandColor hover:underline">View Industries</a>
+                            </div>
+                        </div>
+
+                        @php
+                            $selectedIndustry = old('industry', $organization->industry);
+                        @endphp
+
+                        <select
+                            id="industry"
+                            name="industry"
+                            class="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:ring-1 focus:ring-brandColor dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                        >
                             <option value="">Select Industry</option>
-                            <option value="home_apparel" {{ $selectedIndustry === 'home_apparel' ? 'selected' : '' }}>Home Apparel</option>
-                            <option value="other_shipping" {{ $selectedIndustry === 'other_shipping' ? 'selected' : '' }}>Other Shipping</option>
-                        </x-admin::form.control-group.control>
+                            @foreach ($industries as $industry)
+                                <option value="{{ $industry->name }}" @selected($selectedIndustry === $industry->name)>{{ $industry->name }}</option>
+                            @endforeach
+
+                            @if ($selectedIndustry && ! $industries->contains('name', $selectedIndustry))
+                                <option value="{{ $selectedIndustry }}" selected>{{ $selectedIndustry }}</option>
+                            @endif
+                        </select>
 
                         <x-admin::form.control-group.error control-name="industry" />
                     </x-admin::form.control-group>
@@ -307,19 +346,19 @@
                         />
                     </x-admin::form.control-group>
 
-                    <!-- 4-Column Layout for Country, State, City, Postal Code -->
+                    <!-- 4-Column Layout for City, State, Postal Code, Country -->
                     <div style="display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 1rem !important;">
                         <x-admin::form.control-group style="margin: 0 !important;">
                             <x-admin::form.control-group.label>
-                                Country
+                                City
                             </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.control
                                 type="text"
-                                id="billing_country"
-                                name="billing_country"
-                                :value="old('billing_country', $organization->billing_country)"
-                                label="Country"
+                                id="billing_city"
+                                name="billing_city"
+                                :value="old('billing_city', $organization->billing_city)"
+                                label="City"
                             />
                         </x-admin::form.control-group>
 
@@ -339,20 +378,6 @@
 
                         <x-admin::form.control-group style="margin: 0 !important;">
                             <x-admin::form.control-group.label>
-                                City
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.control
-                                type="text"
-                                id="billing_city"
-                                name="billing_city"
-                                :value="old('billing_city', $organization->billing_city)"
-                                label="City"
-                            />
-                        </x-admin::form.control-group>
-
-                        <x-admin::form.control-group style="margin: 0 !important;">
-                            <x-admin::form.control-group.label>
                                 Zip / Postal Code
                             </x-admin::form.control-group.label>
 
@@ -362,6 +387,20 @@
                                 name="billing_postcode"
                                 :value="old('billing_postcode', $organization->billing_postcode)"
                                 label="Zip / Postal Code"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group style="margin: 0 !important;">
+                            <x-admin::form.control-group.label>
+                                Country
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="billing_country"
+                                name="billing_country"
+                                :value="old('billing_country', $organization->billing_country)"
+                                label="Country"
                             />
                         </x-admin::form.control-group>
                     </div>
@@ -404,19 +443,19 @@
                         />
                     </x-admin::form.control-group>
 
-                    <!-- 4-Column Layout for Country, State, City, Postal Code -->
+                    <!-- 4-Column Layout for City, State, Postal Code, Country -->
                     <div style="display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 1rem !important;">
                         <x-admin::form.control-group style="margin: 0 !important;">
                             <x-admin::form.control-group.label>
-                                Country
+                                City
                             </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.control
                                 type="text"
-                                id="shipping_country"
-                                name="shipping_country"
-                                :value="old('shipping_country', $organization->shipping_country)"
-                                label="Country"
+                                id="shipping_city"
+                                name="shipping_city"
+                                :value="old('shipping_city', $organization->shipping_city)"
+                                label="City"
                             />
                         </x-admin::form.control-group>
 
@@ -436,20 +475,6 @@
 
                         <x-admin::form.control-group style="margin: 0 !important;">
                             <x-admin::form.control-group.label>
-                                City
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.control
-                                type="text"
-                                id="shipping_city"
-                                name="shipping_city"
-                                :value="old('shipping_city', $organization->shipping_city)"
-                                label="City"
-                            />
-                        </x-admin::form.control-group>
-
-                        <x-admin::form.control-group style="margin: 0 !important;">
-                            <x-admin::form.control-group.label>
                                 Zip / Postal Code
                             </x-admin::form.control-group.label>
 
@@ -459,6 +484,20 @@
                                 name="shipping_postcode"
                                 :value="old('shipping_postcode', $organization->shipping_postcode)"
                                 label="Zip / Postal Code"
+                            />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group style="margin: 0 !important;">
+                            <x-admin::form.control-group.label>
+                                Country
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                id="shipping_country"
+                                name="shipping_country"
+                                :value="old('shipping_country', $organization->shipping_country)"
+                                label="Country"
                             />
                         </x-admin::form.control-group>
                     </div>
@@ -481,7 +520,7 @@
                     </div>
 
                     <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
-                        Add as many addresses as needed. Each address is stored in the format city, state, zip, country.
+                        Add as many addresses as needed. Each address is stored in the format street, city, state, zip, country.
                     </p>
 
                     <div id="address-rows" class="flex flex-col gap-3" data-next-index="{{ count($addressRows) }}">
@@ -489,7 +528,7 @@
                             <div class="address-row rounded-lg border border-gray-200 p-4 dark:border-gray-700" data-index="{{ $index }}">
                                 <div class="mb-4 flex items-center justify-between gap-3">
                                     <p class="text-base font-semibold text-gray-800 dark:text-white">Additional Address</p>
-                                    <button type="button" class="remove-address-row secondary-button" onclick="this.closest('.address-row')?.remove()">Remove</button>
+                                    <button type="button" class="remove-address-row secondary-button" onclick="window.confirmRemoveOrganizationAddress && window.confirmRemoveOrganizationAddress(event, this)">Remove</button>
                                 </div>
 
                                 <div class="grid gap-4 md:grid-cols-2">
@@ -535,7 +574,7 @@
                         <div class="address-row rounded-lg border border-gray-200 p-4 dark:border-gray-700" data-index="__INDEX__">
                             <div class="mb-4 flex items-center justify-between gap-3">
                                 <p class="text-base font-semibold text-gray-800 dark:text-white">Additional Address</p>
-                                <button type="button" class="remove-address-row secondary-button" onclick="this.closest('.address-row')?.remove()">Remove</button>
+                                <button type="button" class="remove-address-row secondary-button" onclick="window.confirmRemoveOrganizationAddress && window.confirmRemoveOrganizationAddress(event, this)">Remove</button>
                             </div>
 
                             <div class="grid gap-4 md:grid-cols-2">
@@ -582,9 +621,192 @@
         </div>
     </x-admin::form>
 
+    <div id="industry-create-modal" class="hidden" style="display: none; position: fixed; inset: 0; z-index: 100000; align-items: center; justify-content: center; padding: 24px; background: rgba(15, 23, 42, 0.45);">
+        <div class="dark:bg-gray-900" style="width: 100%; max-width: 480px; max-height: calc(100vh - 48px); overflow-y: auto; border-radius: 8px; background: #fff; padding: 24px; box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);">
+            <div style="margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                <p class="text-lg font-bold text-gray-800 dark:text-white" style="font-size: 18px; font-weight: 700;">Add Industry</p>
+                <button type="button" class="text-gray-500" style="border: 0; background: transparent; font-size: 28px; line-height: 1; cursor: pointer;" data-industry-modal-close onclick="event.preventDefault(); var modal = document.getElementById('industry-create-modal'); if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); modal.classList.remove('flex'); }">&times;</button>
+            </div>
+
+            <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white" style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600;">Industry Name</label>
+            <input type="text" id="quick_industry_name" class="dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" style="width: 100%; border: 1px solid #d9dee7; border-radius: 6px; padding: 10px 12px; font-size: 14px; outline: none;">
+            <p id="quick_industry_error" class="hidden text-xs text-red-600" style="margin-top: 8px; font-size: 12px; color: #dc2626;"></p>
+
+            <div style="margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="secondary-button" data-industry-modal-close onclick="event.preventDefault(); var modal = document.getElementById('industry-create-modal'); if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); modal.classList.remove('flex'); }">Cancel</button>
+                <button type="button" class="primary-button" id="quick_industry_save" onclick="window.saveQuickIndustry && window.saveQuickIndustry(event)">Save Industry</button>
+            </div>
+        </div>
+    </div>
+
     {!! view_render_event('admin.organizations.edit.form.after') !!}
 
     <script>
+        window.saveQuickIndustry = function (event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            var input = document.getElementById('quick_industry_name');
+            var error = document.getElementById('quick_industry_error');
+            var saveButton = document.getElementById('quick_industry_save');
+            var industrySelect = document.getElementById('industry');
+            var modal = document.getElementById('industry-create-modal');
+            var name = input && input.value ? input.value.replace(/^\s+|\s+$/g, '') : '';
+
+            if (error) {
+                error.textContent = '';
+                error.classList.add('hidden');
+            }
+
+            if (! name) {
+                if (error) {
+                    error.textContent = 'Industry name is required.';
+                    error.classList.remove('hidden');
+                }
+
+                return false;
+            }
+
+            if (saveButton) {
+                saveButton.disabled = true;
+                saveButton.textContent = 'Saving...';
+            }
+
+            var request = new XMLHttpRequest();
+
+            request.open('POST', "{{ route('admin.' . $routePrefix . '.organizations.industries.store') }}", true);
+            request.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+            request.setRequestHeader('Accept', 'application/json');
+            request.setRequestHeader('X-CSRF-TOKEN', "{{ csrf_token() }}");
+
+            request.onreadystatechange = function () {
+                if (request.readyState !== 4) {
+                    return;
+                }
+
+                var payload = {};
+
+                try {
+                    payload = JSON.parse(request.responseText || '{}');
+                } catch (e) {
+                    payload = {};
+                }
+
+                if (request.status < 200 || request.status >= 300) {
+                    var message = payload.message || (
+                        payload.errors && payload.errors.name && payload.errors.name[0]
+                            ? payload.errors.name[0]
+                            : 'Unable to save industry.'
+                    );
+
+                    if (error) {
+                        error.textContent = message;
+                        error.classList.remove('hidden');
+                    }
+
+                    if (saveButton) {
+                        saveButton.disabled = false;
+                        saveButton.textContent = 'Save Industry';
+                    }
+
+                    return;
+                }
+
+                if (industrySelect && payload.name) {
+                    var exists = false;
+
+                    for (var index = 0; index < industrySelect.options.length; index++) {
+                        if (industrySelect.options[index].value === payload.name) {
+                            exists = true;
+                            break;
+                        }
+                    }
+
+                    if (! exists) {
+                        industrySelect.add(new Option(payload.name, payload.name));
+                    }
+
+                    industrySelect.value = payload.name;
+                }
+
+                if (modal) {
+                    modal.style.display = 'none';
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+
+                if (saveButton) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'Save Industry';
+                }
+
+                return false;
+            };
+
+            request.send(JSON.stringify({ name: name }));
+
+            return false;
+        };
+    </script>
+
+    <script>
+        (function () {
+            const modal = document.getElementById('industry-create-modal');
+            const input = document.getElementById('quick_industry_name');
+            const error = document.getElementById('quick_industry_error');
+            const saveButton = document.getElementById('quick_industry_save');
+            const industrySelect = document.getElementById('industry');
+
+            function setOpen(open) {
+                if (! modal) return;
+                modal.style.display = open ? 'flex' : 'none';
+                modal.classList.toggle('hidden', !open);
+                modal.classList.toggle('flex', open);
+                if (open && input) {
+                    setTimeout(() => input.focus(), 0);
+                }
+            }
+
+            function setError(message) {
+                if (! error) return;
+                error.textContent = message || '';
+                error.classList.toggle('hidden', !message);
+            }
+
+            function openModal() {
+                if (input) input.value = '';
+                setError('');
+                setOpen(true);
+            }
+
+            window.openIndustryModal = function (event) {
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                openModal();
+            };
+
+            window.closeIndustryModal = function (event) {
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                setOpen(false);
+            };
+
+            document.addEventListener('click', function (event) {
+                if (event.target.closest('[data-industry-modal-close]')) {
+                    window.closeIndustryModal(event);
+                }
+            });
+
+        })();
+
         window.toggleShippingAddress = (checkbox) => {
             const shippingContainer = document.getElementById('shipping-address-container');
             const shippingHeading = document.getElementById('shipping-address-heading');
@@ -694,7 +916,7 @@
                 <div class="address-row rounded-lg border border-gray-200 p-4 dark:border-gray-700" data-index="${index}">
                     <div class="mb-4 flex items-center justify-between gap-3">
                         <p class="text-base font-semibold text-gray-800 dark:text-white">Additional Address</p>
-                        <button type="button" class="remove-address-row secondary-button" onclick="this.closest('.address-row')?.remove()">Remove</button>
+                        <button type="button" class="remove-address-row secondary-button" onclick="window.confirmRemoveOrganizationAddress && window.confirmRemoveOrganizationAddress(event, this)">Remove</button>
                     </div>
 
                     <div class="grid gap-4 md:grid-cols-2">
@@ -734,6 +956,39 @@
                     </div>
                 </div>
             `;
+        };
+
+        window.confirmRemoveOrganizationAddress = (event, button) => {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            const removeAddress = () => {
+                const row = button ? button.closest('.address-row') : null;
+
+                if (row) {
+                    row.remove();
+                }
+            };
+
+            if (window.emitter) {
+                window.emitter.emit('open-confirm-modal', {
+                    title: 'Confirm Removal',
+                    message: 'Remove this address?',
+                    options: {
+                        btnDisagree: 'Cancel',
+                        btnAgree: 'Remove',
+                    },
+                    agree: removeAddress,
+                });
+
+                return;
+            }
+
+            if (confirm('Remove this address?')) {
+                removeAddress();
+            }
         };
 
         window.addAddressRow = () => {

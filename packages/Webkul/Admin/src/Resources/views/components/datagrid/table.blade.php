@@ -338,6 +338,11 @@
                     const method = action.method.toLowerCase();
 
                     switch (method) {
+                        case 'modal':
+                            this.$emitter.emit('datagrid-modal-action', action);
+
+                            break;
+
                         case 'get':
                             window.location.href = action.url;
 

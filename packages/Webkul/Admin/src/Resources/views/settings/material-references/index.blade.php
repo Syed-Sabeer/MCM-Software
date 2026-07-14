@@ -24,6 +24,7 @@
             ref="materialReferences"
             :vendors='@json($vendorOptions)'
             :units='@json($unitOptions)'
+            initial-edit-url="{{ $editId ? route('admin.settings.material_references.edit', $editId) : '' }}"
         >
             <x-admin::shimmer.datagrid />
         </v-material-references>
@@ -55,7 +56,7 @@
                                 <div class="grid gap-4 md:grid-cols-2">
                                     <x-admin::form.control-group>
                                         <x-admin::form.control-group.label class="required">Qty</x-admin::form.control-group.label>
-                                        <x-admin::form.control-group.control type="number" name="qty" step="0.001" rules="required|min_value:0" label="Qty" placeholder="Qty" />
+                                        <x-admin::form.control-group.control type="text" name="qty" inputmode="decimal" rules="required|decimal:0,3|min_value:0" label="Qty" placeholder="0.002" />
                                         <x-admin::form.control-group.error control-name="qty" />
                                     </x-admin::form.control-group>
 
@@ -95,7 +96,7 @@
                                                 placeholder="Search vendor..."
                                             >
 
-                                            <div class="max-h-48 overflow-y-auto rounded border border-gray-300 p-2 dark:border-gray-700">
+                                            <div class="overflow-y-auto rounded border border-gray-300 p-2 pr-1 dark:border-gray-700" style="max-height: 148px; scrollbar-width: thin;">
                                                 <label
                                                     v-for="vendor in filteredVendors"
                                                     :key="vendor.id"
@@ -152,7 +153,22 @@
         <script type="module">
             app.component('v-material-references', {
                 template: '#material-references-template',
-                props: ['vendors', 'units'],
+                props: {
+                    vendors: {
+                        type: Array,
+                        default: () => [],
+                    },
+
+                    units: {
+                        type: Array,
+                        default: () => [],
+                    },
+
+                    initialEditUrl: {
+                        type: String,
+                        default: '',
+                    },
+                },
 
                 data() {
                     return {
@@ -168,12 +184,21 @@
                 computed: {
                     filteredVendors() {
                         const term = String(this.vendorSearchTerm || '').trim().toLowerCase();
+                        const selectedIds = this.selectedVendorIds.map((id) => Number(id));
 
-                        if (! term) {
-                            return this.vendors.slice(0, 5);
-                        }
+                        return this.vendors
+                            .filter((vendor) => ! term || String(vendor.name || '').toLowerCase().includes(term))
+                            .slice()
+                            .sort((a, b) => {
+                                const aSelected = selectedIds.includes(Number(a.id));
+                                const bSelected = selectedIds.includes(Number(b.id));
 
-                        return this.vendors.filter((vendor) => String(vendor.name || '').toLowerCase().includes(term));
+                                if (aSelected !== bSelected) {
+                                    return aSelected ? -1 : 1;
+                                }
+
+                                return String(a.name || '').localeCompare(String(b.name || ''));
+                            });
                     },
 
                     selectedVendorSummary() {
@@ -194,7 +219,28 @@
                 },
 
                 methods: {
+                    formatQtyForInput(value) {
+                        if (value === null || value === undefined || value === '') {
+                            return '';
+                        }
+
+                        const numericValue = Number(value);
+
+                        if (Number.isNaN(numericValue)) {
+                            return String(value);
+                        }
+
+                        return numericValue
+                            .toFixed(3)
+                            .replace(/\.?0+$/, '');
+                    },
+
                     syncModalValues(values) {
+                        values = {
+                            ...values,
+                            qty: this.formatQtyForInput(values.qty),
+                        };
+
                         this.$refs.modalForm.setValues(values);
                         this.selectedVendorIds = (values.vendor_ids || []).map((id) => Number(id));
                         this.selectedUnit = values.unit || '';
@@ -214,6 +260,14 @@
                             this.syncModalValues(response.data.data || {});
                             this.$refs.materialReferencesModal.open();
                         });
+                    },
+
+                    handleDatagridModalAction(action) {
+                        if (! action || action.index !== 'edit' || ! action.url) {
+                            return;
+                        }
+
+                        this.editModal(action.url);
                     },
 
                     updateOrCreate(params, { resetForm, setErrors }) {
@@ -244,11 +298,21 @@
                 },
 
                 mounted() {
+                    this.$emitter.on('datagrid-modal-action', this.handleDatagridModalAction);
+
                     this.$el.addEventListener('change', (event) => {
                         if (event.target.name === 'unit') {
                             this.selectedUnit = event.target.value || '';
                         }
                     });
+
+                    if (this.initialEditUrl) {
+                        this.$nextTick(() => this.editModal(this.initialEditUrl));
+                    }
+                },
+
+                beforeUnmount() {
+                    this.$emitter.off('datagrid-modal-action', this.handleDatagridModalAction);
                 },
             });
         </script>

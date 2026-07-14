@@ -13,6 +13,34 @@ class ProformaInvoiceRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        foreach (['billing', 'shipping'] as $type) {
+            $key = $type . '_address';
+            $address = $this->input($key);
+
+            if (! is_array($address)) {
+                $address = [];
+            }
+
+            $this->merge([
+                $key => array_merge([
+                    'key'      => null,
+                    'label'    => null,
+                    'type'     => $type,
+                    'address'  => '',
+                    'street'   => null,
+                    'city'     => null,
+                    'state'    => null,
+                    'postcode' => null,
+                    'country'  => null,
+                ], $address, [
+                    'type' => $address['type'] ?? $type,
+                ]),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         $quoteRule = $this->isMethod('post')

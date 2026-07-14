@@ -22,6 +22,8 @@ class AdminServiceProvider extends ServiceProvider
     {
         $router->aliasMiddleware('user', BouncerMiddleware::class);
 
+        $router->aliasMiddleware('customer_portal', \Webkul\Admin\Http\Middleware\CustomerPortal::class);
+
         $router->aliasMiddleware('admin_locale', Locale::class);
 
         include __DIR__.'/../Http/helpers.php';

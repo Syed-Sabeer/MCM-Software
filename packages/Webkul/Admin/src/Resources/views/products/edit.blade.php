@@ -134,6 +134,7 @@
                                     input-name="customer_organization_id"
                                     :customers='@json($customersForSearch)'
                                     :value='@json($selectedCustomerId ? ['id' => $selectedCustomerId, 'name' => $selectedCustomerName] : null)'
+                                    create-url="{{ route('admin.customers.organizations.quick_create') }}"
                                 ></v-customer-lookup>
                                 <x-admin::form.control-group.error control-name="customer_organization_id" />
                             </div>
@@ -328,6 +329,26 @@
                                     No results
                                 </li>
                             </ul>
+
+                            <div class="mt-2 border-t border-gray-100 pt-2 dark:border-gray-700">
+                                <button type="button" class="text-xs font-medium text-brandColor hover:underline" @click.stop="showCreate = ! showCreate">
+                                    Add Customer
+                                </button>
+
+                                <div v-if="showCreate" class="mt-2 flex flex-col gap-2">
+                                    <input
+                                        type="text"
+                                        v-model="quickName"
+                                        class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                        placeholder="Company name"
+                                        @keydown.enter.prevent="createCustomer"
+                                    >
+                                    <p v-if="quickError" class="text-xs text-red-600">@{{ quickError }}</p>
+                                    <button type="button" class="primary-button justify-center" :disabled="isCreating" @click.stop="createCustomer">
+                                        @{{ isCreating ? 'Saving...' : 'Save Customer' }}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `,
@@ -345,14 +366,23 @@
                         type: Object,
                         default: null,
                     },
+                    createUrl: {
+                        type: String,
+                        default: '',
+                    },
                 },
 
                 data() {
                     return {
                         showPopup: false,
+                        showCreate: false,
                         searchTerm: '',
+                        quickName: '',
+                        quickError: '',
                         isSearching: false,
+                        isCreating: false,
                         selectedItem: this.value || { id: '', name: '' },
+                        localCustomers: this.customers.slice(),
                     };
                 },
 
@@ -361,10 +391,10 @@
                         const query = (this.searchTerm || '').toLowerCase().trim();
 
                         if (! query) {
-                            return this.customers;
+                            return this.localCustomers;
                         }
 
-                        return this.customers.filter((item) => (item.name || '').toLowerCase().includes(query));
+                        return this.localCustomers.filter((item) => (item.name || '').toLowerCase().includes(query));
                     },
                 },
 
@@ -394,6 +424,52 @@
                     remove() {
                         this.selectedItem = { id: '', name: '' };
                         this.searchTerm = '';
+                    },
+
+                    createCustomer() {
+                        const name = (this.quickName || '').trim();
+
+                        if (! name) {
+                            this.quickError = 'Company name is required.';
+                            return;
+                        }
+
+                        this.isCreating = true;
+                        this.quickError = '';
+
+                        fetch(this.createUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                            },
+                            body: JSON.stringify({ name, type: 'customer' }),
+                        })
+                            .then(async (response) => {
+                                const payload = await response.json().catch(() => ({}));
+                                if (! response.ok) {
+                                    throw new Error(payload?.message || payload?.errors?.name?.[0] || 'Unable to save customer.');
+                                }
+                                return payload;
+                            })
+                            .then((customer) => {
+                                const item = { id: String(customer.id), name: customer.name };
+                                const exists = this.localCustomers.some((existing) => String(existing.id) === String(item.id));
+                                if (! exists) {
+                                    this.localCustomers.push(item);
+                                    this.localCustomers.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+                                }
+                                this.selectItem(item);
+                                this.quickName = '';
+                                this.showCreate = false;
+                            })
+                            .catch((error) => {
+                                this.quickError = error.message;
+                            })
+                            .finally(() => {
+                                this.isCreating = false;
+                            });
                     },
 
                     handleFocusOut(event) {
@@ -427,6 +503,7 @@
                 var colorReferences = @json($colorReferenceOptions);
                 var materialReferences = @json($materialReferenceOptions);
                 var vendorOptions = @json($vendorOptions);
+                var vendorQuickCreateUrl = "{{ route('admin.vendors.organizations.quick_create') }}";
                 var deletedImageIds = [];
                 var lastAutoInternalCode = internalCodeInput ? (internalCodeInput.value || '') : '';
                 var colorReferenceMap = {};
@@ -462,6 +539,28 @@
                     }
 
                     return fallback;
+                }
+
+                function confirmProductRemoval(message, onAgree) {
+                    var confirmConfig = {
+                        title: 'Confirm Removal',
+                        message: message || 'Are you sure you want to remove this item?',
+                        options: {
+                            btnDisagree: 'Cancel',
+                            btnAgree: 'Remove',
+                        },
+                        agree: onAgree,
+                    };
+
+                    if (window.emitter) {
+                        window.emitter.emit('open-confirm-modal', confirmConfig);
+
+                        return;
+                    }
+
+                    if (confirm(confirmConfig.message)) {
+                        onAgree();
+                    }
                 }
 
                 function updateInternalCodeFromItemCode() {
@@ -688,6 +787,14 @@
                         + '        <div class="consumption-vendor-options mt-2 max-h-44 overflow-y-auto rounded border border-gray-200 p-1 dark:border-gray-700"></div>'
                         + '        <p class="consumption-vendor-summary mt-2 text-xs font-medium text-gray-600 dark:text-gray-300">No vendor selected.</p>'
                         + '        <p class="consumption-vendor-empty mt-1 hidden text-xs text-amber-600">No vendors available. Add vendors in Contacts first.</p>'
+                        + '        <div class="mt-2 border-t border-gray-100 pt-2 dark:border-gray-700">'
+                        + '          <button type="button" class="consumption-vendor-create-toggle text-xs font-medium text-brandColor hover:underline">Add Vendor</button>'
+                        + '          <div class="consumption-vendor-create-panel mt-2 hidden flex-col gap-2">'
+                        + '            <input type="text" class="consumption-vendor-create-name w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" placeholder="Company name">'
+                        + '            <p class="consumption-vendor-create-error hidden text-xs text-red-600"></p>'
+                        + '            <button type="button" class="consumption-vendor-create-save primary-button justify-center">Save Vendor</button>'
+                        + '          </div>'
+                        + '        </div>'
                         + '      </div>'
                         + '      <div class="consumption-vendor-hidden"></div>'
                         + '    </div>'
@@ -754,6 +861,11 @@
                     var vendorSelected = row.querySelector('.consumption-vendor-selected');
                     var vendorSummary = row.querySelector('.consumption-vendor-summary');
                     var vendorEmptyState = row.querySelector('.consumption-vendor-empty');
+                    var vendorCreateToggle = row.querySelector('.consumption-vendor-create-toggle');
+                    var vendorCreatePanel = row.querySelector('.consumption-vendor-create-panel');
+                    var vendorCreateName = row.querySelector('.consumption-vendor-create-name');
+                    var vendorCreateError = row.querySelector('.consumption-vendor-create-error');
+                    var vendorCreateSave = row.querySelector('.consumption-vendor-create-save');
                     var colorNameInput = row.querySelector('.consumption-color-name');
                     var colorCodeInput = row.querySelector('.consumption-color-code');
                     var colorPicker = row.querySelector('.consumption-color-picker');
@@ -909,6 +1021,87 @@
                         });
                     }
 
+                    function setVendorCreateError(message) {
+                        if (!vendorCreateError) {
+                            return;
+                        }
+
+                        vendorCreateError.textContent = message || '';
+                        vendorCreateError.classList.toggle('hidden', !message);
+                    }
+
+                    function createVendor() {
+                        var name = String(vendorCreateName ? vendorCreateName.value : '').trim();
+
+                        if (!name) {
+                            setVendorCreateError('Company name is required.');
+                            return;
+                        }
+
+                        if (vendorCreateSave) {
+                            vendorCreateSave.disabled = true;
+                            vendorCreateSave.textContent = 'Saving...';
+                        }
+
+                        setVendorCreateError('');
+
+                        fetch(vendorQuickCreateUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                            },
+                            body: JSON.stringify({ name: name, type: 'vendor' }),
+                        })
+                            .then(function (response) {
+                                return response.json().catch(function () { return {}; }).then(function (payload) {
+                                    if (!response.ok) {
+                                        throw new Error(payload && (payload.message || (payload.errors && payload.errors.name && payload.errors.name[0])) || 'Unable to save vendor.');
+                                    }
+
+                                    return payload;
+                                });
+                            })
+                            .then(function (vendor) {
+                                var item = { id: Number(vendor.id), name: vendor.name };
+                                var exists = vendorOptions.some(function (existing) {
+                                    return Number(existing.id) === Number(item.id);
+                                });
+
+                                if (!exists) {
+                                    vendorOptions.push(item);
+                                    vendorOptions.sort(function (a, b) {
+                                        return String(a.name).localeCompare(String(b.name));
+                                    });
+                                }
+
+                                var selected = getSelectedVendorIds();
+                                if (!selected.includes(String(item.id))) {
+                                    selected.push(String(item.id));
+                                }
+
+                                setSelectedVendorIds(selected);
+                                if (vendorCreateName) {
+                                    vendorCreateName.value = '';
+                                }
+                                if (vendorCreatePanel) {
+                                    vendorCreatePanel.classList.add('hidden');
+                                    vendorCreatePanel.classList.remove('flex');
+                                }
+                                renderVendorOptions(vendorSearch ? vendorSearch.value : '');
+                            })
+                            .catch(function (error) {
+                                setVendorCreateError(error.message);
+                            })
+                            .finally(function () {
+                                if (vendorCreateSave) {
+                                    vendorCreateSave.disabled = false;
+                                    vendorCreateSave.textContent = 'Save Vendor';
+                                }
+                            });
+                    }
+
                     referenceToggle.addEventListener('click', function () {
                         if (referencePopup) {
                             referencePopup.classList.toggle('hidden');
@@ -969,6 +1162,37 @@
                         setSelectedVendorIds(selected);
                         renderVendorOptions(vendorSearch ? vendorSearch.value : '');
                     });
+
+                    if (vendorCreateToggle && vendorCreatePanel) {
+                        vendorCreateToggle.addEventListener('click', function (event) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            var willOpen = vendorCreatePanel.classList.contains('hidden');
+                            vendorCreatePanel.classList.toggle('hidden', !willOpen);
+                            vendorCreatePanel.classList.toggle('flex', willOpen);
+                            setVendorCreateError('');
+                            if (willOpen && vendorCreateName) {
+                                setTimeout(function () { vendorCreateName.focus(); }, 0);
+                            }
+                        });
+                    }
+
+                    if (vendorCreateSave) {
+                        vendorCreateSave.addEventListener('click', function (event) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            createVendor();
+                        });
+                    }
+
+                    if (vendorCreateName) {
+                        vendorCreateName.addEventListener('keydown', function (event) {
+                            if (event.key === 'Enter') {
+                                event.preventDefault();
+                                createVendor();
+                            }
+                        });
+                    }
 
                     colorNameInput.addEventListener('change', syncColorFromName);
                     colorNameInput.addEventListener('blur', syncColorFromName);
@@ -1167,44 +1391,82 @@
                 document.body.addEventListener('click', function (event) {
                     var removeColor = event.target.closest('.remove-color');
                     if (removeColor) {
-                        removeColor.closest('.color-row').remove();
-                        renumber();
+                        event.preventDefault();
+                        confirmProductRemoval('Remove this color variant?', function () {
+                            var row = removeColor.closest('.color-row');
+
+                            if (row) {
+                                row.remove();
+                                renumber();
+                            }
+                        });
+
                         return;
                     }
 
                     var removeExistingOtherImage = event.target.closest('.remove-existing-other-image');
                     if (removeExistingOtherImage) {
-                        var existingRow = removeExistingOtherImage.closest('.existing-other-image-row');
-                        var imageId = existingRow ? existingRow.getAttribute('data-image-id') : null;
-                        if (imageId) {
-                            deletedImageIds.push(imageId);
-                            if (deleteImageIdsInput) {
-                                deleteImageIdsInput.value = deletedImageIds.join(',');
+                        event.preventDefault();
+                        confirmProductRemoval('Remove this existing image?', function () {
+                            var existingRow = removeExistingOtherImage.closest('.existing-other-image-row');
+                            var imageId = existingRow ? existingRow.getAttribute('data-image-id') : null;
+
+                            if (imageId) {
+                                deletedImageIds.push(imageId);
+                                if (deleteImageIdsInput) {
+                                    deleteImageIdsInput.value = deletedImageIds.join(',');
+                                }
                             }
-                        }
-                        if (existingRow) {
-                            existingRow.remove();
-                        }
+
+                            if (existingRow) {
+                                existingRow.remove();
+                            }
+                        });
+
                         return;
                     }
 
                     var removeOtherImage = event.target.closest('.remove-other-image');
                     if (removeOtherImage) {
-                        removeOtherImage.closest('.other-image-row').remove();
+                        event.preventDefault();
+                        confirmProductRemoval('Remove this image row?', function () {
+                            var row = removeOtherImage.closest('.other-image-row');
+
+                            if (row) {
+                                row.remove();
+                            }
+                        });
+
                         return;
                     }
 
                     var removeConsumption = event.target.closest('.remove-consumption');
                     if (removeConsumption) {
-                        removeConsumption.closest('.consumption-row').remove();
-                        renumber();
+                        event.preventDefault();
+                        confirmProductRemoval('Remove this material consumption row?', function () {
+                            var row = removeConsumption.closest('.consumption-row');
+
+                            if (row) {
+                                row.remove();
+                                renumber();
+                            }
+                        });
+
                         return;
                     }
 
                     var removeSection = event.target.closest('.remove-section');
                     if (removeSection) {
-                        removeSection.closest('.production-section').remove();
-                        renumber();
+                        event.preventDefault();
+                        confirmProductRemoval('Remove this production section and its rows?', function () {
+                            var section = removeSection.closest('.production-section');
+
+                            if (section) {
+                                section.remove();
+                                renumber();
+                            }
+                        });
+
                         return;
                     }
 
@@ -1219,12 +1481,15 @@
 
                     var removeSectionItem = event.target.closest('.remove-section-item');
                     if (removeSectionItem) {
+                        event.preventDefault();
                         var item = removeSectionItem.closest('.section-item');
                         var container = item.closest('.section-items');
 
                         if (container.querySelectorAll('.section-item').length > 1) {
-                            item.remove();
-                            renumber();
+                            confirmProductRemoval('Remove this section row?', function () {
+                                item.remove();
+                                renumber();
+                            });
                         }
 
                         return;

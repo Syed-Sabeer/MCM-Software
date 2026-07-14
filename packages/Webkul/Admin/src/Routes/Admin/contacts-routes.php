@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Contact\ActivityController;
+use Webkul\Admin\Http\Controllers\Contact\IndustryController;
 use Webkul\Admin\Http\Controllers\Contact\OrganizationController;
 use Webkul\Admin\Http\Controllers\Contact\OrganizationFileController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\ActivityController as PersonActivityController;
@@ -59,6 +60,16 @@ $registerContactRoutes = function ($prefix) {
             Route::get('create', 'create')->name("admin.{$prefix}.organizations.create");
 
             Route::post('create', 'store')->name("admin.{$prefix}.organizations.store");
+
+            Route::post('quick-create', 'quickCreate')->name("admin.{$prefix}.organizations.quick_create");
+
+            Route::controller(IndustryController::class)->prefix('industries')->group(function () use ($prefix) {
+                Route::get('', 'index')->name("admin.{$prefix}.organizations.industries.index");
+                Route::post('', 'store')->name("admin.{$prefix}.organizations.industries.store");
+                Route::get('edit/{id}', 'edit')->name("admin.{$prefix}.organizations.industries.edit");
+                Route::put('edit/{id}', 'update')->name("admin.{$prefix}.organizations.industries.update");
+                Route::delete('{id}', 'destroy')->name("admin.{$prefix}.organizations.industries.delete");
+            });
 
             Route::get('fetch/{id}', 'fetch')->name("admin.{$prefix}.organizations.fetch");
 
