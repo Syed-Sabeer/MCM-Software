@@ -17,6 +17,7 @@
                 </div>
 
                 <div class="flex gap-2">
+                    <form method="POST" action="{{ route('admin.job_orders.customer_visibility', $jobOrder->id) }}">@csrf<button class="secondary-button" @disabled($jobOrder->status === 'draft' && ! $jobOrder->customer_visible_at)>{{ $jobOrder->customer_visible_at ? 'Unpublish' : 'Publish to customer' }}</button></form>
                     <a href="{{ route('admin.vendor_quotes.create', ['job_order_id' => $jobOrder->id]) }}" class="secondary-button" data-loading-link data-loading-text="Opening...">Create Vendor Quote</a>
                     @if ($createdPurchaseOrder)
                         <a href="{{ route('admin.purchase_orders.view', $createdPurchaseOrder->id) }}" class="secondary-button" data-loading-link data-loading-text="Opening...">PO Created</a>

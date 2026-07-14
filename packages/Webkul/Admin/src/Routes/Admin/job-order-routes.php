@@ -1,7 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Webkul\Admin\Http\Controllers\CustomerPortal\VisibilityController;
 use Webkul\Admin\Http\Controllers\PurchaseOrder\JobOrderController;
+
+Route::post('job-orders/{id}/customer-visibility', [VisibilityController::class, 'jobOrder'])->name('admin.job_orders.customer_visibility');
 
 Route::controller(JobOrderController::class)->prefix('job-orders')->group(function () {
     Route::get('', 'index')->name('admin.job_orders.index');

@@ -19,7 +19,7 @@ Route::withoutMiddleware(['user'])->group(function () {
         Route::prefix('login')->group(function () {
             Route::get('', 'create')->name('admin.session.create');
 
-            Route::post('', 'store')->name('admin.session.store');
+            Route::post('', 'store')->middleware('throttle:5,1')->name('admin.session.store');
         });
 
         Route::middleware(['user'])->group(function () {

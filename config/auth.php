@@ -40,6 +40,10 @@ return [
             'driver'   => 'session',
             'provider' => 'users',
         ],
+        'customer' => [
+            'driver'   => 'session',
+            'provider' => 'customer_portal_users',
+        ],
     ],
 
     /*
@@ -64,6 +68,10 @@ return [
             'driver' => 'eloquent',
             'model'  => Webkul\User\Models\User::class,
         ],
+        'customer_portal_users' => [
+            'driver' => 'eloquent',
+            'model'  => Webkul\Admin\Models\CustomerPortalUser::class,
+        ],
     ],
 
     /*
@@ -86,6 +94,12 @@ return [
             'provider' => 'users',
             'table'    => 'user_password_resets',
             'expire'   => 60,
+        ],
+        'customer_portal_users' => [
+            'provider' => 'customer_portal_users',
+            'table'    => 'customer_portal_password_resets',
+            'expire'   => 60,
+            'throttle' => 60,
         ],
     ],
 

@@ -4,9 +4,9 @@ namespace Webkul\Contact\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Models\ActivityProxy;
+use Webkul\Admin\Models\CustomerPortalUser;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Organization as OrganizationContract;
-use Webkul\Contact\Models\OrganizationFile;
 use Webkul\Product\Models\ProductProxy;
 use Webkul\Quote\Models\ProformaInvoiceProxy;
 use Webkul\Quote\Models\QuoteProxy;
@@ -111,5 +111,10 @@ class Organization extends Model implements OrganizationContract
     public function proformaInvoices()
     {
         return $this->hasMany(ProformaInvoiceProxy::modelClass(), 'organization_id');
+    }
+
+    public function portalUsers()
+    {
+        return $this->hasMany(CustomerPortalUser::class);
     }
 }

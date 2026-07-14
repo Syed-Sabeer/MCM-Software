@@ -8,6 +8,7 @@ use Webkul\Admin\Http\Controllers\Contact\OrganizationFileController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\ActivityController as PersonActivityController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\TagController;
+use Webkul\Admin\Http\Controllers\Contact\PortalAccessController;
 
 // Helper function to register contact routes for a given prefix (contacts, customers, vendors)
 $registerContactRoutes = function ($prefix) {
@@ -115,6 +116,14 @@ $registerContactRoutes('customers');
 
 // Register routes for vendors
 $registerContactRoutes('vendors');
+
+Route::prefix('customers/organizations/{organization}/portal-users')->controller(PortalAccessController::class)->group(function () {
+    Route::post('', 'store')->name('admin.customers.organizations.portal_users.store');
+    Route::put('{portalUser}', 'update')->name('admin.customers.organizations.portal_users.update');
+    Route::put('{portalUser}/status', 'status')->name('admin.customers.organizations.portal_users.status');
+    Route::post('{portalUser}/resend', 'resend')->middleware('throttle:3,1')->name('admin.customers.organizations.portal_users.resend');
+    Route::delete('{portalUser}', 'destroy')->name('admin.customers.organizations.portal_users.destroy');
+});
 
 // Register routes for employees
 Route::prefix('employees')->group(function () {

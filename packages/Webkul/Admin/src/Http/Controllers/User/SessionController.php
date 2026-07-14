@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Admin\Models\CustomerPortalUser;
 use Webkul\Core\Menu\MenuItem;
 
 class SessionController extends Controller
@@ -16,20 +17,18 @@ class SessionController extends Controller
     public function create(): RedirectResponse|View
     {
         if (auth()->guard('user')->check()) {
-            if ($this->isCustomerPortalUser(auth()->guard('user')->user())) {
-                return redirect()->route('customer_portal.dashboard');
-            }
-
             return redirect()->route('admin.dashboard.index');
+        }
+
+        if (auth()->guard('customer')->check()) {
+            return redirect()->route('customer_portal.dashboard');
         }
 
         $previousUrl = url()->previous();
 
-        $intendedUrl = str_contains($previousUrl, 'customer-portal')
+        $intendedUrl = str_contains($previousUrl, 'admin')
             ? $previousUrl
-            : (str_contains($previousUrl, 'admin')
-            ? $previousUrl
-            : route('admin.dashboard.index'));
+            : route('admin.dashboard.index');
 
         session()->put('url.intended', $intendedUrl);
 
@@ -46,7 +45,34 @@ class SessionController extends Controller
             'password' => 'required',
         ]);
 
-        if (! auth()->guard('user')->attempt(request(['email', 'password']), request('remember'))) {
+        $remember = request()->boolean('remember');
+        $credentials = request(['email', 'password']);
+
+        if (! auth()->guard('user')->attempt($credentials, $remember)) {
+            $customerCredentials = [
+                'email'    => CustomerPortalUser::normalizeEmail($credentials['email']),
+                'password' => $credentials['password'],
+            ];
+
+            if (auth()->guard('customer')->attempt($customerCredentials, $remember)) {
+                $customer = auth()->guard('customer')->user();
+
+                if (! $customer->isActive() || strtolower((string) $customer->organization?->type) !== 'customer') {
+                    auth()->guard('customer')->logout();
+                    session()->flash('error', trans('admin::app.users.login-error'));
+
+                    return redirect()->back();
+                }
+
+                request()->session()->regenerate();
+                session()->forget('url.intended');
+                $customer->forceFill(['last_login_at' => now()])->save();
+
+                return redirect()->route($customer->must_change_password
+                    ? 'customer_portal.security'
+                    : 'customer_portal.dashboard');
+            }
+
             session()->flash('error', trans('admin::app.users.login-error'));
 
             return redirect()->back();
@@ -60,17 +86,7 @@ class SessionController extends Controller
             return redirect()->route('admin.session.create');
         }
 
-        if ($this->isCustomerPortalUser(auth()->guard('user')->user())) {
-            $intendedUrl = session('url.intended');
-
-            if ($intendedUrl && str_contains($intendedUrl, 'customer-portal')) {
-                return redirect()->intended(route('customer_portal.dashboard'));
-            }
-
-            session()->forget('url.intended');
-
-            return redirect()->route('customer_portal.dashboard');
-        }
+        request()->session()->regenerate();
 
         $menus = menu()->getItems('admin');
 
@@ -131,16 +147,5 @@ class SessionController extends Controller
         }
 
         return null;
-    }
-
-    protected function isCustomerPortalUser($user): bool
-    {
-        $roleName = strtolower((string) ($user->role?->name ?? ''));
-
-        if (str_contains($roleName, 'customer') || str_contains($roleName, 'portal') || str_contains($roleName, 'client')) {
-            return true;
-        }
-
-        return in_array('customer_portal.access', $user->role?->permissions ?? [], true);
     }
 }

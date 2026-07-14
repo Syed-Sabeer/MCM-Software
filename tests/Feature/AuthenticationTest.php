@@ -2,7 +2,11 @@
 
 it('can see the admin login page', function () {
     test()->get(route('admin.session.create'))
-        ->assertOK();
+        ->assertOK()
+        ->assertSee('Staff and customer account access');
+
+    test()->get(route('customer_portal.login'))
+        ->assertRedirect(route('admin.session.create'));
 });
 
 it('can see the dashboard page after login', function () {

@@ -64,6 +64,7 @@
                 </div>
 
                 <div class="flex gap-2">
+                    <form method="POST" action="{{ route('admin.quotes.customer_visibility', $quote->id) }}">@csrf<button class="secondary-button">{{ $quote->customer_visible_at ? 'Unpublish' : 'Publish to customer' }}</button></form>
                     <a href="{{ route('admin.quotes.print', $quote->id) }}" class="secondary-button">Print</a>
                     <a href="{{ route('admin.proforma_invoices.create', ['quote_id' => $quote->id]) }}" class="secondary-button">Create Proforma</a>
                     <a href="{{ route('admin.quotes.edit', $quote->id) }}" class="primary-button">Edit</a>

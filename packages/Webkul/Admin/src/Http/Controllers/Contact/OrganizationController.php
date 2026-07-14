@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\Contact;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -14,6 +15,7 @@ use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\OrganizationResource;
+use Webkul\Admin\Services\CustomerPortal\InvitationService;
 use Webkul\Contact\Models\Industry;
 use Webkul\Contact\Models\Organization as OrganizationModel;
 use Webkul\Contact\Repositories\OrganizationRepository;
@@ -22,7 +24,6 @@ use Webkul\PurchaseOrder\Models\PurchaseOrder;
 use Webkul\PurchaseOrder\Models\VendorQuote;
 use Webkul\Quote\Models\ProformaInvoice;
 use Webkul\Quote\Models\Quote;
-use Webkul\User\Models\User;
 
 class OrganizationController extends Controller
 {
@@ -31,8 +32,10 @@ class OrganizationController extends Controller
      *
      * @return void
      */
-    public function __construct(protected OrganizationRepository $organizationRepository)
-    {
+    public function __construct(
+        protected OrganizationRepository $organizationRepository,
+        protected InvitationService $invitationService
+    ) {
         request()->request->add(['entity_type' => 'organizations']);
     }
 
@@ -61,7 +64,7 @@ class OrganizationController extends Controller
     {
         // Detect organization type from current route and inject into query for DataGrid filtering
         if ($type = $this->getRouteType()) {
-            if (!request()->query('type')) {
+            if (! request()->query('type')) {
                 request()->query->set('type', $type);
             }
         }
@@ -80,12 +83,10 @@ class OrganizationController extends Controller
     {
         $routeType = $this->getRouteType();
         $industries = Industry::query()->orderBy('name')->get();
-        $portalUsers = $this->portalUsers();
 
         return view('admin::contacts.organizations.create', [
-            'routeType' => $routeType,
+            'routeType'  => $routeType,
             'industries' => $industries,
-            'portalUsers' => $portalUsers,
         ]);
     }
 
@@ -96,7 +97,7 @@ class OrganizationController extends Controller
     {
         $organization = $this->organizationRepository->find($id);
 
-        if (!$organization) {
+        if (! $organization) {
             return response()->json(['message' => 'Organization not found'], 404);
         }
 
@@ -157,7 +158,7 @@ class OrganizationController extends Controller
             ]);
         } elseif (strtolower((string) $organization->type) !== $type) {
             return response()->json([
-                'message' => 'A company with this name already exists as ' . ($organization->type ?: 'another type') . '.',
+                'message' => 'A company with this name already exists as '.($organization->type ?: 'another type').'.',
             ], 422);
         }
 
@@ -165,7 +166,7 @@ class OrganizationController extends Controller
             'id'      => $organization->id,
             'name'    => $organization->name,
             'type'    => $organization->type,
-            'message' => ucfirst($type) . ' created successfully.',
+            'message' => ucfirst($type).' created successfully.',
         ], 201);
     }
 
@@ -176,8 +177,10 @@ class OrganizationController extends Controller
     {
         $organization = $this->organizationRepository->findOrFail($id);
         $documentSections = $this->buildDocumentSections($organization, $this->getRouteType());
+        $portalUsers = $organization->portalUsers()->orderBy('name')->get();
+        $portalContacts = $organization->persons()->orderBy('name')->get(['id', 'name', 'email']);
 
-        return view('admin::contacts.organizations.view', compact('organization', 'documentSections'));
+        return view('admin::contacts.organizations.view', compact('organization', 'documentSections', 'portalUsers', 'portalContacts'));
     }
 
     protected function buildDocumentSections($organization, ?string $routeType): array
@@ -194,7 +197,7 @@ class OrganizationController extends Controller
                     records: VendorQuote::query()->where('organization_id', $organization->id)->latest('issue_date')->latest('id')->take(3)->get(),
                     itemUrl: fn ($record) => route('admin.vendor_quotes.view', $record->id),
                     allUrl: route('admin.vendor_quotes.index', ['organization_id' => $organization->id]),
-                    titleValue: fn ($record) => $record->vendor_quote_number ?: ('RFQ-' . $record->id),
+                    titleValue: fn ($record) => $record->vendor_quote_number ?: ('RFQ-'.$record->id),
                     metaValue: fn ($record) => collect([
                         $record->issue_date?->format('Y-m-d'),
                         $record->status ? Str::headline($record->status) : null,
@@ -207,7 +210,7 @@ class OrganizationController extends Controller
                     records: PurchaseOrder::query()->where('organization_id', $organization->id)->latest('created_at')->take(3)->get(),
                     itemUrl: fn ($record) => route('admin.purchase_orders.view', $record->id),
                     allUrl: route('admin.purchase_orders.index', ['organization_id' => $organization->id]),
-                    titleValue: fn ($record) => $record->po_number ?: ('PO-' . $record->id),
+                    titleValue: fn ($record) => $record->po_number ?: ('PO-'.$record->id),
                     metaValue: fn ($record) => collect([
                         optional($record->created_at)->format('Y-m-d'),
                         $record->status ? Str::headline($record->status) : null,
@@ -224,7 +227,7 @@ class OrganizationController extends Controller
                 records: Quote::query()->where('organization_id', $organization->id)->latest('quote_date')->latest('id')->take(3)->get(),
                 itemUrl: fn ($record) => route('admin.quotes.view', $record->id),
                 allUrl: route('admin.quotes.index', ['organization_id' => $organization->id]),
-                titleValue: fn ($record) => $record->quote_number ?: ('Q' . $record->id),
+                titleValue: fn ($record) => $record->quote_number ?: ('Q'.$record->id),
                 metaValue: fn ($record) => collect([
                     $record->quote_date?->format('Y-m-d'),
                     $record->status ? Str::headline($record->status) : null,
@@ -237,7 +240,7 @@ class OrganizationController extends Controller
                 records: ProformaInvoice::query()->where('organization_id', $organization->id)->latest('issue_date')->latest('id')->take(3)->get(),
                 itemUrl: fn ($record) => route('admin.proforma_invoices.view', $record->id),
                 allUrl: route('admin.proforma_invoices.index', ['organization_id' => $organization->id]),
-                titleValue: fn ($record) => $record->proforma_number ?: ('PF-' . $record->id),
+                titleValue: fn ($record) => $record->proforma_number ?: ('PF-'.$record->id),
                 metaValue: fn ($record) => collect([
                     $record->issue_date?->format('Y-m-d'),
                     $record->status ? Str::headline($record->status) : null,
@@ -250,7 +253,7 @@ class OrganizationController extends Controller
                 records: JobOrder::query()->where('organization_id', $organization->id)->latest('issue_date')->latest('id')->take(3)->get(),
                 itemUrl: fn ($record) => route('admin.job_orders.view', $record->id),
                 allUrl: route('admin.job_orders.index', ['organization_id' => $organization->id]),
-                titleValue: fn ($record) => $record->job_order_number ?: ('JO-' . $record->id),
+                titleValue: fn ($record) => $record->job_order_number ?: ('JO-'.$record->id),
                 metaValue: fn ($record) => collect([
                     $record->issue_date?->format('Y-m-d'),
                     $record->status ? Str::headline($record->status) : null,
@@ -270,14 +273,14 @@ class OrganizationController extends Controller
         callable $metaValue
     ): array {
         return [
-            'title' => $title,
+            'title'         => $title,
             'empty_message' => $emptyMessage,
-            'count' => $count,
-            'all_url' => $allUrl,
-            'records' => $records->map(fn ($record) => [
+            'count'         => $count,
+            'all_url'       => $allUrl,
+            'records'       => $records->map(fn ($record) => [
                 'title' => $titleValue($record),
-                'meta' => $metaValue($record),
-                'url' => $itemUrl($record),
+                'meta'  => $metaValue($record),
+                'url'   => $itemUrl($record),
             ]),
         ];
     }
@@ -296,33 +299,44 @@ class OrganizationController extends Controller
         $normalizedType = $this->normalizeOrganizationType($organizationType);
 
         $request->validate([
-            'description'      => ['nullable', 'max:100'],
-            'billing_street'   => ['nullable', 'max:100'],
-            'shipping_street'  => ['nullable', 'max:100'],
-            'addresses'        => ['nullable', 'array'],
-            'addresses.*.type' => ['nullable', 'string', 'max:50'],
-            'addresses.*.street' => ['nullable', 'string', 'max:100'],
-            'addresses.*.city' => ['nullable', 'string', 'max:100'],
-            'addresses.*.state' => ['nullable', 'string', 'max:100'],
-            'addresses.*.postcode' => ['nullable', 'string', 'max:100'],
-            'addresses.*.country' => ['nullable', 'string', 'max:100'],
-            'industry'         => ['nullable', 'string', 'max:255'],
-            'user_id'          => ['nullable', 'exists:users,id'],
-            'organization_type' => ['required_without:type', 'in:customer,vendor,Customer,Vendor'],
-            'type'             => ['nullable', 'in:customer,vendor,Customer,Vendor'],
+            'description'              => ['nullable', 'max:100'],
+            'billing_street'           => ['nullable', 'max:100'],
+            'shipping_street'          => ['nullable', 'max:100'],
+            'addresses'                => ['nullable', 'array'],
+            'addresses.*.type'         => ['nullable', 'string', 'max:50'],
+            'addresses.*.street'       => ['nullable', 'string', 'max:100'],
+            'addresses.*.city'         => ['nullable', 'string', 'max:100'],
+            'addresses.*.state'        => ['nullable', 'string', 'max:100'],
+            'addresses.*.postcode'     => ['nullable', 'string', 'max:100'],
+            'addresses.*.country'      => ['nullable', 'string', 'max:100'],
+            'industry'                 => ['nullable', 'string', 'max:255'],
+            'organization_type'        => ['required_without:type', 'in:customer,vendor,Customer,Vendor'],
+            'type'                     => ['nullable', 'in:customer,vendor,Customer,Vendor'],
+            'create_portal_access'     => ['nullable', 'boolean'],
+            'portal_name'              => ['required_if:create_portal_access,1', 'nullable', 'string', 'max:255'],
+            'portal_email'             => ['required_if:create_portal_access,1', 'nullable', 'email', 'max:255', 'unique:customer_portal_users,email'],
+            'portal_person_id'         => ['nullable', 'integer'],
+            'portal_role'              => ['nullable', 'in:organization_admin,member'],
+            'portal_credential_method' => ['nullable', 'in:invitation,temporary_password'],
+            'portal_password'          => ['nullable', 'required_if:portal_credential_method,temporary_password', 'string', 'min:8', 'confirmed'],
+            'portal_send_email'        => ['nullable', 'boolean'],
         ]);
+
+        if ($request->boolean('create_portal_access') && $normalizedType !== 'customer') {
+            throw \Illuminate\Validation\ValidationException::withMessages(['create_portal_access' => 'Portal access can only be created for a customer.']);
+        }
 
         $data = $request->all();
         $data['type'] = $normalizedType;
-        $data['user_id'] = $normalizedType === 'customer' ? ($data['user_id'] ?? null) : null;
         unset($data['organization_type']);
+        $portalData = $this->extractPortalData($data);
 
         if ($request->boolean('same_as_billing')) {
-            $data['shipping_street']   = $data['billing_street']   ?? null;
-            $data['shipping_city']     = $data['billing_city']     ?? null;
-            $data['shipping_state']    = $data['billing_state']    ?? null;
+            $data['shipping_street'] = $data['billing_street'] ?? null;
+            $data['shipping_city'] = $data['billing_city'] ?? null;
+            $data['shipping_state'] = $data['billing_state'] ?? null;
             $data['shipping_postcode'] = $data['billing_postcode'] ?? null;
-            $data['shipping_country']  = $data['billing_country']  ?? null;
+            $data['shipping_country'] = $data['billing_country'] ?? null;
         }
 
         $data['address'] = $this->normalizeAddressBook($data, $request->boolean('same_as_billing'));
@@ -330,13 +344,22 @@ class OrganizationController extends Controller
         $this->syncPrimaryAddressFields($data, 'billing');
         $this->syncPrimaryAddressFields($data, 'shipping');
 
-        Event::dispatch('contacts.organization.create.before');
+        DB::transaction(function () use ($data, $portalData, $request, &$organization) {
+            Event::dispatch('contacts.organization.create.before');
+            $organization = $this->organizationRepository->create($data);
+            Event::dispatch('contacts.organization.create.after', $organization);
 
-        $organization = $this->organizationRepository->create($data);
-
-        Event::dispatch('contacts.organization.create.after', $organization);
+            if ($request->boolean('create_portal_access')) {
+                $result = $this->invitationService->createAccount($organization, $portalData, $request->boolean('portal_send_email'));
+                session()->flash('portal_invitation_url', $result['url']);
+            }
+        });
 
         session()->flash('success', trans('admin::app.contacts.organizations.index.create-success'));
+
+        if ($request->boolean('create_portal_access')) {
+            return redirect()->route('admin.customers.organizations.view', $organization->id);
+        }
 
         // Redirect to the appropriate list based on route
         $routeName = request()->route()?->getName() ?? '';
@@ -357,9 +380,8 @@ class OrganizationController extends Controller
         $organization = $this->organizationRepository->findOrFail($id);
         $routeType = $this->getRouteType();
         $industries = Industry::query()->orderBy('name')->get();
-        $portalUsers = $this->portalUsers($organization->user_id);
 
-        return view('admin::contacts.organizations.edit', compact('organization', 'routeType', 'industries', 'portalUsers'));
+        return view('admin::contacts.organizations.edit', compact('organization', 'routeType', 'industries'));
     }
 
     /**
@@ -376,33 +398,44 @@ class OrganizationController extends Controller
         $normalizedType = $this->normalizeOrganizationType($organizationType);
 
         $request->validate([
-            'description'      => ['nullable', 'max:100'],
-            'billing_street'   => ['nullable', 'max:100'],
-            'shipping_street'  => ['nullable', 'max:100'],
-            'addresses'        => ['nullable', 'array'],
-            'addresses.*.type' => ['nullable', 'string', 'max:50'],
-            'addresses.*.street' => ['nullable', 'string', 'max:100'],
-            'addresses.*.city' => ['nullable', 'string', 'max:100'],
-            'addresses.*.state' => ['nullable', 'string', 'max:100'],
-            'addresses.*.postcode' => ['nullable', 'string', 'max:100'],
-            'addresses.*.country' => ['nullable', 'string', 'max:100'],
-            'industry'         => ['nullable', 'string', 'max:255'],
-            'user_id'          => ['nullable', 'exists:users,id'],
-            'organization_type' => ['required_without:type', 'in:customer,vendor,Customer,Vendor'],
-            'type'             => ['nullable', 'in:customer,vendor,Customer,Vendor'],
+            'description'              => ['nullable', 'max:100'],
+            'billing_street'           => ['nullable', 'max:100'],
+            'shipping_street'          => ['nullable', 'max:100'],
+            'addresses'                => ['nullable', 'array'],
+            'addresses.*.type'         => ['nullable', 'string', 'max:50'],
+            'addresses.*.street'       => ['nullable', 'string', 'max:100'],
+            'addresses.*.city'         => ['nullable', 'string', 'max:100'],
+            'addresses.*.state'        => ['nullable', 'string', 'max:100'],
+            'addresses.*.postcode'     => ['nullable', 'string', 'max:100'],
+            'addresses.*.country'      => ['nullable', 'string', 'max:100'],
+            'industry'                 => ['nullable', 'string', 'max:255'],
+            'organization_type'        => ['required_without:type', 'in:customer,vendor,Customer,Vendor'],
+            'type'                     => ['nullable', 'in:customer,vendor,Customer,Vendor'],
+            'create_portal_access'     => ['nullable', 'boolean'],
+            'portal_name'              => ['required_if:create_portal_access,1', 'nullable', 'string', 'max:255'],
+            'portal_email'             => ['required_if:create_portal_access,1', 'nullable', 'email', 'max:255', 'unique:customer_portal_users,email'],
+            'portal_person_id'         => ['nullable', 'integer'],
+            'portal_role'              => ['nullable', 'in:organization_admin,member'],
+            'portal_credential_method' => ['nullable', 'in:invitation,temporary_password'],
+            'portal_password'          => ['nullable', 'required_if:portal_credential_method,temporary_password', 'string', 'min:8', 'confirmed'],
+            'portal_send_email'        => ['nullable', 'boolean'],
         ]);
+
+        if ($request->boolean('create_portal_access') && $normalizedType !== 'customer') {
+            throw \Illuminate\Validation\ValidationException::withMessages(['create_portal_access' => 'Portal access can only be created for a customer.']);
+        }
 
         $data = $request->all();
         $data['type'] = $normalizedType;
-        $data['user_id'] = $normalizedType === 'customer' ? ($data['user_id'] ?? null) : null;
         unset($data['organization_type']);
+        $portalData = $this->extractPortalData($data);
 
         if ($request->boolean('same_as_billing')) {
-            $data['shipping_street']   = $data['billing_street']   ?? null;
-            $data['shipping_city']     = $data['billing_city']     ?? null;
-            $data['shipping_state']    = $data['billing_state']    ?? null;
+            $data['shipping_street'] = $data['billing_street'] ?? null;
+            $data['shipping_city'] = $data['billing_city'] ?? null;
+            $data['shipping_state'] = $data['billing_state'] ?? null;
             $data['shipping_postcode'] = $data['billing_postcode'] ?? null;
-            $data['shipping_country']  = $data['billing_country']  ?? null;
+            $data['shipping_country'] = $data['billing_country'] ?? null;
         }
 
         $data['address'] = $this->normalizeAddressBook($data, $request->boolean('same_as_billing'));
@@ -410,11 +443,16 @@ class OrganizationController extends Controller
         $this->syncPrimaryAddressFields($data, 'billing');
         $this->syncPrimaryAddressFields($data, 'shipping');
 
-        Event::dispatch('contacts.organization.update.before', $id);
+        DB::transaction(function () use ($data, $portalData, $request, $id, &$organization) {
+            Event::dispatch('contacts.organization.update.before', $id);
+            $organization = $this->organizationRepository->update($data, $id);
+            Event::dispatch('contacts.organization.update.after', $organization);
 
-        $organization = $this->organizationRepository->update($data, $id);
-
-        Event::dispatch('contacts.organization.update.after', $organization);
+            if ($request->boolean('create_portal_access')) {
+                $result = $this->invitationService->createAccount($organization, $portalData, $request->boolean('portal_send_email'));
+                session()->flash('portal_invitation_url', $result['url']);
+            }
+        });
 
         session()->flash('success', trans('admin::app.contacts.organizations.index.update-success'));
 
@@ -485,29 +523,24 @@ class OrganizationController extends Controller
         return in_array($normalized, ['customer', 'vendor']) ? $normalized : null;
     }
 
-    /**
-     * Users eligible to log in to the customer portal.
-     */
-    protected function portalUsers(?int $selectedUserId = null)
+    protected function extractPortalData(array &$data): array
     {
-        return User::query()
-            ->with('role')
-            ->where('status', 1)
-            ->where(function ($query) use ($selectedUserId) {
-                $query->whereHas('role', function ($roleQuery) {
-                    $roleQuery
-                        ->whereRaw('LOWER(name) LIKE ?', ['%customer%'])
-                        ->orWhereRaw('LOWER(name) LIKE ?', ['%portal%'])
-                        ->orWhereRaw('LOWER(name) LIKE ?', ['%client%'])
-                        ->orWhere('permissions', 'like', '%customer_portal.access%');
-                });
+        $portal = [
+            'name'              => $data['portal_name'] ?? null,
+            'email'             => $data['portal_email'] ?? null,
+            'person_id'         => $data['portal_person_id'] ?? null,
+            'role'              => $data['portal_role'] ?? 'organization_admin',
+            'credential_method' => $data['portal_credential_method'] ?? 'invitation',
+            'password'          => $data['portal_password'] ?? null,
+        ];
 
-                if ($selectedUserId) {
-                    $query->orWhere('id', $selectedUserId);
-                }
-            })
-            ->orderBy('name')
-            ->get();
+        foreach (array_keys($data) as $key) {
+            if ($key === 'create_portal_access' || str_starts_with($key, 'portal_')) {
+                unset($data[$key]);
+            }
+        }
+
+        return $portal;
     }
 
     /**

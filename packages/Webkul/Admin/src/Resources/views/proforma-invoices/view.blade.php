@@ -67,6 +67,7 @@
                 </div>
 
                 <div class="flex gap-2">
+                    <form method="POST" action="{{ route('admin.proforma_invoices.customer_visibility', $proformaInvoice->id) }}">@csrf<button class="secondary-button" @disabled($proformaInvoice->status === 'draft' && ! $proformaInvoice->customer_visible_at)>{{ $proformaInvoice->customer_visible_at ? 'Unpublish' : 'Publish to customer' }}</button></form>
                     <a href="{{ route('admin.proforma_invoices.print', $proformaInvoice->id) }}" class="secondary-button">Print</a>
                     <a href="{{ route('admin.job_orders.create', ['proforma_invoice_id' => $proformaInvoice->id]) }}" class="secondary-button">Create Job Order</a>
                     <a href="{{ route('admin.proforma_invoices.edit', $proformaInvoice->id) }}" class="primary-button">Edit</a>

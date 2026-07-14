@@ -16,14 +16,23 @@ class JobOrder extends Model implements JobOrderContract
     protected $fillable = [
         'job_order_number', 'proforma_invoice_id', 'organization_id', 'person_id', 'customer_po_reference', 'subject',
         'issue_date', 'required_delivery_date', 'status', 'total_order_qty', 'remarks', 'created_by', 'approved_by', 'approved_at',
+        'customer_visible_at',
     ];
 
     protected $casts = [
-        'issue_date' => 'date',
+        'issue_date'             => 'date',
         'required_delivery_date' => 'date',
-        'approved_at' => 'datetime',
-        'total_order_qty' => 'decimal:4',
+        'approved_at'            => 'datetime',
+        'total_order_qty'        => 'decimal:4',
+        'customer_visible_at'    => 'datetime',
     ];
+
+    public function scopeVisibleToCustomer($query, int $organizationId)
+    {
+        return $query->where('organization_id', $organizationId)
+            ->whereNotNull('customer_visible_at')
+            ->where('status', '!=', 'draft');
+    }
 
     protected static function boot(): void
     {
@@ -53,7 +62,7 @@ class JobOrder extends Model implements JobOrderContract
             $next = ((int) $matches[1]) + 1;
         }
 
-        return 'JO-' . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+        return 'JO-'.str_pad((string) $next, 5, '0', STR_PAD_LEFT);
     }
 
     public function proformaInvoice(): BelongsTo

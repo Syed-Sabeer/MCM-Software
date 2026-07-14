@@ -45,6 +45,7 @@ class ProformaInvoice extends Model implements ProformaInvoiceContract
         'approved_by',
         'approved_at',
         'attachment_path',
+        'customer_visible_at',
     ];
 
     protected $casts = [
@@ -61,7 +62,15 @@ class ProformaInvoice extends Model implements ProformaInvoiceContract
         'grand_total'        => 'decimal:4',
         'received_amount'    => 'decimal:4',
         'remaining_amount'   => 'decimal:4',
+        'customer_visible_at'=> 'datetime',
     ];
+
+    public function scopeVisibleToCustomer($query, int $organizationId)
+    {
+        return $query->where('organization_id', $organizationId)
+            ->whereNotNull('customer_visible_at')
+            ->where('status', '!=', 'draft');
+    }
 
     protected static function boot(): void
     {
@@ -94,7 +103,7 @@ class ProformaInvoice extends Model implements ProformaInvoiceContract
     protected static function nextAvailableNumber(string $column, string $prefix, int $next, int $paddingLength): string
     {
         do {
-            $candidate = $prefix . str_pad((string) $next, $paddingLength, '0', STR_PAD_LEFT);
+            $candidate = $prefix.str_pad((string) $next, $paddingLength, '0', STR_PAD_LEFT);
             $exists = static::where($column, $candidate)->exists();
             $next++;
         } while ($exists);

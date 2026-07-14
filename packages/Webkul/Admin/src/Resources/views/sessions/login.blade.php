@@ -36,6 +36,10 @@
                         @lang('admin::app.users.login.title')
                     </p>
 
+                    <p class="px-4 pb-4 text-xs text-gray-500 dark:text-gray-400">
+                        Staff and customer account access
+                    </p>
+
                     <div class="border-y p-4 dark:border-gray-800">
                         <!-- Email -->
                         <x-admin::form.control-group>

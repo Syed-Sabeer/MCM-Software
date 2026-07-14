@@ -1,7 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Webkul\Admin\Http\Controllers\CustomerPortal\VisibilityController;
 use Webkul\Admin\Http\Controllers\Quote\ProformaInvoiceController;
+
+Route::post('proforma-invoices/{id}/customer-visibility', [VisibilityController::class, 'proforma'])->name('admin.proforma_invoices.customer_visibility');
 
 Route::controller(ProformaInvoiceController::class)->prefix('proforma-invoices')->group(function () {
     Route::get('', 'index')->name('admin.proforma_invoices.index');

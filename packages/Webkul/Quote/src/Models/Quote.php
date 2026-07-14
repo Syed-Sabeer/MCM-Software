@@ -5,8 +5,8 @@ namespace Webkul\Quote\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Webkul\Contact\Models\OrganizationProxy;
 use Webkul\Attribute\Traits\CustomAttribute;
+use Webkul\Contact\Models\OrganizationProxy;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Core\Traits\HasDocumentCharges;
 use Webkul\Lead\Models\LeadProxy;
@@ -21,14 +21,15 @@ class Quote extends Model implements QuoteContract
     protected $table = 'quotes';
 
     protected $casts = [
-        'billing_address'  => 'array',
-        'shipping_address' => 'array',
-        'quote_date'       => 'date',
-        'expired_at'       => 'datetime',
-        'etd'              => 'date',
-        'eta'              => 'date',
-        'tariff_percent'   => 'decimal:4',
-        'freight_percent'  => 'decimal:4',
+        'billing_address'     => 'array',
+        'shipping_address'    => 'array',
+        'quote_date'          => 'date',
+        'expired_at'          => 'datetime',
+        'etd'                 => 'date',
+        'eta'                 => 'date',
+        'tariff_percent'      => 'decimal:4',
+        'freight_percent'     => 'decimal:4',
+        'customer_visible_at' => 'datetime',
     ];
 
     /**
@@ -65,7 +66,13 @@ class Quote extends Model implements QuoteContract
         'expired_at',
         'user_id',
         'person_id',
+        'customer_visible_at',
     ];
+
+    public function scopeVisibleToCustomer($query, int $organizationId)
+    {
+        return $query->where('organization_id', $organizationId)->whereNotNull('customer_visible_at');
+    }
 
     protected static function boot(): void
     {
@@ -106,7 +113,7 @@ class Quote extends Model implements QuoteContract
     protected static function nextAvailableNumber(string $column, string $prefix, int $next, int $paddingLength): string
     {
         do {
-            $candidate = $prefix . str_pad((string) $next, $paddingLength, '0', STR_PAD_LEFT);
+            $candidate = $prefix.str_pad((string) $next, $paddingLength, '0', STR_PAD_LEFT);
             $exists = static::where($column, $candidate)->exists();
             $next++;
         } while ($exists);

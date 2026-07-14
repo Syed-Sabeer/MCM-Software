@@ -1,35 +1,33 @@
-@extends('admin::customer-portal.layouts.app', ['title' => 'Quote '.$quote->quote_number])
+@extends('admin::customer-portal.layouts.app', ['title' => 'Quote '.$quote->quote_number, 'subtitle' => $quote->subject ?: 'Published quotation details and line items.'])
 
 @section('content')
-    <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div><p class="text-xs font-medium text-gray-500 dark:text-gray-400">Status</p><p class="mt-1"><span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium capitalize text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">{{ $quote->status ?: '-' }}</span></p></div>
-            <div><p class="text-xs font-medium text-gray-500 dark:text-gray-400">Quote Date</p><p class="mt-1 text-sm text-gray-800 dark:text-white">{{ optional($quote->quote_date)->format('Y-m-d') ?: '-' }}</p></div>
-            <div><p class="text-xs font-medium text-gray-500 dark:text-gray-400">ETD</p><p class="mt-1 text-sm text-gray-800 dark:text-white">{{ optional($quote->etd)->format('Y-m-d') ?: '-' }}</p></div>
-            <div><p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</p><p class="mt-1 text-sm font-semibold text-gray-800 dark:text-white">{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($quote->grand_total) }}</p></div>
-        </div>
+    @php
+        $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
+        $charges = $chargeManager->extract($quote, 'quote');
+        $chargesTotal = collect($charges)->sum('amount');
+        $addressLines = fn ($value) => collect(preg_split("/\r\n|\n|\r/", trim((string) data_get($value, 'address'))))->map(fn ($line) => trim($line))->filter();
+        $billingLines = $addressLines($quote->billing_address);
+        $shippingLines = $addressLines($quote->shipping_address);
+    @endphp
+
+    <div class="mb-4 flex flex-wrap justify-end gap-2"><a class="primary-button inline-flex items-center gap-2" href="{{ route('customer_portal.quotes.pdf', $quote->id) }}"><span class="icon-download"></span> Download PDF</a>@if($quote->attachment_path)<a class="secondary-button inline-flex items-center gap-2" href="{{ route('customer_portal.quotes.attachment', $quote->id) }}"><span class="icon-attachment"></span> Attachment</a>@endif</div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+        <section class="portal-card p-5"><p class="portal-kicker">Document Summary</p><h2 class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">Quotation information</h2><dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2"><div><dt class="text-xs text-gray-500">Quote #</dt><dd class="mt-1 font-semibold text-gray-900 dark:text-white">{{ $quote->quote_number ?: '-' }}</dd></div><div><dt class="text-xs text-gray-500">Status</dt><dd class="mt-1">@include('admin::customer-portal.partials.status-badge', ['status' => $quote->status])</dd></div><div><dt class="text-xs text-gray-500">Quote Date</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $quote->quote_date?->format('Y-m-d') ?: '-' }}</dd></div><div><dt class="text-xs text-gray-500">Expiry Date</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $quote->expired_at?->format('Y-m-d') ?: '-' }}</dd></div><div><dt class="text-xs text-gray-500">Sales Owner</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $quote->user?->name ?: '-' }}</dd></div><div><dt class="text-xs text-gray-500">Payment Term</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $quote->payment_term ?: '-' }}</dd></div></dl></section>
+        <section class="portal-card p-5"><p class="portal-kicker">Commercial Details</p><h2 class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">Delivery information</h2><dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2"><div><dt class="text-xs text-gray-500">Shipping Method</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $quote->shipping_method ?: '-' }}</dd></div><div><dt class="text-xs text-gray-500">Production Time</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $quote->production_time ?: '-' }}</dd></div><div><dt class="text-xs text-gray-500">Transit Time</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $quote->transit_time ?: '-' }}</dd></div><div><dt class="text-xs text-gray-500">Customer Contact</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $quote->person?->name ?: '-' }}</dd></div><div><dt class="text-xs text-gray-500">ETD</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $quote->etd?->format('Y-m-d') ?: '-' }}</dd></div><div><dt class="text-xs text-gray-500">ETA</dt><dd class="mt-1 text-gray-800 dark:text-gray-200">{{ $quote->eta?->format('Y-m-d') ?: '-' }}</dd></div></dl></section>
     </div>
 
-    <div class="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="border-b border-gray-200 bg-gray-50 text-xs font-semibold uppercase text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300">
-                    <tr><th class="px-4 py-3">Item</th><th class="px-4 py-3">Description</th><th class="px-4 py-3">Qty</th><th class="px-4 py-3">Rate</th><th class="px-4 py-3">Total</th></tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 text-sm dark:divide-gray-800">
-                    @forelse ($quote->items as $item)
-                        @php
-                            $qty = $item->quantity ?? $item->qty ?? 0;
-                            $rate = $item->price ?? $item->unit_price ?? 0;
-                            $total = $item->total ?? $item->line_total ?? 0;
-                            $name = $item->item_code ?: ($item->item_name ?: $item->name);
-                        @endphp
-                        <tr><td class="px-4 py-3 text-gray-800 dark:text-white">{{ $name }}</td><td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ $item->description ?: '-' }}</td><td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ rtrim(rtrim(number_format((float) $qty, 3, '.', ''), '0'), '.') }}</td><td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($rate) }}</td><td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($total) }}</td></tr>
-                    @empty
-                        @include('admin::customer-portal.partials.table-empty', ['colspan' => 5])
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+    <div class="mt-4 grid gap-4 md:grid-cols-2">
+        @foreach([['title' => 'Bill To', 'lines' => $billingLines, 'fallback' => collect([$organization->billing_street, collect([$organization->billing_city, $organization->billing_state, $organization->billing_postcode, $organization->billing_country])->filter()->implode(', ')])->filter()], ['title' => 'Ship To', 'lines' => $shippingLines, 'fallback' => collect([$organization->shipping_street, collect([$organization->shipping_city, $organization->shipping_state, $organization->shipping_postcode, $organization->shipping_country])->filter()->implode(', ')])->filter()]] as $address)
+            <section class="portal-card p-5"><p class="portal-kicker">{{ $address['title'] }}</p><h2 class="mt-1 font-semibold text-gray-900 dark:text-white">{{ $organization->name }}</h2><div class="mt-3 space-y-1 text-sm text-gray-700 dark:text-gray-300">@forelse($address['lines']->isNotEmpty() ? $address['lines'] : $address['fallback'] as $line)<p>{{ $line }}</p>@empty<p class="text-gray-500">No address available.</p>@endforelse</div></section>
+        @endforeach
     </div>
+
+    <section class="portal-card mt-4 overflow-hidden"><div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800"><p class="portal-kicker">Quote Items</p><h2 class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">Products and pricing</h2></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b border-gray-200 bg-slate-50 text-xs font-semibold uppercase text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300"><tr><th class="w-20 px-4 py-3">Image</th><th class="px-4 py-3">Item Code</th><th class="px-4 py-3">Product Name</th><th class="px-4 py-3">Color</th><th class="px-4 py-3 text-right">Qty</th><th class="px-4 py-3">Unit</th><th class="px-4 py-3 text-right">Rate</th><th class="px-4 py-3 text-right">Amount</th></tr></thead><tbody class="divide-y divide-gray-200 text-sm dark:divide-gray-800">
+        @forelse($quote->items as $item) @php($qty = $item->quantity ?: $item->qty ?: 0) @php($rate = $item->price ?: $item->unit_price ?: 0) @php($amount = $item->line_total ?: $item->total ?: ((float)$qty * (float)$rate))
+            <tr class="portal-row"><td class="px-4 py-3">@if($item->preview_image)<img src="{{ $item->preview_image }}" alt="{{ $item->item_name ?: $item->name }}" class="h-12 w-12 rounded-md border border-gray-200 object-cover dark:border-gray-700">@else<span class="flex h-12 w-12 items-center justify-center rounded-md border border-gray-200 bg-slate-50 dark:border-gray-700 dark:bg-gray-950"><i class="icon-image text-xl text-gray-300"></i></span>@endif</td><td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">{{ $item->item_code ?: $item->sku ?: '-' }}</td><td class="px-4 py-3"><p class="font-medium text-gray-900 dark:text-white">{{ $item->item_name ?: $item->name ?: '-' }}</p><p class="mt-0.5 max-w-[280px] text-xs text-gray-500">{{ $item->description }}</p></td><td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ $item->color_variant_name ?: '-' }}</td><td class="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::decimal($qty) }}</td><td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ $item->unit ?: 'PCS' }}</td><td class="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($rate) }}</td><td class="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($amount) }}</td></tr>
+        @empty @include('admin::customer-portal.partials.table-empty', ['colspan' => 8, 'message' => 'No line items available.']) @endforelse
+    </tbody></table></div></section>
+
+    <div class="mt-4 grid gap-4 md:grid-cols-2"><section class="portal-card p-5"><p class="portal-kicker">Totals</p><div class="mt-4 grid gap-3 text-sm"><div class="flex justify-between text-gray-700 dark:text-gray-300"><span>Items Total</span><span>{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($quote->sub_total) }}</span></div>@foreach($charges as $charge)<div class="flex justify-between text-gray-700 dark:text-gray-300"><span>{{ $charge['name'] ?? 'Charge' }}</span><span>{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($charge['amount']) }}</span></div>@endforeach @if($chargesTotal)<div class="flex justify-between text-gray-700 dark:text-gray-300"><span>Additional Charges</span><span>{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($chargesTotal) }}</span></div>@endif<div class="flex justify-between border-t border-gray-200 pt-3 text-base font-semibold text-gray-900 dark:border-gray-800 dark:text-white"><span>Grand Total</span><span>{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($quote->grand_total) }}</span></div></div></section><div class="grid gap-4"><section class="portal-card p-5"><p class="portal-kicker">Remarks</p><p class="mt-3 whitespace-pre-line text-sm text-gray-700 dark:text-gray-300">{{ $quote->notes ?: $quote->description ?: '-' }}</p></section><section class="portal-card p-5"><p class="portal-kicker">Terms & Conditions</p><p class="mt-3 whitespace-pre-line text-sm text-gray-700 dark:text-gray-300">{{ $quote->terms ?: '-' }}</p></section></div></div>
 @endsection

@@ -1,7 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Webkul\Admin\Http\Controllers\CustomerPortal\VisibilityController;
 use Webkul\Admin\Http\Controllers\Quote\QuoteController;
+
+Route::post('quotes/{id}/customer-visibility', [VisibilityController::class, 'quote'])->name('admin.quotes.customer_visibility');
 
 Route::controller(QuoteController::class)->prefix('quotes')->group(function () {
     Route::get('', 'index')->name('admin.quotes.index');

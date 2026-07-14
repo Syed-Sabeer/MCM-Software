@@ -1,14 +1,24 @@
 @php
     $organization = $organization ?? ($portalOrganization ?? null);
     $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0E90D9';
+    $portalUser = auth()->guard('customer')->user();
 
     $navItems = [
         ['label' => 'Dashboard', 'route' => 'customer_portal.dashboard', 'icon' => 'icon-dashboard'],
         ['label' => 'Quotes', 'route' => 'customer_portal.quotes.index', 'icon' => 'icon-quote'],
-        ['label' => 'Proformas', 'route' => 'customer_portal.proformas.index', 'icon' => 'icon-sales'],
+        ['label' => 'Proformas', 'route' => 'customer_portal.proformas.index', 'icon' => 'icon-dollar'],
         ['label' => 'Job Orders', 'route' => 'customer_portal.job_orders.index', 'icon' => 'icon-activity'],
         ['label' => 'Products', 'route' => 'customer_portal.products.index', 'icon' => 'icon-product'],
+        ['label' => 'My Company', 'route' => 'customer_portal.company', 'icon' => 'icon-organization'],
+        ['label' => 'Contacts', 'route' => 'customer_portal.contacts', 'icon' => 'icon-contact'],
+        ['label' => 'Security', 'route' => 'customer_portal.security', 'icon' => 'icon-setting'],
     ];
+    $navItems = collect($navItems)->filter(function ($item) use ($portalUser) {
+        if (str_starts_with($item['route'], 'customer_portal.contacts')) return $portalUser->hasPortalPermission('view_contacts');
+        if (str_starts_with($item['route'], 'customer_portal.products')) return $portalUser->hasPortalPermission('view_products');
+        if (str_contains($item['route'], 'quotes') || str_contains($item['route'], 'proformas') || str_contains($item['route'], 'job_orders')) return $portalUser->hasPortalPermission('view_documents');
+        return true;
+    })->all();
 @endphp
 
 <!DOCTYPE html>
@@ -45,8 +55,85 @@
     <style>
         :root {
             --brand-color: {{ $brandColor }};
-            --admin-sidebar-width: 200px;
+            --admin-sidebar-width: 220px;
+            --portal-border: #e2e8f0;
+            --portal-surface: #ffffff;
+            --portal-muted: #f8fafc;
         }
+
+        .dark {
+            --portal-border: #334155;
+            --portal-surface: #111827;
+            --portal-muted: #0f172a;
+        }
+
+        .portal-card {
+            border: 1px solid var(--portal-border);
+            border-radius: 8px;
+            background: var(--portal-surface);
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+        }
+
+        .dark .portal-card { box-shadow: 0 10px 24px rgba(2, 6, 23, 0.2); }
+
+        .portal-stat {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--portal-border);
+            border-radius: 8px;
+            background: var(--portal-surface);
+            transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .portal-stat::before {
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 3px;
+            background: var(--brand-color);
+            content: '';
+        }
+
+        .portal-stat:hover {
+            transform: translateY(-2px);
+            border-color: color-mix(in srgb, var(--brand-color) 35%, var(--portal-border));
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .portal-icon-box {
+            display: inline-flex;
+            height: 40px;
+            width: 40px;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: color-mix(in srgb, var(--brand-color) 11%, white);
+            color: var(--brand-color);
+        }
+
+        .dark .portal-icon-box { background: color-mix(in srgb, var(--brand-color) 20%, #0f172a); }
+
+        .portal-kicker {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0;
+            text-transform: uppercase;
+        }
+
+        .dark .portal-kicker { color: #94a3b8; }
+
+        .portal-row { transition: background-color 140ms ease; }
+        .portal-row:hover { background: var(--portal-muted); }
+
+        .portal-progress-track {
+            height: 6px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e2e8f0;
+        }
+
+        .dark .portal-progress-track { background: #334155; }
+        .portal-progress-fill { height: 100%; border-radius: inherit; background: var(--brand-color); }
 
         @media (min-width: 1024px) {
             html[dir='ltr'] .admin-main-content { margin-left: var(--admin-sidebar-width); }
@@ -66,7 +153,7 @@
         <x-admin::flash-group />
         <x-admin::modal.confirm />
 
-        <header class="sticky top-0 z-[10001] flex items-center justify-between gap-1 border-b border-gray-200 bg-white px-4 py-2.5 transition-all dark:border-gray-800 dark:bg-gray-900">
+        <header class="sticky top-0 z-[10001] flex items-center justify-between gap-1 border-b border-gray-200 bg-white px-4 py-2.5 shadow-sm transition-all dark:border-gray-800 dark:bg-gray-900">
             <div class="flex items-center gap-1.5">
                 <button
                     type="button"
@@ -78,7 +165,8 @@
                 </button>
 
                 <a href="{{ route('customer_portal.dashboard') }}">
-                    @if ($logo = core()->getConfigData('general.general.admin_logo.logo_image'))
+                    @php($logo = core()->getConfigData('general.general.admin_logo.logo_image'))
+                    @if ($logo && Storage::disk('public')->exists($logo))
                         <img class="h-10" src="{{ asset('/storage/'.$logo) }}" alt="{{ config('app.name') }}" />
                     @else
                         <img
@@ -96,6 +184,11 @@
                         />
                     @endif
                 </a>
+
+                <div class="ml-2 hidden border-l border-gray-200 pl-3 dark:border-gray-700 sm:block">
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">Customer Portal</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ $organization?->name }}</p>
+                </div>
             </div>
 
             <div class="flex items-center gap-2.5">
@@ -107,7 +200,7 @@
 
                 <x-admin::dropdown position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
                     <x-slot:toggle>
-                        @php($user = auth()->guard('user')->user())
+                        @php($user = auth()->guard('customer')->user())
 
                         @if ($user?->image)
                             <button class="flex h-9 w-9 cursor-pointer overflow-hidden rounded-full hover:opacity-80 focus:opacity-80">
@@ -146,7 +239,7 @@
 
         <div class="group/container sidebar-not-collapsed flex gap-4" ref="appLayout">
             <div
-                class="duration-80 fixed top-[60px] z-[10002] h-full w-[200px] border-gray-200 bg-white pt-4 transition-all dark:border-gray-800 dark:bg-gray-900 max-lg:hidden ltr:border-r rtl:border-l"
+                class="duration-80 fixed top-[60px] z-[10002] h-full w-[220px] border-gray-200 bg-white pt-4 transition-all dark:border-gray-800 dark:bg-gray-900 max-lg:hidden ltr:border-r rtl:border-l"
             >
                 <div class="journal-scroll h-[calc(100vh-100px)] overflow-hidden">
                     <nav class="sidebar-rounded grid w-full gap-2">
@@ -191,9 +284,9 @@
                 </div>
             </div>
 
-            <div class="admin-main-content flex min-h-[calc(100vh-62px)] max-w-full flex-1 flex-col bg-gray-100 pt-3 transition-all duration-300 dark:bg-gray-950">
-                <div class="px-4 pb-6">
-                    <div class="mb-5 flex items-center justify-between gap-4 max-sm:flex-wrap">
+            <div class="admin-main-content flex min-h-[calc(100vh-62px)] max-w-full flex-1 flex-col bg-slate-50 pt-3 transition-all duration-300 dark:bg-gray-950">
+                <div class="px-4 pb-6 lg:px-6">
+                    <div class="mb-4 flex items-center justify-between gap-4 px-4 py-3 max-sm:flex-wrap {{ request()->routeIs('customer_portal.dashboard') ? 'border-b border-gray-200 dark:border-gray-800' : 'rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900' }}">
                         <div class="grid gap-1.5">
                             <p class="text-2xl font-semibold dark:text-white">
                                 {{ $title ?? 'Customer Portal' }}

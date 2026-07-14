@@ -1,261 +1,317 @@
-# MCM-Software Agent Overview
+# MCM Development Agent Brief
 
-This document provides a detailed, system-wide technical overview of the MCM-Software repository. It is intended for an AI agent that must understand the application architecture, data model, module boundaries, and end-to-end business flows.
+This document is the working specification for the MCM software family. Use it as the source of truth when planning features, making code changes, extending workflows, or explaining the system to another AI assistant.
 
-Sources:
-- Codebase structure under packages/Webkul/* and config/
-- db.sql in repo root (MariaDB dump, May 20, 2026)
-- AGENTS.md
+## Project Identity
 
-Important:
-- This is a Laravel 10 + Krayin CRM system extended into ERP workflows.
-- Most logic is in packages/Webkul/*, not app/.
-- db.sql is a snapshot; migrations and live DB can differ.
+- Project name: MCM
+- Codebase type: Laravel 10 CRM, quoting, procurement, production, and warehouse platform
+- Primary domain: customer management, lead tracking, product and material planning, quote generation, vendor sourcing, purchase ordering, and operational workflow automation
+- Schema source of truth: active package/root migrations and models; `SQL/V8.sql` is historical context only
 
+## High-Level Architecture
 
-## 1) System Architecture
-- Backend: Laravel 10, PHP 8.2
-- Modular framework: Konekt Concord
-- Repositories: Prettus l5-repository pattern
-- Admin UI: Blade + Blade components + inline Vue (x-template)
-- Lists: Webkul DataGrid (query builder + column definitions)
-- Attributes: Dynamic attribute system (attributes + attribute_values)
-- Activity logging: Activities + link tables to entities
-- Storage: storage/app/public with public/storage
+- Backend: Laravel 10 on PHP 8.2
+- Package architecture: Krayin-style modular Laravel app with Webkul modules registered through Concord
+- Repositories: Prettus L5 Repository pattern is in use for many module layers
+- Frontend build: Vite
+- UI system: shared Blade components and module-specific screens
+- Document rendering: shared document engine in admin component views
+- Route surface: standard Laravel routes plus module route files
 
+## Core Technical Stack
 
-## 2) Code Layout and Conventions
+- Framework: laravel/framework
+- Module system: konekt/concord
+- Repositories: prettus/l5-repository
+- Authentication and UI scaffolding: laravel/ui, sanctum
+- Documents: barryvdh/laravel-dompdf, mpdf/mpdf, smalot/pdfparser
+- Excel import/export: maatwebsite/excel
+- Email: webklex/laravel-imap, laravel mail stack, email template module
+- Utilities: doctrine/dbal, guzzlehttp/guzzle, svg sanitizer, AR PDF helpers
 
-### 2.1 Key Directories
-- packages/Webkul/Admin: Admin UI, controllers, routes, views, DataGrids
-- packages/Webkul/<Module>: Models, repositories, services, migrations
-- config/: Concord and service providers, app settings
-- database/migrations: core migrations
-- public/: web root, compiled assets
-- resources/: global assets and views (minor)
+## Booted Modules
 
-### 2.2 Concord Modules
-Typical modules (non-exhaustive):
-- Activity, Admin, Attribute, Automation, Contact, Core, DataGrid
-- Email, EmailTemplate, Lead, Product, PurchaseOrder, Quote, Tag, User
-- Warehouse, WebForm, DataTransfer
+These modules are registered in `config/concord.php` and are part of the live application surface:
 
-### 2.3 Request Pipeline (Admin)
-1) Route in packages/Webkul/Admin/src/Routes/Admin/*.php
-2) Controller in packages/Webkul/Admin/src/Http/Controllers/*
-3) Repository in packages/Webkul/<Module>/src/Repositories
-4) Model in packages/Webkul/<Module>/src/Models
-5) Blade view + inline Vue templates
-6) Lists use DataGrid classes
+- Activity
+- Admin
+- Attribute
+- Automation
+- Contact
+- Core
+- DataGrid
+- DataTransfer
+- Email
+- EmailTemplate
+- Installer
+- Lead
+- Product
+- PurchaseOrder
+- Quote
+- Tag
+- User
+- Warehouse
+- WebForm
 
-### 2.4 DataGrid Pattern
-- prepareQueryBuilder(): SQL selects/joins
-- prepareColumns(): columns, formatters, visibility
-- prepareActions(): row actions
-- prepareMassActions(): bulk actions
+## Repository Layout Notes
 
-### 2.5 Dynamic Attributes
-- attributes: metadata by entity_type
-- attribute_values: values per entity_id
-- Used for leads, persons, organizations, products, quotes, warehouses
-- Do not assume all fields are physical columns
+- `app/` contains the Laravel application shell and base models/controllers
+- `packages/Webkul/` contains the major business modules
+- `Modules/Admin/` contains admin UI resources and module overrides
+- `routes/` contains global and module-related routes
+- `SQL/V8.sql` is a historical schema/seed snapshot; executable migrations and current models are authoritative
+- `docs/document-ui-engine.md` describes the shared document rendering pattern
 
-### 2.6 Activity Logging
-- activities table + entity link tables (lead_activities, person_activities, etc.)
-- Used for calls, notes, tasks, system changes
+## Domain Model Overview
 
+The application is attribute-driven. Many entities are not hard-coded with fixed form definitions; instead they are described by records in `attributes`, `attribute_values`, and `attribute_options`.
 
-## 3) Data Model by Domain (db.sql)
+### Master Attribute System
 
-### 3.1 Core Entities
-- organizations
-  - Purpose: customer/vendor master
-  - Key columns: name, type, address json, billing/shipping fields, user_id
-- persons
-  - Purpose: contacts under organizations
-  - Key columns: name, type, organization_id, emails/contact_numbers json
-- users, roles, groups, user_groups
-  - Purpose: auth + access control
+- `attributes` defines fields per entity type
+- `attribute_values` stores entity-specific values
+- `attribute_options` stores selectable values for option-based attributes
+- This is the foundation for dynamic forms, validations, display labels, and quick-add fields
 
-### 3.2 CRM Leads
-- leads
-  - case_no, title, description, lead_value, priority, status
-  - user_id, person_id, organization_id
-  - lead_pipeline_id, lead_pipeline_stage_id, lead_source_id, lead_type_id
-- lead_pipelines, lead_pipeline_stages
-- lead_sources, lead_types, lead_priorities
-- lead_activities, lead_tags, lead_products, lead_quotes
+### Core CRM Entities
 
-### 3.3 Email
-- emails
-  - subject, reply (body), from/sender/reply_to, folders, message_id
-  - lead_id, person_id, parent_id (threading)
-- email_attachments
-- email_tags
-- email_templates
+- `users` and `roles` define access and ownership
+- `groups` and `user_groups` support team organization
+- `leads` represent pipeline-driven sales opportunities
+- `persons` represent contacts
+- `organizations` represent companies, vendors, or customer accounts
+- `activities` track calls, meetings, tasks, notes, files, and system history
+- `activity_files` stores attachments for activities
+- `activity_participants` links users and persons to an activity
+- `lead_activities`, `lead_persons`, `lead_quotes`, and `lead_tags` connect leads to related records
+- `person_activities`, `person_tags`, `organization_activities`, `organization_files`, and similar pivot tables preserve entity activity history and associations
 
-### 3.4 Product and Catalog
-- products
-  - sku, internal_code, name
-  - customer_organization_id (customer-specific catalog)
-  - price, cost_price, selling_price, size, weight, cover_image
-- product_colors, product_other_images, product_key_points
-- product_consumptions (materials per product)
-- product_production_sections, product_production_section_items
-- product_pricing_charts, product_pricing_chart_tiers, product_pricing_chart_types
-- product_inventories (warehouse location stock)
+### Lead and Pipeline Logic
 
-### 3.5 Sales: Quotes and Proformas
-- quotes
-  - quote_number, subject, quote_date
-  - billing/shipping, discounts, tax, totals
-  - organization_id, person_id, user_id
-- quote_items
-  - item_code, item_name, qty, unit_price, totals
-  - color_variant_id, preview_image
-- proforma_invoices
-  - proforma_number, quote_id, organization_id
-  - totals, received/remaining, status
-  - sales_owner_id, created_by, approved_by
-- proforma_invoice_items
-- proforma_receipts
+- `lead_pipelines` defines sales pipelines
+- `lead_pipeline_stages` defines ordered stages inside a pipeline
+- `lead_sources` defines lead origins such as Email, Web, Web Form, Phone, and Direct
+- `lead_types` separates new business from existing business
+- `lead_priorities` stores urgency labels
+- `leads.status` and `lead_pipeline_stage_id` drive stage progression and closure state
+- `leads.closed_at` and `lost_reason` capture end-of-life outcome
 
-### 3.6 Production: Job Orders
-- job_orders
-  - created from proformas
-  - proforma_invoice_id, organization_id, person_id
-  - total_order_qty, required_delivery_date
-- job_order_items
-  - item-level details and pricing
-- job_order_requirements
-  - material requirements for job order items
+### Product and Material Logic
 
-### 3.7 Procurement
-- vendor_quotes
-  - vendor_quote_number, job_order_id, organization_id
-  - billing/shipping, terms, totals
-- vendor_quote_items
-  - material, qty, unit_price, lead_time
-- purchase_orders
-  - po_number, job_order_id, vendor_quote_id
-  - organization_id, person_id, user_id
-  - totals, status, terms
-- purchase_order_items
-  - requirement_id, product_id, qty, pricing
-- goods_receipts
-  - purchase_order_id, receipt_date, status
-- goods_receipt_items
-  - purchase_order_item_id, received_qty
-- vendor_payables
-  - payable against purchase_order and goods_receipt
+- `products` stores sellable items and internal products
+- `product_categories`, `product_colors`, `product_other_images`, `product_key_points`, `product_pricing_charts`, `product_pricing_chart_tiers`, and `product_pricing_chart_types` support rich product catalogs
+- `product_inventories` tracks stock and warehouse-level availability
+- `product_consumptions` records material usage or allocation
+- `material_references`, `material_reference_vendor`, and `material_units` support manufacturing and sourcing calculations
+- `unit_references` links measurement conversion logic
+- Product data is used in both sales docs and procurement docs
 
-### 3.8 Inventory and Warehouse
-- warehouses, warehouse_locations
-- warehouse_activities, warehouse_tags
-- product_inventories
+### Quote and Customer Proposal Logic
 
-### 3.9 Config, Reference, and Support Tables
-- core_config
-- tags
-- countries, country_states
-- material_references, material_reference_vendor
-- material_units, unit_references, color_references
-- datagrid_saved_filters
-- imports, import_batches
-- jobs, job_batches, failed_jobs
-- web_forms, web_form_attributes, webhooks
-- workflows
+- `quotes` is the main sales quotation table
+- `quote_items` stores quote line items
+- Quotes carry subject, notes, terms, payment term, shipping method, production time, transit time, ETD, ETA, addresses, discount, tax, freight, adjustment, subtotal, grand total, status, and expiry data
+- Quote items store SKU, code, product reference, color variant, preview image, quantity, pricing, discount, tax, and sort order
+- Quotes are tied to `person_id`, `organization_id`, and `user_id`
 
+### Proforma Invoice Logic
 
-## 4) Key Relationships (Selected Foreign Keys)
-- persons.organization_id -> organizations.id
-- organizations.user_id -> users.id
-- leads.user_id -> users.id
-- leads.person_id -> persons.id
-- leads.organization_id -> organizations.id
-- emails.person_id -> persons.id
-- emails.lead_id -> leads.id
-- email_attachments.email_id -> emails.id
-- products.customer_organization_id -> organizations.id
-- product_inventories.warehouse_id -> warehouses.id
-- product_inventories.warehouse_location_id -> warehouse_locations.id
-- quotes.organization_id -> organizations.id
-- quotes.person_id -> persons.id
-- quote_items.quote_id -> quotes.id
-- proforma_invoices.quote_id -> quotes.id
-- proforma_invoice_items.proforma_invoice_id -> proforma_invoices.id
-- job_orders.proforma_invoice_id -> proforma_invoices.id
-- vendor_quotes.job_order_id -> job_orders.id
-- purchase_orders.vendor_quote_id -> vendor_quotes.id
-- purchase_order_items.purchase_order_id -> purchase_orders.id
-- goods_receipts.purchase_order_id -> purchase_orders.id
-- goods_receipt_items.purchase_order_item_id -> purchase_order_items.id
-- vendor_quote_items.vendor_quote_id -> vendor_quotes.id
+- `proforma_invoices` stores invoice-like commercial documents currently used in the system
+- `proforma_invoice_items` stores line items
+- `proforma_receipts` stores payment receipts against proforma invoices
+- Proforma invoices can originate from quotes and can track approval, conversion, received amount, remaining amount, attachment, notes, terms, and payment terms
+- Current statuses include draft and issued states in the seeded data
 
+### Procurement and Vendor Logic
 
-## 5) End-to-End Business Flows
+- `vendor_quotes` stores supplier quotes linked to job orders and organizations
+- `vendor_quote_items` stores material sourcing requests and vendor responses
+- `purchase_orders` stores procurement orders
+- `purchase_order_items` stores ordered materials and receiving progress
+- `goods_receipts` and `goods_receipt_items` capture received materials against purchase orders
+- `vendor_payables` tracks vendor balances and settlement progress
 
-### 5.1 CRM Lead Flow
-1) Lead created (leads + attribute_values)
-2) Activities logged (activities + lead_activities)
-3) Lead linked to person/organization
-4) Lead can be converted into a quote
+### Job and Production Logic
 
-### 5.2 Customer and Vendor Management
-- organizations table holds both customers and vendors via type
-- persons are contacts attached to organizations
-- dynamic attributes expand standard fields
+- `jobs` is a top-level production or order execution record
+- `job_orders` links production requests to items and requirements
+- `job_order_items` and `job_order_requirements` decompose the bill of materials or production plan
+- `job_cards`, `job_card_sections`, and `job_card_section_items` support production execution and internal task tracking
+- These tables indicate a manufacturing-oriented workflow where sales demand is converted into sourcing and execution steps
 
-### 5.3 Product and Catalog Flow
-1) Product created in catalog
-2) Optional: colors, images, key points
-3) Production data: material consumption + production sections
-4) Pricing charts and tiers for volume pricing
-5) Inventory tracked by warehouse location
+### Warehouse and Inventory Logic
 
-### 5.4 Sales Flow (Quote -> Proforma -> Job Order)
-1) Quote created (quote + quote_items)
-2) Proforma created from quote (proforma_invoices + items)
-3) Job order generated (job_orders + items)
-4) Material requirements generated (job_order_requirements)
+- `warehouses` stores warehouse master data, contacts, and addresses
+- `warehouse_locations` stores sub-locations inside warehouses
+- `warehouse_activities` and `warehouse_tags` add relationships and categorization
+- Warehouse data is used to ground stock, receiving, and logistics flows
 
-### 5.5 Procurement Flow (Vendor Quote -> PO -> Receipt -> Payable)
-1) Vendor quotes generated from job requirements
-2) Purchase order issued
-3) Goods received and recorded
-4) Vendor payable created
+### Marketing, Forms, and Automation
 
-### 5.6 Email Flow
-- Inbound and outbound messages stored in emails
-- Attachments stored in email_attachments
-- Message lists built via DataGrid in Admin UI
+- `marketing_campaigns` and `marketing_events` support outbound activity
+- `web_forms` stores embeddable lead capture forms
+- `web_form_attributes` maps form fields to attribute definitions
+- `webhooks` defines outbound integrations for entity events
+- `workflows` defines server-side automation rules
 
+### Email and Communication
 
-## 6) UI and Frontend Behavior
-- Admin UI uses Blade components plus Vue inline templates
-- Each list page has a DataGrid class that defines data shape
-- Most forms use <x-admin::form> and component control groups
-- Validation errors are handled server-side and surfaced in Blade
+- `emails` stores captured or sent mail records
+- `email_attachments` and `email_tags` preserve mail metadata
+- `email_templates` stores reusable email content
+- `activity` records often drive email and timeline-based notifications
 
+## Workflow Rules Found in the Database
 
-## 7) Operational and Infrastructure Notes
-- Storage: file paths saved in DB; URLs resolved via Storage helpers
-- Jobs: queued jobs use jobs/job_batches tables
-- Imports: imports and import_batches control bulk data operations
-- Webhooks and web forms exist for external integrations
-- Use config/app.php and config/concord.php for global wiring
+The seeded automation in `workflows` currently includes:
 
+- Send email to participants after activity creation
+- Send email to participants after activity update
 
-## 8) Development Rules for Agents
-- Prefer package-level changes over app/ layer
-- Preserve dynamic attribute behavior
-- Update DataGrid when list columns or filters change
-- Keep controller thin; put sync and totals in repositories
-- Recalculate totals on server, not only on frontend
-- Avoid breaking existing ERP flows when changing CRM features
+These workflows are triggered by activity events and filtered by activity type. The stored conditions show activity types such as call, meeting, and lunch, while actions reference the email-to-participants mechanism.
 
+## Business Process Flow
 
-## 9) Limitations and Source of Truth
-- db.sql is a snapshot; migrations can differ
-- If schema conflicts arise, confirm live DB and migrations
-- Some tables are legacy; do not remove without impact analysis
+### 1. Lead Capture and Qualification
+
+- Leads may originate from manual entry, email, web, web form, phone, or direct outreach
+- A lead is assigned a sales owner, pipeline, and pipeline stage
+- Additional data can be collected through dynamic attributes
+- Lead activity is logged continuously through the activity system
+- Contacts and organizations are linked as the lead matures
+
+### 2. Sales Opportunity Management
+
+- Leads progress across ordered pipeline stages
+- A lead can be marked open, won, or lost depending on workflow state
+- Priority, source, type, and expected close date guide sales handling
+- Quotes can be created from lead context and tied to organizations and persons
+
+### 3. Quotation and Commercial Proposal
+
+- Quote creation includes address capture, commercial terms, shipping, production timing, and line items
+- Line item pricing is calculated with discount, tax, freight, adjustment, and subtotal logic
+- Quotes use product and color variant data where applicable
+- Attachments can be stored alongside the quote
+
+### 4. Proforma Billing
+
+- Quotes can be converted into proforma invoices
+- Proforma invoices retain the commercial structure but add approval, receipt, and remaining balance tracking
+- This layer is used as a billing or pre-invoice stage rather than a final invoice implementation
+- The repository does not currently show a dedicated invoice module, so any future invoice work should reuse the shared document engine rather than introducing a separate layout system
+
+### 5. Procurement and Supply Chain
+
+- Internal requirements or job orders can generate vendor quotes
+- Vendor quotes are compared and converted into purchase orders
+- Purchase orders track expected receiving dates, shipping method, freight, and payment terms
+- Goods receipts update received quantities and may create vendor payables
+- Vendor payables track the remaining amount owed to suppliers
+
+### 6. Production and Execution
+
+- Jobs and job orders drive operational work after the commercial and sourcing layers
+- Job orders split into required materials and execution sections
+- Job cards document production or operational steps
+- Production data is tied back to materials, warehouses, and vendor sourcing where needed
+
+### 7. Activity and Collaboration
+
+- Activities are the shared timeline object for calls, meetings, tasks, notes, files, and system events
+- Activities can belong to leads, persons, organizations, products, warehouses, and other entity types via polymorphic-style fields
+- Participants may be users or persons
+- File attachments can be linked to activity records
+- System activities log field-level change history in JSON-like payloads
+
+## Shared Document Engine
+
+The repository uses a shared document renderer described in `docs/document-ui-engine.md`.
+
+Current shared views:
+
+- `admin::components.documents.standard`
+- `admin::components.documents.form-styles`
+
+Current document consumers:
+
+- Quote print views
+- Proforma invoice detail and print views
+- Purchase order detail and print views
+- Create/edit forms for quote, proforma, and purchase order flows
+
+Document views should continue to pass the same logical data blocks:
+
+- company
+- meta
+- partyBlocks
+- summaryRows
+- columns
+- items
+- totals
+- notes
+- signatures
+
+## Data Modeling Rules
+
+- Monetary values commonly use `decimal(12,4)` and should be treated as exact decimals, not floats
+- Addresses are often stored as JSON or longtext blobs because the UI expects structured address blocks
+- Status fields are usually string enums or small state strings such as draft, open, issued, fully_received, or similar domain-specific states
+- Many relations are modeled through pivot tables instead of hard-coded foreign object graphs
+- Activity history is treated as first-class audit data
+- Table and entity names are usually plural and match business nouns directly
+
+## Technical Conventions
+
+- Prefer module-local changes over framework-wide rewrites
+- Reuse shared components and shared document layouts before introducing new view systems
+- Preserve attribute-driven forms and repository abstractions
+- Keep controllers thin and let module services, repositories, or model layers do the domain work
+- Maintain existing status transitions and lifecycle hooks when extending lead, quote, invoice, procurement, or workflow logic
+- Do not create a separate invoice system if the existing commercial document flow can extend the current shared renderer and data model
+
+## AI Working Instructions For Future Changes
+
+When extending this repository, follow this order:
+
+1. Identify the owning module and the exact table or route that controls the behavior
+2. Check whether the behavior already exists in a shared component, workflow, repository, or attribute definition
+3. Preserve existing business state transitions and calculate totals using the current rounding and decimal conventions
+4. Update the UI only through the shared document and form primitives when possible
+5. Add or update tests for the narrow slice being changed
+6. Avoid inventing parallel models for the same business concept
+
+## Important Gaps To Remember
+
+- There is no dedicated invoice module visible in the current repository snapshot
+- Global route registration is minimal; most behavior lives inside package modules
+- The SQL dump is the best source for entity relationships, seed data, and domain assumptions
+- If a new feature touches commercial docs, use the shared document engine first
+
+## Customer Portal Security Boundary
+
+- Customer portal accounts live in `customer_portal_users` and authenticate only through the `customer` guard; internal `users`, roles, and the `user` guard remain staff-only.
+- Multiple portal users may belong to one organization and may optionally link to a person in that organization.
+- Portal invitations are one-time SHA-256 token hashes in `customer_portal_invitations`; password resets use the dedicated `customer_portal_password_resets` broker table.
+- Every customer query derives `organization_id` from `auth('customer')->user()` and repeats ownership checks for view, PDF, and attachment routes.
+- Quotes, proforma invoices, and job orders are private unless `customer_visible_at` is set. Draft proformas and draft job orders remain hidden even if data is malformed.
+- Portal document downloads reuse the existing quote/proforma PDF views behind customer-authenticated routes. Internal admin print URLs must never be linked from the portal.
+- Deploy by running migrations, configuring mail/queue, then dry-running `php artisan customer-portal:backfill-legacy`. Review output before using `--apply`; unambiguous accounts whose role contains only the portal permission are disabled internally unless `--keep-legacy-access` is supplied. The command preserves hashes and never deletes users or clears `organizations.user_id`.
+
+## Suggested Future Extension Areas
+
+- Final invoice module reusing the shared document engine
+- Stronger workflow builder coverage for non-activity events
+- Better audit trail documentation for system activities and field changes
+- More explicit warehouse receiving and stock movement docs
+- Clearer separation between customer-facing quotes and internal procurement documents
+
+## Source References In This Repo
+
+- `config/concord.php`
+- `docs/document-ui-engine.md`
+- `SQL/V8.sql`
+- `packages/Webkul/*`
+
+This file should stay aligned with the schema and module registry. When the database or module map changes, update this document first so downstream AI work remains consistent.
