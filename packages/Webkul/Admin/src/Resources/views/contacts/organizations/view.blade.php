@@ -670,28 +670,9 @@
             </div>
 
             @if(strtolower((string) $organization->type) === 'customer' && bouncer()->hasPermission('contacts.organizations.edit'))
-                <section class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-                    <div><h2 class="text-base font-bold text-gray-900 dark:text-white">Customer Portal Access</h2><p class="text-xs text-gray-500">Manage customer identities separately from internal staff users.</p></div>
-                    @if(session('portal_invitation_url'))
-                        <label class="grid gap-1 text-xs text-gray-600 dark:text-gray-300">Fresh invitation link<input readonly value="{{ session('portal_invitation_url') }}" onclick="this.select()" class="rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950"></label>
-                    @endif
-                    <div class="grid gap-3">
-                        @forelse($portalUsers as $portalUser)
-                            <div class="rounded border border-gray-200 p-3 dark:border-gray-700">
-                                <div class="flex flex-wrap items-start justify-between gap-3"><div><p class="text-sm font-semibold dark:text-white">{{ $portalUser->name }}</p><p class="text-xs text-gray-500">{{ $portalUser->email }} | {{ $portalUser->email_verified_at ? 'Verified' : 'Invited' }} | Last login: {{ $portalUser->last_login_at?->format('Y-m-d H:i') ?: 'Never' }}</p></div><span class="rounded-full px-2 py-1 text-xs {{ $portalUser->status === 'active' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700' }}">{{ ucfirst($portalUser->status) }}</span></div>
-                                <div class="mt-3 flex flex-wrap gap-2">
-                                    <form method="POST" action="{{ route('admin.customers.organizations.portal_users.update', [$organization, $portalUser]) }}" class="flex flex-wrap gap-2">@csrf @method('PUT')<select name="role" class="rounded border px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white"><option value="organization_admin" @selected($portalUser->role === 'organization_admin')>Organization admin</option><option value="member" @selected($portalUser->role === 'member')>Member</option></select>@foreach(['view_documents' => 'Documents', 'view_products' => 'Products', 'view_contacts' => 'Contacts'] as $permission => $label)<label class="flex items-center gap-1 text-xs dark:text-white"><input type="checkbox" name="permissions[]" value="{{ $permission }}" @checked(in_array($permission, $portalUser->permissions ?? []))>{{ $label }}</label>@endforeach<button class="rounded border px-2 py-1 text-xs dark:text-white">Update</button></form>
-                                    <form method="POST" action="{{ route('admin.customers.organizations.portal_users.status', [$organization, $portalUser]) }}">@csrf @method('PUT')<input type="hidden" name="status" value="{{ $portalUser->status === 'active' ? 'suspended' : 'active' }}"><button class="rounded border px-2 py-1 text-xs dark:text-white">{{ $portalUser->status === 'active' ? 'Suspend' : 'Reactivate' }}</button></form>
-                                    <form method="POST" action="{{ route('admin.customers.organizations.portal_users.resend', [$organization, $portalUser]) }}">@csrf<button class="rounded border px-2 py-1 text-xs dark:text-white">Resend setup</button></form>
-                                    <form method="POST" action="{{ route('admin.customers.organizations.portal_users.destroy', [$organization, $portalUser]) }}" onsubmit="return confirm('Revoke this portal account?')">@csrf @method('DELETE')<button class="rounded border border-red-300 px-2 py-1 text-xs text-red-600">Revoke</button></form>
-                                </div>
-                            </div>
-                        @empty
-                            <p class="text-sm text-gray-500">No portal accounts yet.</p>
-                        @endforelse
-                    </div>
-                    <details class="border-t pt-3 dark:border-gray-700"><summary class="cursor-pointer text-sm font-semibold text-brandColor">Invite another portal user</summary><form method="POST" action="{{ route('admin.customers.organizations.portal_users.store', $organization) }}" class="mt-3 grid gap-3 md:grid-cols-2">@csrf<label class="grid gap-1 text-xs dark:text-white">Name<input name="name" required class="rounded border px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950"></label><label class="grid gap-1 text-xs dark:text-white">Email<input type="email" name="email" required class="rounded border px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950"></label><label class="grid gap-1 text-xs dark:text-white">Link contact<select name="person_id" class="rounded border px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950"><option value="">No linked contact</option>@foreach($portalContacts as $contact)<option value="{{ $contact->id }}">{{ $contact->name }}{{ $contact->email ? ' ('.$contact->email.')' : '' }}</option>@endforeach</select></label><label class="grid gap-1 text-xs dark:text-white">Role<select name="role" class="rounded border px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950"><option value="organization_admin">Organization admin</option><option value="member">Member</option></select></label><input type="hidden" name="credential_method" value="invitation"><label class="flex items-center gap-2 text-xs dark:text-white"><input type="checkbox" name="send_email" value="1" checked> Send secure invitation email</label><button class="w-fit rounded bg-brandColor px-3 py-2 text-sm font-medium text-white">Create access</button></form></details>
-                </section>
+                @include('admin::contacts.organizations.portal-access-panel', ['portalManagerContext' => 'view'])
+                @include('admin::contacts.organizations.portal-access-modal', ['portalManagerContext' => 'view'])
+                @include('admin::contacts.organizations.portal-access-actions')
             @endif
 
             @foreach ($documentSections as $section)

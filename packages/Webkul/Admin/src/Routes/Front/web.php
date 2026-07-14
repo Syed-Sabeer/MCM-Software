@@ -43,6 +43,7 @@ Route::prefix('customer-portal')->group(function () {
 
         Route::get('company', [PortalController::class, 'company'])->name('customer_portal.company');
         Route::get('contacts', [PortalController::class, 'contacts'])->name('customer_portal.contacts');
+        Route::get('contacts/{id}', [PortalController::class, 'contact'])->name('customer_portal.contacts.view');
         Route::get('security', [PortalController::class, 'security'])->name('customer_portal.security');
         Route::put('security', [PortalController::class, 'updateSecurity'])->name('customer_portal.security.update');
 

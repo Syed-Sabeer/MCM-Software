@@ -118,6 +118,27 @@ it('enforces granular member permissions', function () {
         ->assertOk();
 });
 
+it('shows only contacts belonging to the signed-in customer organization', function () {
+    $organizationId = portalOrganization();
+    $otherOrganizationId = portalOrganization();
+    $account = portalAccount($organizationId);
+    $contactId = DB::table('persons')->insertGetId([
+        'name' => 'Customer Contact', 'organization_id' => $organizationId, 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    $otherContactId = DB::table('persons')->insertGetId([
+        'name' => 'Other Customer Contact', 'organization_id' => $otherOrganizationId, 'created_at' => now(), 'updated_at' => now(),
+    ]);
+
+    $this->actingAs($account, 'customer')
+        ->get(portalTestUrl('customer_portal.contacts.view', $contactId))
+        ->assertOk()
+        ->assertSee('Customer Contact');
+
+    $this->actingAs($account, 'customer')
+        ->get(portalTestUrl('customer_portal.contacts.view', $otherContactId))
+        ->assertNotFound();
+});
+
 it('hides unpublished and cross organization quotes', function () {
     $organizationId = portalOrganization();
     $otherOrganizationId = portalOrganization();

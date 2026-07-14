@@ -177,8 +177,8 @@ class OrganizationController extends Controller
     {
         $organization = $this->organizationRepository->findOrFail($id);
         $documentSections = $this->buildDocumentSections($organization, $this->getRouteType());
-        $portalUsers = $organization->portalUsers()->orderBy('name')->get();
-        $portalContacts = $organization->persons()->orderBy('name')->get(['id', 'name', 'email']);
+        $portalUsers = $organization->portalUsers()->with('person')->orderByDesc('created_at')->orderByDesc('id')->get();
+        $portalContacts = $organization->persons()->orderBy('name')->get(['id', 'name', 'email', 'emails']);
 
         return view('admin::contacts.organizations.view', compact('organization', 'documentSections', 'portalUsers', 'portalContacts'));
     }
@@ -380,8 +380,10 @@ class OrganizationController extends Controller
         $organization = $this->organizationRepository->findOrFail($id);
         $routeType = $this->getRouteType();
         $industries = Industry::query()->orderBy('name')->get();
+        $portalUsers = $organization->portalUsers()->with('person')->orderBy('name')->get();
+        $portalContacts = $organization->persons()->orderBy('name')->get(['id', 'name', 'email', 'emails']);
 
-        return view('admin::contacts.organizations.edit', compact('organization', 'routeType', 'industries'));
+        return view('admin::contacts.organizations.edit', compact('organization', 'routeType', 'industries', 'portalUsers', 'portalContacts'));
     }
 
     /**

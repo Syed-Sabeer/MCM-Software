@@ -48,14 +48,6 @@
             </label>
         @endisset
 
-        <label class="grid gap-1 text-sm dark:text-white">
-            Role
-            <select name="portal_role" class="rounded border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
-                <option value="organization_admin" @selected(old('portal_role', 'organization_admin') === 'organization_admin')>Organization admin</option>
-                <option value="member" @selected(old('portal_role') === 'member')>Member</option>
-            </select>
-        </label>
-
         <fieldset class="grid gap-3 md:col-span-2">
             <legend class="text-sm font-semibold text-gray-900 dark:text-white">Credential method</legend>
 
@@ -89,7 +81,7 @@
         </label>
     </div>
 
-    @foreach(['create_portal_access', 'portal_name', 'portal_email', 'portal_person_id', 'portal_role', 'portal_credential_method', 'portal_password'] as $field)
+    @foreach(['create_portal_access', 'portal_name', 'portal_email', 'portal_person_id', 'portal_credential_method', 'portal_password'] as $field)
         <x-admin::form.control-group.error :control-name="$field" />
     @endforeach
 </section>

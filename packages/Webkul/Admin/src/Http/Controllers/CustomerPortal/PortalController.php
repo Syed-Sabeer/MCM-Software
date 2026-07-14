@@ -85,6 +85,27 @@ class PortalController extends Controller
         return view('admin::customer-portal.contacts', compact('organization', 'records'));
     }
 
+    public function contact(int $id): View
+    {
+        $this->requirePermission('view_contacts');
+        $organization = $this->organization();
+        $contact = Person::query()
+            ->where('organization_id', $organization->id)
+            ->findOrFail($id);
+        $recentQuotes = Quote::visibleToCustomer($organization->id)
+            ->where('person_id', $contact->id)
+            ->latest('quote_date')
+            ->take(5)
+            ->get();
+        $recentProformas = ProformaInvoice::visibleToCustomer($organization->id)
+            ->where('person_id', $contact->id)
+            ->latest('issue_date')
+            ->take(5)
+            ->get();
+
+        return view('admin::customer-portal.contacts.view', compact('organization', 'contact', 'recentQuotes', 'recentProformas'));
+    }
+
     public function quotes(): View
     {
         $this->requirePermission('view_documents');
@@ -222,7 +243,7 @@ class PortalController extends Controller
                         ->orWhere('description', 'like', '%'.$search.'%');
                 });
             })
-            ->select(['id', 'customer_organization_id', 'name', 'sku', 'description', 'selling_price', 'price', 'size', 'cover_image'])
+            ->select(['id', 'customer_organization_id', 'name', 'sku', 'description', 'size', 'cover_image'])
             ->latest('id')->paginate($this->perPage())->withQueryString();
 
         return view('admin::customer-portal.products.index', compact('organization', 'records'));
@@ -234,7 +255,7 @@ class PortalController extends Controller
         $organization = $this->organization();
         $product = Product::query()->with(['colors', 'otherImages.color', 'keyPoints'])
             ->where('customer_organization_id', $organization->id)
-            ->select(['id', 'customer_organization_id', 'name', 'sku', 'description', 'selling_price', 'price', 'size', 'style', 'weight', 'weight_unit', 'cover_image', 'additional_info', 'shipping_info'])
+            ->select(['id', 'customer_organization_id', 'name', 'sku', 'description', 'size', 'style', 'weight', 'weight_unit', 'cover_image', 'additional_info', 'shipping_info'])
             ->findOrFail($id);
 
         return view('admin::customer-portal.products.view', compact('organization', 'product'));

@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Models\CustomerPortalUser;
 use Webkul\Admin\Services\CustomerPortal\InvitationService;
@@ -17,15 +18,53 @@ class PortalAccessController extends Controller
     {
         $this->authorizeManagement();
         $data = $request->validate([
-            'name'              => ['required', 'string', 'max:255'],
-            'email'             => ['required', 'email', 'max:255', 'unique:customer_portal_users,email'],
-            'person_id'         => ['nullable', 'integer'],
-            'role'              => ['required', Rule::in(['organization_admin', 'member'])],
-            'credential_method' => ['required', Rule::in(['invitation', 'temporary_password'])],
-            'password'          => ['nullable', 'required_if:credential_method,temporary_password', 'min:8', 'confirmed'],
-            'send_email'        => ['nullable', 'boolean'],
+            'portal_name'              => ['nullable', 'string', 'max:255'],
+            'portal_email'             => ['nullable', 'email', 'max:255'],
+            'portal_person_id'         => ['nullable', 'integer'],
+            'portal_credential_method' => ['required', Rule::in(['invitation', 'temporary_password'])],
+            'portal_password'          => ['nullable', 'required_if:portal_credential_method,temporary_password', 'min:8', 'confirmed'],
+            'portal_send_email'        => ['nullable', 'boolean'],
         ]);
-        $result = $invitations->createAccount($organization, $data, $request->boolean('send_email'));
+
+        if (filled($data['portal_person_id'] ?? null)) {
+            $contact = $organization->persons()->find($data['portal_person_id']);
+
+            if (! $contact) {
+                throw ValidationException::withMessages(['portal_person_id' => 'The selected contact does not belong to this customer.']);
+            }
+
+            $contactEmail = $contact->email ?: collect($contact->emails ?? [])
+                ->map(fn ($email) => is_array($email) ? ($email['value'] ?? null) : $email)
+                ->filter()
+                ->first();
+
+            if (! $contactEmail || ! filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
+                throw ValidationException::withMessages(['portal_person_id' => 'The selected contact needs a valid email address before portal access can be created.']);
+            }
+
+            $data['portal_name'] = $contact->name;
+            $data['portal_email'] = $contactEmail;
+        } else {
+            $request->validate([
+                'portal_name'  => ['required', 'string', 'max:255'],
+                'portal_email' => ['required', 'email', 'max:255'],
+            ]);
+        }
+
+        validator(['portal_email' => $data['portal_email']], [
+            'portal_email' => ['required', 'email', 'max:255', Rule::unique('customer_portal_users', 'email')],
+        ])->validate();
+
+        $accountData = [
+            'name'              => $data['portal_name'],
+            'email'             => $data['portal_email'],
+            'person_id'         => $data['portal_person_id'] ?? null,
+            'credential_method' => $data['portal_credential_method'],
+            'password'          => $data['portal_password'] ?? null,
+            'role'              => 'organization_admin',
+            'permissions'       => [],
+        ];
+        $result = $invitations->createAccount($organization, $accountData, $request->boolean('portal_send_email'));
         Log::info('Customer portal account created', ['organization_id' => $organization->id, 'portal_user_id' => $result['user']->id, 'actor_id' => auth()->id()]);
 
         return back()->with('success', 'Portal account created.')->with('portal_invitation_url', $result['url']);

@@ -591,11 +591,16 @@
                 {!! view_render_event('admin.contacts.organizations.edit.address_information.after', ['organization' => $organization]) !!}
             </div>
 
-            @if ($routePrefix !== 'vendors')
-                @include('admin::contacts.organizations.portal-access-fields')
+            @if ($routePrefix !== 'vendors' && strtolower((string) $organization->type) === 'customer')
+                @include('admin::contacts.organizations.portal-access-panel', ['portalManagerContext' => 'edit'])
             @endif
         </div>
     </x-admin::form>
+
+    @if ($routePrefix !== 'vendors' && strtolower((string) $organization->type) === 'customer')
+        @include('admin::contacts.organizations.portal-access-modal', ['portalManagerContext' => 'edit'])
+        @include('admin::contacts.organizations.portal-access-actions')
+    @endif
 
     <div id="industry-create-modal" class="hidden" style="display: none; position: fixed; inset: 0; z-index: 100000; align-items: center; justify-content: center; padding: 24px; background: rgba(15, 23, 42, 0.45);">
         <div class="dark:bg-gray-900" style="width: 100%; max-width: 480px; max-height: calc(100vh - 48px); overflow-y: auto; border-radius: 8px; background: #fff; padding: 24px; box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);">
