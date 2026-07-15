@@ -28,6 +28,7 @@
         'id' => (int) $vendor->id,
         'name' => $vendor->name,
     ])->values();
+    $unitOptions = $units->map(fn ($unit) => ['name' => $unit->name])->values();
 @endphp
 
 <x-admin::layouts>
@@ -132,7 +133,14 @@
                     <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <div class="mb-3 flex items-center justify-between">
                             <p class="text-base font-semibold text-gray-800 dark:text-white">Material Consumption</p>
-                            <button type="button" id="add-consumption" class="secondary-button">Add Material +</button>
+                            <div class="flex items-center gap-2">
+                                <button type="button" id="quick-add-material" class="secondary-button inline-flex items-center gap-1.5">
+                                    <span class="icon-add text-base"></span>
+                                    New Material
+                                </button>
+
+                                <button type="button" id="add-consumption" class="secondary-button">Add Row</button>
+                            </div>
                         </div>
 
                         <datalist id="product-material-reference-options">
@@ -215,6 +223,52 @@
             </div>
         </div>
     </x-admin::form>
+
+    <div id="product-quick-material-modal" class="hidden" style="display: none; position: fixed; inset: 0; z-index: 100001; align-items: center; justify-content: center; padding: 24px; background: rgba(15, 23, 42, 0.45);">
+        <div class="dark:bg-gray-900" style="width: 100%; max-width: 560px; max-height: calc(100vh - 48px); overflow-y: auto; border-radius: 8px; background: #fff; box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);">
+            <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+                <p class="text-lg font-bold text-gray-800 dark:text-white">Add Material</p>
+                <button type="button" id="product-quick-material-close" class="icon-cross-large text-2xl text-gray-500" aria-label="Close"></button>
+            </div>
+
+            <div class="space-y-4 p-5">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Material Name <span class="text-red-600">*</span></label>
+                    <input type="text" id="product_quick_material_name" maxlength="255" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Material Name">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Qty <span class="text-red-600">*</span></label>
+                        <input type="number" id="product_quick_material_qty" min="0" step="0.001" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="0.002">
+                    </div>
+
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Unit <span class="text-red-600">*</span></label>
+                        <select id="product_quick_material_unit" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                            <option value="">Select Unit</option>
+                            @foreach ($unitOptions as $unit)
+                                <option value="{{ $unit['name'] }}">{{ $unit['name'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Vendors</label>
+                    <input type="text" id="product_quick_material_vendor_search" class="mb-2 w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Search vendors...">
+                    <div id="product_quick_material_vendors" class="overflow-y-auto rounded border border-gray-300 p-2 pr-1 dark:border-gray-700" style="max-height: 160px; scrollbar-width: thin;"></div>
+                </div>
+
+                <p id="product_quick_material_error" class="hidden rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"></p>
+            </div>
+
+            <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4 dark:border-gray-700">
+                <button type="button" id="product-quick-material-cancel" class="secondary-button">Cancel</button>
+                <button type="button" id="product-quick-material-save" class="primary-button">Save Material</button>
+            </div>
+        </div>
+    </div>
 
     <div id="product-quick-organization-modal" class="hidden" style="display: none; position: fixed; inset: 0; z-index: 100000; align-items: center; justify-content: center; padding: 24px; background: rgba(15, 23, 42, 0.45);">
         <div class="dark:bg-gray-900" style="width: 100%; max-width: 480px; max-height: calc(100vh - 48px); overflow-y: auto; border-radius: 8px; background: #fff; padding: 24px; box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);">
@@ -619,9 +673,18 @@
                 var consumptionsContainer = document.getElementById('consumptions-container');
                 var sectionsContainer = document.getElementById('production-sections-container');
                 var addConsumptionButton = document.getElementById('add-consumption');
+                var quickAddMaterialButton = document.getElementById('quick-add-material');
                 var addSectionButton = document.getElementById('add-production-section');
                 var otherImagesContainer = document.getElementById('other-images-container');
                 var addOtherImageButton = document.getElementById('add-other-image');
+                var quickMaterialModal = document.getElementById('product-quick-material-modal');
+                var quickMaterialName = document.getElementById('product_quick_material_name');
+                var quickMaterialQty = document.getElementById('product_quick_material_qty');
+                var quickMaterialUnit = document.getElementById('product_quick_material_unit');
+                var quickMaterialVendorSearch = document.getElementById('product_quick_material_vendor_search');
+                var quickMaterialVendors = document.getElementById('product_quick_material_vendors');
+                var quickMaterialError = document.getElementById('product_quick_material_error');
+                var quickMaterialSave = document.getElementById('product-quick-material-save');
 
                 var oldColors = @json($initialColorRows);
                 var oldConsumptions = @json($initialConsumptions);
@@ -631,10 +694,13 @@
                 var materialReferences = @json($materialReferenceOptions);
                 var vendorOptions = @json($vendorOptions);
                 var vendorQuickCreateUrl = "{{ route('admin.vendors.organizations.quick_create') }}";
+                var materialQuickCreateUrl = "{{ route('admin.settings.material_references.store') }}";
                 var lastAutoInternalCode = internalCodeInput ? (internalCodeInput.value || '') : '';
                 var colorReferenceMap = {};
                 var materialReferenceMap = {};
                 var materialReferenceIdMap = {};
+                var quickMaterialVendorIds = [];
+                var quickMaterialOnSaved = null;
 
                 colorReferences.forEach(function (reference) {
                     if (!reference || !reference.name) {
@@ -718,6 +784,174 @@
 
                 function getMaterialReference(name) {
                     return materialReferenceMap[String(name || '').trim().toLowerCase()] || null;
+                }
+
+                function setQuickMaterialError(message) {
+                    if (!quickMaterialError) {
+                        return;
+                    }
+
+                    quickMaterialError.textContent = message || '';
+                    quickMaterialError.classList.toggle('hidden', !message);
+                }
+
+                function renderQuickMaterialVendors(term) {
+                    if (!quickMaterialVendors) {
+                        return;
+                    }
+
+                    var query = String(term || '').trim().toLowerCase();
+                    var filtered = vendorOptions.filter(function (vendor) {
+                        return !query || String(vendor.name || '').toLowerCase().includes(query);
+                    });
+
+                    quickMaterialVendors.innerHTML = '';
+
+                    if (!filtered.length) {
+                        quickMaterialVendors.innerHTML = '<p class="px-2 py-1 text-xs text-gray-500 dark:text-gray-400">No vendors found.</p>';
+                        return;
+                    }
+
+                    filtered.forEach(function (vendor) {
+                        var checked = quickMaterialVendorIds.includes(String(vendor.id)) ? ' checked' : '';
+                        quickMaterialVendors.innerHTML += '<label class="mb-1 flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"><input type="checkbox" class="product-quick-material-vendor h-4 w-4" value="' + escapeHtml(vendor.id) + '"' + checked + '><span>' + escapeHtml(vendor.name) + '</span></label>';
+                    });
+                }
+
+                function closeQuickMaterialModal() {
+                    if (!quickMaterialModal) {
+                        return;
+                    }
+
+                    quickMaterialModal.style.display = 'none';
+                    quickMaterialModal.classList.add('hidden');
+                    quickMaterialModal.classList.remove('flex');
+                    quickMaterialOnSaved = null;
+                }
+
+                function openQuickMaterialModal(onSaved) {
+                    quickMaterialOnSaved = typeof onSaved === 'function' ? onSaved : null;
+                    quickMaterialVendorIds = [];
+
+                    if (quickMaterialName) quickMaterialName.value = '';
+                    if (quickMaterialQty) quickMaterialQty.value = '';
+                    if (quickMaterialUnit) quickMaterialUnit.value = '';
+                    if (quickMaterialVendorSearch) quickMaterialVendorSearch.value = '';
+                    if (quickMaterialSave) {
+                        quickMaterialSave.disabled = false;
+                        quickMaterialSave.textContent = 'Save Material';
+                    }
+
+                    setQuickMaterialError('');
+                    renderQuickMaterialVendors('');
+
+                    if (quickMaterialModal) {
+                        quickMaterialModal.style.display = 'flex';
+                        quickMaterialModal.classList.remove('hidden');
+                        quickMaterialModal.classList.add('flex');
+                    }
+
+                    if (quickMaterialName) {
+                        setTimeout(function () { quickMaterialName.focus(); }, 0);
+                    }
+                }
+
+                function registerMaterialReference(savedMaterial) {
+                    var savedVendors = Array.isArray(savedMaterial.vendors) ? savedMaterial.vendors : [];
+                    var reference = {
+                        id: Number(savedMaterial.id),
+                        name: savedMaterial.name || '',
+                        qty: savedMaterial.qty || '',
+                        unit: savedMaterial.unit || '',
+                        color_name: savedMaterial.color_name || '',
+                        color_code: savedMaterial.color_code || '',
+                        vendor_ids: savedVendors.map(function (vendor) { return Number(vendor.id); }),
+                        vendor_names: savedVendors.map(function (vendor) { return vendor.name; }),
+                    };
+
+                    materialReferences.push(reference);
+                    materialReferences.sort(function (a, b) {
+                        return String(a.name || '').localeCompare(String(b.name || ''));
+                    });
+                    materialReferenceMap[String(reference.name).trim().toLowerCase()] = reference;
+                    materialReferenceIdMap[String(reference.id)] = reference;
+
+                    var datalist = document.getElementById('product-material-reference-options');
+                    if (datalist) {
+                        var option = document.createElement('option');
+                        option.value = reference.name;
+                        option.textContent = reference.unit || '';
+                        datalist.appendChild(option);
+                    }
+
+                    return reference;
+                }
+
+                function saveQuickMaterial() {
+                    var name = String(quickMaterialName ? quickMaterialName.value : '').trim();
+                    var qty = String(quickMaterialQty ? quickMaterialQty.value : '').trim();
+                    var unit = String(quickMaterialUnit ? quickMaterialUnit.value : '').trim();
+
+                    if (!name || qty === '' || !unit) {
+                        setQuickMaterialError('Material name, quantity, and unit are required.');
+                        return;
+                    }
+
+                    setQuickMaterialError('');
+                    if (quickMaterialSave) {
+                        quickMaterialSave.disabled = true;
+                        quickMaterialSave.textContent = 'Saving...';
+                    }
+
+                    fetch(materialQuickCreateUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            qty: qty,
+                            unit: unit,
+                            vendor_ids: quickMaterialVendorIds,
+                        }),
+                    })
+                        .then(function (response) {
+                            return response.json().catch(function () { return {}; }).then(function (payload) {
+                                if (!response.ok) {
+                                    var errors = payload.errors || {};
+                                    var firstError = Object.keys(errors).length && Array.isArray(errors[Object.keys(errors)[0]])
+                                        ? errors[Object.keys(errors)[0]][0]
+                                        : '';
+                                    throw new Error(firstError || payload.message || 'Unable to save material.');
+                                }
+
+                                return payload;
+                            });
+                        })
+                        .then(function (payload) {
+                            var reference = registerMaterialReference(payload.data || payload);
+                            var onSaved = quickMaterialOnSaved;
+                            closeQuickMaterialModal();
+
+                            if (onSaved) {
+                                onSaved(reference);
+                            }
+
+                            if (window.emitter) {
+                                window.emitter.emit('add-flash', { type: 'success', message: payload.message || 'Material created successfully.' });
+                            }
+                        })
+                        .catch(function (error) {
+                            setQuickMaterialError(error.message || 'Unable to save material.');
+                        })
+                        .finally(function () {
+                            if (quickMaterialSave) {
+                                quickMaterialSave.disabled = false;
+                                quickMaterialSave.textContent = 'Save Material';
+                            }
+                        });
                 }
 
                 function bindColorRow(row) {
@@ -869,6 +1103,9 @@
                         + '      <div class="consumption-reference-popup absolute left-0 right-0 top-full z-10 mt-1 hidden rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">'
                         + '        <input type="text" class="consumption-reference-search w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" placeholder="Search material...">'
                         + '        <div class="consumption-reference-options mt-2 max-h-44 overflow-y-auto rounded border border-gray-200 p-1 dark:border-gray-700"></div>'
+                        + '        <div class="mt-2 border-t border-gray-100 pt-2 dark:border-gray-700">'
+                        + '          <button type="button" class="consumption-material-create-toggle text-xs font-medium text-brandColor hover:underline">New Material</button>'
+                        + '        </div>'
                         + '      </div>'
                         + '    </div>'
                         + '  </div>'
@@ -942,6 +1179,7 @@
                     var referenceSelected = row.querySelector('.consumption-reference-selected');
                     var referenceSearch = row.querySelector('.consumption-reference-search');
                     var referenceOptions = row.querySelector('.consumption-reference-options');
+                    var materialCreateToggle = row.querySelector('.consumption-material-create-toggle');
                     var referenceIdInput = row.querySelector('.consumption-reference-id');
                     var nameInput = row.querySelector('.consumption-name-input');
                     var qtyInput = row.querySelector('.consumption-qty-input');
@@ -1224,6 +1462,18 @@
                     if (referenceSearch) {
                         referenceSearch.addEventListener('input', function () {
                             renderMaterialOptions(referenceSearch.value);
+                        });
+                    }
+
+                    if (materialCreateToggle) {
+                        materialCreateToggle.addEventListener('click', function (event) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            if (referencePopup) referencePopup.classList.add('hidden');
+
+                            openQuickMaterialModal(function (reference) {
+                                applyReference(reference);
+                            });
                         });
                     }
 
@@ -1560,6 +1810,81 @@
                         renumber();
                     });
                 }
+
+                if (quickAddMaterialButton) {
+                    quickAddMaterialButton.addEventListener('click', function () {
+                        openQuickMaterialModal(function (reference) {
+                            var existingRows = Array.from(consumptionsContainer.querySelectorAll('.consumption-row'));
+                            var blankRows = existingRows.filter(function (row) {
+                                var name = row.querySelector('.consumption-name-input');
+                                var qty = row.querySelector('.consumption-qty-input');
+                                var unit = row.querySelector('.consumption-unit-input');
+
+                                return !String(name ? name.value : '').trim()
+                                    && !String(qty ? qty.value : '').trim()
+                                    && !String(unit ? unit.value : '').trim();
+                            });
+
+                            if (existingRows.length === 1 && blankRows.length === 1) {
+                                blankRows[0].remove();
+                            }
+
+                            addConsumptionRow({
+                                material_reference_id: reference.id,
+                                name: reference.name,
+                                qty: reference.qty,
+                                unit: reference.unit,
+                                vendor_ids: reference.vendor_ids,
+                                color_name: reference.color_name,
+                                color_code: reference.color_code,
+                            });
+                            renumber();
+                        });
+                    });
+                }
+
+                if (quickMaterialVendorSearch) {
+                    quickMaterialVendorSearch.addEventListener('input', function () {
+                        renderQuickMaterialVendors(quickMaterialVendorSearch.value);
+                    });
+                }
+
+                if (quickMaterialVendors) {
+                    quickMaterialVendors.addEventListener('change', function (event) {
+                        if (!event.target.classList.contains('product-quick-material-vendor')) {
+                            return;
+                        }
+
+                        var vendorId = String(event.target.value);
+
+                        if (event.target.checked && !quickMaterialVendorIds.includes(vendorId)) {
+                            quickMaterialVendorIds.push(vendorId);
+                        } else if (!event.target.checked) {
+                            quickMaterialVendorIds = quickMaterialVendorIds.filter(function (id) { return id !== vendorId; });
+                        }
+                    });
+                }
+
+                if (quickMaterialSave) {
+                    quickMaterialSave.addEventListener('click', saveQuickMaterial);
+                }
+
+                ['product-quick-material-close', 'product-quick-material-cancel'].forEach(function (id) {
+                    var button = document.getElementById(id);
+                    if (button) button.addEventListener('click', closeQuickMaterialModal);
+                });
+
+                if (quickMaterialModal) {
+                    quickMaterialModal.addEventListener('click', function (event) {
+                        if (event.target === quickMaterialModal) closeQuickMaterialModal();
+                    });
+                }
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape' && quickMaterialModal && !quickMaterialModal.classList.contains('hidden')) {
+                        closeQuickMaterialModal();
+                    }
+                });
 
                 if (addSectionButton) {
                     addSectionButton.addEventListener('click', function () {

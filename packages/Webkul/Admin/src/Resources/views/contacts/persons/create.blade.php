@@ -436,26 +436,12 @@
                         ])"
                     />
 
-                    <template v-if="organizationNameLabel">
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.contacts.persons.create.organization')
-                            </x-admin::form.control-group.label>
-
-                            <input
-                                type="text"
-                                class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                :value="organizationNameLabel"
-                                disabled
-                            />
-
-                            <input
-                                type="hidden"
-                                name="organization_name"
-                                :value="organizationNameLabel"
-                            />
-                        </x-admin::form.control-group>
-                    </template>
+                    <input
+                        v-if="organizationNameLabel"
+                        type="hidden"
+                        name="organization_name"
+                        :value="organizationNameLabel"
+                    />
                 </template>
             </div>
         </script>
@@ -526,6 +512,7 @@
 
                     applyOrganizationAddress(organization) {
                         const mapping = {
+                            phone: organization.phone || '',
                             mailing_street: organization.billing_street || organization.shipping_street || '',
                             mailing_city: organization.billing_city || organization.shipping_city || '',
                             mailing_state: organization.billing_state || organization.shipping_state || '',

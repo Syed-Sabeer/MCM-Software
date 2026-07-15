@@ -1,197 +1,121 @@
 @php
     $chargeManager = app(\Webkul\Core\Support\DocumentChargeManager::class);
     $organization = $proformaInvoice->organization;
-    $salesPerson = $proformaInvoice->salesOwner;
     $charges = $chargeManager->extract($proformaInvoice->loadMissing('additionalCharges'), 'proforma');
-
-    $logo = core()->getConfigData('general.general.admin_logo.logo_image');
-    $logoPath = $logo && file_exists(public_path('storage/' . $logo)) ? public_path('storage/' . $logo) : null;
+    $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?: '#b91c1c';
+    $configuredLogo = core()->getConfigData('general.general.admin_logo.logo_image');
+    $configuredLogoPath = $configuredLogo ? public_path('storage/'.$configuredLogo) : null;
+    $fallbackLogoPath = public_path('logo/mcmmain-pdf.png');
+    $logoPath = $configuredLogoPath && file_exists($configuredLogoPath) ? $configuredLogoPath : (file_exists($fallbackLogoPath) ? $fallbackLogoPath : null);
+    $logoSource = $logoPath ? 'data:'.(mime_content_type($logoPath) ?: 'image/png').';base64,'.base64_encode(file_get_contents($logoPath)) : null;
     $companyName = core()->getConfigData('general.general.company_info.company_name') ?: config('app.name');
-    $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?: '#0E90D9';
     $companyLines = array_filter([
         core()->getConfigData('general.general.company_info.address'),
-        core()->getConfigData('general.general.company_info.telephone') ? 'Tel: ' . core()->getConfigData('general.general.company_info.telephone') : null,
-        core()->getConfigData('general.general.company_info.cell') ? 'Cell: ' . core()->getConfigData('general.general.company_info.cell') : null,
-        core()->getConfigData('general.general.company_info.email') ? 'Email: ' . core()->getConfigData('general.general.company_info.email') : null,
+        core()->getConfigData('general.general.company_info.telephone') ? 'Tel: '.core()->getConfigData('general.general.company_info.telephone') : null,
+        core()->getConfigData('general.general.company_info.cell') ? 'Cell: '.core()->getConfigData('general.general.company_info.cell') : null,
+        core()->getConfigData('general.general.company_info.email') ? 'Email: '.core()->getConfigData('general.general.company_info.email') : null,
     ]);
+    $addressLines = fn ($value) => collect(preg_split("/\r\n|\n|\r/", (string) $value))->map(fn ($line) => trim((string) $line))->filter()->values()->all();
     $selectedBillingAddress = trim((string) data_get($proformaInvoice->billing_address, 'address'));
     $selectedShippingAddress = trim((string) data_get($proformaInvoice->shipping_address, 'address'));
-    $addressLines = fn ($value) => collect(preg_split("/\r\n|\n|\r/", (string) $value))->map(fn ($line) => trim((string) $line))->filter()->values()->all();
-
     $billToLines = array_filter([
         $organization?->name,
         ...($selectedBillingAddress !== '' ? $addressLines($selectedBillingAddress) : [
             $organization?->billing_street ?: $organization?->shipping_street,
-            trim(implode(', ', array_filter([
-                $organization?->billing_city ?: $organization?->shipping_city,
-                $organization?->billing_state ?: $organization?->shipping_state,
-                $organization?->billing_postcode ?: $organization?->shipping_postcode,
-                $organization?->billing_country ?: $organization?->shipping_country,
-            ]))),
+            trim(implode(', ', array_filter([$organization?->billing_city ?: $organization?->shipping_city, $organization?->billing_state ?: $organization?->shipping_state, $organization?->billing_postcode ?: $organization?->shipping_postcode, $organization?->billing_country ?: $organization?->shipping_country]))),
         ]),
-        $organization?->phone ? 'Phone: ' . $organization->phone : null,
-        data_get($organization, 'email') ? 'Email: ' . data_get($organization, 'email') : null,
+        $organization?->phone ? 'Phone: '.$organization->phone : null,
+        data_get($organization, 'email') ? 'Email: '.data_get($organization, 'email') : null,
     ]);
-
     $shipToLines = array_filter([
         $organization?->name,
         ...($selectedShippingAddress !== '' ? $addressLines($selectedShippingAddress) : [
             $organization?->shipping_street ?: $organization?->billing_street,
-            trim(implode(', ', array_filter([
-                $organization?->shipping_city ?: $organization?->billing_city,
-                $organization?->shipping_state ?: $organization?->billing_state,
-                $organization?->shipping_postcode ?: $organization?->billing_postcode,
-                $organization?->shipping_country ?: $organization?->billing_country,
-            ]))),
+            trim(implode(', ', array_filter([$organization?->shipping_city ?: $organization?->billing_city, $organization?->shipping_state ?: $organization?->billing_state, $organization?->shipping_postcode ?: $organization?->billing_postcode, $organization?->shipping_country ?: $organization?->billing_country]))),
         ]),
-        $organization?->phone ? 'Phone: ' . $organization->phone : null,
-        data_get($organization, 'email') ? 'Email: ' . data_get($organization, 'email') : null,
+        $organization?->phone ? 'Phone: '.$organization->phone : null,
+        data_get($organization, 'email') ? 'Email: '.data_get($organization, 'email') : null,
     ]);
-
     $paymentTerms = $proformaInvoice->payment_term ?: data_get($proformaInvoice, 'payment_terms') ?: '-';
     $shippingMethod = data_get($proformaInvoice, 'shipping_method') ?: '-';
     $productionTime = data_get($proformaInvoice, 'production_time') ?: '-';
     $transitTime = data_get($proformaInvoice, 'transit_time') ?: '-';
+    $formatDate = function ($value) {
+        if (blank($value)) {
+            return '-';
+        }
+
+        try {
+            $date = \Carbon\Carbon::parse($value);
+        } catch (\Throwable) {
+            return '-';
+        }
+
+        return $date->year > 1 ? $date->format('M d, Y') : '-';
+    };
+    $shipDateRequired = $formatDate($proformaInvoice->due_date);
+    $etd = $formatDate(data_get($proformaInvoice, 'etd'));
+    $eta = $formatDate(data_get($proformaInvoice, 'eta'));
     $remarks = trim((string) ($proformaInvoice->notes ?: ''));
     $terms = trim((string) ($proformaInvoice->terms ?: ''));
-    $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
-        . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
-    $shipDateRequired = optional($proformaInvoice->due_date)->format('Y-m-d') ?: '-';
-    $etd = data_get($proformaInvoice, 'etd') ? \Carbon\Carbon::parse(data_get($proformaInvoice, 'etd'))->format('Y-m-d') : '-';
-    $eta = data_get($proformaInvoice, 'eta') ? \Carbon\Carbon::parse(data_get($proformaInvoice, 'eta'))->format('Y-m-d') : '-';
-
+    $formatQuantity = fn ($value) => rtrim(rtrim(number_format((float) $value, 4, '.', ','), '0'), '.');
+    $formatMoney = fn ($value) => core()->formatBasePrice((float) $value, 2);
+    $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge').(($charge['type'] ?? 'value') === 'percentage' ? ' ('.rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ','), '0'), '.').'%)' : '');
     $resolveImagePath = function (?string $image) {
-        if (! $image) {
-            return null;
-        }
-
+        if (! $image) return null;
         if (str_starts_with($image, 'http://') || str_starts_with($image, 'https://')) {
-            $parts = parse_url($image);
-            $path = $parts['path'] ?? '';
-
-            if (str_contains($path, '/public/storage/')) {
-                $relative = ltrim(Str::after($path, '/public/storage/'), '/');
-                $candidate = public_path('storage/' . $relative);
-
-                return file_exists($candidate) ? $candidate : null;
-            }
-
-            if (str_contains($path, '/storage/')) {
-                $relative = ltrim(Str::after($path, '/storage/'), '/');
-                $candidate = public_path('storage/' . $relative);
-
-                return file_exists($candidate) ? $candidate : null;
+            $path = parse_url($image, PHP_URL_PATH) ?: '';
+            foreach (['/public/storage/', '/storage/'] as $marker) {
+                if (str_contains($path, $marker)) {
+                    $candidate = public_path('storage/'.ltrim(\Illuminate\Support\Str::after($path, $marker), '/'));
+                    return file_exists($candidate) ? $candidate : null;
+                }
             }
         }
-
-        if (str_starts_with($image, 'storage/')) {
-            $candidate = public_path($image);
-
-            return file_exists($candidate) ? $candidate : null;
-        }
-
-        $candidate = public_path('storage/' . ltrim($image, '/'));
-
+        $candidate = str_starts_with($image, 'storage/') ? public_path($image) : public_path('storage/'.ltrim($image, '/'));
         return file_exists($candidate) ? $candidate : null;
     };
+    $documentTitle = 'PROFORMA INVOICE';
+    $documentNumber = $proformaInvoice->proforma_number ?: 'PF-'.$proformaInvoice->id;
+    $documentMeta = [
+        ['label' => 'Issue date', 'value' => $formatDate($proformaInvoice->issue_date ?: $proformaInvoice->created_at)],
+        ['label' => 'Quote reference', 'value' => optional($proformaInvoice->quote)->quote_number ?: '-'],
+    ];
 @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Proforma {{ $proformaInvoice->proforma_number }}</title>
-    <style>
-        body { font-family: DejaVu Sans, sans-serif; color: #111827; font-size: 12px; margin: 0; }
-        .page { padding: 24px; }
-        .header-table, .party-table, .items-table, .totals-table, .summary-table, .notes-table, .sign-table { width: 100%; border-collapse: collapse; }
-        .brand { color: {{ $brandColor }}; }
-        .title { font-size: 24px; font-weight: 700; text-align: right; }
-        .logo { max-width: 120px; max-height: 70px; margin-bottom: 8px; }
-        .meta-label { font-weight: 700; width: 35%; background: #f5f7fb; }
-        .meta-table td { border: 1px solid #d8e0ea; padding: 7px 10px; }
-        .section-box { border: 1px solid #d8e0ea; padding: 12px; min-height: 90px; }
-        .section-title { color: {{ $brandColor }}; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
-        .summary-table { margin: 16px 0; }
-        .summary-table td { border: 1px solid #d8e0ea; padding: 8px; width: 16.66%; }
-        .summary-label { display: block; color: #6b7280; font-size: 10px; text-transform: uppercase; margin-bottom: 4px; }
-        .summary-value { font-weight: 700; }
-        .items-table th { background: {{ $brandColor }}; color: #fff; border: 1px solid {{ $brandColor }}; padding: 8px; text-align: left; font-size: 10px; text-transform: uppercase; }
-        .items-table td { border: 1px solid #d8e0ea; padding: 8px; vertical-align: top; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .item-image { width: 42px; height: 42px; object-fit: cover; border: 1px solid #d8e0ea; border-radius: 6px; }
-        .totals-table { width: 320px; margin-left: auto; margin-top: 16px; }
-        .totals-table td { border: 1px solid #d8e0ea; padding: 8px 10px; }
-        .totals-label { background: #f5f7fb; font-weight: 700; }
-        .totals-value { text-align: right; font-weight: 700; }
-        .grand-row td { background: #eef6ff; color: {{ $brandColor }}; font-weight: 700; }
-        .notes-table { margin-top: 18px; }
-        .notes-table td { width: 50%; vertical-align: top; padding-right: 12px; }
-        .note-card { border: 1px solid #d8e0ea; padding: 12px; min-height: 90px; }
-        .preline { white-space: pre-line; }
-        .sign-table { margin-top: 26px; }
-        .sign-cell { width: 33.33%; padding-right: 18px; }
-        .sign-line { border-top: 1px solid #111827; padding-top: 8px; color: #6b7280; font-size: 10px; }
-    </style>
+    <title>Proforma Invoice {{ $documentNumber }}</title>
+    <style>@include('admin::documents.pdf.styles')</style>
 </head>
 <body>
-<div class="page">
-    <table class="header-table">
-        <tr>
-            <td style="width: 52%; vertical-align: top;">
-                @if ($logoPath)
-                    <img src="{{ $logoPath }}" alt="Logo" class="logo">
-                @endif
-                <div class="brand" style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">{{ $companyName }}</div>
-                @foreach ($companyLines as $line)
-                    <div>{{ $line }}</div>
-                @endforeach
-            </td>
-            <td style="width: 48%; vertical-align: top;">
-                <div class="title brand">Proforma Invoice</div>
-                <table class="meta-table">
-                    <tr><td class="meta-label">Proforma #</td><td>{{ $proformaInvoice->proforma_number ?: ('PF-' . $proformaInvoice->id) }}</td></tr>
-                    <tr><td class="meta-label">Quote #</td><td>{{ optional($proformaInvoice->quote)->quote_number ? 'Q' . ltrim((string) optional($proformaInvoice->quote)->quote_number, 'Q') : '-' }}</td></tr>
-                    <tr><td class="meta-label">Issue Date</td><td>{{ $proformaInvoice->issue_date ? core()->formatDate($proformaInvoice->issue_date, 'Y-m-d') : core()->formatDate($proformaInvoice->created_at, 'Y-m-d') }}</td></tr>
-                    <tr><td class="meta-label">Sales Person</td><td>{{ $salesPerson?->name ?: '-' }}</td></tr>
-                    <tr><td class="meta-label">Status</td><td>{{ ucfirst($proformaInvoice->status ?: 'draft') }}</td></tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+    @include('admin::documents.pdf.header')
 
-    <table class="party-table" style="margin-top: 16px;">
-        <tr>
-            <td style="width: 50%; padding-right: 8px; vertical-align: top;"><div class="section-box"><div class="section-title">Bill To</div>@foreach ($billToLines as $line)<div>{{ $line }}</div>@endforeach</div></td>
-            <td style="width: 50%; padding-left: 8px; vertical-align: top;"><div class="section-box"><div class="section-title">Ship To</div>@foreach ($shipToLines as $line)<div>{{ $line }}</div>@endforeach</div></td>
-        </tr>
-    </table>
+    <table class="party-table"><tr>
+        <td class="party-left"><div class="party-box"><div class="box-heading">Bill to</div><div class="party-content">@foreach($billToLines as $line)<div>{{ $line }}</div>@endforeach</div></div></td>
+        <td class="party-right"><div class="party-box"><div class="box-heading">Ship to</div><div class="party-content">@foreach($shipToLines as $line)<div>{{ $line }}</div>@endforeach</div></div></td>
+    </tr></table>
 
     <table class="summary-table">
         <tr>
-            <td><span class="summary-label">Payment Terms</span><span class="summary-value">{{ $paymentTerms }}</span></td>
-            <td><span class="summary-label">Shipping Method</span><span class="summary-value">{{ $shippingMethod }}</span></td>
-            <td><span class="summary-label">Production Time</span><span class="summary-value">{{ $productionTime }}</span></td>
-            <td><span class="summary-label">Transit Time</span><span class="summary-value">{{ $transitTime }}</span></td>
-            <td><span class="summary-label">Ship Date Required</span><span class="summary-value">{{ $shipDateRequired }}</span></td>
+            <td style="width:33.33%"><span class="summary-label">Payment terms</span><span class="summary-value">{{ $paymentTerms }}</span></td>
+            <td style="width:33.33%"><span class="summary-label">Shipping method</span><span class="summary-value">{{ $shippingMethod }}</span></td>
+            <td style="width:33.33%"><span class="summary-label">Production time</span><span class="summary-value">{{ $productionTime }}</span></td>
+        </tr>
+        <tr>
+            <td><span class="summary-label">Transit time</span><span class="summary-value">{{ $transitTime }}</span></td>
+            <td><span class="summary-label">Ship date required</span><span class="summary-value">{{ $shipDateRequired }}</span></td>
             <td><span class="summary-label">ETD / ETA</span><span class="summary-value">{{ $etd }} / {{ $eta }}</span></td>
         </tr>
     </table>
 
     <table class="items-table">
-        <thead>
-            <tr>
-                <th style="width: 9%;" class="text-center">Image</th>
-                <th style="width: 9%;" class="text-right">Qty</th>
-                <th style="width: 14%;">Item #</th>
-                <th style="width: 12%;">Colors</th>
-                <th style="width: 31%;">Description</th>
-                <th style="width: 12%;" class="text-right">Rate</th>
-                <th style="width: 13%;" class="text-right">Amount</th>
-            </tr>
-        </thead>
+        <thead><tr>
+            <th style="width:8%" class="text-center">Image</th><th style="width:9%" class="text-right">Qty</th><th style="width:14%">Item code</th><th style="width:13%">Color</th><th style="width:30%">Description</th><th style="width:12%" class="text-right">Rate</th><th style="width:14%" class="text-right">Amount</th>
+        </tr></thead>
         <tbody>
-            @forelse ($proformaInvoice->items as $item)
+            @forelse($proformaInvoice->items as $item)
                 @php
                     $qty = (float) ($item->qty ?: 0);
                     $price = (float) ($item->unit_price ?: 0);
@@ -199,57 +123,27 @@
                     $imagePath = $resolveImagePath($item->preview_image);
                 @endphp
                 <tr>
-                    <td class="text-center">
-                        @if ($imagePath)
-                            <img src="{{ $imagePath }}" alt="Item Image" class="item-image">
-                        @else
-                            -
-                        @endif
-                    </td>
-                    <td class="text-right">{{ rtrim(rtrim(number_format($qty, 4, '.', ''), '0'), '.') }}</td>
-                    <td>{{ $item->item_code ?: '-' }}</td>
-                    <td>{{ $item->color_variant_name ?: '-' }}</td>
-                    <td>{{ $item->item_name ?: '-' }}</td>
-                    <td class="text-right">{{ core()->formatBasePrice($price, 2) }}</td>
-                    <td class="text-right">{{ core()->formatBasePrice($lineTotal, 2) }}</td>
+                    <td class="text-center">@if($imagePath)<img src="{{ $imagePath }}" alt="Item" class="item-image">@else<span class="muted">-</span>@endif</td>
+                    <td class="text-right">{{ $formatQuantity($qty) }}</td><td>{{ $item->item_code ?: '-' }}</td><td>{{ $item->color_variant_name ?: '-' }}</td><td class="item-name">{{ $item->item_name ?: '-' }}</td><td class="text-right">{{ $formatMoney($price) }}</td><td class="text-right">{{ $formatMoney($lineTotal) }}</td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="text-center">No line items available.</td></tr>
+                <tr><td colspan="7" class="text-center muted">No line items available.</td></tr>
             @endforelse
         </tbody>
     </table>
 
-    <table class="totals-table">
-        <tr><td class="totals-label">Sub Total</td><td class="totals-value">{{ core()->formatBasePrice($proformaInvoice->subtotal ?: 0, 2) }}</td></tr>
-        @foreach ($charges as $charge)
-            <tr><td class="totals-label">{{ $formatChargeLabel($charge) }}</td><td class="totals-value">{{ core()->formatBasePrice($charge['amount'] ?: 0, 2) }}</td></tr>
-        @endforeach
-        <tr class="grand-row"><td class="totals-label">Grand Total</td><td class="totals-value">{{ core()->formatBasePrice($proformaInvoice->grand_total ?: 0, 2) }}</td></tr>
-    </table>
+    <table class="totals-wrap"><tr><td class="totals-spacer"></td><td class="totals-cell"><table class="totals-table">
+        <tr><td class="totals-label">Subtotal</td><td class="totals-value">{{ $formatMoney($proformaInvoice->subtotal ?: 0) }}</td></tr>
+        @foreach($charges as $charge)<tr><td class="totals-label">{{ $formatChargeLabel($charge) }}</td><td class="totals-value">{{ $formatMoney($charge['amount'] ?: 0) }}</td></tr>@endforeach
+        <tr class="grand-row"><td class="totals-label">Grand total</td><td class="totals-value">{{ $formatMoney($proformaInvoice->grand_total ?: 0) }}</td></tr>
+    </table></td></tr></table>
 
-    @if ($remarks)
-        <table class="notes-table">
-            <tr>
-                <td><div class="note-card"><div class="section-title">Remarks</div><div class="preline">{{ $remarks }}</div></div></td>
-            </tr>
-        </table>
-    @endif
+    @if($remarks || $terms)<table class="notes-table"><tr>
+        @if($remarks)<td class="{{ $terms ? 'note-left' : '' }}"><div class="note-box"><div class="note-title">Remarks</div><div class="preline">{{ $remarks }}</div></div></td>@endif
+        @if($terms)<td class="{{ $remarks ? 'note-right' : '' }}"><div class="note-box"><div class="note-title">Terms &amp; conditions</div><div class="preline">{{ $terms }}</div></div></td>@endif
+    </tr></table>@endif
 
-    @if ($terms)
-        <table class="notes-table">
-            <tr>
-                <td><div class="note-card"><div class="section-title">Terms & Conditions</div><div class="preline">{{ $terms }}</div></div></td>
-            </tr>
-        </table>
-    @endif
-
-    <table class="sign-table">
-        <tr>
-            <td class="sign-cell"><div class="sign-line">Prepared By</div></td>
-            <td class="sign-cell"><div class="sign-line">Approved By</div></td>
-            <td class="sign-cell" style="padding-right:0;"><div class="sign-line">Customer Confirmation</div></td>
-        </tr>
-    </table>
-</div>
+    @include('admin::documents.pdf.signatures', ['signatureLabels' => ['Prepared by', 'Approved by', 'Customer confirmation']])
+    @include('admin::documents.pdf.footer')
 </body>
 </html>

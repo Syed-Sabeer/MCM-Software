@@ -17,6 +17,7 @@ use Webkul\Admin\Http\Resources\ProductResource;
 use Webkul\Contact\Models\Organization;
 use Webkul\Product\Models\ColorReference;
 use Webkul\Product\Models\MaterialReference;
+use Webkul\Product\Models\UnitReference;
 use Webkul\Product\Repositories\ProductRepository;
 
 class ProductController extends Controller
@@ -56,6 +57,7 @@ class ProductController extends Controller
         $duplicateDraft = null;
         $colorReferences = ColorReference::query()->orderBy('name')->get(['name', 'code']);
         $materialReferences = MaterialReference::with('vendors')->orderBy('name')->get();
+        $units = UnitReference::query()->orderBy('name')->get(['name']);
         $vendors = Organization::query()
             ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
@@ -75,7 +77,7 @@ class ProductController extends Controller
             $duplicateDraft = $this->buildDuplicateDraft($original);
         }
 
-        return view('admin::products.create', compact('customers', 'duplicateDraft', 'colorReferences', 'materialReferences', 'vendors'));
+        return view('admin::products.create', compact('customers', 'duplicateDraft', 'colorReferences', 'materialReferences', 'units', 'vendors'));
     }
 
     /**
