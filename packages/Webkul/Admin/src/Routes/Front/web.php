@@ -35,6 +35,10 @@ Route::prefix('customer-portal')->group(function () {
         Route::get('proformas/{id}/pdf', [PortalController::class, 'proformaPdf'])->name('customer_portal.proformas.pdf');
         Route::get('proformas/{id}/attachment', [PortalController::class, 'proformaAttachment'])->name('customer_portal.proformas.attachment');
 
+        Route::get('invoices', [PortalController::class, 'invoices'])->name('customer_portal.invoices.index');
+        Route::get('invoices/{id}', [PortalController::class, 'invoice'])->name('customer_portal.invoices.view');
+        Route::get('invoices/{id}/pdf', [PortalController::class, 'invoicePdf'])->name('customer_portal.invoices.pdf');
+
         Route::get('job-orders', [PortalController::class, 'jobOrders'])->name('customer_portal.job_orders.index');
         Route::get('job-orders/{id}', [PortalController::class, 'jobOrder'])->name('customer_portal.job_orders.view');
 

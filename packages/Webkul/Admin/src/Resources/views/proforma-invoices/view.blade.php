@@ -69,6 +69,17 @@
                 <div class="flex gap-2">
                     <form method="POST" action="{{ route('admin.proforma_invoices.customer_visibility', $proformaInvoice->id) }}">@csrf<button class="secondary-button" @disabled($proformaInvoice->status === 'draft' && ! $proformaInvoice->customer_visible_at)>{{ $proformaInvoice->customer_visible_at ? 'Unpublish' : 'Publish to customer' }}</button></form>
                     <a href="{{ route('admin.proforma_invoices.print', $proformaInvoice->id) }}" class="secondary-button">Print</a>
+                    @if ($proformaInvoice->converted_to_invoice_id)
+                        <a href="{{ route('admin.invoices.view', $proformaInvoice->converted_to_invoice_id) }}" class="secondary-button">View Final Invoice</a>
+                    @elseif (! in_array($proformaInvoice->status, ['draft', 'cancelled'], true) && bouncer()->hasPermission('invoices.create'))
+                        <form method="POST" action="{{ route('admin.invoices.store', $proformaInvoice->id) }}">
+                            @csrf
+                            <button type="submit" class="primary-button inline-flex items-center gap-2" onclick="return confirm('Create the final invoice and apply all recorded advance receipts?')">
+                                <span class="icon-note"></span>
+                                Create Final Invoice
+                            </button>
+                        </form>
+                    @endif
                     <a href="{{ route('admin.job_orders.create', ['proforma_invoice_id' => $proformaInvoice->id]) }}" class="secondary-button">Create Job Order</a>
                     <a href="{{ route('admin.proforma_invoices.edit', $proformaInvoice->id) }}" class="primary-button">Edit</a>
                 </div>

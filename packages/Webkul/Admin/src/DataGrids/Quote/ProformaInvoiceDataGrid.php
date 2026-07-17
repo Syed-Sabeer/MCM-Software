@@ -166,6 +166,16 @@ class ProformaInvoiceDataGrid extends DataGrid
             ]);
         }
 
+        if (bouncer()->hasPermission('invoices.create')) {
+            $this->addAction([
+                'index'  => 'view_for_invoice',
+                'icon'   => 'icon-note',
+                'title'  => 'Create Final Invoice',
+                'method' => 'GET',
+                'url'    => fn ($row) => route('admin.proforma_invoices.view', $row->id),
+            ]);
+        }
+
         if (bouncer()->hasPermission('proforma_invoices.delete')) {
             $this->addAction([
                 'index'  => 'delete',

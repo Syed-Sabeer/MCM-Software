@@ -97,6 +97,26 @@ return [
         'route' => ['admin.proforma_invoices.delete', 'admin.proforma_invoices.mass_delete'],
         'sort'  => 4,
     ], [
+        'key'   => 'invoices',
+        'name'  => 'Final Invoices',
+        'route' => 'admin.invoices.index',
+        'sort'  => 5,
+    ], [
+        'key'   => 'invoices.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.invoices.store', 'admin.invoices.receipts.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'invoices.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => ['admin.invoices.view', 'admin.invoices.print'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'invoices.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.invoices.status', 'admin.invoices.customer_visibility', 'admin.invoices.receipts.delete'],
+        'sort'  => 3,
+    ], [
         'key'   => 'job_orders',
         'name'  => 'Job Orders',
         'route' => 'admin.job_orders.index',

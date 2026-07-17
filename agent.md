@@ -123,6 +123,16 @@ The application is attribute-driven. Many entities are not hard-coded with fixed
 - Proforma invoices can originate from quotes and can track approval, conversion, received amount, remaining amount, attachment, notes, terms, and payment terms
 - Current statuses include draft and issued states in the seeded data
 
+### Final Invoice Logic
+
+- `invoices` stores final customer invoices created transactionally from one proforma invoice
+- `invoice_items` preserves the final commercial line-item snapshot
+- `invoice_receipts` stores payments received after final invoice issue
+- Proforma receipts remain the advance-payment source and are applied through `invoices.advance_applied`
+- `invoices.received_amount` contains later invoice receipts; `remaining_amount` subtracts both advances and later receipts
+- A proforma can be converted only once through `proforma_invoices.converted_to_invoice_id`
+- Final invoices inherit explicit customer publication from the source proforma and remain organization-scoped in the customer portal
+
 ### Procurement and Vendor Logic
 
 - `vendor_quotes` stores supplier quotes linked to job orders and organizations
@@ -284,7 +294,6 @@ When extending this repository, follow this order:
 
 ## Important Gaps To Remember
 
-- There is no dedicated invoice module visible in the current repository snapshot
 - Global route registration is minimal; most behavior lives inside package modules
 - The SQL dump is the best source for entity relationships, seed data, and domain assumptions
 - If a new feature touches commercial docs, use the shared document engine first

@@ -145,4 +145,9 @@ class ProformaInvoice extends Model implements ProformaInvoiceContract
     {
         return $this->hasMany(ProformaReceiptProxy::modelClass(), 'proforma_invoice_id')->orderByDesc('payment_date');
     }
+
+    public function finalInvoice(): BelongsTo
+    {
+        return $this->belongsTo(InvoiceProxy::modelClass(), 'converted_to_invoice_id');
+    }
 }

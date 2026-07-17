@@ -7,6 +7,7 @@
         ['label' => 'Dashboard', 'route' => 'customer_portal.dashboard', 'icon' => 'icon-dashboard'],
         ['label' => 'Quotes', 'route' => 'customer_portal.quotes.index', 'icon' => 'icon-quote'],
         ['label' => 'Proformas', 'route' => 'customer_portal.proformas.index', 'icon' => 'icon-dollar'],
+        ['label' => 'Invoices', 'route' => 'customer_portal.invoices.index', 'icon' => 'icon-note'],
         ['label' => 'Job Orders', 'route' => 'customer_portal.job_orders.index', 'icon' => 'icon-activity'],
         ['label' => 'Products', 'route' => 'customer_portal.products.index', 'icon' => 'icon-product'],
         ['label' => 'My Company', 'route' => 'customer_portal.company', 'icon' => 'icon-organization'],
@@ -16,7 +17,7 @@
     $navItems = collect($navItems)->filter(function ($item) use ($portalUser) {
         if (str_starts_with($item['route'], 'customer_portal.contacts')) return $portalUser->hasPortalPermission('view_contacts');
         if (str_starts_with($item['route'], 'customer_portal.products')) return $portalUser->hasPortalPermission('view_products');
-        if (str_contains($item['route'], 'quotes') || str_contains($item['route'], 'proformas') || str_contains($item['route'], 'job_orders')) return $portalUser->hasPortalPermission('view_documents');
+        if (str_contains($item['route'], 'quotes') || str_contains($item['route'], 'proformas') || str_contains($item['route'], 'invoices') || str_contains($item['route'], 'job_orders')) return $portalUser->hasPortalPermission('view_documents');
         return true;
     })->all();
 @endphp

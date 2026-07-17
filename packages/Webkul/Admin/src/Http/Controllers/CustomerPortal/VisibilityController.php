@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\PurchaseOrder\Models\JobOrder;
+use Webkul\Quote\Models\Invoice;
 use Webkul\Quote\Models\ProformaInvoice;
 use Webkul\Quote\Models\Quote;
 
@@ -34,6 +35,13 @@ class VisibilityController extends Controller
         abort_if($record->status === 'draft' && ! $record->customer_visible_at, 422, 'Draft job orders cannot be published.');
 
         return $this->toggle($record, 'job order');
+    }
+
+    public function invoice(int $id): RedirectResponse
+    {
+        abort_unless(bouncer()->hasPermission('invoices.edit'), 403);
+
+        return $this->toggle(Invoice::findOrFail($id), 'final invoice');
     }
 
     protected function toggle($record, string $type): RedirectResponse

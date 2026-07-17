@@ -12,5 +12,8 @@ class ModuleServiceProvider extends BaseModuleServiceProvider
         \Webkul\Quote\Models\ProformaInvoice::class,
         \Webkul\Quote\Models\ProformaInvoiceItem::class,
         \Webkul\Quote\Models\ProformaReceipt::class,
+        \Webkul\Quote\Models\Invoice::class,
+        \Webkul\Quote\Models\InvoiceItem::class,
+        \Webkul\Quote\Models\InvoiceReceipt::class,
     ];
 }

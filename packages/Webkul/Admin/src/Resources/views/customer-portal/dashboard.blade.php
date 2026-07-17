@@ -8,10 +8,11 @@
         $statItems = [
             ['label' => 'Visible Quotes', 'value' => $stats['quotes'], 'description' => 'Commercial proposals available', 'route' => 'customer_portal.quotes.index', 'icon' => 'icon-quote', 'permission' => $canViewDocuments],
             ['label' => 'Proforma Invoices', 'value' => $stats['proformas'], 'description' => 'Issued payment documents', 'route' => 'customer_portal.proformas.index', 'icon' => 'icon-dollar', 'permission' => $canViewDocuments],
+            ['label' => 'Final Invoices', 'value' => $stats['invoices'], 'description' => 'Final bills and balances', 'route' => 'customer_portal.invoices.index', 'icon' => 'icon-note', 'permission' => $canViewDocuments],
             ['label' => 'Active Orders', 'value' => $stats['jobOrders'], 'description' => 'Orders currently in progress', 'route' => 'customer_portal.job_orders.index', 'icon' => 'icon-activity', 'permission' => $canViewDocuments],
             ['label' => 'Customer Products', 'value' => $stats['products'], 'description' => 'Products assigned to your company', 'route' => 'customer_portal.products.index', 'icon' => 'icon-product', 'permission' => $canViewProducts],
             ['label' => 'Upcoming Deliveries', 'value' => $stats['deliveries'], 'description' => 'Scheduled delivery dates ahead', 'route' => 'customer_portal.job_orders.index', 'icon' => 'icon-calendar', 'permission' => $canViewDocuments],
-            ['label' => 'Outstanding Balance', 'value' => \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($stats['outstanding']), 'description' => 'Remaining proforma balance', 'route' => 'customer_portal.proformas.index', 'icon' => 'icon-stats-up', 'permission' => $canViewDocuments],
+            ['label' => 'Outstanding Balance', 'value' => \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::money($stats['outstanding']), 'description' => 'Remaining customer balance', 'route' => 'customer_portal.invoices.index', 'icon' => 'icon-stats-up', 'permission' => $canViewDocuments],
         ];
     @endphp
 

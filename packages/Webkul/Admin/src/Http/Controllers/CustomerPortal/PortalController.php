@@ -19,6 +19,7 @@ use Webkul\Product\Models\Product;
 use Webkul\PurchaseOrder\Models\JobOrder;
 use Webkul\Quote\Models\ProformaInvoice;
 use Webkul\Quote\Models\Quote;
+use Webkul\Quote\Models\Invoice;
 
 class PortalController extends Controller
 {
@@ -36,18 +37,21 @@ class PortalController extends Controller
         $id = $organization->id;
         $quotes = Quote::visibleToCustomer($id);
         $proformas = ProformaInvoice::visibleToCustomer($id);
+        $invoices = Invoice::visibleToCustomer($id);
         $orders = JobOrder::visibleToCustomer($id);
         $stats = [
             'quotes'      => $canViewDocuments ? (clone $quotes)->count() : 0,
             'proformas'   => $canViewDocuments ? (clone $proformas)->count() : 0,
+            'invoices'    => $canViewDocuments ? (clone $invoices)->count() : 0,
             'jobOrders'   => $canViewDocuments ? (clone $orders)->whereNotIn('status', ['completed', 'closed', 'cancelled'])->count() : 0,
             'products'    => $canViewProducts ? Product::where('customer_organization_id', $id)->count() : 0,
             'deliveries'  => $canViewDocuments ? (clone $orders)->whereNotNull('required_delivery_date')->whereDate('required_delivery_date', '>=', today())->count() : 0,
-            'outstanding' => $canViewDocuments ? (string) (clone $proformas)->sum('remaining_amount') : '0',
+            'outstanding' => $canViewDocuments ? (string) ((clone $invoices)->sum('remaining_amount') + (clone $proformas)->whereNull('converted_to_invoice_id')->sum('remaining_amount')) : '0',
         ];
 
         $recentQuotes = $canViewDocuments ? (clone $quotes)->latest('quote_date')->latest('id')->take(5)->get() : collect();
         $recentProformas = $canViewDocuments ? (clone $proformas)->latest('issue_date')->latest('id')->take(5)->get() : collect();
+        $recentInvoices = $canViewDocuments ? (clone $invoices)->latest('issue_date')->latest('id')->take(5)->get() : collect();
         $recentJobOrders = $canViewDocuments ? (clone $orders)->latest('issue_date')->latest('id')->take(5)->get() : collect();
         $activeOrders = $canViewDocuments
             ? (clone $orders)->whereNotIn('status', ['completed', 'closed', 'cancelled'])
@@ -57,7 +61,7 @@ class PortalController extends Controller
                 ->map(fn ($order) => ['record' => $order, 'progress' => $presenter->present($order->status)])
             : collect();
 
-        return view('admin::customer-portal.dashboard', compact('organization', 'stats', 'recentQuotes', 'recentProformas', 'recentJobOrders', 'activeOrders', 'canViewDocuments', 'canViewProducts'));
+        return view('admin::customer-portal.dashboard', compact('organization', 'stats', 'recentQuotes', 'recentProformas', 'recentInvoices', 'recentJobOrders', 'activeOrders', 'canViewDocuments', 'canViewProducts'));
     }
 
     public function company(): View
@@ -198,6 +202,45 @@ class PortalController extends Controller
         abort_unless($record->attachment_path && Storage::disk('public')->exists($record->attachment_path), 404);
 
         return response()->download(Storage::disk('public')->path($record->attachment_path), basename($record->attachment_path));
+    }
+
+    public function invoices(): View
+    {
+        $this->requirePermission('view_documents');
+        $organization = $this->organization();
+        $records = Invoice::visibleToCustomer($organization->id)
+            ->when(request('q'), function ($query, $search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('invoice_number', 'like', '%'.$search.'%')
+                        ->orWhere('subject', 'like', '%'.$search.'%')
+                        ->orWhere('customer_po_reference', 'like', '%'.$search.'%');
+                });
+            })
+            ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
+            ->latest('issue_date')->latest('id')->paginate($this->perPage())->withQueryString();
+
+        return view('admin::customer-portal.invoices.index', compact('organization', 'records'));
+    }
+
+    public function invoice(int $id): View
+    {
+        $this->requirePermission('view_documents');
+        $organization = $this->organization();
+        $invoice = Invoice::visibleToCustomer($organization->id)
+            ->with(['items', 'receipts', 'proformaInvoice.receipts', 'organization', 'salesOwner', 'additionalCharges'])
+            ->findOrFail($id);
+
+        return view('admin::customer-portal.invoices.view', compact('organization', 'invoice'));
+    }
+
+    public function invoicePdf(int $id): Response|StreamedResponse
+    {
+        $this->requirePermission('view_documents');
+        $invoice = Invoice::visibleToCustomer($this->organization()->id)
+            ->with(['items', 'receipts', 'proformaInvoice', 'quote', 'organization', 'salesOwner', 'additionalCharges'])
+            ->findOrFail($id);
+
+        return $this->downloadPDF(view('admin::invoices.pdf', compact('invoice'))->render(), 'Invoice_'.$invoice->invoice_number);
     }
 
     public function jobOrders(): View

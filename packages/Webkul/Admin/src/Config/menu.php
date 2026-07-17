@@ -32,7 +32,7 @@ return [
         'key'        => 'sales',
         'name'       => 'Sales',
         'route'      => 'admin.quotes.index',
-        'permission' => ['quotes', 'proforma_invoices'],
+        'permission' => ['quotes', 'proforma_invoices', 'invoices'],
         'sort'       => 5,
         'icon-class' => 'icon-quote',
     ], [
@@ -48,6 +48,13 @@ return [
         'route'      => 'admin.proforma_invoices.index',
         'permission' => 'proforma_invoices',
         'sort'       => 2,
+        'icon-class' => '',
+    ], [
+        'key'        => 'sales.invoices',
+        'name'       => 'Final Invoices',
+        'route'      => 'admin.invoices.index',
+        'permission' => 'invoices',
+        'sort'       => 3,
         'icon-class' => '',
     ],
 

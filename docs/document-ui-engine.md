@@ -10,6 +10,7 @@
 ## Current Modules Using It
 - Quote print view
 - Proforma Invoice detail + print views
+- Final Invoice detail + print views
 - Purchase Order detail + print views
 - Quote / Proforma / Purchase Order create-edit forms use the shared form style include
 
@@ -27,6 +28,7 @@ Each document view prepares:
 
 The component renders the document consistently while allowing each module to choose labels and visible sections.
 
-## Invoice Note
-There is no existing Invoice module, route, controller, or Blade stack in this repository yet.
-When Invoice is introduced, it should map into `admin::components.documents.standard` instead of creating a separate document layout system.
+## Final Invoice Flow
+- Final invoices are immutable commercial snapshots created from issued, non-cancelled proforma invoices.
+- Proforma advances are carried as `advance_applied`; later receipts are stored separately in `invoice_receipts`.
+- Invoice PDFs use the shared mature PDF document partials and show total, advance, subsequent payments, and balance due.

@@ -23,6 +23,7 @@ use Webkul\PurchaseOrder\Models\JobOrder;
 use Webkul\PurchaseOrder\Models\PurchaseOrder;
 use Webkul\PurchaseOrder\Models\VendorQuote;
 use Webkul\Quote\Models\ProformaInvoice;
+use Webkul\Quote\Models\Invoice;
 use Webkul\Quote\Models\Quote;
 
 class OrganizationController extends Controller
@@ -241,6 +242,19 @@ class OrganizationController extends Controller
                 itemUrl: fn ($record) => route('admin.proforma_invoices.view', $record->id),
                 allUrl: route('admin.proforma_invoices.index', ['organization_id' => $organization->id]),
                 titleValue: fn ($record) => $record->proforma_number ?: ('PF-'.$record->id),
+                metaValue: fn ($record) => collect([
+                    $record->issue_date?->format('Y-m-d'),
+                    $record->status ? Str::headline($record->status) : null,
+                ])->filter()->implode(' | ')
+            ),
+            $this->makeDocumentSection(
+                title: 'Final Invoices',
+                emptyMessage: 'No final invoices found for this customer yet.',
+                count: Invoice::query()->where('organization_id', $organization->id)->count(),
+                records: Invoice::query()->where('organization_id', $organization->id)->latest('issue_date')->latest('id')->take(3)->get(),
+                itemUrl: fn ($record) => route('admin.invoices.view', $record->id),
+                allUrl: route('admin.invoices.index', ['organization_id' => $organization->id]),
+                titleValue: fn ($record) => $record->invoice_number ?: ('INV-'.$record->id),
                 metaValue: fn ($record) => collect([
                     $record->issue_date?->format('Y-m-d'),
                     $record->status ? Str::headline($record->status) : null,
