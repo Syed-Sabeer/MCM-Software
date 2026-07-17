@@ -72,9 +72,11 @@ it('persists incorrect otp attempts', function () {
     $user = User::query()->firstOrFail();
     $service = app(PasswordResetOtpService::class);
     $challenge = $service->createChallenge($user->email);
+    $challenge->forceFill(['expires_at' => now()->subHours(10)])->save();
 
     expect(fn () => $service->verify($challenge, '000000'))->toThrow(ValidationException::class)
-        ->and($challenge->fresh()->attempts)->toBe(1);
+        ->and($challenge->fresh()->attempts)->toBe(1)
+        ->and($challenge->expires_at_epoch)->toBeGreaterThan(time());
 });
 
 it('uses the shared otp flow for customer portal accounts', function () {
@@ -123,5 +125,6 @@ it('renders branded otp and portal invitation emails', function () {
     ])->render();
 
     expect($otpHtml)->toContain('123456')->toContain('Verify your password reset')
+        ->toContain('logo/mcmmain-pdf.png')->toContain('width="220"')
         ->and($invitationHtml)->toContain('Set up your portal access')->toContain('preview@example.test');
 });

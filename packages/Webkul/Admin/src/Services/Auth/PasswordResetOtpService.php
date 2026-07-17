@@ -27,14 +27,21 @@ class PasswordResetOtpService
         $challenge = DB::transaction(function () use ($email, $accountType, $otp) {
             PasswordResetOtp::where('email', $email)->delete();
 
-            return PasswordResetOtp::create([
-                'email'        => $email,
-                'account_type' => $accountType,
-                'otp'          => $otp,
-                'otp_hash'     => Hash::make($otp),
-                'attempts'     => 0,
-                'expires_at'   => now()->addMinutes(self::EXPIRY_MINUTES),
+            $challenge = PasswordResetOtp::create([
+                'email'            => $email,
+                'account_type'     => $accountType,
+                'otp'              => $otp,
+                'otp_hash'         => Hash::make($otp),
+                'attempts'         => 0,
+                'expires_at'       => now()->addMinutes(self::EXPIRY_MINUTES),
+                'expires_at_epoch' => time() + (self::EXPIRY_MINUTES * 60),
             ]);
+
+            DB::table('password_reset_otps')->where('id', $challenge->id)->update([
+                'expires_at' => DB::raw('DATE_ADD(created_at, INTERVAL '.self::EXPIRY_MINUTES.' MINUTE)'),
+            ]);
+
+            return $challenge->fresh();
         });
 
         if ($account) {

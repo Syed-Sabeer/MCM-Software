@@ -1,7 +1,6 @@
 @php
     $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?: '#b91c1c';
-    $configuredLogo = core()->getConfigData('general.general.admin_logo.logo_image') ?: core()->getConfigData('general.design.admin_logo.logo_image');
-    $logoUrl = $configuredLogo ? asset('/storage/'.$configuredLogo) : asset('logo/mcmmain-pdf.png');
+    $logoUrl = asset('logo/mcmmain-pdf.png');
     $companyName = core()->getConfigData('general.general.company_info.company_name') ?: config('app.name');
     $supportEmail = core()->getConfigData('general.general.company_info.email');
 @endphp
@@ -18,7 +17,7 @@
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;border:1px solid #e2e8f0;border-radius:8px;background:#ffffff;overflow:hidden;">
                 <tr><td style="height:4px;background:{{ $brandColor }};"></td></tr>
                 <tr><td style="padding:24px 30px;border-bottom:1px solid #e2e8f0;">
-                    <a href="{{ config('app.url') }}" style="display:inline-block;text-decoration:none;"><img src="{{ $logoUrl }}" alt="{{ $companyName }}" style="display:block;max-height:48px;max-width:190px;border:0;object-fit:contain;"></a>
+                    <a href="{{ config('app.url') }}" style="display:inline-block;text-decoration:none;"><img src="{{ $logoUrl }}" width="220" alt="{{ $companyName }}" style="display:block;width:220px;max-width:100%;height:auto;border:0;"></a>
                 </td></tr>
                 <tr><td style="padding:30px;">{{ $slot }}</td></tr>
                 <tr><td style="padding:20px 30px;border-top:1px solid #e2e8f0;background:#f8fafc;">

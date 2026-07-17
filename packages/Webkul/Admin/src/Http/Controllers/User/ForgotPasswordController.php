@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\User;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -52,7 +53,7 @@ class ForgotPasswordController extends Controller
         }
 
         return view('admin::sessions.verify-password-otp', [
-            'maskedEmail' => $this->maskEmail($challenge->email),
+            'maskedEmail'  => $this->maskEmail($challenge->email),
             'verifyAction' => $this->signedChallengeUrl('admin.forgot_password.verify.store', $challenge),
             'resendAction' => $this->signedChallengeUrl('admin.forgot_password.resend', $challenge),
         ]);
@@ -111,7 +112,9 @@ class ForgotPasswordController extends Controller
     {
         return URL::temporarySignedRoute(
             $route,
-            $challenge->expires_at,
+            $challenge->expires_at_epoch
+                ? CarbonImmutable::createFromTimestampUTC($challenge->expires_at_epoch)
+                : $challenge->expires_at,
             ['challenge' => $challenge->id],
         );
     }

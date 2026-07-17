@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('otp_hash');
             $table->unsignedTinyInteger('attempts')->default(0);
             $table->timestamp('expires_at')->index();
+            $table->unsignedBigInteger('expires_at_epoch')->index();
             $table->timestamp('verified_at')->nullable();
             $table->timestamps();
         });
