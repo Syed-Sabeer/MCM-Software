@@ -38,8 +38,11 @@ class DashboardController extends Controller
     public function index()
     {
         return view('admin::dashboard.index')->with([
-            'startDate' => $this->dashboardHelper->getStartDate(),
-            'endDate'   => $this->dashboardHelper->getEndDate(),
+            'startDate'              => $this->dashboardHelper->getStartDate(),
+            'endDate'                => $this->dashboardHelper->getEndDate(),
+            'canViewBusinessDetails' => bouncer()->hasPermission('dashboard.business_details'),
+            'canViewCustomerDetails' => bouncer()->hasPermission('dashboard.customer_details'),
+            'canViewActivities'      => bouncer()->hasPermission('activities'),
         ]);
     }
 
@@ -55,6 +58,21 @@ class DashboardController extends Controller
         abort_unless(isset($this->typeFunctions[$type]), 404);
 
         $stats = $this->dashboardHelper->{$this->typeFunctions[$type]}();
+
+        if ($type === 'erp-overview') {
+            if (! bouncer()->hasPermission('dashboard.business_details')) {
+                unset(
+                    $stats['quote_status'],
+                    $stats['cases_by_stage'],
+                    $stats['sales_purchasing'],
+                    $stats['best_products']
+                );
+            }
+
+            if (! bouncer()->hasPermission('dashboard.customer_details')) {
+                unset($stats['top_customers']);
+            }
+        }
 
         return response()->json([
             'statistics' => $stats,

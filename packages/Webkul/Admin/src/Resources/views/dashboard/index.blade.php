@@ -14,7 +14,7 @@
             </p>
 
             <p class="text-sm text-gray-600 dark:text-gray-300">
-                Welcome back. Here is your business snapshot with upcoming events and active tasks.
+                Welcome back. Your workspace reflects the access assigned to your role.
             </p>
         </div>
 
@@ -22,11 +22,13 @@
 
         {!! view_render_event('admin.dashboard.index.header.right.before') !!}
 
-        <div class="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900">
-            <span class="text-gray-500 dark:text-gray-400">Sales: <strong class="text-gray-900 dark:text-white">USD</strong></span>
-            <span class="text-gray-300 dark:text-gray-700">|</span>
-            <span class="text-gray-500 dark:text-gray-400">Purchasing: <strong class="text-gray-900 dark:text-white">PKR</strong></span>
-        </div>
+        @if ($canViewBusinessDetails)
+            <div class="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900">
+                <span class="text-gray-500 dark:text-gray-400">Sales: <strong class="text-gray-900 dark:text-white">USD</strong></span>
+                <span class="text-gray-300 dark:text-gray-700">|</span>
+                <span class="text-gray-500 dark:text-gray-400">Purchasing: <strong class="text-gray-900 dark:text-white">PKR</strong></span>
+            </div>
+        @endif
 
         {!! view_render_event('admin.dashboard.index.header.right.after') !!}
     </div>
@@ -372,7 +374,7 @@
             id="v-erp-dashboard-template"
         >
             <div class="erp-dashboard-shell mt-3.5 grid gap-4">
-                <section class="erp-stats-row">
+                <section v-if="canViewBusinessDetails" class="erp-stats-row">
                     <a :href="quoteStatus.routes?.open || '#'" class="erp-stat-card erp-stat-link p-4">
                         <div class="flex items-start justify-between gap-3">
                             <div>
@@ -431,8 +433,8 @@
                 </section>
 
                 <div class="flex gap-4 max-xl:flex-wrap">
-                    <div class="flex flex-1 flex-col gap-4 max-xl:flex-auto">
-                        <section class="erp-dashboard-card p-5">
+                    <div v-if="canViewBusinessDetails || canViewCustomerDetails" class="flex flex-1 flex-col gap-4 max-xl:flex-auto">
+                        <section v-if="canViewBusinessDetails" class="erp-dashboard-card p-5">
                             <div class="flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                     <p class="erp-card-title">Sales vs Purchasing</p>
@@ -458,8 +460,8 @@
                             </div>
                         </section>
 
-                        <section class="grid gap-4 xl:grid-cols-2">
-                            <div class="erp-dashboard-card p-5">
+                        <section v-if="canViewBusinessDetails || canViewCustomerDetails" class="grid gap-4" :class="canViewBusinessDetails && canViewCustomerDetails ? 'xl:grid-cols-2' : 'grid-cols-1'">
+                            <div v-if="canViewCustomerDetails" class="erp-dashboard-card p-5">
                                 <div class="flex flex-wrap items-center justify-between gap-3">
                                     <div>
                                         <p class="erp-card-title">Customers</p>
@@ -511,7 +513,7 @@
                                 </div>
                             </div>
 
-                            <div class="erp-dashboard-card p-5">
+                            <div v-if="canViewBusinessDetails" class="erp-dashboard-card p-5">
                                 <div class="flex flex-wrap items-center justify-between gap-3">
                                     <div>
                                         <p class="erp-card-title">Products</p>
@@ -566,8 +568,8 @@
                         </section>
                     </div>
 
-                    <div class="flex w-[378px] max-w-full flex-col gap-4 max-sm:w-full">
-                        <div class="erp-dashboard-card p-4">
+                    <div v-if="canViewBusinessDetails || canViewActivities" class="flex w-[378px] max-w-full flex-col gap-4 max-sm:w-full">
+                        <div v-if="canViewActivities" class="erp-dashboard-card p-4">
                             <div class="mb-3 flex items-center justify-between gap-2">
                                 <div>
                                     <p class="erp-card-title">Calendar</p>
@@ -644,7 +646,7 @@
                             </div>
                         </div>
 
-                        <div class="erp-dashboard-card p-4">
+                        <div v-if="canViewActivities" class="erp-dashboard-card p-4">
                             <div class="mb-3 flex items-center justify-between gap-2">
                                 <div>
                                     <p class="erp-card-title">Tasks</p>
@@ -675,7 +677,7 @@
                             </div>
                         </div>
 
-                        <div class="erp-dashboard-card p-5">
+                        <div v-if="canViewBusinessDetails" class="erp-dashboard-card p-5">
                             <div class="flex items-center justify-between gap-3">
                                 <div>
                                     <p class="erp-card-title">Quotes</p>
@@ -709,7 +711,7 @@
                             </div>
                         </div>
 
-                        <div class="erp-dashboard-card p-5">
+                        <div v-if="canViewBusinessDetails" class="erp-dashboard-card p-5">
                             <div class="flex items-center justify-between gap-3">
                                 <div>
                                     <p class="erp-card-title">Cases</p>
@@ -739,6 +741,12 @@
                         </div>
                     </div>
                 </div>
+
+                <div v-if="!canViewBusinessDetails && !canViewCustomerDetails && !canViewActivities" class="erp-dashboard-card px-6 py-12 text-center">
+                    <span class="icon-lock inline-block text-3xl text-gray-400"></span>
+                    <h2 class="mt-3 text-lg font-semibold text-gray-900 dark:text-white">No dashboard sections assigned</h2>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Ask an administrator to enable dashboard details for your role.</p>
+                </div>
             </div>
         </script>
 
@@ -749,6 +757,9 @@
                 data() {
                     return {
                         loading: true,
+                        canViewBusinessDetails: @json($canViewBusinessDetails),
+                        canViewCustomerDetails: @json($canViewCustomerDetails),
+                        canViewActivities: @json($canViewActivities),
                         periodOptions: [],
                         filters: {
                             salesPeriod: '7d',
@@ -789,8 +800,13 @@
                 },
 
                 mounted() {
-                    this.fetchDashboard();
-                    this.fetchLatestTasks();
+                    if (this.canViewBusinessDetails || this.canViewCustomerDetails) {
+                        this.fetchDashboard();
+                    }
+
+                    if (this.canViewActivities) {
+                        this.fetchLatestTasks();
+                    }
                 },
 
                 methods: {

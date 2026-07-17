@@ -62,16 +62,19 @@ class Acl
             return $roles;
         }
 
-        $roles = collect($this->getAclConfig())
-            ->mapWithKeys(function ($role) {
-                if (is_array($role['route'])) {
-                    return collect($role['route'])->mapWithKeys(function ($route) use ($role) {
-                        return [$route => $role['key']];
-                    });
-                } else {
-                    return [$role['route'] => $role['key']];
-                }
-            });
+        $routePermissions = [];
+
+        foreach ($this->getAclConfig() as $role) {
+            foreach ((array) $role['route'] as $route) {
+                $routePermissions[$route][] = $role['key'];
+            }
+        }
+
+        $roles = collect($routePermissions)->map(function ($permissions) {
+            $permissions = array_values(array_unique($permissions));
+
+            return count($permissions) === 1 ? $permissions[0] : $permissions;
+        });
 
         return $roles;
     }
@@ -90,6 +93,10 @@ class Acl
         $acl = Arr::undot(Arr::dot($aclWithDotNotation));
 
         foreach ($acl as $aclItemKey => $aclItem) {
+            if ($aclItem['hidden'] ?? false) {
+                continue;
+            }
+
             $subAclItems = $this->processSubAclItems($aclItem);
 
             $this->addItem(new AclItem(

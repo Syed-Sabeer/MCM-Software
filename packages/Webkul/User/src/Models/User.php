@@ -95,10 +95,18 @@ class User extends Authenticatable implements UserContract
      */
     public function hasPermission($permission)
     {
-        if ($this->role->permission_type == 'custom' && ! $this->role->permissions) {
+        if (! $this->role) {
             return false;
         }
 
-        return in_array($permission, $this->role->permissions);
+        if ($this->role->permission_type === 'all') {
+            return true;
+        }
+
+        if (! $this->role->permissions) {
+            return false;
+        }
+
+        return in_array($permission, $this->role->permissions, true);
     }
 }

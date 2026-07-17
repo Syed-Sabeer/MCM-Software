@@ -9,7 +9,7 @@
             <!-- Navigation Menu -->
             @foreach (menu()->getItems('admin') as $menuItem)
                 @php
-                    $highlightKeys = ['settings', 'employees', 'website-submissions'];
+                    $highlightKeys = ['website-submissions'];
                     $isHighlighted = in_array($menuItem->getKey(), $highlightKeys, true);
 
                     $hasInlineChildren = ! in_array($menuItem->getKey(), ['settings', 'configuration'])

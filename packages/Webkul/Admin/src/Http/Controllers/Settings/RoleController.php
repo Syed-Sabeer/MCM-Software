@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Settings\RoleDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -52,7 +53,8 @@ class RoleController extends Controller
 
         if (request('permission_type') == 'custom') {
             $this->validate(request(), [
-                'permissions' => 'required',
+                'permissions'   => ['required', 'array', 'min:1'],
+                'permissions.*' => ['string', Rule::in(collect(config('acl'))->pluck('key')->all())],
             ]);
         }
 
@@ -93,7 +95,8 @@ class RoleController extends Controller
             'name'            => 'required',
             'permission_type' => 'required|in:all,custom',
             'description'     => 'required',
-            'permissions'     => 'required_if:permission_type,custom',
+            'permissions'     => ['required_if:permission_type,custom', 'array'],
+            'permissions.*'   => ['string', Rule::in(collect(config('acl'))->pluck('key')->all())],
         ]);
 
         Event::dispatch('settings.role.update.before', $id);

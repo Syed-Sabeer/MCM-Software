@@ -66,7 +66,13 @@ class Menu
         switch ($area) {
             case self::ADMIN:
                 $this->configMenu = $configMenu
-                    ->filter(fn ($item) => bouncer()->hasPermission($item['key']))
+                    ->filter(function ($item) {
+                        $permissions = (array) ($item['permission'] ?? $item['key']);
+
+                        return collect($permissions)->contains(
+                            fn ($permission) => bouncer()->hasPermission($permission)
+                        );
+                    })
                     ->toArray();
                 break;
 
@@ -142,7 +148,7 @@ class Menu
     {
         return collect($menuItem)
             ->sortBy('sort')
-            ->filter(fn ($value) => is_array($value))
+            ->filter(fn ($value, $key) => is_array($value) && ! in_array($key, ['permission'], true))
             ->map(function ($subMenuItem) {
                 $subSubMenuItems = $this->processSubMenuItems($subMenuItem);
 

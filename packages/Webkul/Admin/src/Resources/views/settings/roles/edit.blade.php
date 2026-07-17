@@ -56,9 +56,8 @@
                 <!-- Left sub-component -->
                 <div class="flex flex-1 flex-col gap-2 max-xl:flex-auto">
                     <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
-                            @lang('admin::app.settings.roles.edit.access-control')
-                        </p>
+                        <p class="text-base font-semibold text-gray-800 dark:text-white">Module and dashboard permissions</p>
+                        <p class="mb-4 mt-1 text-sm text-gray-500 dark:text-gray-400">Choose the sidebar modules, CRUD actions, record details, and dashboard information this employee role can access.</p>
 
                         <!-- Edit Role for  -->
                         <v-access-control>

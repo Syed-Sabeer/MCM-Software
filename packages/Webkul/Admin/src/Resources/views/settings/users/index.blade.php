@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        @lang('admin::app.settings.users.index.title')
+        Employees
     </x-slot>
 
     <div class="flex flex-col gap-4">
@@ -10,7 +10,7 @@
                 <x-admin::breadcrumbs name="settings.users" />
 
                 <div class="text-xl font-bold dark:text-white">
-                    @lang('admin::app.settings.users.index.title')
+                    Employees
                 </div>
             </div>
 
@@ -25,7 +25,7 @@
                             class="primary-button"
                             @click="$refs.userSettings.openModal()"
                         >
-                            @lang('admin::app.settings.users.index.create-btn')
+                            Add Employee
                         </button>
                     </div>
                 @endif
@@ -227,8 +227,8 @@
                             <p class="text-lg font-bold text-gray-800 dark:text-white">
                                 @{{
                                     selectedType == 'create'
-                                    ? "@lang('admin::app.settings.users.index.create.title')"
-                                    : "@lang('admin::app.settings.users.index.edit.title')"
+                                    ? 'Add Employee'
+                                    : 'Edit Employee'
                                 }}
                             </p>
                         </x-slot>

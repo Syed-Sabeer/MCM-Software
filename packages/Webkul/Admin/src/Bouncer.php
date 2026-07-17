@@ -14,15 +14,18 @@ class Bouncer
      */
     public function hasPermission($permission)
     {
-        if (auth()->guard('user')->check() && auth()->guard('user')->user()->role->permission_type == 'all') {
-            return true;
-        } else {
-            if (! auth()->guard('user')->check() || ! auth()->guard('user')->user()->hasPermission($permission)) {
-                return false;
-            }
+        if (! auth()->guard('user')->check()) {
+            return false;
         }
 
-        return true;
+        if (is_array($permission)) {
+            return collect($permission)->contains(fn ($item) => $this->hasPermission($item));
+        }
+
+        $user = auth()->guard('user')->user();
+
+        return collect($this->permissionCandidates((string) $permission))
+            ->contains(fn ($candidate) => $user->hasPermission($candidate));
     }
 
     /**
@@ -33,9 +36,43 @@ class Bouncer
      */
     public static function allow($permission)
     {
-        if (! auth()->guard('user')->check() || ! auth()->guard('user')->user()->hasPermission($permission)) {
-            abort(401, 'This action is unauthorized');
+        if (! app('bouncer')->hasPermission($permission)) {
+            abort(403, 'This action is unauthorized');
         }
+    }
+
+    /**
+     * Keep legacy contact permissions working while customer and vendor access
+     * is managed independently for new roles.
+     */
+    protected function permissionCandidates(string $permission): array
+    {
+        $candidates = [$permission];
+
+        if (str_starts_with($permission, 'customers.')) {
+            $candidates[] = 'contacts.'.substr($permission, strlen('customers.'));
+        }
+
+        if (str_starts_with($permission, 'vendors.')) {
+            $candidates[] = 'contacts.'.substr($permission, strlen('vendors.'));
+        }
+
+        if (str_starts_with($permission, 'contacts.')) {
+            $suffix = substr($permission, strlen('contacts.'));
+            $routeName = (string) request()->route()?->getName();
+
+            if (str_starts_with($routeName, 'admin.customers.')) {
+                array_unshift($candidates, 'customers.'.$suffix);
+            } elseif (str_starts_with($routeName, 'admin.vendors.')) {
+                array_unshift($candidates, 'vendors.'.$suffix);
+            }
+        }
+
+        if ($permission === 'configuration') {
+            $candidates[] = 'general-settings';
+        }
+
+        return array_values(array_unique($candidates));
     }
 
     /**

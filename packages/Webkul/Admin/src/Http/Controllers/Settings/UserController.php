@@ -58,7 +58,7 @@ class UserController extends Controller
             'name'             => 'required',
             'password'         => 'nullable',
             'confirm_password' => 'nullable|required_with:password|same:password',
-            'role_id'          => 'required',
+            'role_id'          => 'required|integer|exists:roles,id',
             'status'           => 'boolean|in:0,1',
             'view_permission'  => 'string|in:global,group,individual',
         ]);
