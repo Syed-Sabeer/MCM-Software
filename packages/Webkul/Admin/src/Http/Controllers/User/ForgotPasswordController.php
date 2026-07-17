@@ -39,7 +39,7 @@ class ForgotPasswordController extends Controller
         $request->session()->put('password_reset.challenge_id', $challenge->id);
         $request->session()->forget('password_reset.verified_id');
 
-        return redirect()->route('admin.forgot_password.verify')
+        return redirect()->to($this->signedChallengeUrl('admin.forgot_password.verify', $challenge))
             ->with('success', 'If an account matches that email, a verification code has been sent.');
     }
 
@@ -53,6 +53,8 @@ class ForgotPasswordController extends Controller
 
         return view('admin::sessions.verify-password-otp', [
             'maskedEmail' => $this->maskEmail($challenge->email),
+            'verifyAction' => $this->signedChallengeUrl('admin.forgot_password.verify.store', $challenge),
+            'resendAction' => $this->signedChallengeUrl('admin.forgot_password.resend', $challenge),
         ]);
     }
 
@@ -69,11 +71,7 @@ class ForgotPasswordController extends Controller
         $challenge = $this->otpService->verify($challenge, $data['otp']);
         $request->session()->put('password_reset.verified_id', $challenge->id);
 
-        return redirect()->to(URL::temporarySignedRoute(
-            'admin.reset_password.create',
-            $challenge->expires_at,
-            ['challenge' => $challenge->id],
-        ));
+        return redirect()->to($this->signedChallengeUrl('admin.reset_password.create', $challenge));
     }
 
     public function resend(Request $request): RedirectResponse
@@ -95,14 +93,27 @@ class ForgotPasswordController extends Controller
         $request->session()->put('password_reset.challenge_id', $challenge->id);
         $request->session()->forget('password_reset.verified_id');
 
-        return back()->with('success', 'A new verification code has been sent.');
+        return redirect()->to($this->signedChallengeUrl('admin.forgot_password.verify', $challenge))
+            ->with('success', 'A new verification code has been sent.');
     }
 
     protected function challenge(Request $request): ?PasswordResetOtp
     {
-        $id = $request->session()->get('password_reset.challenge_id');
+        $signedChallengeId = $request->hasValidSignature()
+            ? $request->integer('challenge')
+            : null;
+        $id = $signedChallengeId ?: $request->session()->get('password_reset.challenge_id');
 
         return $id ? PasswordResetOtp::find($id) : null;
+    }
+
+    protected function signedChallengeUrl(string $route, PasswordResetOtp $challenge): string
+    {
+        return URL::temporarySignedRoute(
+            $route,
+            $challenge->expires_at,
+            ['challenge' => $challenge->id],
+        );
     }
 
     protected function maskEmail(string $email): string

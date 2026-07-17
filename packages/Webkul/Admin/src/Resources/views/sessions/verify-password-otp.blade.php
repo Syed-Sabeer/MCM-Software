@@ -12,7 +12,7 @@
                     <p class="mt-1 text-sm text-gray-500">Enter the six-digit code sent to {{ $maskedEmail }}.</p>
                 </div>
 
-                <x-admin::form :action="route('admin.forgot_password.verify.store')">
+                <x-admin::form :action="$verifyAction">
                     <div class="p-6">
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label class="required">Verification code</x-admin::form.control-group.label>
@@ -26,7 +26,7 @@
                     </div>
                 </x-admin::form>
 
-                <form method="POST" action="{{ route('admin.forgot_password.resend') }}" class="border-t border-gray-200 px-6 py-4 text-center dark:border-gray-800">
+                <form method="POST" action="{{ $resendAction }}" class="border-t border-gray-200 px-6 py-4 text-center dark:border-gray-800">
                     @csrf
                     <button type="submit" class="text-sm font-semibold text-gray-600 hover:text-brandColor dark:text-gray-300">Send a new code</button>
                 </form>

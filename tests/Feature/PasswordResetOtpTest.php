@@ -23,8 +23,11 @@ it('resets an employee password only after the emailed otp is verified', functio
     $user = User::query()->firstOrFail();
 
     $response = $this->post(passwordOtpUrl('admin.forgot_password.store'), ['email' => $user->email]);
-    $response->assertRedirect(route('admin.forgot_password.verify'))
-        ->assertSessionHas('password_reset.challenge_id');
+    $response->assertSessionHas('password_reset.challenge_id');
+    $verifyUrl = $response->headers->get('Location');
+
+    expect($verifyUrl)->toContain(route('admin.forgot_password.verify'))
+        ->and($verifyUrl)->toContain('signature=');
 
     $otp = null;
     Notification::assertSentTo($user, PasswordResetOtpNotification::class, function ($notification) use (&$otp) {
@@ -40,7 +43,12 @@ it('resets an employee password only after the emailed otp is verified', functio
     $this->get(passwordOtpUrl('admin.reset_password.create'))
         ->assertRedirect(route('admin.forgot_password.create'));
 
-    $verifyResponse = $this->post(passwordOtpUrl('admin.forgot_password.verify.store'), ['otp' => $otp]);
+    $this->withSession(['password_reset' => []])
+        ->get($verifyUrl)
+        ->assertOk()
+        ->assertSee('Verify your email');
+
+    $verifyResponse = $this->post($verifyUrl, ['otp' => $otp]);
     $resetUrl = $verifyResponse->headers->get('Location');
 
     expect($resetUrl)->toContain(route('admin.reset_password.create'))
