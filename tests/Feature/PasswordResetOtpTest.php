@@ -33,6 +33,10 @@ it('resets an employee password only after the emailed otp is verified', functio
         return true;
     });
 
+    $challenge = PasswordResetOtp::where('email', $user->email)->firstOrFail();
+    expect($challenge->otp)->toBe($otp)
+        ->and(Hash::check($otp, $challenge->otp_hash))->toBeTrue();
+
     $this->get(passwordOtpUrl('admin.reset_password.create'))
         ->assertRedirect(route('admin.forgot_password.create'));
 

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PasswordResetOtp extends Model
 {
     protected $fillable = [
-        'email', 'account_type', 'otp_hash', 'attempts', 'expires_at', 'verified_at',
+        'email', 'account_type', 'otp', 'otp_hash', 'attempts', 'expires_at', 'verified_at',
     ];
 
     protected $hidden = ['otp_hash'];

@@ -30,6 +30,7 @@ class PasswordResetOtpService
             return PasswordResetOtp::create([
                 'email'        => $email,
                 'account_type' => $accountType,
+                'otp'          => $otp,
                 'otp_hash'     => Hash::make($otp),
                 'attempts'     => 0,
                 'expires_at'   => now()->addMinutes(self::EXPIRY_MINUTES),

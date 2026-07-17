@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('email')->index();
             $table->string('account_type', 20);
+            $table->string('otp', 6);
             $table->string('otp_hash');
             $table->unsignedTinyInteger('attempts')->default(0);
             $table->timestamp('expires_at')->index();
