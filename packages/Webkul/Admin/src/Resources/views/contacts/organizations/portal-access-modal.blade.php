@@ -56,7 +56,7 @@
                 <label class="flex cursor-pointer items-start gap-2 rounded-md border border-gray-200 p-3 text-sm dark:border-gray-700 dark:text-white"><input type="hidden" name="portal_send_email" value="0"><input type="checkbox" name="portal_send_email" value="1" @checked(old('portal_send_email', true)) class="mt-0.5"><span><span class="font-medium">Send invitation/login email</span><span class="mt-0.5 block text-xs text-gray-500">An email is sent for either credential method. Manually entered passwords are not included.</span></span></label>
             </div>
 
-            <div class="flex justify-end gap-2 border-t border-gray-200 bg-slate-50 px-5 py-4 dark:border-gray-800 dark:bg-gray-950"><button type="button" class="secondary-button" onclick="window.closePortalUserModal(@js($portalModalId))">Cancel</button><button class="primary-button inline-flex items-center gap-2"><span class="icon-add"></span> Create access</button></div>
+            <div class="flex justify-end gap-2 border-t border-gray-200 bg-slate-50 px-5 py-4 dark:border-gray-800 dark:bg-gray-950"><button type="button" class="secondary-button" onclick="window.closePortalUserModal(@js($portalModalId))">Cancel</button><button id="{{ $portalModalId }}-submit" type="submit" class="primary-button inline-flex min-w-[142px] items-center justify-center gap-2"><span class="icon-add"></span> Create access</button></div>
         </form>
     </div>
 </div>
@@ -90,6 +90,10 @@
         var passwordFields = document.getElementById(modalId + '-password-fields');
         var linkedEmail = selectedContact ? selectedContact.dataset.email : '';
 
+        contactSelect.setCustomValidity(selectedContact && ! linkedEmail
+            ? 'The linked contact must have a valid email before portal access can be created.'
+            : '');
+
         independentFields.classList.toggle('hidden', Boolean(selectedContact));
         linkedSummary.classList.toggle('hidden', ! selectedContact);
         independentFields.querySelectorAll('input').forEach(function (input) {
@@ -117,6 +121,13 @@
         if (selected && ! selected.dataset.email) {
             event.preventDefault();
             window.syncPortalUserModal(@js($portalModalId));
+
+            return;
+        }
+
+        var submitButton = document.getElementById(@js($portalModalId) + '-submit');
+        if (submitButton) {
+            submitButton.innerHTML = '<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span><span>Creating access...</span>';
         }
     });
 
