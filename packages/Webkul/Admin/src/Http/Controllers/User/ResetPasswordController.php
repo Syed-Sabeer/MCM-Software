@@ -15,12 +15,20 @@ class ResetPasswordController extends Controller
 
     public function create(Request $request): View|RedirectResponse
     {
-        if (! $this->verifiedChallenge($request)) {
+        $challenge = $this->verifiedChallenge($request);
+
+        if (! $challenge) {
             return redirect()->route('admin.forgot_password.create')
                 ->withErrors(['email' => 'Verify your password reset code first.']);
         }
 
-        return view('admin::sessions.reset-password');
+        $request->session()->put('password_reset.verified_id', $challenge->id);
+
+        return view('admin::sessions.reset-password', [
+            'resetAction' => $request->hasValidSignature()
+                ? $request->fullUrl()
+                : route('admin.reset_password.store'),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -44,7 +52,10 @@ class ResetPasswordController extends Controller
 
     protected function verifiedChallenge(Request $request): ?PasswordResetOtp
     {
-        $id = $request->session()->get('password_reset.verified_id');
+        $signedChallengeId = $request->hasValidSignature()
+            ? $request->integer('challenge')
+            : null;
+        $id = $signedChallengeId ?: $request->session()->get('password_reset.verified_id');
         $challenge = $id ? PasswordResetOtp::find($id) : null;
 
         return $challenge?->isVerified() ? $challenge : null;

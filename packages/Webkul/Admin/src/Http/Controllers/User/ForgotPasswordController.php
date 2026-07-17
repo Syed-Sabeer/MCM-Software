@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Models\PasswordResetOtp;
@@ -68,7 +69,11 @@ class ForgotPasswordController extends Controller
         $challenge = $this->otpService->verify($challenge, $data['otp']);
         $request->session()->put('password_reset.verified_id', $challenge->id);
 
-        return redirect()->route('admin.reset_password.create');
+        return redirect()->to(URL::temporarySignedRoute(
+            'admin.reset_password.create',
+            $challenge->expires_at,
+            ['challenge' => $challenge->id],
+        ));
     }
 
     public function resend(Request $request): RedirectResponse

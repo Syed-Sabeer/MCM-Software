@@ -40,10 +40,18 @@ it('resets an employee password only after the emailed otp is verified', functio
     $this->get(passwordOtpUrl('admin.reset_password.create'))
         ->assertRedirect(route('admin.forgot_password.create'));
 
-    $this->post(passwordOtpUrl('admin.forgot_password.verify.store'), ['otp' => $otp])
-        ->assertRedirect(route('admin.reset_password.create'));
+    $verifyResponse = $this->post(passwordOtpUrl('admin.forgot_password.verify.store'), ['otp' => $otp]);
+    $resetUrl = $verifyResponse->headers->get('Location');
 
-    $this->post(passwordOtpUrl('admin.reset_password.store'), [
+    expect($resetUrl)->toContain(route('admin.reset_password.create'))
+        ->and($resetUrl)->toContain('signature=');
+
+    $this->withSession(['password_reset' => []])
+        ->get($resetUrl)
+        ->assertOk()
+        ->assertSee('Set a new password');
+
+    $this->post($resetUrl, [
         'password' => 'NewSecurePass123!', 'password_confirmation' => 'NewSecurePass123!',
     ])->assertRedirect(route('admin.session.create'));
 

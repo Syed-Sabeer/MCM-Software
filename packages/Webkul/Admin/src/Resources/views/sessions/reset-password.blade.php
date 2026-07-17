@@ -10,7 +10,7 @@
                     <div class="flex items-start gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-red-50 text-brandColor dark:bg-red-950"><i class="icon-setting text-xl"></i></span><div><h1 class="text-lg font-bold text-gray-900 dark:text-white">Set a new password</h1><p class="mt-1 text-sm text-gray-500">Use at least eight characters and confirm it below.</p></div></div>
                 </div>
 
-                <x-admin::form :action="route('admin.reset_password.store')">
+                <x-admin::form :action="$resetAction">
                     <div class="grid gap-4 p-6">
                         <x-admin::form.control-group class="!mb-0">
                             <x-admin::form.control-group.label class="required">New password</x-admin::form.control-group.label>
