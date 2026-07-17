@@ -2,6 +2,10 @@
 
 ## Authentication
 
+- Employees and portal customers recover passwords from the shared `/admin/forget-password` page.
+- Recovery sends a six-digit OTP rather than a password-reset link.
+- OTP challenges are hashed, short-lived, attempt-limited, and bound to the server session before the new-password form is available.
+
 The `/customer-portal` surface uses the `customer` session guard, the `customer_portal_users` provider, and the `customer_portal_users` password broker. Staff accounts cannot authenticate on this guard, and portal accounts cannot authenticate through the admin login.
 
 Invitations store only a SHA-256 token hash, expire after `CUSTOMER_PORTAL_INVITATION_EXPIRY` hours (72 by default), and are invalidated on use or resend. Invitation and reset emails should be processed by the configured Laravel queue worker.

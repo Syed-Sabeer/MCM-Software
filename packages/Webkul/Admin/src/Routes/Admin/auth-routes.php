@@ -33,15 +33,23 @@ Route::withoutMiddleware(['user'])->group(function () {
     Route::controller(ForgotPasswordController::class)->prefix('forget-password')->group(function () {
         Route::get('', 'create')->name('admin.forgot_password.create');
 
-        Route::post('', 'store')->name('admin.forgot_password.store');
+        Route::post('', 'store')->middleware('throttle:3,1')->name('admin.forgot_password.store');
+
+        Route::get('verify', 'verifyForm')->name('admin.forgot_password.verify');
+
+        Route::post('verify', 'verify')->middleware('throttle:8,1')->name('admin.forgot_password.verify.store');
+
+        Route::post('resend', 'resend')->middleware('throttle:2,1')->name('admin.forgot_password.resend');
     });
 
     /**
      * Reset password routes.
      */
     Route::controller(ResetPasswordController::class)->prefix('reset-password')->group(function () {
-        Route::get('{token}', 'create')->name('admin.reset_password.create');
+        Route::get('', 'create')->name('admin.reset_password.create');
 
-        Route::post('', 'store')->name('admin.reset_password.store');
+        Route::post('', 'store')->middleware('throttle:5,1')->name('admin.reset_password.store');
+
+        Route::get('{token}', fn () => redirect()->route('admin.forgot_password.create'));
     });
 });

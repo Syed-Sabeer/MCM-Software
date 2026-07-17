@@ -301,6 +301,7 @@ When extending this repository, follow this order:
 ## Customer Portal Security Boundary
 
 - Customer portal accounts live in `customer_portal_users` and authenticate only through the `customer` guard; internal `users`, roles, and the `user` guard remain staff-only.
+- The shared admin login uses one OTP password-recovery flow for both guards. Six-digit codes are hashed in `password_reset_otps`, expire after 10 minutes, allow five failed attempts, and must be verified in-session before a new password can be saved.
 - Multiple portal users may belong to one organization and may optionally link to a person in that organization.
 - Portal invitations are one-time SHA-256 token hashes in `customer_portal_invitations`; password resets use the dedicated `customer_portal_password_resets` broker table.
 - Every customer query derives `organization_id` from `auth('customer')->user()` and repeats ownership checks for view, PDF, and attachment routes.

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Controllers\CustomerPortal\AuthController;
 use Webkul\Admin\Http\Controllers\CustomerPortal\PortalController;
+use Webkul\Admin\Http\Controllers\User\ForgotPasswordController as SharedForgotPasswordController;
 
 /**
  * Home routes.
@@ -14,10 +15,10 @@ Route::prefix('customer-portal')->group(function () {
     Route::middleware('guest:customer')->group(function () {
         Route::get('login', fn () => redirect()->route('admin.session.create'))->name('customer_portal.login');
         Route::post('login', fn () => redirect()->route('admin.session.create'))->name('customer_portal.login.store');
-        Route::get('forgot-password', [AuthController::class, 'forgotForm'])->name('customer_portal.password.request');
-        Route::post('forgot-password', [AuthController::class, 'forgot'])->middleware('throttle:3,1')->name('customer_portal.password.email');
-        Route::get('reset-password/{token}', [AuthController::class, 'resetForm'])->name('customer_portal.password.reset');
-        Route::post('reset-password', [AuthController::class, 'reset'])->middleware('throttle:5,1')->name('customer_portal.password.update');
+        Route::get('forgot-password', fn () => redirect()->route('admin.forgot_password.create'))->name('customer_portal.password.request');
+        Route::post('forgot-password', [SharedForgotPasswordController::class, 'store'])->middleware('throttle:3,1')->name('customer_portal.password.email');
+        Route::get('reset-password/{token}', fn () => redirect()->route('admin.forgot_password.create'))->name('customer_portal.password.reset');
+        Route::post('reset-password', fn () => redirect()->route('admin.forgot_password.create'))->name('customer_portal.password.update');
         Route::get('invitation/{token}', [AuthController::class, 'invitationForm'])->name('customer_portal.invitation.show');
         Route::post('invitation/{token}', [AuthController::class, 'acceptInvitation'])->middleware('throttle:5,1')->name('customer_portal.invitation.accept');
     });

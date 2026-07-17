@@ -23,21 +23,13 @@ class CustomerPortalInvitationNotification extends Notification implements Shoul
 
     public function toMail($notifiable): MailMessage
     {
-        $message = (new MailMessage)
+        return (new MailMessage)
             ->subject('Set up your '.config('customer_portal.name').' access')
-            ->greeting('Hello '.$notifiable->name.',')
-            ->line($this->temporaryPasswordWasSet
-                ? 'An administrator created your portal account with a temporary password.'
-                : 'You have been invited to access your company account.')
-            ->line('Login email: '.$notifiable->email);
-
-        if ($this->temporaryPasswordWasSet) {
-            $message->line('For security, the temporary password is not included in this email. Use the secure link below to replace it before accessing the portal.');
-        }
-
-        return $message
-            ->action($this->temporaryPasswordWasSet ? 'Secure your account' : 'Set password', $this->url)
-            ->line('This secure link expires '.$this->expiresAt->toDayDateTimeString().'.')
-            ->line('Need help? Contact '.config('customer_portal.support_email').'.');
+            ->view('admin::emails.customer-portal.invitation', [
+                'user'                    => $notifiable,
+                'url'                     => $this->url,
+                'expiresAt'               => $this->expiresAt,
+                'temporaryPasswordWasSet' => $this->temporaryPasswordWasSet,
+            ]);
     }
 }

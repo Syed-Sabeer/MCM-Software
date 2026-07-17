@@ -51,7 +51,7 @@ return [
         'icon-class' => '',
     ], [
         'key'        => 'sales.invoices',
-        'name'       => 'Final Invoices',
+        'name'       => 'Invoices',
         'route'      => 'admin.invoices.index',
         'permission' => 'invoices',
         'sort'       => 3,

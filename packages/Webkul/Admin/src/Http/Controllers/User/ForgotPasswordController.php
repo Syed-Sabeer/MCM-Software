@@ -2,76 +2,109 @@
 
 namespace Webkul\Admin\Http\Controllers\User;
 
-use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
-use Illuminate\Support\Facades\Password;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
-use Webkul\Admin\Notifications\User\UserResetPassword;
+use Webkul\Admin\Models\PasswordResetOtp;
+use Webkul\Admin\Services\Auth\PasswordResetOtpService;
 
 class ForgotPasswordController extends Controller
 {
-    use SendsPasswordResetEmails;
+    public function __construct(protected PasswordResetOtpService $otpService) {}
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): View|RedirectResponse
     {
         if (auth()->guard('user')->check()) {
             return redirect()->route('admin.dashboard.index');
-        } else {
-            if (strpos(url()->previous(), 'user') !== false) {
-                $intendedUrl = url()->previous();
-            } else {
-                $intendedUrl = route('admin.dashboard.index');
-            }
-
-            session()->put('url.intended', $intendedUrl);
-
-            return view('admin::sessions.forgot-password');
         }
+
+        return view('admin::sessions.forgot-password');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function store()
+    public function store(Request $request): RedirectResponse
     {
+        $data = $request->validate(['email' => ['required', 'email', 'max:255']]);
+
         try {
-            $this->validate(request(), [
-                'email' => 'required|email',
-            ]);
+            $challenge = $this->otpService->createChallenge($data['email']);
+        } catch (\Throwable $exception) {
+            Log::error('Password reset OTP delivery failed', ['email' => $data['email'], 'exception' => $exception::class]);
 
-            $response = $this->broker()->sendResetLink(request(['email']), function ($user, $token) {
-                $user->notify(new UserResetPassword($token));
-            });
-
-            if ($response == Password::RESET_LINK_SENT) {
-                session()->flash('success', trans('admin::app.users.forget-password.create.reset-link-sent'));
-
-                return back();
-            }
-
-            return back()
-                ->withInput(request(['email']))
-                ->withErrors([
-                    'email' => trans('admin::app.users.forget-password.create.email-not-exist'),
-                ]);
-        } catch (\Exception $exception) {
-            session()->flash('error', trans($exception->getMessage()));
-
-            return redirect()->back();
+            return back()->withInput()->withErrors(['email' => 'The verification email could not be sent. Please try again shortly.']);
         }
+
+        $request->session()->put('password_reset.challenge_id', $challenge->id);
+        $request->session()->forget('password_reset.verified_id');
+
+        return redirect()->route('admin.forgot_password.verify')
+            ->with('success', 'If an account matches that email, a verification code has been sent.');
     }
 
-    /**
-     * Get the broker to be used during password reset.
-     *
-     * @return \Illuminate\Contracts\Auth\PasswordBroker
-     */
-    public function broker()
+    public function verifyForm(Request $request): View|RedirectResponse
     {
-        return Password::broker('users');
+        $challenge = $this->challenge($request);
+
+        if (! $challenge) {
+            return redirect()->route('admin.forgot_password.create');
+        }
+
+        return view('admin::sessions.verify-password-otp', [
+            'maskedEmail' => $this->maskEmail($challenge->email),
+        ]);
+    }
+
+    public function verify(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['otp' => ['required', 'digits:6']]);
+        $challenge = $this->challenge($request);
+
+        if (! $challenge) {
+            return redirect()->route('admin.forgot_password.create')
+                ->withErrors(['email' => 'Start a new password reset request.']);
+        }
+
+        $challenge = $this->otpService->verify($challenge, $data['otp']);
+        $request->session()->put('password_reset.verified_id', $challenge->id);
+
+        return redirect()->route('admin.reset_password.create');
+    }
+
+    public function resend(Request $request): RedirectResponse
+    {
+        $challenge = $this->challenge($request);
+
+        if (! $challenge) {
+            return redirect()->route('admin.forgot_password.create');
+        }
+
+        try {
+            $challenge = $this->otpService->resend($challenge);
+        } catch (\Throwable $exception) {
+            Log::error('Password reset OTP resend failed', ['challenge_id' => $challenge->id, 'exception' => $exception::class]);
+
+            return back()->withErrors(['otp' => 'A new code could not be sent. Please try again shortly.']);
+        }
+
+        $request->session()->put('password_reset.challenge_id', $challenge->id);
+        $request->session()->forget('password_reset.verified_id');
+
+        return back()->with('success', 'A new verification code has been sent.');
+    }
+
+    protected function challenge(Request $request): ?PasswordResetOtp
+    {
+        $id = $request->session()->get('password_reset.challenge_id');
+
+        return $id ? PasswordResetOtp::find($id) : null;
+    }
+
+    protected function maskEmail(string $email): string
+    {
+        [$name, $domain] = array_pad(explode('@', $email, 2), 2, '');
+        $visible = mb_substr($name, 0, min(2, mb_strlen($name)));
+
+        return $visible.str_repeat('*', max(mb_strlen($name) - mb_strlen($visible), 3)).'@'.$domain;
     }
 }

@@ -2,96 +2,51 @@
 
 namespace Webkul\Admin\Http\Controllers\User;
 
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Foundation\Auth\ResetsPasswords;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Admin\Models\PasswordResetOtp;
+use Webkul\Admin\Services\Auth\PasswordResetOtpService;
 
 class ResetPasswordController extends Controller
 {
-    use ResetsPasswords;
+    public function __construct(protected PasswordResetOtpService $otpService) {}
 
-    /**
-     * Display the password reset view for the given token.
-     *
-     * If no token is present, display the link request form.
-     *
-     * @param  string|null  $token
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
-    public function create($token = null)
+    public function create(Request $request): View|RedirectResponse
     {
-        return view('admin::sessions.reset-password')->with([
-            'token' => $token,
-            'email' => request('email'),
-        ]);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function store()
-    {
-        try {
-            $this->validate(request(), [
-                'token'    => 'required',
-                'email'    => 'required|email',
-                'password' => 'required|confirmed|min:6',
-            ]);
-
-            $response = $this->broker()->reset(
-                request(['email', 'password', 'password_confirmation', 'token']), function ($admin, $password) {
-                    $this->resetPassword($admin, $password);
-                }
-            );
-
-            if ($response == Password::PASSWORD_RESET) {
-                return redirect()->route('admin.dashboard.index');
-            }
-
-            return back()
-                ->withInput(request(['email']))
-                ->withErrors([
-                    'email' => trans($response),
-                ]);
-        } catch (\Exception $exception) {
-            session()->flash('error', trans($exception->getMessage()));
-
-            return redirect()->back();
+        if (! $this->verifiedChallenge($request)) {
+            return redirect()->route('admin.forgot_password.create')
+                ->withErrors(['email' => 'Verify your password reset code first.']);
         }
+
+        return view('admin::sessions.reset-password');
     }
 
-    /**
-     * Reset the given admin's password.
-     *
-     * @param  \Illuminate\Contracts\Auth\CanResetPassword  $admin
-     * @param  string  $password
-     * @return void
-     */
-    protected function resetPassword($admin, $password)
+    public function store(Request $request): RedirectResponse
     {
-        $admin->password = Hash::make($password);
+        $data = $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+        $challenge = $this->verifiedChallenge($request);
 
-        $admin->setRememberToken(Str::random(60));
+        if (! $challenge) {
+            return redirect()->route('admin.forgot_password.create')
+                ->withErrors(['email' => 'Your verified password reset session has expired.']);
+        }
 
-        $admin->save();
+        $this->otpService->resetPassword($challenge, $data['password']);
+        $request->session()->forget('password_reset');
 
-        event(new PasswordReset($admin));
-
-        auth()->guard('user')->login($admin);
+        return redirect()->route('admin.session.create')
+            ->with('success', 'Your password has been updated. You can now sign in.');
     }
 
-    /**
-     * Get the broker to be used during password reset.
-     *
-     * @return \Illuminate\Contracts\Auth\PasswordBroker
-     */
-    public function broker()
+    protected function verifiedChallenge(Request $request): ?PasswordResetOtp
     {
-        return Password::broker('users');
+        $id = $request->session()->get('password_reset.verified_id');
+        $challenge = $id ? PasswordResetOtp::find($id) : null;
+
+        return $challenge?->isVerified() ? $challenge : null;
     }
 }
