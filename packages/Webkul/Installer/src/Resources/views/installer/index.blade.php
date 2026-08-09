@@ -1096,7 +1096,7 @@
 
                                         this.envData = { ...this.envData, ...params };
                                     } else {
-                                        setErrors({ 'db_connection': ["Krayin currently supports MySQL only."] });
+                                        setErrors({ 'db_connection': ["Deveon currently supports MySQL only."] });
                                     }
                                 },
 

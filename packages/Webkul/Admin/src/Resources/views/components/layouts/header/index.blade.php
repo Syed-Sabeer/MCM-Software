@@ -7,7 +7,7 @@
         <a href="{{ route('admin.dashboard.index') }}">
             @if ($logo = core()->getConfigData('general.general.admin_logo.logo_image'))
                 <img
-                    class="h-10" 
+                    class="h-10"
                     src="{{ asset('/storage/'.$logo) }}"
                     alt="{{ config('app.name') }}"
                 />
@@ -80,7 +80,7 @@
             <x-slot:content class="mt-2 border-t-0 !p-0">
                 <div class="flex items-center gap-1.5 border border-x-0 border-b-gray-300 px-5 py-2.5 dark:border-gray-800">
                     <img
-                        src="{{ url('cache/logo.png') }}"
+                        src="{{ asset('logo/mcmfav.jpg') }}"
                         width="24"
                         height="24"
                     />
