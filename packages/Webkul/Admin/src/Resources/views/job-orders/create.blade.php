@@ -26,12 +26,12 @@
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-sm font-medium dark:text-white">Status</label>
-                            <select name="status" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-                                @foreach (['draft', 'open', 'in_progress', 'ready_to_ship', 'completed', 'closed', 'cancelled'] as $status)
-                                    <option value="{{ $status }}" @selected(old('status', 'open') === $status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
-                                @endforeach
-                            </select>
+                            @include('admin::partials.document-status-picker', [
+                                'type' => 'job_order',
+                                'name' => 'status',
+                                'selected' => 'open',
+                                'selectClass' => 'w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white',
+                            ])
                         </div>
 
                         <div>

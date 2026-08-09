@@ -6,6 +6,11 @@
 require 'auth-routes.php';
 
 /**
+ * Document status routes.
+ */
+require 'document-status-routes.php';
+
+/**
  * Leads routes.
  */
 require 'leads-routes.php';

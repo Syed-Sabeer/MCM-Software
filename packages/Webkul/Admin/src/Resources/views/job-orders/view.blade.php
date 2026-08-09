@@ -2,9 +2,22 @@
     <x-slot:title>{{ $jobOrder->job_order_number }}</x-slot>
 
     @php
-        $formatItemQty = fn ($value) => number_format((float) $value, 0, '.', '');
-        $formatStageQty = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+        $formatItemQty = fn ($value) => number_format((float) $value, 0, '.', ',');
+        $formatStageQty = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ','), '0'), '.');
         $formatAmount = fn ($value) => number_format((float) $value, 3, '.', ',');
+        $formatDate = function ($value) {
+            if (empty($value) || (is_string($value) && str_starts_with($value, '0000-00-00'))) {
+                return '-';
+            }
+
+            try {
+                $date = \Illuminate\Support\Carbon::parse($value);
+
+                return (int) $date->format('Y') <= 1 ? '-' : $date->format('Y-m-d');
+            } catch (\Throwable) {
+                return '-';
+            }
+        };
         $createdPurchaseOrder = $jobOrder->purchaseOrders->first();
     @endphp
 
@@ -45,8 +58,8 @@
                         -
                     @endif
                 </div>
-                <div><strong>Issue Date:</strong> {{ optional($jobOrder->issue_date)->format('Y-m-d') }}</div>
-                <div><strong>ETD:</strong> {{ optional($jobOrder->required_delivery_date)->format('Y-m-d') ?: '-' }}</div>
+                <div><strong>Issue Date:</strong> {{ $formatDate($jobOrder->issue_date) }}</div>
+                <div><strong>ETD:</strong> {{ $formatDate($jobOrder->required_delivery_date) }}</div>
             </div>
 
         </div>
@@ -240,8 +253,8 @@
                 <div class="mb-3 text-base font-semibold dark:text-white">Procurement Summary</div>
 
                 <div class="space-y-2 text-sm dark:text-white">
-                    <div><strong>Vendor Quotes:</strong> {{ $jobOrder->vendorQuotes->count() }}</div>
-                    <div><strong>Vendor POs:</strong> {{ $jobOrder->purchaseOrders->count() }}</div>
+                    <div><strong>Vendor Quotes:</strong> {{ number_format($jobOrder->vendorQuotes->count()) }}</div>
+                    <div><strong>Vendor POs:</strong> {{ number_format($jobOrder->purchaseOrders->count()) }}</div>
 
                     @foreach ($jobOrder->purchaseOrders as $purchaseOrder)
                         <div class="rounded border border-gray-200 p-2 dark:border-gray-700">

@@ -70,12 +70,11 @@
                         <input type="text" name="vendor_quote_number" value="{{ old('vendor_quote_number', $nextVendorQuoteNumber) }}" class="custom-input">
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium">Status</label>
-                        <select name="status" class="custom-select">
-                            @foreach (['draft', 'requested', 'received', 'selected', 'rejected', 'cancelled'] as $status)
-                                <option value="{{ $status }}" @selected(old('status', 'draft') === $status)>{{ ucfirst($status) }}</option>
-                            @endforeach
-                        </select>
+                        @include('admin::partials.document-status-picker', [
+                            'type' => 'vendor_quote',
+                            'name' => 'status',
+                            'selected' => 'draft',
+                        ])
                     </div>
                     <div>
                         <label class="mb-1 block text-sm font-medium">Issue Date</label>

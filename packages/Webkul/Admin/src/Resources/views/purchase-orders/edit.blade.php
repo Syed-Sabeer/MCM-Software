@@ -65,12 +65,11 @@
                         </select>
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium dark:text-white">Status</label>
-                        <select name="status" class="custom-select">
-                            @foreach (['draft', 'issued', 'partially_received', 'fully_received', 'closed', 'cancelled'] as $status)
-                                <option value="{{ $status }}" @selected(old('status', $purchaseOrder->status) === $status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
-                            @endforeach
-                        </select>
+                        @include('admin::partials.document-status-picker', [
+                            'type' => 'purchase_order',
+                            'name' => 'status',
+                            'selected' => $purchaseOrder->status,
+                        ])
                     </div>
                     <div>
                         <label class="mb-1 block text-sm font-medium dark:text-white">Expected Receive Date</label>

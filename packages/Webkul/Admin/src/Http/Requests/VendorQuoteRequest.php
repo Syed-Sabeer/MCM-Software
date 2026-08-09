@@ -5,7 +5,6 @@ namespace Webkul\Admin\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class VendorQuoteRequest extends FormRequest
 {
@@ -55,7 +54,7 @@ class VendorQuoteRequest extends FormRequest
             'charges.*.name' => ['required_with:charges.*.type,charges.*.value', 'string', 'max:255'],
             'charges.*.type' => ['required_with:charges.*.name,charges.*.value', 'in:percentage,value'],
             'charges.*.value' => ['required_with:charges.*.name,charges.*.type', 'numeric', 'min:0'],
-            'status' => ['required', Rule::in(['draft', 'requested', 'received', 'selected', 'rejected', 'cancelled'])],
+            'status' => ['required', 'string', 'max:50'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.material_name' => ['nullable', 'string'],
             'items.*.item' => ['nullable', 'string'],

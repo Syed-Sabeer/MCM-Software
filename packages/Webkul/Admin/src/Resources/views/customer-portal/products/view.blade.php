@@ -1,4 +1,4 @@
-@extends('admin::customer-portal.layouts.app', ['title' => $product->name, 'subtitle' => 'Product item code, specifications, color variants, and assigned images.'])
+@extends('admin::customer-portal.layouts.app', ['title' => $product->name, 'subtitle' => ''])
 
 @section('content')
     @php

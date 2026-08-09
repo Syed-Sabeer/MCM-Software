@@ -36,10 +36,12 @@
         $organization?->phone ? 'Phone: '.$organization->phone : null,
         data_get($organization, 'email') ? 'Email: '.data_get($organization, 'email') : null,
     ]);
-    $paymentTerms = $invoice->payment_term ?: data_get($invoice, 'payment_terms') ?: '-';
-    $shippingMethod = data_get($invoice, 'shipping_method') ?: '-';
-    $productionTime = data_get($invoice, 'production_time') ?: '-';
-    $transitTime = data_get($invoice, 'transit_time') ?: '-';
+    $sourceProforma = $invoice->proformaInvoice;
+    $sourceQuote = $invoice->quote ?: $sourceProforma?->quote;
+    $paymentTerms = $invoice->payment_term ?: data_get($invoice, 'payment_terms') ?: $sourceProforma?->payment_term ?: $sourceQuote?->payment_term ?: '-';
+    $shippingMethod = data_get($invoice, 'shipping_method') ?: data_get($sourceProforma, 'shipping_method') ?: $sourceQuote?->shipping_method ?: '-';
+    $productionTime = data_get($invoice, 'production_time') ?: data_get($sourceProforma, 'production_time') ?: $sourceQuote?->production_time ?: '-';
+    $transitTime = data_get($invoice, 'transit_time') ?: data_get($sourceProforma, 'transit_time') ?: $sourceQuote?->transit_time ?: '-';
     $formatDate = function ($value) {
         if (blank($value)) {
             return '-';
@@ -53,11 +55,12 @@
 
         return $date->year > 1 ? $date->format('M d, Y') : '-';
     };
-    $shipDateRequired = $formatDate($invoice->due_date);
-    $etd = $formatDate(data_get($invoice, 'etd'));
-    $eta = $formatDate(data_get($invoice, 'eta'));
+    $etd = $formatDate(data_get($invoice, 'etd') ?: data_get($sourceProforma, 'etd') ?: $sourceQuote?->etd);
+    $eta = $formatDate(data_get($invoice, 'eta') ?: data_get($sourceProforma, 'eta') ?: $sourceQuote?->eta);
     $remarks = trim((string) ($invoice->notes ?: ''));
     $terms = trim((string) ($invoice->terms ?: ''));
+    $advanceApplied = (float) ($invoice->advance_applied ?: 0);
+    $invoicePayments = (float) ($invoice->received_amount ?: 0);
     $formatQuantity = fn ($value) => rtrim(rtrim(number_format((float) $value, 4, '.', ','), '0'), '.');
     $formatMoney = fn ($value) => core()->formatBasePrice((float) $value, 2);
     $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge').(($charge['type'] ?? 'value') === 'percentage' ? ' ('.rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ','), '0'), '.').'%)' : '');
@@ -105,8 +108,8 @@
         </tr>
         <tr>
             <td><span class="summary-label">Transit time</span><span class="summary-value">{{ $transitTime }}</span></td>
-            <td><span class="summary-label">Ship date required</span><span class="summary-value">{{ $shipDateRequired }}</span></td>
-            <td><span class="summary-label">ETD / ETA</span><span class="summary-value">{{ $etd }} / {{ $eta }}</span></td>
+            <td><span class="summary-label">ETD</span><span class="summary-value">{{ $etd }}</span></td>
+            <td><span class="summary-label">ETA</span><span class="summary-value">{{ $eta }}</span></td>
         </tr>
     </table>
 
@@ -136,8 +139,12 @@
         <tr><td class="totals-label">Subtotal</td><td class="totals-value">{{ $formatMoney($invoice->subtotal ?: 0) }}</td></tr>
         @foreach($charges as $charge)<tr><td class="totals-label">{{ $formatChargeLabel($charge) }}</td><td class="totals-value">{{ $formatMoney($charge['amount'] ?: 0) }}</td></tr>@endforeach
         <tr><td class="totals-label">Grand total</td><td class="totals-value">{{ $formatMoney($invoice->grand_total ?: 0) }}</td></tr>
-        <tr><td class="totals-label">Advance applied</td><td class="totals-value">- {{ $formatMoney($invoice->advance_applied ?: 0) }}</td></tr>
-        <tr><td class="totals-label">Invoice payments</td><td class="totals-value">- {{ $formatMoney($invoice->received_amount ?: 0) }}</td></tr>
+        @if($advanceApplied > 0)
+            <tr><td class="totals-label">Advance applied</td><td class="totals-value">- {{ $formatMoney($advanceApplied) }}</td></tr>
+        @endif
+        @if($invoicePayments > 0)
+            <tr><td class="totals-label">Invoice payments</td><td class="totals-value">- {{ $formatMoney($invoicePayments) }}</td></tr>
+        @endif
         <tr class="grand-row"><td class="totals-label">Balance due</td><td class="totals-value">{{ $formatMoney($invoice->remaining_amount ?: 0) }}</td></tr>
     </table></td></tr></table>
 

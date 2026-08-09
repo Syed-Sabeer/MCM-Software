@@ -151,7 +151,7 @@ class JobOrderController extends Controller
                             $itemLabel,
                             $section->section_name,
                             $sectionItem->name,
-                            $sectionItem->qty,
+                            $this->formatRequirementQty($sectionItem->qty),
                             $sectionItem->unit,
                         ]);
                     }
@@ -221,7 +221,7 @@ class JobOrderController extends Controller
 
     protected function formatRequirementQty($value): string
     {
-        return rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+        return rtrim(rtrim(number_format((float) $value, 2, '.', ','), '0'), '.');
     }
 
     protected function findJobOrderForExport(int $id): JobOrder

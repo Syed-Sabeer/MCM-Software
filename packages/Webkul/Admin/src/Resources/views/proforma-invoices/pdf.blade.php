@@ -36,10 +36,11 @@
         $organization?->phone ? 'Phone: '.$organization->phone : null,
         data_get($organization, 'email') ? 'Email: '.data_get($organization, 'email') : null,
     ]);
-    $paymentTerms = $proformaInvoice->payment_term ?: data_get($proformaInvoice, 'payment_terms') ?: '-';
-    $shippingMethod = data_get($proformaInvoice, 'shipping_method') ?: '-';
-    $productionTime = data_get($proformaInvoice, 'production_time') ?: '-';
-    $transitTime = data_get($proformaInvoice, 'transit_time') ?: '-';
+    $sourceQuote = $proformaInvoice->quote;
+    $paymentTerms = $proformaInvoice->payment_term ?: data_get($proformaInvoice, 'payment_terms') ?: $sourceQuote?->payment_term ?: '-';
+    $shippingMethod = data_get($proformaInvoice, 'shipping_method') ?: $sourceQuote?->shipping_method ?: '-';
+    $productionTime = data_get($proformaInvoice, 'production_time') ?: $sourceQuote?->production_time ?: '-';
+    $transitTime = data_get($proformaInvoice, 'transit_time') ?: $sourceQuote?->transit_time ?: '-';
     $formatDate = function ($value) {
         if (blank($value)) {
             return '-';
@@ -53,9 +54,8 @@
 
         return $date->year > 1 ? $date->format('M d, Y') : '-';
     };
-    $shipDateRequired = $formatDate($proformaInvoice->due_date);
-    $etd = $formatDate(data_get($proformaInvoice, 'etd'));
-    $eta = $formatDate(data_get($proformaInvoice, 'eta'));
+    $etd = $formatDate(data_get($proformaInvoice, 'etd') ?: $sourceQuote?->etd);
+    $eta = $formatDate(data_get($proformaInvoice, 'eta') ?: $sourceQuote?->eta);
     $remarks = trim((string) ($proformaInvoice->notes ?: ''));
     $terms = trim((string) ($proformaInvoice->terms ?: ''));
     $formatQuantity = fn ($value) => rtrim(rtrim(number_format((float) $value, 4, '.', ','), '0'), '.');
@@ -105,8 +105,8 @@
         </tr>
         <tr>
             <td><span class="summary-label">Transit time</span><span class="summary-value">{{ $transitTime }}</span></td>
-            <td><span class="summary-label">Ship date required</span><span class="summary-value">{{ $shipDateRequired }}</span></td>
-            <td><span class="summary-label">ETD / ETA</span><span class="summary-value">{{ $etd }} / {{ $eta }}</span></td>
+            <td><span class="summary-label">ETD</span><span class="summary-value">{{ $etd }}</span></td>
+            <td><span class="summary-label">ETA</span><span class="summary-value">{{ $eta }}</span></td>
         </tr>
     </table>
 

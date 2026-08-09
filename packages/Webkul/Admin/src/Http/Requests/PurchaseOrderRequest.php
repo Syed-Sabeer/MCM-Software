@@ -77,7 +77,7 @@ class PurchaseOrderRequest extends FormRequest
             'charges.*.value' => ['required_with:charges.*.name,charges.*.type', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
             'terms' => ['nullable', 'string'],
-            'status' => ['required', 'in:draft,issued,partially_received,fully_received,closed,cancelled'],
+            'status' => ['required', 'string', 'max:50'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item' => ['required', 'string'],
             'items.*.ordered_quantity' => ['required', 'numeric', 'gt:0'],

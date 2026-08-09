@@ -17,7 +17,6 @@ class PurchaseOrderDataGrid extends DataGrid
             ->addSelect(
                 'purchase_orders.id',
                 'purchase_orders.po_number',
-                'purchase_orders.expected_receive_date',
                 'purchase_orders.grand_total',
                 'purchase_orders.status',
                 'purchase_orders.created_at',
@@ -36,7 +35,6 @@ class PurchaseOrderDataGrid extends DataGrid
         $this->addFilter('po_number', 'purchase_orders.po_number');
         $this->addFilter('vendor_name', 'organizations.name');
         $this->addFilter('job_order_number', 'job_orders.job_order_number');
-        $this->addFilter('expected_receive_date', 'purchase_orders.expected_receive_date');
         $this->addFilter('status', 'purchase_orders.status');
 
         return $queryBuilder;
@@ -47,7 +45,6 @@ class PurchaseOrderDataGrid extends DataGrid
         $this->addColumn(['index' => 'po_number', 'label' => 'PO #', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => '<a href="'.e(route('admin.purchase_orders.view', $row->id)).'" class="text-brandColor">'.e($row->po_number).'</a>']);
         $this->addColumn(['index' => 'vendor_name', 'label' => 'Vendor', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->organization_id ? '<a href="'.e(route('admin.contacts.organizations.view', $row->organization_id)).'" class="text-brandColor">'.e($row->vendor_name).'</a>' : '--']);
         $this->addColumn(['index' => 'job_order_number', 'label' => 'Job Order', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->job_order_id ? '<a href="'.e(route('admin.job_orders.view', $row->job_order_id)).'" class="text-brandColor">'.e($row->job_order_number).'</a>' : '--']);
-        $this->addColumn(['index' => 'expected_receive_date', 'label' => 'Expected Receive Date', 'type' => 'date', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->expected_receive_date ? core()->formatDate($row->expected_receive_date, 'd M Y') : '--']);
         $this->addColumn(['index' => 'grand_total', 'label' => 'Grand Total', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => 'PKR '.number_format((float) $row->grand_total, 2)]);
         $this->addColumn([
             'index'      => 'status',

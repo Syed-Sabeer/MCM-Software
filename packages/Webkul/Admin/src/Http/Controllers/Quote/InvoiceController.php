@@ -55,7 +55,7 @@ class InvoiceController extends Controller
     public function print(int $id): Response|StreamedResponse
     {
         $invoice = $this->invoiceRepository->with([
-            'items', 'receipts', 'proformaInvoice', 'quote', 'organization', 'salesOwner', 'additionalCharges',
+            'items', 'receipts', 'proformaInvoice.quote', 'quote', 'organization', 'salesOwner', 'additionalCharges',
         ])->findOrFail($id);
 
         return $this->downloadPDF(

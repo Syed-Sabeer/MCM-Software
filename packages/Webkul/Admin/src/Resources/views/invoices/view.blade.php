@@ -20,10 +20,16 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     @if (bouncer()->hasPermission('invoices.edit'))
-                        <form method="POST" action="{{ route('admin.invoices.status', $invoice->id) }}">
+                        <form method="POST" action="{{ route('admin.invoices.status', $invoice->id) }}" id="invoice-status-form-{{ $invoice->id }}">
                             @csrf
                             <input type="hidden" name="status" value="{{ $invoice->status === 'cancelled' ? 'issued' : 'cancelled' }}">
-                            <button type="submit" class="secondary-button" onclick="return confirm('{{ $invoice->status === 'cancelled' ? 'Reopen this invoice?' : 'Cancel this invoice? Existing payment records will be retained.' }}')">{{ $invoice->status === 'cancelled' ? 'Reopen Invoice' : 'Cancel Invoice' }}</button>
+                            <button
+                                type="button"
+                                class="secondary-button"
+                                onclick="window.confirmInvoiceStatusChange && window.confirmInvoiceStatusChange(event, 'invoice-status-form-{{ $invoice->id }}', '{{ $invoice->status === 'cancelled' ? 'Reopen invoice' : 'Cancel invoice' }}', '{{ $invoice->status === 'cancelled' ? 'Reopen this invoice?' : 'Cancel this invoice? Existing payment records will be retained.' }}', '{{ $invoice->status === 'cancelled' ? 'Reopen' : 'Cancel Invoice' }}')"
+                            >
+                                {{ $invoice->status === 'cancelled' ? 'Reopen Invoice' : 'Cancel Invoice' }}
+                            </button>
                         </form>
                     @endif
                     @if (bouncer()->hasPermission('invoices.edit'))
@@ -41,8 +47,6 @@
                 <dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
                     <div><dt class="text-xs text-gray-500">Customer</dt><dd class="mt-1 font-medium dark:text-white">{{ $invoice->organization?->name ?: '-' }}</dd></div>
                     <div><dt class="text-xs text-gray-500">Issue date</dt><dd class="mt-1 dark:text-white">{{ $invoice->issue_date?->format('Y-m-d') ?: '-' }}</dd></div>
-                    <div><dt class="text-xs text-gray-500">Due date</dt><dd class="mt-1 dark:text-white">{{ $invoice->due_date?->format('Y-m-d') ?: '-' }}</dd></div>
-                    <div><dt class="text-xs text-gray-500">Customer PO</dt><dd class="mt-1 dark:text-white">{{ $invoice->customer_po_reference ?: '-' }}</dd></div>
                     <div><dt class="text-xs text-gray-500">Payment terms</dt><dd class="mt-1 dark:text-white">{{ $invoice->payment_term ?: '-' }}</dd></div>
                     <div><dt class="text-xs text-gray-500">Sales owner</dt><dd class="mt-1 dark:text-white">{{ $invoice->salesOwner?->name ?: '-' }}</dd></div>
                 </dl>
@@ -84,7 +88,7 @@
 
             <section class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <h2 class="font-semibold text-gray-900 dark:text-white">Final invoice payments</h2>
-                <div class="mt-3 space-y-2">@forelse($invoice->receipts as $receipt)<div class="flex items-center justify-between rounded-md border border-gray-200 p-3 text-sm dark:border-gray-700"><div><p class="font-medium dark:text-white">{{ $receipt->receipt_number }}</p><p class="text-xs text-gray-500">{{ $receipt->payment_date?->format('Y-m-d') }} | {{ $receipt->payment_method ?: 'Method not set' }}</p></div><div class="flex items-center gap-3"><span class="font-semibold text-green-700">{{ $formatAmount($receipt->amount) }}</span>@if(bouncer()->hasPermission('invoices.edit'))<form method="POST" action="{{ route('admin.invoices.receipts.delete', [$invoice->id, $receipt->id]) }}">@csrf @method('DELETE')<button class="icon-delete text-lg text-red-600" title="Delete payment"></button></form>@endif</div></div>@empty<p class="text-sm text-gray-500">No final-invoice payments recorded yet.</p>@endforelse</div>
+                <div class="mt-3 space-y-2">@forelse($invoice->receipts as $receipt)<div class="flex items-center justify-between rounded-md border border-gray-200 p-3 text-sm dark:border-gray-700"><div><p class="font-medium dark:text-white">{{ $receipt->receipt_number }}</p><p class="text-xs text-gray-500">{{ $receipt->payment_date?->format('Y-m-d') }} | {{ $receipt->payment_method ?: 'Method not set' }}</p></div><div class="flex items-center gap-3"><span class="font-semibold text-green-700">{{ $formatAmount($receipt->amount) }}</span>@if(bouncer()->hasPermission('invoices.edit'))<form method="POST" action="{{ route('admin.invoices.receipts.delete', [$invoice->id, $receipt->id]) }}" id="invoice-receipt-delete-{{ $receipt->id }}">@csrf @method('DELETE')<button type="button" class="icon-delete text-lg text-red-600" title="Delete payment" onclick="window.confirmInvoiceReceiptDelete && window.confirmInvoiceReceiptDelete(event, 'invoice-receipt-delete-{{ $receipt->id }}')"></button></form>@endif</div></div>@empty<p class="text-sm text-gray-500">No final-invoice payments recorded yet.</p>@endforelse</div>
             </section>
         </div>
 
@@ -103,4 +107,52 @@
             </section>
         @endif
     </div>
+
+    @pushOnce('scripts')
+        <script>
+            window.confirmInvoiceStatusChange = function (event, formId, title, message, agreeLabel) {
+                event.preventDefault();
+
+                var form = document.getElementById(formId);
+
+                if (! form) {
+                    return;
+                }
+
+                window.emitter.emit('open-confirm-modal', {
+                    title: title,
+                    message: message,
+                    options: {
+                        btnDisagree: 'Cancel',
+                        btnAgree: agreeLabel,
+                    },
+                    agree: function () {
+                        form.submit();
+                    },
+                });
+            };
+
+            window.confirmInvoiceReceiptDelete = function (event, formId) {
+                event.preventDefault();
+
+                var form = document.getElementById(formId);
+
+                if (! form) {
+                    return;
+                }
+
+                window.emitter.emit('open-confirm-modal', {
+                    title: 'Delete payment',
+                    message: 'Are you sure you want to delete this invoice payment?',
+                    options: {
+                        btnDisagree: 'Cancel',
+                        btnAgree: 'Delete',
+                    },
+                    agree: function () {
+                        form.submit();
+                    },
+                });
+            };
+        </script>
+    @endPushOnce
 </x-admin::layouts>

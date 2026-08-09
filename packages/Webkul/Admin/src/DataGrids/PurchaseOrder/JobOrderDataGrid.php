@@ -35,7 +35,7 @@ class JobOrderDataGrid extends DataGrid
             ['job_order_number', 'Job Order #', 'string'],
             ['customer_name', 'Customer', 'string'],
             ['proforma_number', 'Proforma', 'string'],
-            ['required_delivery_date', 'ETD', 'date'],
+            ['required_delivery_date', 'ETD', 'string'],
             ['status', 'Status', 'string'],
         ] as [$index, $label, $type]) {
             $closure = fn ($row) => $row->{$index} ?: '--';
@@ -54,6 +54,10 @@ class JobOrderDataGrid extends DataGrid
                 $closure = fn ($row) => $row->proforma_invoice_id
                     ? '<a href="'.e(route('admin.proforma_invoices.view', $row->proforma_invoice_id)).'" class="text-brandColor">'.e($row->proforma_number).'</a>'
                     : '--';
+            }
+
+            if ($index === 'required_delivery_date') {
+                $closure = fn ($row) => $this->formatDate($row->required_delivery_date);
             }
 
             $this->addColumn([
@@ -77,5 +81,20 @@ class JobOrderDataGrid extends DataGrid
     public function prepareMassActions(): void
     {
         $this->addMassAction(['icon' => 'icon-delete', 'title' => 'Delete', 'method' => 'POST', 'url' => route('admin.job_orders.mass_delete')]);
+    }
+
+    protected function formatDate($value): string
+    {
+        if (empty($value) || (is_string($value) && str_starts_with($value, '0000-00-00'))) {
+            return '-';
+        }
+
+        try {
+            $date = \Illuminate\Support\Carbon::parse($value);
+
+            return (int) $date->format('Y') <= 1 ? '-' : $date->format('Y-m-d');
+        } catch (\Throwable) {
+            return '-';
+        }
     }
 }

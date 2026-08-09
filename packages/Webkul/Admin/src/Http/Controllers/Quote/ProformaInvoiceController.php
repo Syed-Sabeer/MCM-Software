@@ -142,12 +142,9 @@ class ProformaInvoiceController extends Controller
 
     public function changeStatus(int $id): RedirectResponse
     {
-        $allowed = ['draft', 'issued', 'partially_paid', 'fully_paid', 'cancelled', 'ready_for_job_order', 'converted'];
-        $status = request('status');
-
-        if (! in_array($status, $allowed)) {
-            abort(422, 'Invalid status.');
-        }
+        $status = request()->validate([
+            'status' => ['required', 'string', 'max:50'],
+        ])['status'];
 
         Event::dispatch('proforma_invoice.status.update.before', [$id, $status]);
 

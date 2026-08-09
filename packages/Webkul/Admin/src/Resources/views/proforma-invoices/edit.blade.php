@@ -247,6 +247,10 @@
         </div>
     </div>
 
+    @include('admin::partials.document-status-picker', [
+        'renderControl' => false,
+    ])
+
     @pushOnce('scripts')
         <script type="text/x-template" id="v-proforma-template">
             <div class="document-form-panel quote-create-form-panel box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -275,16 +279,13 @@
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group class="!mb-0">
-                            <x-admin::form.control-group.label>Status</x-admin::form.control-group.label>
-                            <select name="status" v-model="form.status" class="custom-select">
-                                <option value="draft">draft</option>
-                                <option value="issued">issued</option>
-                                <option value="partially_paid">partially_paid</option>
-                                <option value="fully_paid">fully_paid</option>
-                                <option value="cancelled">cancelled</option>
-                                <option value="ready_for_job_order">ready_for_job_order</option>
-                                <option value="converted">converted</option>
-                            </select>
+                            @include('admin::partials.document-status-picker', [
+                                'type' => 'proforma_invoice',
+                                'name' => 'status',
+                                'selected' => $formState['status'] ?? $proformaInvoice->status,
+                                'selectAttributes' => 'v-model="form.status"',
+                                'includeManager' => false,
+                            ])
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group class="!mb-0"><x-admin::form.control-group.label>Quote #</x-admin::form.control-group.label><input type="text" class="custom-input" :value="form.quote_number_display || ''" disabled></x-admin::form.control-group>
@@ -723,4 +724,3 @@
         <style>.custom-input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.45rem 0.6rem; font-size: 0.875rem; background: transparent; } .custom-select { width: 100%; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.45rem 0.6rem; font-size: 0.875rem; background: transparent; }</style>
     @endPushOnce
 </x-admin::layouts>
-

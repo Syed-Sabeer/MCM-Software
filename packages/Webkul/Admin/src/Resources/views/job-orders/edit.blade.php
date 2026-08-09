@@ -4,6 +4,19 @@
     @php
         $formatQty = fn ($value) => number_format((float) $value, 0, '.', '');
         $formatAmount = fn ($value) => number_format((float) $value, 3, '.', ',');
+        $formatInputDate = function ($value) {
+            if (empty($value) || (is_string($value) && str_starts_with($value, '0000-00-00'))) {
+                return '';
+            }
+
+            try {
+                $date = \Illuminate\Support\Carbon::parse($value);
+
+                return (int) $date->format('Y') <= 1 ? '' : $date->format('Y-m-d');
+            } catch (\Throwable) {
+                return '';
+            }
+        };
     @endphp
 
     <x-admin::form :action="route('admin.job_orders.update', $jobOrder->id)" method="PUT">
@@ -26,22 +39,22 @@
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-sm font-medium dark:text-white">Status</label>
-                            <select name="status" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-                                @foreach (['draft', 'open', 'in_progress', 'ready_to_ship', 'completed', 'closed', 'cancelled'] as $status)
-                                    <option value="{{ $status }}" @selected(old('status', $jobOrder->status) === $status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
-                                @endforeach
-                            </select>
+                            @include('admin::partials.document-status-picker', [
+                                'type' => 'job_order',
+                                'name' => 'status',
+                                'selected' => $jobOrder->status,
+                                'selectClass' => 'w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white',
+                            ])
                         </div>
 
                         <div>
                             <label class="mb-1 block text-sm font-medium dark:text-white">Issue Date</label>
-                            <input type="date" name="issue_date" value="{{ old('issue_date', optional($jobOrder->issue_date)->toDateString()) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                            <input type="date" name="issue_date" value="{{ old('issue_date', $formatInputDate($jobOrder->issue_date)) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                         </div>
 
                         <div>
                             <label class="mb-1 block text-sm font-medium dark:text-white">ETD</label>
-                            <input type="date" name="required_delivery_date" value="{{ old('required_delivery_date', optional($jobOrder->required_delivery_date)->toDateString()) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                            <input type="date" name="required_delivery_date" value="{{ old('required_delivery_date', $formatInputDate($jobOrder->required_delivery_date)) }}" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                         </div>
                     </div>
 
@@ -166,6 +179,3 @@
         </div>
     </x-admin::form>
 </x-admin::layouts>
-
-
-

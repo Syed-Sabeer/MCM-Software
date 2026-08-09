@@ -94,7 +94,7 @@
 
                 <div class="grid gap-4" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
                     <div><label class="mb-1 block text-sm font-medium">Vendor Quote #</label><input type="text" name="vendor_quote_number" value="{{ old('vendor_quote_number', $vendorQuote->vendor_quote_number) }}" class="custom-input"></div>
-                    <div><label class="mb-1 block text-sm font-medium">Status</label><select name="status" class="custom-select">@foreach (['draft', 'requested', 'received', 'selected', 'rejected', 'cancelled'] as $status)<option value="{{ $status }}" @selected(old('status', $vendorQuote->status) === $status)>{{ ucfirst($status) }}</option>@endforeach</select></div>
+                    <div>@include('admin::partials.document-status-picker', ['type' => 'vendor_quote', 'name' => 'status', 'selected' => $vendorQuote->status])</div>
                     <div><label class="mb-1 block text-sm font-medium">Issue Date</label><input type="date" name="issue_date" value="{{ old('issue_date', optional($vendorQuote->issue_date)->toDateString()) }}" class="custom-input"></div>
                 </div>
 

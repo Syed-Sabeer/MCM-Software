@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Services\CustomerPortal\OrderProgressPresenter;
+use Webkul\Core\Traits\PDFHandler;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Product\Models\Product;
@@ -23,6 +24,8 @@ use Webkul\Quote\Models\Invoice;
 
 class PortalController extends Controller
 {
+    use PDFHandler;
+
     protected function organization(): Organization
     {
         return Auth::guard('customer')->user()->organization;
@@ -83,7 +86,7 @@ class PortalController extends Controller
                         ->orWhere('cell_phone', 'like', '%'.$search.'%');
                 });
             })
-            ->select(['id', 'organization_id', 'name', 'job_title', 'email', 'phone', 'cell_phone'])
+            ->select(['id', 'organization_id', 'name', 'first_name', 'last_name', 'job_title', 'email', 'phone', 'cell_phone'])
             ->orderBy('name')->paginate($this->perPage())->withQueryString();
 
         return view('admin::customer-portal.contacts', compact('organization', 'records'));
@@ -96,18 +99,8 @@ class PortalController extends Controller
         $contact = Person::query()
             ->where('organization_id', $organization->id)
             ->findOrFail($id);
-        $recentQuotes = Quote::visibleToCustomer($organization->id)
-            ->where('person_id', $contact->id)
-            ->latest('quote_date')
-            ->take(5)
-            ->get();
-        $recentProformas = ProformaInvoice::visibleToCustomer($organization->id)
-            ->where('person_id', $contact->id)
-            ->latest('issue_date')
-            ->take(5)
-            ->get();
 
-        return view('admin::customer-portal.contacts.view', compact('organization', 'contact', 'recentQuotes', 'recentProformas'));
+        return view('admin::customer-portal.contacts.view', compact('organization', 'contact'));
     }
 
     public function quotes(): View
@@ -237,7 +230,7 @@ class PortalController extends Controller
     {
         $this->requirePermission('view_documents');
         $invoice = Invoice::visibleToCustomer($this->organization()->id)
-            ->with(['items', 'receipts', 'proformaInvoice', 'quote', 'organization', 'salesOwner', 'additionalCharges'])
+            ->with(['items', 'receipts', 'proformaInvoice.quote', 'quote', 'organization', 'salesOwner', 'additionalCharges'])
             ->findOrFail($id);
 
         return $this->downloadPDF(view('admin::invoices.pdf', compact('invoice'))->render(), 'Invoice_'.$invoice->invoice_number);

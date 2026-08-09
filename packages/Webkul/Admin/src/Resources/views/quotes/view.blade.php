@@ -82,7 +82,6 @@
                     @endphp
                     <div><strong>Status:</strong> {{ $displayStatus }}</div>
                     <div><strong>Quote Date:</strong> {{ optional($quote->quote_date)->format('Y-m-d') ?: '-' }}</div>
-                    <div><strong>Expiry Date:</strong> {{ optional($quote->expired_at)->format('Y-m-d') ?: '-' }}</div>
                     <div><strong>Sales Owner:</strong> {{ $salesPerson?->name ?: '-' }}</div>
                     <div><strong>Payment Term:</strong> {{ $quote->payment_term ?: '-' }}</div>
                 </div>
@@ -96,7 +95,6 @@
                     <div><strong>Transit Time:</strong> {{ $quote->transit_time ?: '-' }}</div>
                     <div><strong>ETD:</strong> {{ optional($quote->etd)->format('Y-m-d') ?: '-' }}</div>
                     <div><strong>ETA:</strong> {{ optional($quote->eta)->format('Y-m-d') ?: '-' }}</div>
-                    <div><strong>Customer Contact:</strong> {{ optional($quote->person)->name ?: '-' }}</div>
                 </div>
             </div>
         </div>

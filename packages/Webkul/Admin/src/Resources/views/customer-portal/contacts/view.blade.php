@@ -1,4 +1,8 @@
-@extends('admin::customer-portal.layouts.app', ['title' => $contact->name, 'subtitle' => $contact->job_title ?: 'Company contact details.'])
+@php
+    $contactName = trim(($contact->first_name ?? '').' '.($contact->last_name ?? '')) ?: ($contact->name ?: 'Contact #'.$contact->id);
+@endphp
+
+@extends('admin::customer-portal.layouts.app', ['title' => $contactName, 'subtitle' => $contact->job_title ?: 'Company contact details.'])
 
 @section('content')
     @php
@@ -16,8 +20,8 @@
     <div class="grid gap-4 xl:grid-cols-[380px_minmax(0,1fr)]">
         <aside class="portal-card h-fit overflow-hidden">
             <div class="flex flex-col items-center border-b border-gray-200 p-6 text-center dark:border-gray-800">
-                <span class="flex h-20 w-20 items-center justify-center rounded-full bg-brandColor text-2xl font-semibold text-white">{{ strtoupper(substr($contact->name, 0, 1)) }}</span>
-                <h2 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">{{ $contact->name }}</h2>
+                <span class="flex h-20 w-20 items-center justify-center rounded-full bg-brandColor text-2xl font-semibold text-white">{{ strtoupper(substr($contactName, 0, 1)) }}</span>
+                <h2 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">{{ $contactName }}</h2>
                 <p class="mt-1 text-sm text-gray-500">{{ $contact->job_title ?: 'Company contact' }}</p>
                 @if($contact->type)<span class="mt-3 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium capitalize text-blue-700 dark:bg-blue-950 dark:text-blue-300">{{ $contact->type }}</span>@endif
             </div>
@@ -35,7 +39,7 @@
                 <h2 class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">Personal details</h2>
                 <dl class="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2">
                     @foreach([
-                        'Full name' => $contact->name,
+                        'Full name' => $contactName,
                         'Salutation' => $contact->salutation,
                         'Job title' => $contact->job_title ?: $contact->title,
                         'Primary email' => $primaryEmail,
@@ -52,20 +56,8 @@
             </section>
 
             <section class="portal-card p-5">
-                <div class="flex items-start gap-3"><span class="portal-icon-box shrink-0"><i class="icon-location text-xl"></i></span><div><p class="portal-kicker">Mailing Address</p><h2 class="mt-1 font-semibold text-gray-900 dark:text-white">{{ $contact->name }}</h2><div class="mt-3 space-y-1 text-sm text-gray-700 dark:text-gray-300">@forelse($mailingAddress as $line)<p>{{ $line }}</p>@empty<p class="text-gray-500">No mailing address has been registered.</p>@endforelse</div></div></div>
+                <div class="flex items-start gap-3"><span class="portal-icon-box shrink-0"><i class="icon-location text-xl"></i></span><div><p class="portal-kicker">Mailing Address</p><h2 class="mt-1 font-semibold text-gray-900 dark:text-white">{{ $contactName }}</h2><div class="mt-3 space-y-1 text-sm text-gray-700 dark:text-gray-300">@forelse($mailingAddress as $line)<p>{{ $line }}</p>@empty<p class="text-gray-500">No mailing address has been registered.</p>@endforelse</div></div></div>
             </section>
-
-            <div class="grid gap-4 lg:grid-cols-2">
-                <section class="portal-card overflow-hidden">
-                    <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800"><p class="portal-kicker">Commercial</p><h2 class="mt-1 font-semibold text-gray-900 dark:text-white">Recent quotations</h2></div>
-                    <div class="divide-y divide-gray-200 dark:divide-gray-800">@forelse($recentQuotes as $quote)<a href="{{ route('customer_portal.quotes.view', $quote->id) }}" class="portal-row flex items-center justify-between gap-3 px-5 py-3.5"><div><p class="text-sm font-semibold text-brandColor">{{ $quote->quote_number }}</p><p class="mt-0.5 text-xs text-gray-500">{{ $quote->quote_date?->format('M d, Y') ?: '-' }}</p></div>@include('admin::customer-portal.partials.status-badge', ['status' => $quote->status])</a>@empty<p class="px-5 py-8 text-center text-sm text-gray-500">No visible quotations for this contact.</p>@endforelse</div>
-                </section>
-
-                <section class="portal-card overflow-hidden">
-                    <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800"><p class="portal-kicker">Billing</p><h2 class="mt-1 font-semibold text-gray-900 dark:text-white">Recent proformas</h2></div>
-                    <div class="divide-y divide-gray-200 dark:divide-gray-800">@forelse($recentProformas as $proforma)<a href="{{ route('customer_portal.proformas.view', $proforma->id) }}" class="portal-row flex items-center justify-between gap-3 px-5 py-3.5"><div><p class="text-sm font-semibold text-brandColor">{{ $proforma->proforma_number }}</p><p class="mt-0.5 text-xs text-gray-500">{{ $proforma->issue_date?->format('M d, Y') ?: '-' }}</p></div>@include('admin::customer-portal.partials.status-badge', ['status' => $proforma->status])</a>@empty<p class="px-5 py-8 text-center text-sm text-gray-500">No visible proformas for this contact.</p>@endforelse</div>
-                </section>
-            </div>
         </div>
     </div>
 @endsection
