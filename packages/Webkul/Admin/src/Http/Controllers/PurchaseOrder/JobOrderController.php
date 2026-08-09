@@ -41,22 +41,37 @@ class JobOrderController extends Controller
 
     public function create(): View
     {
-        $proformaInvoice = $this->proformaInvoiceRepository->with(['items', 'organization', 'person'])->findOrFail(request('proforma_invoice_id'));
-        $nextJobOrderNumber = JobOrder::generateNextNumber();
+        $proformaInvoice = $this->proformaInvoiceRepository->with(['items', 'organization', 'person', 'quote'])->findOrFail(request('proforma_invoice_id'));
+        $existingJobOrder = JobOrder::query()
+            ->where('proforma_invoice_id', $proformaInvoice->id)
+            ->latest('id')
+            ->first();
+        $nextJobOrderNumber = $existingJobOrder?->job_order_number ?: JobOrder::generateNextNumber();
 
-        return view('admin::job-orders.create', compact('proformaInvoice', 'nextJobOrderNumber'));
+        return view('admin::job-orders.create', compact('proformaInvoice', 'existingJobOrder', 'nextJobOrderNumber'));
     }
 
     public function store(JobOrderRequest $request): RedirectResponse
     {
-        Event::dispatch('job_order.create.before');
+        $proformaInvoice = $this->proformaInvoiceRepository->with(['items', 'quote'])->findOrFail($request->input('proforma_invoice_id'));
+        $existingJobOrder = JobOrder::query()
+            ->where('proforma_invoice_id', $proformaInvoice->id)
+            ->latest('id')
+            ->first();
 
-        $proformaInvoice = $this->proformaInvoiceRepository->with('items')->findOrFail($request->input('proforma_invoice_id'));
+        if ($existingJobOrder) {
+            Event::dispatch('job_order.update.before', $existingJobOrder->id);
+        } else {
+            Event::dispatch('job_order.create.before');
+        }
+
         $jobOrder = $this->jobOrderRepository->createFromProforma($proformaInvoice, $request->validated());
 
-        Event::dispatch('job_order.create.after', $jobOrder);
+        Event::dispatch($existingJobOrder ? 'job_order.update.after' : 'job_order.create.after', $jobOrder);
 
-        session()->flash('success', 'Job order created successfully.');
+        session()->flash('success', $existingJobOrder
+            ? 'Existing job order updated from the proforma invoice successfully.'
+            : 'Job order created successfully.');
 
         return redirect()->route('admin.job_orders.view', $jobOrder->id);
     }

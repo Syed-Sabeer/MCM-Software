@@ -62,7 +62,7 @@
                             <div class="mt-4 portal-progress-track"><div class="portal-progress-fill" style="width: {{ $progressPercent }}%"></div></div>
                             <div class="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                                 <span>{{ $progress['label'] }}</span>
-                                <span>Delivery {{ $order->required_delivery_date?->format('M d, Y') ?: 'not scheduled' }}</span>
+                                <span>Delivery {{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::date($order->required_delivery_date, 'M d, Y', 'not scheduled') }}</span>
                             </div>
                         </a>
                     @empty

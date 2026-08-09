@@ -5,7 +5,7 @@
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div><p class="text-xs font-medium text-gray-500 dark:text-gray-400">Status</p><p class="mt-1"><span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">{{ $progress['label'] }}</span></p></div>
             <div><p class="text-xs font-medium text-gray-500 dark:text-gray-400">Issue Date</p><p class="mt-1 text-sm text-gray-800 dark:text-white">{{ optional($jobOrder->issue_date)->format('Y-m-d') ?: '-' }}</p></div>
-            <div><p class="text-xs font-medium text-gray-500 dark:text-gray-400">ETD</p><p class="mt-1 text-sm text-gray-800 dark:text-white">{{ optional($jobOrder->required_delivery_date)->format('Y-m-d') ?: '-' }}</p></div>
+            <div><p class="text-xs font-medium text-gray-500 dark:text-gray-400">ETD</p><p class="mt-1 text-sm text-gray-800 dark:text-white">{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::date($jobOrder->required_delivery_date) }}</p></div>
             <div><p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total Qty</p><p class="mt-1 text-sm font-semibold text-gray-800 dark:text-white">{{ \Webkul\Admin\Http\Controllers\CustomerPortal\PortalController::decimal($jobOrder->total_order_qty) }}</p></div>
         </div>
         <ol class="mt-5 grid gap-2 sm:grid-cols-4" aria-label="Order progress">

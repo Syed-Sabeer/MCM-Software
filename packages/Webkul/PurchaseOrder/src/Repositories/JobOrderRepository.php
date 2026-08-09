@@ -27,6 +27,19 @@ class JobOrderRepository extends Repository
 
     public function createFromProforma(ProformaInvoice $proformaInvoice, array $overrides = []): JobOrder
     {
+        $proformaInvoice->loadMissing(['items', 'quote']);
+        $sourceItems = $proformaInvoice->items->map(fn ($item) => [
+            'proforma_invoice_item_id' => $item->id,
+            'product_id' => $item->product_id,
+            'item_name' => $item->item_name,
+            'item_code' => $item->item_code,
+            'description' => $item->description,
+            'qty' => $item->qty,
+            'unit' => $item->unit,
+            'unit_price' => $item->unit_price,
+            'line_total' => $item->line_total,
+        ])->toArray();
+
         $payload = array_merge([
             'proforma_invoice_id' => $proformaInvoice->id,
             'organization_id' => $proformaInvoice->organization_id,
@@ -34,24 +47,49 @@ class JobOrderRepository extends Repository
             'customer_po_reference' => $proformaInvoice->customer_po_reference,
             'subject' => $proformaInvoice->subject,
             'issue_date' => now()->toDateString(),
-            'required_delivery_date' => $proformaInvoice->due_date?->toDateString(),
+            'required_delivery_date' => $proformaInvoice->quote?->etd?->toDateString()
+                ?: $proformaInvoice->due_date?->toDateString(),
             'status' => 'open',
             'remarks' => $proformaInvoice->notes,
             'created_by' => auth()->id(),
-            'items' => $proformaInvoice->items->map(fn ($item) => [
-                'proforma_invoice_item_id' => $item->id,
-                'product_id' => $item->product_id,
-                'item_name' => $item->item_name,
-                'item_code' => $item->item_code,
-                'description' => $item->description,
-                'qty' => $item->qty,
-                'unit' => $item->unit,
-                'unit_price' => $item->unit_price,
-                'line_total' => $item->line_total,
-            ])->toArray(),
+            'items' => $sourceItems,
         ], $overrides);
 
-        return $this->create($payload);
+        // These values always come from the latest proforma, not hidden form fields.
+        $payload['proforma_invoice_id'] = $proformaInvoice->id;
+        $payload['organization_id'] = $proformaInvoice->organization_id;
+        $payload['person_id'] = $proformaInvoice->person_id;
+        $payload['customer_po_reference'] = $proformaInvoice->customer_po_reference;
+        $payload['subject'] = $proformaInvoice->subject;
+        $payload['items'] = $sourceItems;
+
+        return DB::transaction(function () use ($proformaInvoice, $payload) {
+            ProformaInvoice::query()->whereKey($proformaInvoice->id)->lockForUpdate()->firstOrFail();
+
+            $existing = JobOrder::query()
+                ->where('proforma_invoice_id', $proformaInvoice->id)
+                ->latest('id')
+                ->lockForUpdate()
+                ->first();
+
+            if (! $existing) {
+                return $this->create($payload);
+            }
+
+            $existingItemIds = $existing->items()
+                ->whereNotNull('proforma_invoice_item_id')
+                ->pluck('id', 'proforma_invoice_item_id');
+
+            $payload['items'] = collect($payload['items'])->map(function ($item) use ($existingItemIds) {
+                $item['id'] = $existingItemIds->get($item['proforma_invoice_item_id']);
+
+                return $item;
+            })->all();
+            $payload['job_order_number'] = $existing->job_order_number;
+            $payload['created_by'] = $existing->created_by;
+
+            return $this->update($payload, $existing->id);
+        });
     }
 
     public function create(array $data)
@@ -119,4 +157,3 @@ class JobOrderRepository extends Repository
         }
     }
 }
-

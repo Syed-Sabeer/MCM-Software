@@ -355,6 +355,23 @@ class PortalController extends Controller
         return $negative && $formatted !== '0' ? '-'.$formatted : $formatted;
     }
 
+    public static function date($value, string $format = 'Y-m-d', string $fallback = '-'): string
+    {
+        if (! $value) {
+            return $fallback;
+        }
+
+        try {
+            $date = $value instanceof \DateTimeInterface
+                ? $value
+                : new \DateTimeImmutable((string) $value);
+
+            return (int) $date->format('Y') > 1 ? $date->format($format) : $fallback;
+        } catch (\Throwable) {
+            return $fallback;
+        }
+    }
+
     public static function productImageUrl(?string $path): ?string
     {
         if (! $path || ! Storage::disk('public')->exists($path)) {
