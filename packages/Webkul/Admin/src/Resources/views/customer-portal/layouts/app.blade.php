@@ -193,11 +193,11 @@
             </div>
 
             <div class="flex items-center gap-2.5">
-                <v-dark>
+                {{-- <v-dark>
                     <div class="flex">
                         <span class="{{ request()->cookie('dark_mode') ? 'icon-light' : 'icon-dark' }} cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"></span>
                     </div>
-                </v-dark>
+                </v-dark> --}}
 
                 <x-admin::dropdown position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
                     <x-slot:toggle>
@@ -216,10 +216,18 @@
 
                     <x-slot:content class="mt-2 border-t-0 !p-0">
                         <div class="grid gap-1 py-2.5">
-                            <div class="px-5 py-2 text-sm text-gray-500 dark:text-gray-300">
-                                {{ $organization?->name ?: 'Customer Portal' }}
-                            </div>
+<div class="flex items-center gap-1.5 border border-x-0 border-b-gray-300 px-5 py-2.5 dark:border-gray-800">
+                    <img
+                        src="{{ asset('logo/mcmfav.jpg') }}"
+                        width="24"
+                        height="24"
+                    />
 
+                    <!-- Version -->
+                    <p class="text-gray-400">
+                        {{ $portalUser?->name ?: 'Customer Portal' }}
+                    </p>
+                </div>
                             <form method="POST" action="{{ route('customer_portal.logout') }}" id="customerPortalLogout">
                                 @csrf
                                 @method('DELETE')
