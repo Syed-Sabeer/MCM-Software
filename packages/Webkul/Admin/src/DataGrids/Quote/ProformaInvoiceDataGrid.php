@@ -4,6 +4,8 @@ namespace Webkul\Admin\DataGrids\Quote;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Webkul\Admin\Support\DocumentStatusOptions;
 use Webkul\DataGrid\DataGrid;
 
 class ProformaInvoiceDataGrid extends DataGrid
@@ -50,6 +52,9 @@ class ProformaInvoiceDataGrid extends DataGrid
 
     public function prepareColumns(): void
     {
+        $statusOptions = DocumentStatusOptions::all('proforma_invoice');
+        $statusLabels = collect($statusOptions)->pluck('name', 'value')->all();
+
         $this->addColumn([
             'index'      => 'proforma_number',
             'label'      => 'Proforma #',
@@ -126,11 +131,20 @@ class ProformaInvoiceDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'status',
-            'label'      => 'Status',
-            'type'       => 'string',
-            'sortable'   => true,
-            'filterable' => true,
+            'index'              => 'status',
+            'label'              => 'Status',
+            'type'               => 'string',
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => collect($statusOptions)
+                ->map(fn ($status) => [
+                    'label' => $status['name'],
+                    'value' => $status['value'],
+                ])
+                ->values()
+                ->all(),
+            'closure'            => fn ($row) => e($statusLabels[$row->status] ?? Str::headline($row->status ?: 'draft')),
         ]);
     }
 

@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\PurchaseOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -13,6 +14,7 @@ use Webkul\Admin\DataGrids\PurchaseOrder\PurchaseOrderDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\PurchaseOrderRequest;
+use Webkul\Admin\Support\DocumentStatusOptions;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\PurchaseOrder\Models\PurchaseOrder;
 use Webkul\PurchaseOrder\Repositories\JobOrderRepository;
@@ -142,7 +144,7 @@ class PurchaseOrderController extends Controller
                     Event::dispatch('purchase_order.create.after', $createdPurchaseOrder);
                 }
 
-                $this->vendorQuoteRepository->update(['status' => 'selected'], $vendorQuote->id);
+                $this->markVendorQuoteSelected($vendorQuote->id);
 
                 session()->flash('success', 'Purchase orders created successfully for ' . count($createdPurchaseOrders) . ' vendors.');
 
@@ -164,7 +166,7 @@ class PurchaseOrderController extends Controller
             $payload['charges'] = $payload['charges'] ?? app(\Webkul\Core\Support\DocumentChargeManager::class)->extract($vendorQuote, 'vendor_quote');
 
             $purchaseOrder = $this->purchaseOrderRepository->create($payload);
-            $this->vendorQuoteRepository->update(['status' => 'selected'], $vendorQuote->id);
+            $this->markVendorQuoteSelected($vendorQuote->id);
 
         } elseif ($request->filled('job_order_id') && ! $request->filled('organization_id')) {
             $jobOrder = $this->refreshJobOrderRequirementsIfNeeded((int) $request->input('job_order_id'));
@@ -222,7 +224,7 @@ class PurchaseOrderController extends Controller
                 }
 
                 if ($request->filled('vendor_quote_id')) {
-                    $this->vendorQuoteRepository->update(['status' => 'selected'], $request->input('vendor_quote_id'));
+                    $this->markVendorQuoteSelected((int) $request->input('vendor_quote_id'));
                 }
 
                 session()->flash('success', 'Purchase orders created successfully for ' . count($createdPurchaseOrders) . ' vendors.');
@@ -250,8 +252,55 @@ class PurchaseOrderController extends Controller
             $purchaseOrder = $this->purchaseOrderRepository->createFromJobOrder($jobOrder, $payload);
 
             if ($request->filled('vendor_quote_id')) {
-                $this->vendorQuoteRepository->update(['status' => 'selected'], $request->input('vendor_quote_id'));
+                $this->markVendorQuoteSelected((int) $request->input('vendor_quote_id'));
             }
+        } elseif (! $request->filled('organization_id')) {
+            $items = collect($payload['items'] ?? []);
+
+            if ($items->contains(fn ($item) => (int) ($item['vendor_id'] ?? 0) <= 0)) {
+                session()->flash('error', 'Please select a vendor for every Vendor PO item.');
+
+                return redirect()->back()->withInput();
+            }
+
+            $groupedItems = $items
+                ->groupBy(fn ($item) => (int) ($item['vendor_id'] ?? 0))
+                ->filter(fn ($items, $vendorId) => $vendorId > 0);
+
+            if ($groupedItems->isEmpty()) {
+                session()->flash('error', 'Please select at least one vendor in Vendor PO Items.');
+
+                return redirect()->back()->withInput();
+            }
+
+            $createdPurchaseOrders = [];
+
+            foreach ($groupedItems as $vendorId => $items) {
+                $vendorPayload = $payload;
+                $vendorPayload['po_number'] = $groupedItems->count() > 1
+                    ? PurchaseOrder::generateNextPoNumber()
+                    : $payload['po_number'];
+                $vendorPayload['organization_id'] = (int) $vendorId;
+                $vendorPayload['items'] = collect($items)->map(function ($item) {
+                    unset($item['vendor_id']);
+
+                    return $item;
+                })->values()->all();
+
+                $createdPurchaseOrders[] = $this->purchaseOrderRepository->create($vendorPayload);
+            }
+
+            if (count($createdPurchaseOrders) > 1) {
+                foreach ($createdPurchaseOrders as $createdPurchaseOrder) {
+                    Event::dispatch('purchase_order.create.after', $createdPurchaseOrder);
+                }
+
+                session()->flash('success', 'Purchase orders created successfully for ' . count($createdPurchaseOrders) . ' vendors.');
+
+                return redirect()->route('admin.purchase_orders.index');
+            }
+
+            $purchaseOrder = $createdPurchaseOrders[0];
         } else {
             $purchaseOrder = $this->purchaseOrderRepository->create($payload);
         }
@@ -355,5 +404,20 @@ class PurchaseOrderController extends Controller
         }
 
         return $jobOrder;
+    }
+
+    protected function markVendorQuoteSelected(int $vendorQuoteId): void
+    {
+        $selectedStatusExists = collect(DocumentStatusOptions::all('vendor_quote'))
+            ->contains('value', 'selected');
+
+        if ($selectedStatusExists) {
+            DB::table('vendor_quotes')
+                ->where('id', $vendorQuoteId)
+                ->update([
+                    'status'     => 'selected',
+                    'updated_at' => now(),
+                ]);
+        }
     }
 }

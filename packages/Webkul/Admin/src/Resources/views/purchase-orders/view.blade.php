@@ -69,7 +69,7 @@
 
             <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Commercial</div>
-                <div><strong>Status:</strong> {{ ucfirst(str_replace('_', ' ', $purchaseOrder->status ?: 'draft')) }}</div>
+                <div><strong>Status:</strong> {{ \Webkul\Admin\Support\DocumentStatusOptions::label('purchase_order', $purchaseOrder->status) }}</div>
                 <div><strong>Payment Term:</strong> {{ $purchaseOrder->payment_term ?: '-' }}</div>
                 <div><strong>Shipping:</strong> {{ $purchaseOrder->shipping_method ?: '-' }}</div>
             </div>

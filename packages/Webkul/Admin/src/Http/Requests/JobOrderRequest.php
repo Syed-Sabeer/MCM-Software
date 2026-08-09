@@ -3,13 +3,14 @@
 namespace Webkul\Admin\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class JobOrderRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'person_id'               => $this->filled('person_id') ? $this->input('person_id') : null,
+            'person_id'               => (int) $this->input('person_id') > 0 ? (int) $this->input('person_id') : null,
             'required_delivery_date'  => $this->sanitizeDateInput($this->input('required_delivery_date')),
             'issue_date'              => $this->sanitizeDateInput($this->input('issue_date')) ?: now()->toDateString(),
             'remarks'                 => $this->filled('remarks') ? $this->input('remarks') : null,
@@ -32,7 +33,13 @@ class JobOrderRequest extends FormRequest
             'person_id' => ['nullable', 'exists:persons,id'],
             'issue_date' => ['required', 'date'],
             'required_delivery_date' => ['nullable', 'date'],
-            'status' => ['required', 'string', 'max:50'],
+            'status' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::exists('document_statuses', 'value')
+                    ->where(fn ($query) => $query->where('type', 'job_order')),
+            ],
             'remarks' => ['nullable', 'string'],
             'customer_po_reference' => ['nullable', 'string', 'max:255'],
             'subject' => ['nullable', 'string', 'max:255'],

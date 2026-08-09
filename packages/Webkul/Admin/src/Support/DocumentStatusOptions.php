@@ -45,23 +45,9 @@ class DocumentStatusOptions
         ],
     ];
 
-    public static function all(string $type, ?string $selected = null): array
+    public static function all(string $type): array
     {
-        $statuses = collect(static::stored($type));
-
-        if ($statuses->isEmpty()) {
-            $statuses = collect(static::defaults($type));
-        }
-
-        if ($selected && ! $statuses->contains('value', $selected)) {
-            $statuses->push([
-                'id'    => null,
-                'name'  => Str::headline($selected),
-                'value' => $selected,
-            ]);
-        }
-
-        return $statuses->values()->all();
+        return collect(static::stored($type))->values()->all();
     }
 
     public static function defaults(string $type): array
@@ -79,6 +65,25 @@ class DocumentStatusOptions
     public static function allowedTypes(): array
     {
         return array_keys(static::TYPES);
+    }
+
+    public static function label(string $type, ?string $value): string
+    {
+        $value = $value ?: 'draft';
+        $status = collect(static::all($type))->firstWhere('value', $value);
+
+        return $status['name'] ?? Str::headline($value);
+    }
+
+    public static function filterOptions(string $type): array
+    {
+        return collect(static::all($type))
+            ->map(fn ($status) => [
+                'label' => $status['name'],
+                'value' => $status['value'],
+            ])
+            ->values()
+            ->all();
     }
 
     protected static function stored(string $type): array

@@ -68,6 +68,12 @@ Breadcrumbs::for('purchase_orders.edit', function (BreadcrumbTrail $trail, $purc
     $trail->push(trans('admin::app.purchase-orders.edit.title'), route('admin.purchase_orders.edit', $purchaseOrder->id));
 });
 
+// Dashboard > Vendor Quotes
+Breadcrumbs::for('vendor_quotes', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Vendor Quotes', route('admin.vendor_quotes.index'));
+});
+
 // Mail
 Breadcrumbs::for('mail', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');

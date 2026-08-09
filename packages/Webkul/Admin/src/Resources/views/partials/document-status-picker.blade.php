@@ -5,7 +5,10 @@
     if ($renderControl) {
         $pickerId = $pickerId ?? 'document-status-picker-'.md5($type.'-'.$name.'-'.uniqid('', true));
         $selectedStatus = old($name, $selected ?? null);
-        $statusOptions = \Webkul\Admin\Support\DocumentStatusOptions::all($type, $selectedStatus);
+        $statusOptions = \Webkul\Admin\Support\DocumentStatusOptions::all($type);
+        $selectedStatusExists = collect($statusOptions)->contains(
+            fn ($status) => $status['value'] === $selectedStatus
+        );
         $selectClass = $selectClass ?? 'custom-select';
         $labelClass = $labelClass ?? 'mb-1 block text-sm font-medium dark:text-white';
         $selectAttributes = $selectAttributes ?? '';
@@ -33,6 +36,10 @@
         </div>
 
         <select name="{{ $name }}" class="{{ $selectClass }} document-status-picker-select" {!! $selectAttributes !!}>
+            @if (! $selectedStatusExists)
+                <option value="" selected disabled>Select Status</option>
+            @endif
+
             @foreach ($statusOptions as $status)
                 <option
                     value="{{ $status['value'] }}"
@@ -43,6 +50,10 @@
                 </option>
             @endforeach
         </select>
+
+        @error($name)
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
     </div>
 @endif
 

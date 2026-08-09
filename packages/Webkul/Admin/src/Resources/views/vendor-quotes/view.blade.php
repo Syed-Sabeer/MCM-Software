@@ -7,6 +7,19 @@
         $formatPkr = fn ($value) => 'PKR ' . number_format((float) $value, 2);
         $formatChargeLabel = fn (array $charge) => ($charge['name'] ?? 'Charge')
             . (($charge['type'] ?? 'value') === 'percentage' ? ' (' . rtrim(rtrim(number_format((float) ($charge['value'] ?? 0), 2, '.', ''), '0'), '.') . '%)' : '');
+        $formatDate = function ($value) {
+            if (blank($value)) {
+                return '-';
+            }
+
+            try {
+                $date = $value instanceof \Carbon\CarbonInterface ? $value : \Carbon\Carbon::parse($value);
+
+                return $date->year > 1 ? $date->format('Y-m-d') : '-';
+            } catch (\Throwable) {
+                return '-';
+            }
+        };
         $companyName = core()->getConfigData('general.general.company_info.company_name');
         $companyAddress = core()->getConfigData('general.general.company_info.address');
         $companyPhone = core()->getConfigData('general.general.company_info.telephone');
@@ -46,7 +59,14 @@
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <div class="text-xl font-bold dark:text-white">Vendor Quote {{ $vendorQuote->vendor_quote_number }}</div>
-                    <div class="text-sm text-gray-500">Status: {{ ucfirst($vendorQuote->status) }}</div>
+                    <div class="text-sm text-gray-500">
+                        Vendor-facing quotation linked to
+                        @if ($vendorQuote->job_order_id && $vendorQuote->jobOrder)
+                            <a class="text-brandColor" href="{{ route('admin.job_orders.view', $vendorQuote->job_order_id) }}">{{ $vendorQuote->jobOrder->job_order_number }}</a>
+                        @else
+                            manual purchasing
+                        @endif
+                    </div>
                 </div>
 
                 <div class="flex gap-2">
@@ -59,29 +79,45 @@
                     <a href="{{ route('admin.vendor_quotes.edit', $vendorQuote->id) }}" class="primary-button" data-loading-link data-loading-text="Opening...">Edit</a>
                 </div>
             </div>
+        </div>
 
-            <div class="mt-4 grid gap-4 text-sm dark:text-white md:grid-cols-4">
-                <div>
-                    <strong>Vendor:</strong>
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="mb-2 text-xs font-semibold uppercase text-gray-500">Vendor</div>
+                <div class="font-semibold">
                     @if ($vendorQuote->organization_id && $vendorQuote->organization)
                         <a class="text-brandColor" href="{{ route('admin.contacts.organizations.view', $vendorQuote->organization_id) }}">{{ $vendorQuote->organization->name }}</a>
                     @else
                         -
                     @endif
                 </div>
-                <div>
-                    <strong>Job Order:</strong>
+                <div class="mt-1 text-gray-500">{{ optional($vendorQuote->organization)->phone ?: '' }}</div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="mb-2 text-xs font-semibold uppercase text-gray-500">Job Order</div>
+                <div class="font-semibold">
                     @if ($vendorQuote->job_order_id && $vendorQuote->jobOrder)
                         <a class="text-brandColor" href="{{ route('admin.job_orders.view', $vendorQuote->job_order_id) }}">{{ $vendorQuote->jobOrder->job_order_number }}</a>
                     @else
                         -
                     @endif
                 </div>
-                <div><strong>Issue Date:</strong> {{ optional($vendorQuote->issue_date)->format('Y-m-d') ?: '-' }}</div>
+                <div class="mt-1 text-gray-500">{{ $vendorQuote->jobOrder?->organization?->name ?: '' }}</div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="mb-2 text-xs font-semibold uppercase text-gray-500">Commercial</div>
+                <div><strong>Status:</strong> {{ \Webkul\Admin\Support\DocumentStatusOptions::label('vendor_quote', $vendorQuote->status) }}</div>
                 <div><strong>Payment Term:</strong> {{ $vendorQuote->payment_term ?: '-' }}</div>
-                <div><strong>Shipping Method:</strong> {{ $vendorQuote->shipping_method ?: '-' }}</div>
-                <div><strong>First Delivery:</strong> {{ optional($vendorQuote->first_delivery_date)->format('Y-m-d') ?: '-' }}</div>
-                <div><strong>Last Delivery:</strong> {{ optional($vendorQuote->last_delivery_date)->format('Y-m-d') ?: '-' }}</div>
+                <div><strong>Shipping:</strong> {{ $vendorQuote->shipping_method ?: '-' }}</div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-white">
+                <div class="mb-2 text-xs font-semibold uppercase text-gray-500">Dates</div>
+                <div><strong>Issue Date:</strong> {{ $formatDate($vendorQuote->issue_date) }}</div>
+                <div><strong>First Delivery:</strong> {{ $formatDate($vendorQuote->first_delivery_date) }}</div>
+                <div><strong>Last Delivery:</strong> {{ $formatDate($vendorQuote->last_delivery_date) }}</div>
             </div>
         </div>
 

@@ -5,9 +5,39 @@ namespace Webkul\Admin\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class VendorQuoteRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $items = collect($this->input('items', []))
+            ->map(function ($item) {
+                if (! is_array($item)) {
+                    return $item;
+                }
+
+                $vendorId = (int) ($item['vendor_id'] ?? 0);
+                $requirementId = (int) ($item['requirement_id'] ?? 0);
+
+                $item['vendor_id'] = $vendorId > 0 ? $vendorId : null;
+                $item['requirement_id'] = $requirementId > 0 ? $requirementId : null;
+
+                return $item;
+            })
+            ->all();
+
+        $this->merge([
+            'job_order_id'    => (int) $this->input('job_order_id') > 0 ? (int) $this->input('job_order_id') : null,
+            'organization_id' => (int) $this->input('organization_id') > 0 ? (int) $this->input('organization_id') : null,
+            'person_id'       => (int) $this->input('person_id') > 0 ? (int) $this->input('person_id') : null,
+            'expected_response_date' => $this->sanitizeDateInput($this->input('expected_response_date')),
+            'first_delivery_date'    => $this->sanitizeDateInput($this->input('first_delivery_date')),
+            'last_delivery_date'     => $this->sanitizeDateInput($this->input('last_delivery_date')),
+            'items'           => $items,
+        ]);
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -54,7 +84,13 @@ class VendorQuoteRequest extends FormRequest
             'charges.*.name' => ['required_with:charges.*.type,charges.*.value', 'string', 'max:255'],
             'charges.*.type' => ['required_with:charges.*.name,charges.*.value', 'in:percentage,value'],
             'charges.*.value' => ['required_with:charges.*.name,charges.*.type', 'numeric', 'min:0'],
-            'status' => ['required', 'string', 'max:50'],
+            'status' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::exists('document_statuses', 'value')
+                    ->where(fn ($query) => $query->where('type', 'vendor_quote')),
+            ],
             'items' => ['required', 'array', 'min:1'],
             'items.*.material_name' => ['nullable', 'string'],
             'items.*.item' => ['nullable', 'string'],
@@ -74,10 +110,19 @@ class VendorQuoteRequest extends FormRequest
     {
         $validator->after(function (Validator $validator) {
             $organizationId = $this->input('organization_id');
-            $lineVendorIds = collect($this->input('items', []))
+            $items = collect($this->input('items', []));
+            $lineVendorIds = $items
                 ->pluck('vendor_id')
                 ->filter()
                 ->values();
+
+            if (! $this->filled('job_order_id')) {
+                $items->each(function ($item, $index) use ($validator) {
+                    if (empty($item['vendor_id'])) {
+                        $validator->errors()->add("items.$index.vendor_id", 'Please select a vendor for this item.');
+                    }
+                });
+            }
 
             if ($organizationId || $lineVendorIds->isNotEmpty()) {
                 return;
@@ -85,5 +130,22 @@ class VendorQuoteRequest extends FormRequest
 
             $validator->errors()->add('organization_id', 'Please select a vendor or assign at least one line vendor.');
         });
+    }
+
+    protected function sanitizeDateInput($value): ?string
+    {
+        $value = is_string($value) ? trim($value) : $value;
+
+        if (empty($value) || $value === '0000-00-00') {
+            return null;
+        }
+
+        try {
+            $date = new \DateTime((string) $value);
+
+            return (int) $date->format('Y') > 1 ? $date->format('Y-m-d') : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

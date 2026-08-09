@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ProformaInvoiceRequest extends FormRequest
@@ -56,7 +57,13 @@ class ProformaInvoiceRequest extends FormRequest
             'subject'                => ['nullable', 'string', 'max:255'],
             'issue_date'             => ['required', 'date'],
             'due_date'               => ['nullable', 'date'],
-            'status'                 => ['nullable', 'string', 'max:50'],
+            'status'                 => [
+                'required',
+                'string',
+                'max:50',
+                Rule::exists('document_statuses', 'value')
+                    ->where(fn ($query) => $query->where('type', 'proforma_invoice')),
+            ],
             'customer_po_reference'  => ['nullable', 'string', 'max:255'],
             'notes'                  => ['nullable', 'string'],
             'terms'                  => ['nullable', 'string'],

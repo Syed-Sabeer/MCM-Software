@@ -183,13 +183,15 @@ class ProformaInvoiceRepository extends Repository
 
         $status = $invoice->status;
 
-        if ($status !== 'cancelled' && $status !== 'converted' && $status !== 'ready_for_job_order') {
-            if ($received <= 0) {
-                $status = 'issued';
-            } elseif ($remaining > 0) {
+        $automaticPaymentStatuses = ['draft', 'issued', 'partially_paid', 'fully_paid'];
+
+        if (in_array($status, $automaticPaymentStatuses, true)) {
+            if ($received > 0 && $remaining > 0) {
                 $status = 'partially_paid';
-            } else {
+            } elseif ($received > 0) {
                 $status = 'fully_paid';
+            } elseif (in_array($status, ['partially_paid', 'fully_paid'], true)) {
+                $status = 'draft';
             }
         }
 

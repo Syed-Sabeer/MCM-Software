@@ -241,21 +241,23 @@ class PurchaseOrderRepository extends Repository
         /** @var PurchaseOrder $purchaseOrder */
         $purchaseOrder = $this->with('items')->findOrFail($purchaseOrderId);
 
-        if (in_array($purchaseOrder->status, ['cancelled', 'closed'], true)) {
+        $automaticReceiptStatuses = ['draft', 'issued', 'partially_received', 'fully_received'];
+
+        if (! in_array($purchaseOrder->status, $automaticReceiptStatuses, true)) {
             return;
         }
 
         $ordered = (float) $purchaseOrder->items->sum('ordered_quantity');
         $received = (float) $purchaseOrder->items->sum('received_quantity');
 
-        $status = 'issued';
+        $status = $purchaseOrder->status;
 
-        if ($received <= 0) {
-            $status = 'issued';
-        } elseif ($received < $ordered) {
+        if ($received > 0 && $received < $ordered) {
             $status = 'partially_received';
-        } elseif ($ordered > 0) {
+        } elseif ($received > 0 && $ordered > 0) {
             $status = 'fully_received';
+        } elseif (in_array($status, ['partially_received', 'fully_received'], true)) {
+            $status = 'draft';
         }
 
         parent::update([

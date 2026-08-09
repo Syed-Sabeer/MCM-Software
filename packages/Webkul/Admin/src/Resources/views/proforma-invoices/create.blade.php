@@ -106,6 +106,11 @@
         ? $quotes->firstWhere('id', $quote->id)
         : $quotes->firstWhere('id', (int) request('quote_id'));
 
+    $availableStatusValues = collect(\Webkul\Admin\Support\DocumentStatusOptions::all('proforma_invoice'))
+        ->pluck('value');
+    $requestedStatus = old('status', 'draft');
+    $initialStatus = $availableStatusValues->contains($requestedStatus) ? $requestedStatus : '';
+
     $initialForm = [
         'proforma_number' => old('proforma_number', $nextProformaNumber ?? \Webkul\Quote\Models\ProformaInvoice::generateNextProformaNumber()),
         'quote_id' => $selectedQuote['id'] ?? request('quote_id'),
@@ -116,7 +121,7 @@
         'sales_owner_id' => $selectedQuote['sales_owner_id'] ?? auth()->id(),
         'sales_owner_name' => $selectedQuote['sales_owner_name'] ?? optional(auth()->user())->name,
         'issue_date' => now()->toDateString(),
-        'status' => 'draft',
+        'status' => $initialStatus,
         'shipping_method' => $selectedQuote['shipping_method'] ?? '',
         'production_time' => $selectedQuote['production_time'] ?? '',
         'transit_time' => $selectedQuote['transit_time'] ?? '',
@@ -211,7 +216,7 @@
                             @include('admin::partials.document-status-picker', [
                                 'type' => 'proforma_invoice',
                                 'name' => 'status',
-                                'selected' => $formState['status'] ?? 'draft',
+                                'selected' => $initialForm['status'],
                                 'selectAttributes' => 'v-model="form.status"',
                                 'includeManager' => false,
                             ])
@@ -696,7 +701,6 @@
         </style>
     @endPushOnce
 </x-admin::layouts>
-
 
 
 

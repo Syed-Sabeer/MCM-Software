@@ -4,6 +4,7 @@ namespace Webkul\Admin\DataGrids\PurchaseOrder;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Webkul\Admin\Support\DocumentStatusOptions;
 use Webkul\DataGrid\DataGrid;
 
 class PurchaseOrderDataGrid extends DataGrid
@@ -47,12 +48,14 @@ class PurchaseOrderDataGrid extends DataGrid
         $this->addColumn(['index' => 'job_order_number', 'label' => 'Job Order', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => $row->job_order_id ? '<a href="'.e(route('admin.job_orders.view', $row->job_order_id)).'" class="text-brandColor">'.e($row->job_order_number).'</a>' : '--']);
         $this->addColumn(['index' => 'grand_total', 'label' => 'Grand Total', 'type' => 'string', 'sortable' => true, 'filterable' => true, 'closure' => fn ($row) => 'PKR '.number_format((float) $row->grand_total, 2)]);
         $this->addColumn([
-            'index'      => 'status',
-            'label'      => 'Status',
-            'type'       => 'string',
-            'sortable'   => true,
-            'filterable' => true,
-            'closure'    => fn ($row) => e($this->formatStatus($row->status)),
+            'index'              => 'status',
+            'label'              => 'Status',
+            'type'               => 'string',
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => DocumentStatusOptions::filterOptions('purchase_order'),
+            'closure'            => fn ($row) => e(DocumentStatusOptions::label('purchase_order', $row->status)),
         ]);
     }
 
@@ -70,8 +73,4 @@ class PurchaseOrderDataGrid extends DataGrid
         $this->addMassAction(['icon' => 'icon-delete', 'title' => 'Delete', 'method' => 'POST', 'url' => route('admin.purchase_orders.mass_delete')]);
     }
 
-    protected function formatStatus(?string $status): string
-    {
-        return ucwords(str_replace('_', ' ', $status ?: 'draft'));
-    }
 }

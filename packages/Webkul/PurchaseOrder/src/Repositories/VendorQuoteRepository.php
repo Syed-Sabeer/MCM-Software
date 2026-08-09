@@ -63,6 +63,12 @@ class VendorQuoteRepository extends Repository
     public function update(array $data, $id, $attribute = 'id')
     {
         return DB::transaction(function () use ($data, $id, $attribute) {
+            $existing = $this->findOrFail($id);
+
+            if (empty($data['organization_id'])) {
+                $data['organization_id'] = $existing->organization_id;
+            }
+
             $data = $this->calculateTotals($data);
             $quote = parent::update($data, $id, $attribute);
             $this->syncItems($quote, $data['items'] ?? []);
@@ -122,10 +128,12 @@ class VendorQuoteRepository extends Repository
             $materialName = trim((string) ($item['item'] ?? $item['material_name'] ?? ''));
             $quantity = (float) ($item['ordered_quantity'] ?? $item['quantity'] ?? 0);
             $unitPrice = (float) ($item['price'] ?? $item['unit_price'] ?? 0);
+            $vendorId = (int) ($item['vendor_id'] ?? 0);
+            $requirementId = (int) ($item['requirement_id'] ?? 0);
             $payload = [
                 'vendor_quote_id' => $vendorQuote->id,
-                'requirement_id' => $item['requirement_id'] ?? null,
-                'vendor_id' => $item['vendor_id'] ?? null,
+                'requirement_id' => $requirementId > 0 ? $requirementId : null,
+                'vendor_id' => $vendorId > 0 ? $vendorId : null,
                 'material_name' => $materialName,
                 'color' => $item['color'] ?? null,
                 'description' => $item['description'] ?? null,

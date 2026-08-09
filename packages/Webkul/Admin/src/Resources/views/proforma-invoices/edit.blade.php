@@ -133,6 +133,11 @@
         ];
     })->values();
 
+    $availableStatusValues = collect(\Webkul\Admin\Support\DocumentStatusOptions::all('proforma_invoice'))
+        ->pluck('value');
+    $requestedStatus = old('status', $proformaInvoice->status);
+    $initialStatus = $availableStatusValues->contains($requestedStatus) ? $requestedStatus : '';
+
     $initialForm = [
         'proforma_number' => $proformaInvoice->proforma_number,
         'quote_id' => $proformaInvoice->quote_id,
@@ -143,7 +148,7 @@
         'sales_owner_id' => $proformaInvoice->sales_owner_id,
         'sales_owner_name' => optional($proformaInvoice->salesOwner)->name,
         'issue_date' => optional($proformaInvoice->issue_date)->format('Y-m-d'),
-        'status' => $proformaInvoice->status,
+        'status' => $initialStatus,
         'shipping_method' => old('shipping_method', optional($proformaInvoice->quote)->shipping_method),
         'production_time' => old('production_time', optional($proformaInvoice->quote)->production_time),
         'transit_time' => old('transit_time', optional($proformaInvoice->quote)->transit_time),
@@ -282,7 +287,7 @@
                             @include('admin::partials.document-status-picker', [
                                 'type' => 'proforma_invoice',
                                 'name' => 'status',
-                                'selected' => $formState['status'] ?? $proformaInvoice->status,
+                                'selected' => $initialForm['status'],
                                 'selectAttributes' => 'v-model="form.status"',
                                 'includeManager' => false,
                             ])

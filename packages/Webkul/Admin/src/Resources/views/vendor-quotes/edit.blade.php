@@ -104,8 +104,8 @@
                 </div>
 
                 <div class="mt-4 grid gap-4" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
-                    <div><label class="mb-1 block text-sm font-medium">First Delivery</label><input type="date" name="first_delivery_date" value="{{ old('first_delivery_date', optional($vendorQuote->first_delivery_date)->toDateString()) }}" class="custom-input"></div>
-                    <div><label class="mb-1 block text-sm font-medium">Last Delivery</label><input type="date" name="last_delivery_date" value="{{ old('last_delivery_date', optional($vendorQuote->last_delivery_date)->toDateString()) }}" class="custom-input"></div>
+                    <div><label class="mb-1 block text-sm font-medium">First Delivery</label><input type="date" name="first_delivery_date" value="{{ old('first_delivery_date', $formatSafeDate($vendorQuote->first_delivery_date)) }}" class="custom-input"></div>
+                    <div><label class="mb-1 block text-sm font-medium">Last Delivery</label><input type="date" name="last_delivery_date" value="{{ old('last_delivery_date', $formatSafeDate($vendorQuote->last_delivery_date)) }}" class="custom-input"></div>
                 </div>
             </div>
 

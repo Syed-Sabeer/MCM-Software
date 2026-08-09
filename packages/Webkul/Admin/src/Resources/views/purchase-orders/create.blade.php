@@ -111,6 +111,7 @@
             <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <input type="hidden" name="vendor_quote_id" value="{{ $vendorQuote?->id }}">
                 <input type="hidden" name="job_order_id" value="{{ $vendorQuote?->job_order_id ?: $jobOrder?->id }}">
+                <input type="hidden" name="organization_id" value="{{ old('organization_id', $vendorQuote?->organization_id) }}">
                 <input type="hidden" name="expected_receive_date" value="{{ $defaultExpectedReceiveDate }}">
 
                 <div class="grid gap-4" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
@@ -135,18 +136,7 @@
                     </div>
                 </div>
 
-                <div class="mt-4 grid gap-4" style="grid-template-columns: repeat({{ $jobOrderMode ? 2 : 3 }}, minmax(0, 1fr));">
-                    @if (! $jobOrderMode)
-                        <div>
-                            <label class="mb-1 block text-sm font-medium">Vendor</label>
-                            <select name="organization_id" class="custom-select" id="po-organization-select">
-                                <option value="">Select vendor</option>
-                                @foreach ($vendors as $vendor)
-                                    <option value="{{ $vendor->id }}" @selected(old('organization_id', $vendorQuote?->organization_id) == $vendor->id)>{{ $vendor->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @endif
+                <div class="mt-4 grid gap-4" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
                     <div>
                         <label class="mb-1 block text-sm font-medium">First Delivery</label>
                         <input type="date" name="completion_date" value="{{ old('completion_date', optional($vendorQuote?->first_delivery_date)->toDateString()) }}" class="custom-input">

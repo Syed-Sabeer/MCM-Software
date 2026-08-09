@@ -149,6 +149,42 @@ class VendorQuoteController extends Controller
 
             $quote = $this->vendorQuoteRepository->createFromJobOrder($jobOrder, $payload);
         } else {
+            $groupedItems = collect($payload['items'] ?? [])
+                ->groupBy(fn ($item) => (int) ($item['vendor_id'] ?? 0))
+                ->filter(fn ($items, $vendorId) => $vendorId > 0);
+
+            if ($groupedItems->count() > 1) {
+                $createdVendorQuotes = [];
+
+                foreach ($groupedItems as $vendorId => $items) {
+                    $vendorPayload = $payload;
+                    $vendorPayload['vendor_quote_number'] = VendorQuote::generateNextNumber();
+                    $vendorPayload['organization_id'] = (int) $vendorId;
+                    $vendorPayload['items'] = collect($items)->values()->all();
+
+                    $createdVendorQuotes[] = $this->vendorQuoteRepository->create($vendorPayload);
+                }
+
+                foreach ($createdVendorQuotes as $createdVendorQuote) {
+                    Event::dispatch('vendor_quote.create.after', $createdVendorQuote);
+                }
+
+                session()->flash('success', 'Vendor quotes created successfully for '.count($createdVendorQuotes).' vendors.');
+
+                return redirect()->route('admin.vendor_quotes.index');
+            }
+
+            $singleVendorId = (int) $groupedItems->keys()->first();
+
+            if ($singleVendorId <= 0) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->withErrors(['items' => 'Please assign a vendor to every Vendor Quote item.']);
+            }
+
+            $payload['organization_id'] = $singleVendorId;
+            $payload['items'] = $groupedItems->first()->values()->all();
             $quote = $this->vendorQuoteRepository->create($payload);
         }
 

@@ -4,6 +4,7 @@ namespace Webkul\Admin\DataGrids\PurchaseOrder;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Webkul\Admin\Support\DocumentStatusOptions;
 use Webkul\DataGrid\DataGrid;
 
 class JobOrderDataGrid extends DataGrid
@@ -60,14 +61,25 @@ class JobOrderDataGrid extends DataGrid
                 $closure = fn ($row) => $this->formatDate($row->required_delivery_date);
             }
 
-            $this->addColumn([
+            if ($index === 'status') {
+                $closure = fn ($row) => e(DocumentStatusOptions::label('job_order', $row->status));
+            }
+
+            $column = [
                 'index' => $index,
                 'label' => $label,
                 'type' => $type,
                 'sortable' => true,
                 'filterable' => true,
                 'closure' => $closure,
-            ]);
+            ];
+
+            if ($index === 'status') {
+                $column['filterable_type'] = 'dropdown';
+                $column['filterable_options'] = DocumentStatusOptions::filterOptions('job_order');
+            }
+
+            $this->addColumn($column);
         }
     }
 

@@ -21,6 +21,17 @@
 
     <x-admin::form :action="route('admin.job_orders.update', $jobOrder->id)" method="PUT">
         <div class="flex flex-col gap-4">
+            @if ($errors->any())
+                <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
+                    <p class="font-semibold">Please correct the following:</p>
+                    <ul class="mt-1 list-disc pl-5">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                 <div>
                     <div class="text-xl font-bold dark:text-white">Edit Job Order</div>

@@ -31,17 +31,13 @@ class PurchaseOrderRequest extends FormRequest
 
     public function rules(): array
     {
-        $id = $this->route('id');
-        $isJobOrderBased = $this->filled('job_order_id') && ! $this->filled('organization_id');
-
         return [
             'po_number' => ['nullable', 'string', 'max:255'],
             'organization_id' => [
-                Rule::requiredIf(! $isJobOrderBased),
                 'nullable',
                 'exists:organizations,id',
-                function ($attribute, $value, $fail) use ($isJobOrderBased) {
-                    if ($isJobOrderBased && ! $value) {
+                function ($attribute, $value, $fail) {
+                    if (! $value) {
                         return;
                     }
 
@@ -77,7 +73,13 @@ class PurchaseOrderRequest extends FormRequest
             'charges.*.value' => ['required_with:charges.*.name,charges.*.type', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
             'terms' => ['nullable', 'string'],
-            'status' => ['required', 'string', 'max:50'],
+            'status' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::exists('document_statuses', 'value')
+                    ->where(fn ($query) => $query->where('type', 'purchase_order')),
+            ],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item' => ['required', 'string'],
             'items.*.ordered_quantity' => ['required', 'numeric', 'gt:0'],

@@ -41,6 +41,7 @@
             <div class="document-form-panel rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 dark:text-white">
                 <input type="hidden" name="vendor_quote_id" value="{{ $purchaseOrder->vendor_quote_id }}">
                 <input type="hidden" name="job_order_id" value="{{ $purchaseOrder->job_order_id }}">
+                <input type="hidden" name="organization_id" id="po-organization-select" value="{{ old('organization_id', $purchaseOrder->organization_id) }}">
                 <input type="hidden" name="billing_address[key]" id="po-billing-key" value="{{ old('billing_address.key', data_get($purchaseOrder->billing_address, 'key')) }}">
                 <input type="hidden" name="billing_address[label]" id="po-billing-label" value="{{ old('billing_address.label', data_get($purchaseOrder->billing_address, 'label')) }}">
                 <input type="hidden" name="billing_address[type]" id="po-billing-type" value="{{ old('billing_address.type', data_get($purchaseOrder->billing_address, 'type', 'billing')) }}">
@@ -54,15 +55,6 @@
                     <div>
                         <label class="mb-1 block text-sm font-medium dark:text-white">PO #</label>
                         <input type="text" name="po_number" value="{{ old('po_number', $purchaseOrder->po_number) }}" class="custom-input">
-                    </div>
-                    <div>
-                        <label class="mb-1 block text-sm font-medium dark:text-white">Vendor</label>
-                        <select name="organization_id" class="custom-select" id="po-organization-select">
-                            <option value="">Select vendor</option>
-                            @foreach ($vendors as $vendor)
-                                <option value="{{ $vendor->id }}" @selected(old('organization_id', $purchaseOrder->organization_id) == $vendor->id)>{{ $vendor->name }}</option>
-                            @endforeach
-                        </select>
                     </div>
                     <div>
                         @include('admin::partials.document-status-picker', [

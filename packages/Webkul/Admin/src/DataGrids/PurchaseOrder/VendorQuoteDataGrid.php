@@ -4,6 +4,7 @@ namespace Webkul\Admin\DataGrids\PurchaseOrder;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Webkul\Admin\Support\DocumentStatusOptions;
 use Webkul\DataGrid\DataGrid;
 
 class VendorQuoteDataGrid extends DataGrid
@@ -13,15 +14,37 @@ class VendorQuoteDataGrid extends DataGrid
         $queryBuilder = DB::table('vendor_quotes')
             ->leftJoin('organizations', 'vendor_quotes.organization_id', '=', 'organizations.id')
             ->leftJoin('job_orders', 'vendor_quotes.job_order_id', '=', 'job_orders.id')
-            ->addSelect('vendor_quotes.id', 'vendor_quotes.vendor_quote_number', 'vendor_quotes.issue_date', 'vendor_quotes.status', 'organizations.id as organization_id', 'organizations.name as vendor_name', 'job_orders.id as job_order_id', 'job_orders.job_order_number');
+            ->leftJoin('vendor_quote_items', 'vendor_quotes.id', '=', 'vendor_quote_items.vendor_quote_id')
+            ->leftJoin('organizations as item_vendors', 'vendor_quote_items.vendor_id', '=', 'item_vendors.id')
+            ->addSelect(
+                'vendor_quotes.id',
+                'vendor_quotes.vendor_quote_number',
+                'vendor_quotes.issue_date',
+                'vendor_quotes.status',
+                'job_orders.id as job_order_id',
+                'job_orders.job_order_number',
+                DB::raw("COALESCE(GROUP_CONCAT(DISTINCT NULLIF(TRIM(item_vendors.name), '') ORDER BY item_vendors.name SEPARATOR ', '), MAX(CASE WHEN LOWER(TRIM(organizations.type)) IN ('vendor', 'vendors') THEN organizations.name END)) as vendor_name"),
+                DB::raw("CASE WHEN COUNT(DISTINCT item_vendors.id) = 1 THEN MIN(item_vendors.id) WHEN COUNT(DISTINCT item_vendors.id) = 0 THEN MAX(CASE WHEN LOWER(TRIM(organizations.type)) IN ('vendor', 'vendors') THEN organizations.id END) ELSE NULL END as vendor_id")
+            )
+            ->groupBy(
+                'vendor_quotes.id',
+                'vendor_quotes.vendor_quote_number',
+                'vendor_quotes.issue_date',
+                'vendor_quotes.status',
+                'job_orders.id',
+                'job_orders.job_order_number'
+            );
 
         if ($organizationId = request('organization_id')) {
-            $queryBuilder->where('vendor_quotes.organization_id', $organizationId);
+            $queryBuilder->where(function ($query) use ($organizationId) {
+                $query->where('vendor_quotes.organization_id', $organizationId)
+                    ->orWhere('item_vendors.id', $organizationId);
+            });
         }
 
-        $this->addFilter('organization_id', 'vendor_quotes.organization_id');
+        $this->addFilter('organization_id', 'item_vendors.id');
         $this->addFilter('vendor_quote_number', 'vendor_quotes.vendor_quote_number');
-        $this->addFilter('vendor_name', 'organizations.name');
+        $this->addFilter('vendor_name', 'item_vendors.name');
         $this->addFilter('job_order_number', 'job_orders.job_order_number');
         $this->addFilter('issue_date', 'vendor_quotes.issue_date');
         $this->addFilter('status', 'vendor_quotes.status');
@@ -45,8 +68,10 @@ class VendorQuoteDataGrid extends DataGrid
             }
 
             if ($index === 'vendor_name') {
-                $closure = fn ($row) => $row->organization_id
-                    ? '<a href="'.e(route('admin.contacts.organizations.view', $row->organization_id)).'" class="text-brandColor">'.e($row->vendor_name).'</a>'
+                $closure = fn ($row) => $row->vendor_name
+                    ? ($row->vendor_id
+                        ? '<a href="'.e(route('admin.contacts.organizations.view', $row->vendor_id)).'" class="text-brandColor">'.e($row->vendor_name).'</a>'
+                        : e($row->vendor_name))
                     : '--';
             }
 
@@ -56,14 +81,25 @@ class VendorQuoteDataGrid extends DataGrid
                     : '--';
             }
 
-            $this->addColumn([
+            if ($index === 'status') {
+                $closure = fn ($row) => e(DocumentStatusOptions::label('vendor_quote', $row->status));
+            }
+
+            $column = [
                 'index' => $index,
                 'label' => $label,
                 'type' => $type,
                 'sortable' => true,
                 'filterable' => true,
                 'closure' => $closure,
-            ]);
+            ];
+
+            if ($index === 'status') {
+                $column['filterable_type'] = 'dropdown';
+                $column['filterable_options'] = DocumentStatusOptions::filterOptions('vendor_quote');
+            }
+
+            $this->addColumn($column);
         }
     }
 

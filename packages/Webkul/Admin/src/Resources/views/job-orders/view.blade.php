@@ -26,7 +26,7 @@
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <div class="text-xl font-bold dark:text-white">Job Order {{ $jobOrder->job_order_number }}</div>
-                    <div class="text-sm text-gray-500">Status: {{ ucfirst(str_replace('_', ' ', $jobOrder->status)) }}</div>
+                    <div class="text-sm text-gray-500">Status: {{ \Webkul\Admin\Support\DocumentStatusOptions::label('job_order', $jobOrder->status) }}</div>
                 </div>
 
                 <div class="flex gap-2">
@@ -259,7 +259,7 @@
                     @foreach ($jobOrder->purchaseOrders as $purchaseOrder)
                         <div class="rounded border border-gray-200 p-2 dark:border-gray-700">
                             <a class="text-brandColor" href="{{ route('admin.purchase_orders.view', $purchaseOrder->id) }}">{{ $purchaseOrder->po_number }}</a>
-                            <div>Status: {{ ucfirst(str_replace('_', ' ', $purchaseOrder->status)) }}</div>
+                            <div>Status: {{ \Webkul\Admin\Support\DocumentStatusOptions::label('purchase_order', $purchaseOrder->status) }}</div>
                         </div>
                     @endforeach
                 </div>
