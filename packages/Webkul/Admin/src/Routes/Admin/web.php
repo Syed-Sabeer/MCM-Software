@@ -81,6 +81,11 @@ require 'vendor-quote-routes.php';
 require 'goods-receipt-routes.php';
 
 /**
+ * Material Inventory routes.
+ */
+require 'inventory-routes.php';
+
+/**
  * Vendor Payables routes.
  */
 require 'vendor-payable-routes.php';

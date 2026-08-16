@@ -133,11 +133,17 @@
                     <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <div class="mb-3 flex items-center justify-between">
                             <p class="text-base font-semibold text-gray-800 dark:text-white">Material Consumption</p>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center justify-end gap-3">
                                 <button type="button" id="quick-add-material" class="secondary-button inline-flex items-center gap-1.5">
                                     <span class="icon-add text-base"></span>
                                     New Material
                                 </button>
+
+                                <button type="button" data-quick-add-unit class="text-sm font-medium text-red-600 hover:underline">
+                                    Add Unit
+                                </button>
+
+                                <a href="{{ route('admin.settings.units.index') }}" class="text-sm font-medium text-red-600 hover:underline">View Units</a>
 
                                 <button type="button" id="add-consumption" class="secondary-button">Add Row</button>
                             </div>
@@ -245,7 +251,7 @@
 
                     <div>
                         <label class="mb-1.5 block text-sm font-medium text-gray-800 dark:text-white">Unit <span class="text-red-600">*</span></label>
-                        <select id="product_quick_material_unit" class="w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                        <select id="product_quick_material_unit" class="product-unit-select w-full rounded border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                             <option value="">Select Unit</option>
                             @foreach ($unitOptions as $unit)
                                 <option value="{{ $unit['name'] }}">{{ $unit['name'] }}</option>
@@ -497,6 +503,8 @@
             return false;
         };
     </script>
+
+    @include('admin::products.partials.quick-unit-modal', ['unitOptions' => $unitOptions])
 
     @pushOnce('scripts')
         <script type="module">
@@ -1144,7 +1152,7 @@
                         + '    <input type="number" step="0.001" name="consumptions[' + index + '][qty]" class="consumption-qty-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
                         + '  </div>'
                         + '  <div>'
-                        + '    <input type="text" name="consumptions[' + index + '][unit]" class="consumption-unit-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Unit" value="' + escapeHtml(valueOf(data, 'unit', '')) + '">'
+                        + '    <select name="consumptions[' + index + '][unit]" class="consumption-unit-input product-unit-select w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">' + window.productUnitOptionsMarkup(valueOf(data, 'unit', '')) + '</select>'
                         + '  </div>'
                         + '  <div class="flex items-end">'
                         + '    <button type="button" class="remove-consumption inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove consumption">&times;</button>'

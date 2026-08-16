@@ -141,6 +141,7 @@
                             <th class="py-2 text-left">Color</th>
                             <th class="py-2 text-left">Per Item Required</th>
                             <th class="py-2 text-left">Required</th>
+                            <th class="py-2 text-left">From Stock</th>
                             <th class="py-2 text-left">Received</th>
                             <th class="py-2 text-left">Balance</th>
                         </tr>
@@ -155,8 +156,9 @@
                                 <td class="py-2">{{ $requirement->color_name ?: $requirement->color_code ?: '-' }}</td>
                                 <td class="py-2">{{ $formatStageQty($requirement->qty_per_unit) }} {{ $requirement->unit }}</td>
                                 <td class="py-2">{{ $formatStageQty($requirement->required_qty) }} {{ $requirement->unit }}</td>
-                                <td class="py-2">{{ $formatStageQty($requirement->received_qty) }}</td>
-                                <td class="py-2">{{ $formatStageQty($requirement->balance_qty) }}</td>
+                                <td class="py-2">{{ $formatStageQty($requirement->inventory_allocated_qty) }} {{ $requirement->unit }}</td>
+                                <td class="py-2">{{ $formatStageQty($requirement->received_qty) }} {{ $requirement->unit }}</td>
+                                <td class="py-2">{{ $formatStageQty($requirement->balance_qty) }} {{ $requirement->unit }}</td>
                             </tr>
                         @endforeach
                     </tbody>

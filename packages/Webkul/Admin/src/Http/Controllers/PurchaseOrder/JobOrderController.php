@@ -200,7 +200,7 @@ class JobOrderController extends Controller
         return response()->streamDownload(function () use ($jobOrder) {
             $handle = fopen('php://output', 'w');
 
-            fputcsv($handle, ['Item', 'Material', 'Color', 'Per Item Required', 'Required', 'Received', 'Balance']);
+            fputcsv($handle, ['Item', 'Material', 'Color', 'Per Item Required', 'Required', 'From Stock', 'Received', 'Balance']);
 
             foreach ($jobOrder->requirements as $requirement) {
                 fputcsv($handle, [
@@ -209,8 +209,9 @@ class JobOrderController extends Controller
                     $requirement->color_name ?: $requirement->color_code ?: '',
                     $this->formatRequirementQty($requirement->qty_per_unit).' '.$requirement->unit,
                     $this->formatRequirementQty($requirement->required_qty).' '.$requirement->unit,
-                    $this->formatRequirementQty($requirement->received_qty),
-                    $this->formatRequirementQty($requirement->balance_qty),
+                    $this->formatRequirementQty($requirement->inventory_allocated_qty).' '.$requirement->unit,
+                    $this->formatRequirementQty($requirement->received_qty).' '.$requirement->unit,
+                    $this->formatRequirementQty($requirement->balance_qty).' '.$requirement->unit,
                 ]);
             }
 

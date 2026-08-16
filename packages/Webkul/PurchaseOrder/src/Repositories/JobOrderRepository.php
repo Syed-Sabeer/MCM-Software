@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Product\Models\Product;
 use Webkul\PurchaseOrder\Models\JobOrder;
+use Webkul\PurchaseOrder\Services\MaterialInventoryService;
 use Webkul\Quote\Models\ProformaInvoice;
 
 class JobOrderRepository extends Repository
@@ -15,6 +16,7 @@ class JobOrderRepository extends Repository
         protected JobOrderItemRepository $jobOrderItemRepository,
         protected JobCardRepository $jobCardRepository,
         protected JobOrderRequirementRepository $jobOrderRequirementRepository,
+        protected MaterialInventoryService $materialInventoryService,
         Container $container
     ) {
         parent::__construct($container);
@@ -101,6 +103,7 @@ class JobOrderRepository extends Repository
             $this->syncItems($jobOrder, $data['items'] ?? []);
             $this->jobCardRepository->regenerateForJobOrder($jobOrder->fresh('items'));
             $this->jobOrderRequirementRepository->regenerateForJobOrder($jobOrder->fresh('items'));
+            $this->materialInventoryService->syncJobOrder($jobOrder->fresh('requirements'));
 
             return $jobOrder->fresh(['items', 'jobCards.sections.items', 'requirements']);
         });
@@ -115,8 +118,20 @@ class JobOrderRepository extends Repository
             $this->syncItems($jobOrder, $data['items'] ?? []);
             $this->jobCardRepository->regenerateForJobOrder($jobOrder->fresh('items'));
             $this->jobOrderRequirementRepository->regenerateForJobOrder($jobOrder->fresh('items'));
+            $this->materialInventoryService->syncJobOrder($jobOrder->fresh('requirements'));
 
             return $jobOrder->fresh(['items', 'jobCards.sections.items', 'requirements']);
+        });
+    }
+
+    public function delete($id)
+    {
+        return DB::transaction(function () use ($id) {
+            /** @var JobOrder $jobOrder */
+            $jobOrder = $this->findOrFail($id);
+            $this->materialInventoryService->syncJobOrder($jobOrder, true);
+
+            return parent::delete($id);
         });
     }
 

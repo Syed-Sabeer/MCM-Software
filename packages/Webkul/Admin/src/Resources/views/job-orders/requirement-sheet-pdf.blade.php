@@ -52,9 +52,10 @@
                 <th style="width: 27%;">Material</th>
                 <th style="width: 16%;">Color</th>
                 <th style="width: 13%;" class="text-right">Per item</th>
-                <th style="width: 12%;" class="text-right">Required</th>
-                <th style="width: 9%;" class="text-right">Received</th>
-                <th style="width: 9%;" class="text-right">Balance</th>
+                <th style="width: 11%;" class="text-right">Required</th>
+                <th style="width: 10%;" class="text-right">From stock</th>
+                <th style="width: 8%;" class="text-right">Received</th>
+                <th style="width: 8%;" class="text-right">Balance</th>
             </tr>
         </thead>
         <tbody>
@@ -65,11 +66,12 @@
                     <td>{{ $requirement->color_name ?: $requirement->color_code ?: '-' }}</td>
                     <td class="text-right">{{ $formatQuantity($requirement->qty_per_unit) }} {{ $requirement->unit }}</td>
                     <td class="text-right">{{ $formatQuantity($requirement->required_qty) }} {{ $requirement->unit }}</td>
-                    <td class="text-right">{{ $formatQuantity($requirement->received_qty) }}</td>
-                    <td class="text-right">{{ $formatQuantity($requirement->balance_qty) }}</td>
+                    <td class="text-right">{{ $formatQuantity($requirement->inventory_allocated_qty) }} {{ $requirement->unit }}</td>
+                    <td class="text-right">{{ $formatQuantity($requirement->received_qty) }} {{ $requirement->unit }}</td>
+                    <td class="text-right">{{ $formatQuantity($requirement->balance_qty) }} {{ $requirement->unit }}</td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="text-center muted">No requirements available.</td></tr>
+                <tr><td colspan="8" class="text-center muted">No requirements available.</td></tr>
             @endforelse
         </tbody>
     </table>

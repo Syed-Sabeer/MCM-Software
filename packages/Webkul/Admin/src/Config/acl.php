@@ -207,6 +207,26 @@ return [
         'route' => ['admin.goods_receipts.delete', 'admin.goods_receipts.delete_fallback'],
         'sort'  => 4,
     ], [
+        'key'   => 'inventory',
+        'name'  => 'Inventory',
+        'route' => 'admin.inventory.index',
+        'sort'  => 4,
+    ], [
+        'key'   => 'inventory.view',
+        'name'  => 'admin::app.acl.view',
+        'route' => 'admin.inventory.view',
+        'sort'  => 1,
+    ], [
+        'key'   => 'inventory.create',
+        'name'  => 'Record Inventory Movements',
+        'route' => ['admin.inventory.movements.store', 'admin.settings.material_references.store'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'inventory.edit',
+        'name'  => 'Update Inventory Settings',
+        'route' => ['admin.inventory.edit', 'admin.inventory.settings.update'],
+        'sort'  => 3,
+    ], [
         'key'   => 'vendor_payables',
         'name'  => 'Vendor Payables',
         'route' => 'admin.vendor_payables.index',
@@ -485,12 +505,12 @@ return [
     ], [
         'key'   => 'products.create',
         'name'  => 'admin::app.acl.create',
-        'route' => ['admin.products.create', 'admin.products.store', 'admin.products.duplicate'],
+        'route' => ['admin.products.create', 'admin.products.store', 'admin.products.duplicate', 'admin.settings.units.index', 'admin.settings.units.store'],
         'sort'  => 1,
     ], [
         'key'   => 'products.edit',
         'name'  => 'admin::app.acl.edit',
-        'route' => ['admin.products.edit', 'admin.products.update', 'admin.products.toggle_publish', 'admin.products.inventories.store', 'admin.products.tags.attach', 'admin.products.tags.detach'],
+        'route' => ['admin.products.edit', 'admin.products.update', 'admin.products.toggle_publish', 'admin.products.inventories.store', 'admin.products.tags.attach', 'admin.products.tags.detach', 'admin.settings.units.index', 'admin.settings.units.store'],
         'sort'  => 2,
     ], [
         'key'   => 'products.delete',

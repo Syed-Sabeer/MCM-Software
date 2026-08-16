@@ -8,6 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Product\ProductDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -19,6 +20,7 @@ use Webkul\Product\Models\ColorReference;
 use Webkul\Product\Models\MaterialReference;
 use Webkul\Product\Models\UnitReference;
 use Webkul\Product\Repositories\ProductRepository;
+use Webkul\Product\Services\UnitConversionService;
 
 class ProductController extends Controller
 {
@@ -27,8 +29,10 @@ class ProductController extends Controller
      *
      * @return void
      */
-    public function __construct(protected ProductRepository $productRepository)
-    {
+    public function __construct(
+        protected ProductRepository $productRepository,
+        protected UnitConversionService $unitConversionService
+    ) {
         request()->request->add(['entity_type' => 'products']);
     }
 
@@ -57,7 +61,7 @@ class ProductController extends Controller
         $duplicateDraft = null;
         $colorReferences = ColorReference::query()->orderBy('name')->get(['name', 'code']);
         $materialReferences = MaterialReference::with('vendors')->orderBy('name')->get();
-        $units = UnitReference::query()->orderBy('name')->get(['name']);
+        $units = UnitReference::query()->orderBy('name')->get(['name', 'meter_conversion']);
         $vendors = Organization::query()
             ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
@@ -149,12 +153,13 @@ class ProductController extends Controller
 
         $colorReferences = ColorReference::query()->orderBy('name')->get(['name', 'code']);
         $materialReferences = MaterialReference::with('vendors')->orderBy('name')->get();
+        $units = UnitReference::query()->orderBy('name')->get(['name', 'meter_conversion']);
         $vendors = Organization::query()
             ->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('admin::products.edit', compact('product', 'inventories', 'customers', 'colorReferences', 'materialReferences', 'vendors'));
+        return view('admin::products.edit', compact('product', 'inventories', 'customers', 'colorReferences', 'materialReferences', 'units', 'vendors'));
     }
 
     /**
@@ -508,7 +513,7 @@ class ProductController extends Controller
             'consumptions.*.material_reference_id' => ['nullable', 'integer', 'exists:material_references,id'],
             'consumptions.*.name'  => ['required', 'string', 'max:255'],
             'consumptions.*.qty'   => ['required', 'numeric'],
-            'consumptions.*.unit'  => ['required', 'string', 'max:100'],
+            'consumptions.*.unit'  => ['required', 'string', 'max:100', Rule::exists('unit_references', 'name')],
             'consumptions.*.vendor_ids' => ['nullable', 'array'],
             'consumptions.*.vendor_ids.*' => ['integer', Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['vendor', 'Vendor']))],
             'consumptions.*.color_name' => ['nullable', 'string', 'max:100'],
@@ -542,8 +547,13 @@ class ProductController extends Controller
     protected function normalizeDynamicProductInputs($request): void
     {
         $consumptions = [];
+        $requestedConsumptions = (array) $request->input('consumptions', []);
+        $materialReferences = MaterialReference::query()
+            ->whereIn('id', collect($requestedConsumptions)->pluck('material_reference_id')->filter()->map(fn ($id) => (int) $id))
+            ->get(['id', 'name', 'unit'])
+            ->keyBy('id');
 
-        foreach ((array) $request->input('consumptions', []) as $consumption) {
+        foreach ($requestedConsumptions as $index => $consumption) {
             if (! is_array($consumption)) {
                 continue;
             }
@@ -559,6 +569,27 @@ class ProductController extends Controller
                 ->all();
             $colorName = trim((string) ($consumption['color_name'] ?? ''));
             $colorCode = trim((string) ($consumption['color_code'] ?? ''));
+
+            if ($materialReferenceId && ($materialReference = $materialReferences->get((int) $materialReferenceId))) {
+                $targetUnit = (string) $materialReference->unit;
+
+                if ($unit !== '' && strcasecmp($unit, $targetUnit) !== 0 && $qty !== null && $qty !== '') {
+                    $convertedQty = $this->unitConversionService->convert((float) $qty, $unit, $targetUnit);
+
+                    if ($convertedQty === null) {
+                        throw ValidationException::withMessages([
+                            "consumptions.$index.unit" => "{$unit} cannot be converted to the material stock unit {$targetUnit}.",
+                        ]);
+                    }
+
+                    $qty = round($convertedQty, 4);
+                }
+
+                $name = (string) $materialReference->name;
+                $unit = $targetUnit;
+            } elseif ($canonicalUnit = $this->unitConversionService->canonicalName($unit)) {
+                $unit = $canonicalUnit;
+            }
 
             if ($name === '' && ($qty === null || $qty === '') && $unit === '') {
                 continue;
@@ -593,6 +624,10 @@ class ProductController extends Controller
                 $name = trim((string) ($item['name'] ?? ''));
                 $qty = $item['qty'] ?? null;
                 $unit = trim((string) ($item['unit'] ?? ''));
+
+                if ($canonicalUnit = $this->unitConversionService->canonicalName($unit)) {
+                    $unit = $canonicalUnit;
+                }
 
                 if ($name === '' && ($qty === null || $qty === '') && $unit === '') {
                     continue;

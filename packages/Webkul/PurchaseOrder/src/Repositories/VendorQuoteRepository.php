@@ -37,13 +37,13 @@ class VendorQuoteRepository extends Repository
             'created_by' => auth()->id(),
             'first_delivery_date' => $jobOrder->required_delivery_date?->toDateString(),
             'last_delivery_date' => $jobOrder->required_delivery_date?->toDateString(),
-            'items' => $jobOrder->requirements->map(fn ($requirement) => [
+            'items' => $jobOrder->requirements->filter(fn ($requirement) => (float) $requirement->balance_qty > 0.00005)->map(fn ($requirement) => [
                 'requirement_id' => $requirement->id,
                 'material_name' => $requirement->material_name,
                 'quantity' => $requirement->balance_qty,
                 'unit' => $requirement->unit,
                 'unit_price' => 0,
-            ])->toArray(),
+            ])->values()->toArray(),
         ], $overrides);
 
         return $this->create($payload);

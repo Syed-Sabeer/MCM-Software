@@ -6,8 +6,10 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Product\Services\UnitConversionService;
 use Webkul\PurchaseOrder\Models\GoodsReceipt;
 use Webkul\PurchaseOrder\Models\PurchaseOrder;
+use Webkul\PurchaseOrder\Services\MaterialInventoryService;
 
 class GoodsReceiptRepository extends Repository
 {
@@ -16,6 +18,8 @@ class GoodsReceiptRepository extends Repository
         protected PurchaseOrderRepository $purchaseOrderRepository,
         protected JobOrderRequirementRepository $jobOrderRequirementRepository,
         protected VendorPayableRepository $vendorPayableRepository,
+        protected MaterialInventoryService $materialInventoryService,
+        protected UnitConversionService $unitConversionService,
         Container $container
     ) {
         parent::__construct($container);
@@ -33,6 +37,7 @@ class GoodsReceiptRepository extends Repository
             $purchaseOrder = PurchaseOrder::with('items')->findOrFail($data['purchase_order_id']);
             $receipt = parent::create($data);
             $this->applyReceiptItems($receipt, $purchaseOrder, $data['items'] ?? []);
+            $this->materialInventoryService->syncGoodsReceipt($receipt->fresh('items'));
 
             return $receipt->fresh('items');
         });
@@ -48,6 +53,7 @@ class GoodsReceiptRepository extends Repository
             $receipt = parent::update($data, $id, $attribute);
 
             $this->appendReceiptItems($receipt->fresh('items'), $purchaseOrder, $data['items'] ?? []);
+            $this->materialInventoryService->syncGoodsReceipt($receipt->fresh('items'));
 
             return $receipt->fresh('items');
         });
@@ -58,6 +64,7 @@ class GoodsReceiptRepository extends Repository
         return DB::transaction(function () use ($id) {
             /** @var GoodsReceipt $receipt */
             $receipt = $this->with('items')->findOrFail($id);
+            $this->materialInventoryService->syncGoodsReceipt($receipt, true);
             /** @var PurchaseOrder|null $purchaseOrder */
             $purchaseOrder = PurchaseOrder::with('items')->find($receipt->purchase_order_id);
 
@@ -217,9 +224,18 @@ class GoodsReceiptRepository extends Repository
                     continue;
                 }
 
-                $receivedQty = max((float) $requirement->received_qty - (float) $receiptItem->received_qty, 0);
-                $balanceQty = max((float) $requirement->required_qty - $receivedQty, 0);
-                $status = $receivedQty <= 0 ? 'pending' : ($balanceQty <= 0 ? 'fulfilled' : 'partial');
+                $requirementReceivedQty = $this->convertRequirementQuantity(
+                    (float) $receiptItem->received_qty,
+                    (string) $receiptItem->unit,
+                    (string) $requirement->unit
+                );
+                $receivedQty = max((float) $requirement->received_qty - $requirementReceivedQty, 0);
+                $vendorRequired = max((float) $requirement->required_qty - (float) $requirement->inventory_allocated_qty, 0);
+                $receivedQty = min($receivedQty, $vendorRequired);
+                $balanceQty = max($vendorRequired - $receivedQty, 0);
+                $status = $balanceQty <= 0
+                    ? 'fulfilled'
+                    : ($receivedQty > 0 || (float) $requirement->inventory_allocated_qty > 0 ? 'partial' : 'pending');
 
                 $this->jobOrderRequirementRepository->update([
                     'received_qty' => $receivedQty,
@@ -246,7 +262,27 @@ class GoodsReceiptRepository extends Repository
         ]);
 
         if ($purchaseOrderItem->requirement_id) {
-            $this->jobOrderRequirementRepository->applyReceivedQuantity((int) $purchaseOrderItem->requirement_id, $receivedQty);
+            $requirement = $this->jobOrderRequirementRepository->findOrFail((int) $purchaseOrderItem->requirement_id);
+            $requirementReceivedQty = $this->convertRequirementQuantity(
+                $receivedQty,
+                (string) $purchaseOrderItem->unit,
+                (string) $requirement->unit
+            );
+
+            $this->jobOrderRequirementRepository->applyReceivedQuantity($requirement->id, $requirementReceivedQty);
         }
+    }
+
+    protected function convertRequirementQuantity(float $quantity, string $fromUnit, string $toUnit): float
+    {
+        $converted = $this->unitConversionService->convert($quantity, $fromUnit, $toUnit);
+
+        if ($converted === null) {
+            throw ValidationException::withMessages([
+                'items' => "The received unit {$fromUnit} cannot be converted to the material stock unit {$toUnit}.",
+            ]);
+        }
+
+        return round($converted, 4);
     }
 }

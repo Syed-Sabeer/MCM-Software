@@ -21,6 +21,7 @@ use Webkul\PurchaseOrder\Repositories\JobOrderRepository;
 use Webkul\PurchaseOrder\Repositories\JobOrderRequirementRepository;
 use Webkul\PurchaseOrder\Repositories\PurchaseOrderRepository;
 use Webkul\PurchaseOrder\Repositories\VendorQuoteRepository;
+use Webkul\PurchaseOrder\Services\MaterialInventoryService;
 use Webkul\PurchaseOrder\Support\RequirementVendorAggregator;
 
 class PurchaseOrderController extends Controller
@@ -32,6 +33,7 @@ class PurchaseOrderController extends Controller
         protected VendorQuoteRepository $vendorQuoteRepository,
         protected JobOrderRepository $jobOrderRepository,
         protected JobOrderRequirementRepository $jobOrderRequirementRepository,
+        protected MaterialInventoryService $materialInventoryService,
         protected RequirementVendorAggregator $requirementVendorAggregator
     ) {
     }
@@ -399,6 +401,7 @@ class PurchaseOrderController extends Controller
 
         if ($requirementsNeedRefresh) {
             $this->jobOrderRequirementRepository->regenerateForJobOrder($jobOrder);
+            $this->materialInventoryService->syncJobOrder($jobOrder->fresh('requirements'));
 
             $jobOrder = $this->jobOrderRepository->with(['requirements', 'items.product.consumptions', 'organization'])->findOrFail($jobOrderId);
         }

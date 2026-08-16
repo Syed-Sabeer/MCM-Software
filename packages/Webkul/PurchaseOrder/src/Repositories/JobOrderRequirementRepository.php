@@ -6,12 +6,16 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Product\Models\Product;
+use Webkul\Product\Services\UnitConversionService;
 use Webkul\PurchaseOrder\Models\JobOrder;
 use Webkul\PurchaseOrder\Models\JobOrderRequirement;
 
 class JobOrderRequirementRepository extends Repository
 {
-    public function __construct(Container $container)
+    public function __construct(
+        protected UnitConversionService $unitConversionService,
+        Container $container
+    )
     {
         parent::__construct($container);
     }
@@ -50,12 +54,22 @@ class JobOrderRequirementRepository extends Repository
                     continue;
                 }
 
-                $product = Product::with('consumptions')->find($jobOrderItem->product_id);
+                $product = Product::with('consumptions.materialReference')->find($jobOrderItem->product_id);
                 $itemColorName = trim((string) ($jobOrderItem->color_variant_name ?: ''));
 
                 foreach ($product?->consumptions ?? [] as $consumption) {
                     $orderedQty = (float) $jobOrderItem->qty;
                     $qtyPerUnit = (float) $consumption->qty;
+                    $consumptionUnit = trim((string) $consumption->unit);
+                    $materialUnit = trim((string) ($consumption->materialReference?->unit ?: $consumptionUnit));
+
+                    if (strcasecmp($consumptionUnit, $materialUnit) !== 0) {
+                        $convertedQty = $this->unitConversionService->convert($qtyPerUnit, $consumptionUnit, $materialUnit);
+
+                        if ($convertedQty !== null) {
+                            $qtyPerUnit = $convertedQty;
+                        }
+                    }
                     $requiredQty = $qtyPerUnit * $orderedQty;
                     $materialName = trim((string) $consumption->name);
                     $colorName = trim((string) ($consumption->color_name ?: ''));
@@ -68,7 +82,7 @@ class JobOrderRequirementRepository extends Repository
                         mb_strtolower($materialName),
                         mb_strtolower($colorName),
                         mb_strtolower($colorCode),
-                        mb_strtolower((string) $consumption->unit),
+                        mb_strtolower($materialUnit),
                         number_format($qtyPerUnit, 4, '.', ''),
                     ]);
 
@@ -82,10 +96,11 @@ class JobOrderRequirementRepository extends Repository
                             'item_codes' => [],
                             'material_reference_id' => $consumption->material_reference_id,
                             'material_name' => $materialName,
-                            'unit' => $consumption->unit,
+                            'unit' => $materialUnit,
                             'qty_per_unit' => $qtyPerUnit,
                             'ordered_qty' => 0,
                             'required_qty' => 0,
+                            'inventory_allocated_qty' => 0,
                             'received_qty' => $existingReceivedQty,
                             'balance_qty' => 0,
                             'vendor_ids' => [],
@@ -125,6 +140,7 @@ class JobOrderRequirementRepository extends Repository
                     'qty_per_unit' => $requirement['qty_per_unit'],
                     'ordered_qty' => $requirement['ordered_qty'],
                     'required_qty' => $requiredQty,
+                    'inventory_allocated_qty' => 0,
                     'received_qty' => $receivedQty,
                     'balance_qty' => $balanceQty,
                     'vendor_ids' => $requirement['vendor_ids'] ?: null,
@@ -140,10 +156,13 @@ class JobOrderRequirementRepository extends Repository
     public function applyReceivedQuantity(int $requirementId, float $receivedQty): void
     {
         $requirement = $this->findOrFail($requirementId);
-        $newReceived = min((float) $requirement->required_qty, (float) $requirement->received_qty + $receivedQty);
-        $balance = max((float) $requirement->required_qty - $newReceived, 0);
+        $vendorRequired = max((float) $requirement->required_qty - (float) $requirement->inventory_allocated_qty, 0);
+        $newReceived = min($vendorRequired, (float) $requirement->received_qty + $receivedQty);
+        $balance = max($vendorRequired - $newReceived, 0);
 
-        $status = $balance <= 0 ? 'fulfilled' : ($newReceived > 0 ? 'partial' : 'pending');
+        $status = $balance <= 0
+            ? 'fulfilled'
+            : ($newReceived > 0 || (float) $requirement->inventory_allocated_qty > 0 ? 'partial' : 'pending');
 
         $this->update([
             'received_qty' => $newReceived,

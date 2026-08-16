@@ -3,11 +3,13 @@
 namespace Webkul\PurchaseOrder\Support;
 
 use Illuminate\Support\Collection;
-use Webkul\Product\Models\UnitReference;
+use Webkul\Product\Services\UnitConversionService;
 
 class RequirementVendorAggregator
 {
-    protected ?Collection $unitConversions = null;
+    public function __construct(protected UnitConversionService $unitConversionService)
+    {
+    }
 
     public function totals(Collection $requirements): Collection
     {
@@ -17,7 +19,7 @@ class RequirementVendorAggregator
             ->map(function (Collection $rows) {
                 $first = $rows->first();
                 $required = $rows->sum('required_qty');
-                $received = $rows->sum('received_qty');
+                $received = min($rows->sum('received_qty'), $required);
                 $balance = max($required - $received, 0);
 
                 return [
@@ -35,6 +37,7 @@ class RequirementVendorAggregator
                     'vendor_ids'           => $rows->flatMap(fn ($row) => $row['vendor_ids'])->filter()->unique()->values()->all(),
                 ];
             })
+            ->filter(fn ($row) => $row['required_qty'] > 0.00005 || $row['received_qty'] > 0.00005)
             ->sortBy([
                 ['material_name', 'asc'],
                 ['color_label', 'asc'],
@@ -70,8 +73,11 @@ class RequirementVendorAggregator
             'color_name'            => $colorName !== '' ? $colorName : null,
             'color_code'            => $colorCode !== '' ? $colorCode : null,
             'color_label'           => $colorLabel,
-            'required_qty'          => (float) $requirement->required_qty * $multiplier,
-            'received_qty'          => (float) $requirement->received_qty * $multiplier,
+            'required_qty'          => max((float) $requirement->required_qty - (float) $requirement->inventory_allocated_qty, 0) * $multiplier,
+            'received_qty'          => min(
+                (float) $requirement->received_qty,
+                max((float) $requirement->required_qty - (float) $requirement->inventory_allocated_qty, 0)
+            ) * $multiplier,
             'unit'                  => $targetUnit,
             'vendor_ids'            => array_map('intval', (array) ($requirement->vendor_ids ?? [])),
             'group_key'             => implode('|', [
@@ -84,26 +90,6 @@ class RequirementVendorAggregator
 
     protected function conversionFor(string $unit): ?float
     {
-        $normalized = strtoupper(trim($unit));
-
-        if ($normalized === '') {
-            return null;
-        }
-
-        $conversion = $this->unitConversions()->get($normalized);
-
-        return $conversion !== null ? (float) $conversion : null;
-    }
-
-    protected function unitConversions(): Collection
-    {
-        if ($this->unitConversions !== null) {
-            return $this->unitConversions;
-        }
-
-        return $this->unitConversions = UnitReference::query()
-            ->whereNotNull('meter_conversion')
-            ->get(['name', 'meter_conversion'])
-            ->mapWithKeys(fn ($unit) => [strtoupper(trim((string) $unit->name)) => (float) $unit->meter_conversion]);
+        return $this->unitConversionService->factor($unit, 'METER');
     }
 }

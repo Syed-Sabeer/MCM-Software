@@ -102,6 +102,14 @@ return [
         'sort'       => 5,
         'icon-class' => '',
     ],
+    [
+        'key'        => 'inventory',
+        'name'       => 'Inventory',
+        'route'      => 'admin.inventory.index',
+        'permission' => 'inventory',
+        'sort'       => 7,
+        'icon-class' => 'icon-settings-warehouse',
+    ],
 
     /**
      * Emails.

@@ -81,7 +81,7 @@ class PurchaseOrderRepository extends Repository
             'job_number' => $jobOrder->job_order_number,
             'expected_receive_date' => $jobOrder->required_delivery_date?->toDateString(),
             'status' => 'draft',
-            'items' => $jobOrder->requirements->map(fn ($requirement) => [
+            'items' => $jobOrder->requirements->filter(fn ($requirement) => (float) $requirement->balance_qty > 0.00005)->map(fn ($requirement) => [
                 'requirement_id' => $requirement->id,
                 'item' => $requirement->material_name,
                 'material_name' => $requirement->material_name,
@@ -94,7 +94,7 @@ class PurchaseOrderRepository extends Repository
                 'price' => 0,
                 'expected_receive_date' => $jobOrder->required_delivery_date?->toDateString(),
                 'line_status' => 'open',
-            ])->toArray(),
+            ])->values()->toArray(),
         ], $overrides);
 
         return $this->create($payload);
