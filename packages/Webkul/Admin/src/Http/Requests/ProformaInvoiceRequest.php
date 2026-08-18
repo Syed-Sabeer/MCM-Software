@@ -44,13 +44,9 @@ class ProformaInvoiceRequest extends FormRequest
 
     public function rules(): array
     {
-        $quoteRule = $this->isMethod('post')
-            ? ['required', 'exists:quotes,id']
-            : ['nullable', 'exists:quotes,id'];
-
         return [
             'proforma_number'        => ['nullable', 'string', 'max:50'],
-            'quote_id'               => $quoteRule,
+            'quote_id'               => ['nullable', 'exists:quotes,id'],
             'organization_id'        => ['required', 'exists:organizations,id'],
             'person_id'              => ['nullable', 'exists:persons,id'],
             'sales_owner_id'         => ['nullable', 'exists:users,id'],

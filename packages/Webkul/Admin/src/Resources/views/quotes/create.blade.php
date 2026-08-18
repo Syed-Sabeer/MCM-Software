@@ -230,7 +230,7 @@
                         <p class="text-sm text-gray-600 dark:text-white">@lang('admin::app.quotes.create.quote-item-info')</p>
                     </div>
 
-                    <v-quote-item-list :errors="errors" :organization-id="selectedOrganizationId"></v-quote-item-list>
+                    <v-quote-item-list :errors="errors" :organization-id="selectedOrganizationId" :organization-name="selectedCustomer?.name || ''" :companies="customers"></v-quote-item-list>
                 </div>
                 <div class="document-form-section grid gap-4 md:grid-cols-2">
                     <x-admin::form.control-group class="!mb-0">
@@ -260,6 +260,16 @@
             <div class="flex flex-col gap-4">
                 <div class="block w-full overflow-visible">
                     <x-admin::table>
+                        <colgroup>
+                            <col style="width: 30%;">
+                            <col style="width: 90px;">
+                            <col style="width: 16%;">
+                            <col style="width: 14%;">
+                            <col style="width: 14%;">
+                            <col style="width: 14%;">
+                            <col v-if="products.length > 1" style="width: 56px;">
+                        </colgroup>
+
                         <x-admin::table.thead>
                             <x-admin::table.thead.tr>
                                 <x-admin::table.th>@lang('admin::app.quotes.create.product-name')</x-admin::table.th>
@@ -274,7 +284,7 @@
 
                         <x-admin::table.tbody>
                             <template v-for='(product, index) in products' :key="index">
-                                <v-quote-item :product="product" :index="index" :errors="errors" :organization-id="organizationId" @onRemoveProduct="removeProduct($event)"></v-quote-item>
+                                <v-quote-item :product="product" :index="index" :errors="errors" :organization-id="organizationId" :organization-name="organizationName" :companies="companies" @onRemoveProduct="removeProduct($event)"></v-quote-item>
                             </template>
                         </x-admin::table.tbody>
                     </x-admin::table>
@@ -340,10 +350,12 @@
         <script type="text/x-template" id="v-quote-item-template">
             <x-admin::table.thead.tr>
                 <x-admin::table.td class="!px-2 align-top overflow-visible">
-                    <div class="relative min-w-[380px]">
+                    <div class="relative min-w-0 w-full">
                         <v-quote-product-lookup
                             :src="src"
                             :organization-id="organizationId"
+                            :organization-name="organizationName"
+                            :companies="companies"
                             :selected-product="product"
                             @on-selected="(product) => addProduct(product)"
                         ></v-quote-product-lookup>
@@ -352,10 +364,10 @@
                     </div>
                 </x-admin::table.td>
 
-                <x-admin::table.td class="!px-2">
+                <x-admin::table.td class="!px-2 text-center align-middle">
                     <input type="hidden" :name="inputName + '[preview_image]'" :value="product.preview_image || ''">
                     <img v-if="product.preview_image" :key="product.preview_image" :src="product.preview_image" class="mx-auto h-12 w-12 rounded object-cover border border-gray-200" alt="preview">
-                    <span v-else class="text-xs text-gray-500">No image</span>
+                    <span v-else class="block text-xs text-gray-500">No image</span>
                 </x-admin::table.td>
 
                 <x-admin::table.td class="!px-2">
@@ -520,7 +532,7 @@
 
             app.component('v-quote-item-list', {
                 template: '#v-quote-item-list-template',
-                props: ['errors', 'organizationId'],
+                props: ['errors', 'organizationId', 'organizationName', 'companies'],
                 data() {
                     return {
                         charges: @json($initialQuoteCharges),
@@ -612,7 +624,7 @@
             });
 
             app.component('v-quote-product-lookup', {
-                props: ['src', 'organizationId', 'selectedProduct'],
+                props: ['src', 'organizationId', 'organizationName', 'companies', 'selectedProduct'],
                 emits: ['on-selected'],
                 data() {
                     return {
@@ -621,6 +633,16 @@
                         results: [],
                         isSearching: false,
                         cancelToken: null,
+                        isCreatingProduct: false,
+                        quickProductErrors: {},
+                        companyPickerOpen: false,
+                        companySearch: '',
+                        quickProduct: {
+                            name: '',
+                            sku: '',
+                            selling_price: '',
+                            customer_organization_id: '',
+                        },
                     };
                 },
                 computed: {
@@ -633,6 +655,20 @@
                         }
 
                         return itemCode || name || '';
+                    },
+                    quickProductCompanyLabel() {
+                        if (! this.quickProduct.customer_organization_id) {
+                            return 'Global Product';
+                        }
+
+                        return (this.companies || []).find((company) => String(company.id) === String(this.quickProduct.customer_organization_id))?.name
+                            || this.organizationName
+                            || 'Selected Company';
+                    },
+                    filteredQuickProductCompanies() {
+                        const query = this.companySearch.trim().toLowerCase();
+
+                        return (this.companies || []).filter((company) => ! query || String(company.name || '').toLowerCase().includes(query));
                     },
                 },
                 methods: {
@@ -659,7 +695,7 @@
                         });
                     },
                     search() {
-                        if (! this.organizationId || this.searchTerm.trim().length < 1) {
+                        if (this.searchTerm.trim().length < 1) {
                             this.results = [];
                             return;
                         }
@@ -694,9 +730,83 @@
                         this.results = [];
                         this.$emit('on-selected', product);
                     },
+                    openQuickCreate() {
+                        this.showPopup = false;
+                        this.quickProductErrors = {};
+                        this.companyPickerOpen = false;
+                        this.companySearch = '';
+                        this.quickProduct = {
+                            name: '',
+                            sku: this.searchTerm.trim(),
+                            selling_price: '',
+                            customer_organization_id: this.organizationId ? String(this.organizationId) : '',
+                        };
+                        this.$refs.quickProductModal.open();
+                        this.$nextTick(() => this.$refs.quickProductName?.focus());
+                    },
+                    closeQuickCreate() {
+                        if (this.isCreatingProduct) return;
+
+                        this.$refs.quickProductModal.close();
+                    },
+                    resetQuickProductModal() {
+                        this.companyPickerOpen = false;
+                        this.companySearch = '';
+                        this.quickProductErrors = {};
+                    },
+                    toggleCompanyPicker() {
+                        this.companyPickerOpen = ! this.companyPickerOpen;
+
+                        if (this.companyPickerOpen) {
+                            this.$nextTick(() => this.$refs.quickCompanySearch?.focus());
+                        }
+                    },
+                    selectQuickProductCompany(company) {
+                        this.quickProduct.customer_organization_id = company?.id ? String(company.id) : '';
+                        this.companySearch = '';
+                        this.companyPickerOpen = false;
+                    },
+                    quickProductError(field) {
+                        const errors = this.quickProductErrors?.[field];
+
+                        return Array.isArray(errors) ? errors[0] : (errors || '');
+                    },
+                    saveQuickProduct() {
+                        this.quickProductErrors = {};
+
+                        if (! this.quickProduct.name.trim() || ! this.quickProduct.sku.trim()) {
+                            if (! this.quickProduct.name.trim()) this.quickProductErrors.name = ['The product name is required.'];
+                            if (! this.quickProduct.sku.trim()) this.quickProductErrors.sku = ['The item code is required.'];
+                            return;
+                        }
+
+                        this.isCreatingProduct = true;
+
+                        this.$axios.post("{{ route('admin.products.quick_store') }}", {
+                            name: this.quickProduct.name.trim(),
+                            sku: this.quickProduct.sku.trim(),
+                            selling_price: this.quickProduct.selling_price || null,
+                            customer_organization_id: this.quickProduct.customer_organization_id || null,
+                        }).then((response) => {
+                            const product = response?.data?.data || response?.data;
+
+                            this.$refs.quickProductModal.close();
+                            this.selectProduct(product);
+                        }).catch((error) => {
+                            this.quickProductErrors = error?.response?.data?.errors || {
+                                name: [error?.response?.data?.message || 'Unable to save the product.'],
+                            };
+                        }).finally(() => {
+                            this.isCreatingProduct = false;
+                        });
+                    },
                     handleFocusOut(event) {
                         if (this.$refs.lookup && ! this.$refs.lookup.contains(event.target)) {
                             this.showPopup = false;
+                        }
+
+                        if (this.$refs.quickCompanyLookup && ! this.$refs.quickCompanyLookup.contains(event.target)) {
+                            this.companyPickerOpen = false;
                         }
                     },
                     resultLabel(product) {
@@ -750,6 +860,11 @@
                             v-if="showPopup"
                             class="absolute top-full z-50 mt-1 flex w-full min-w-[380px] origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
                         >
+                            <div class="flex items-center justify-between gap-3 px-1 pt-1">
+                                <span class="text-sm font-semibold text-gray-800 dark:text-white">Select Product</span>
+                                <button type="button" class="text-sm font-medium text-red-600 hover:underline" @click.stop="openQuickCreate">Add Product</button>
+                            </div>
+
                             <div class="relative flex items-center">
                                 <input
                                     type="text"
@@ -785,13 +900,84 @@
                                 </li>
                             </ul>
                         </div>
+
+                        <x-admin::modal ref="quickProductModal" size="medium" @close="resetQuickProductModal">
+                            <x-slot:header>
+                                <p class="text-lg font-bold text-gray-800 dark:text-white">Add Product</p>
+                            </x-slot>
+
+                            <x-slot:content>
+                                <div class="grid grid-cols-1 gap-x-6 gap-y-6 px-1 py-2 sm:grid-cols-2">
+                                    <div class="flex min-w-0 flex-col gap-2">
+                                        <label class="text-sm font-semibold text-gray-800 dark:text-gray-200">Product Name *</label>
+                                        <input ref="quickProductName" v-model="quickProduct.name" type="text" maxlength="255" class="min-h-[44px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200" autocomplete="off">
+                                        <p v-if="quickProductError('name')" class="text-xs text-red-600">@{{ quickProductError('name') }}</p>
+                                    </div>
+
+                                    <div class="flex min-w-0 flex-col gap-2">
+                                        <label class="text-sm font-semibold text-gray-800 dark:text-gray-200">Item Code *</label>
+                                        <input v-model="quickProduct.sku" type="text" maxlength="255" class="min-h-[44px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200" autocomplete="off">
+                                        <p v-if="quickProductError('sku')" class="text-xs text-red-600">@{{ quickProductError('sku') }}</p>
+                                    </div>
+
+                                    <div class="flex min-w-0 flex-col gap-2">
+                                        <label class="text-sm font-semibold text-gray-800 dark:text-gray-200">Selling Price</label>
+                                        <input v-model="quickProduct.selling_price" type="number" min="0" step="0.0001" class="min-h-[44px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200" placeholder="0.00">
+                                        <p v-if="quickProductError('selling_price')" class="text-xs text-red-600">@{{ quickProductError('selling_price') }}</p>
+                                    </div>
+
+                                    <div class="flex min-w-0 flex-col gap-2">
+                                        <label class="text-sm font-semibold text-gray-800 dark:text-gray-200">Company</label>
+                                        <div ref="quickCompanyLookup" class="relative">
+                                            <button type="button" class="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-800 outline-none hover:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200" @click.stop="toggleCompanyPicker">
+                                                <span class="truncate">@{{ quickProductCompanyLabel }}</span>
+                                                <span class="icon-down-arrow shrink-0 text-base text-gray-500"></span>
+                                            </button>
+
+                                            <div v-if="companyPickerOpen" class="absolute top-full z-[10004] mt-1 w-full overflow-hidden rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900" @click.stop>
+                                                <div class="border-b border-gray-200 p-2 dark:border-gray-700">
+                                                    <div class="relative">
+                                                        <span class="icon-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400"></span>
+                                                        <input ref="quickCompanySearch" v-model="companySearch" type="search" class="min-h-[40px] w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm text-gray-800 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200" placeholder="Search company...">
+                                                    </div>
+                                                </div>
+
+                                                <div class="max-h-48 overflow-y-auto p-1" style="scrollbar-width: thin;">
+                                                    <button type="button" class="flex w-full items-center justify-between rounded px-3 py-2 text-left text-sm hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800" @click="selectQuickProductCompany(null)">
+                                                        <span>Global Product</span>
+                                                        <span v-if="! quickProduct.customer_organization_id" class="icon-tick text-base text-brandColor"></span>
+                                                    </button>
+                                                    <button v-for="company in filteredQuickProductCompanies" :key="company.id" type="button" class="flex w-full items-center justify-between rounded px-3 py-2 text-left text-sm hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800" @click="selectQuickProductCompany(company)">
+                                                        <span class="truncate">@{{ company.name }}</span>
+                                                        <span v-if="String(quickProduct.customer_organization_id) === String(company.id)" class="icon-tick text-base text-brandColor"></span>
+                                                    </button>
+                                                    <p v-if="! filteredQuickProductCompanies.length" class="px-3 py-4 text-center text-sm text-gray-500">No companies found.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p v-if="quickProductError('customer_organization_id')" class="text-xs text-red-600">@{{ quickProductError('customer_organization_id') }}</p>
+                                    </div>
+                                </div>
+                            </x-slot>
+
+                            <x-slot:footer>
+                                <div class="flex items-center justify-end gap-3 py-1">
+                                    <button type="button" class="secondary-button" :disabled="isCreatingProduct" @click="closeQuickCreate">Cancel</button>
+                                    <button type="button" class="primary-button inline-flex min-w-[150px] items-center justify-center gap-2" :disabled="isCreatingProduct" @click="saveQuickProduct">
+                                        <span v-if="isCreatingProduct" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                                        <span v-else class="icon-add text-base"></span>
+                                        <span>@{{ isCreatingProduct ? 'Saving...' : 'Save Product' }}</span>
+                                    </button>
+                                </div>
+                            </x-slot>
+                        </x-admin::modal>
                     </div>
                 `,
             });
 
             app.component('v-quote-item', {
                 template: '#v-quote-item-template',
-                props: ['index', 'product', 'errors', 'organizationId'],
+                props: ['index', 'product', 'errors', 'organizationId', 'organizationName', 'companies'],
                 computed: {
                     inputName() {
                         if (this.product.id) {
@@ -873,13 +1059,5 @@
         </script>
     @endPushOnce
 </x-admin::layouts>
-
-
-
-
-
-
-
-
 
 

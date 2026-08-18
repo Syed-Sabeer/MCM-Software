@@ -49,7 +49,7 @@ return [
     ], [
         'key'   => 'quotes.create',
         'name'  => 'admin::app.acl.create',
-        'route' => ['admin.quotes.create', 'admin.quotes.store'],
+        'route' => ['admin.quotes.create', 'admin.quotes.store', 'admin.products.quick_store'],
         'sort'  => 1,
     ], [
         'key'   => 'quotes.view',
@@ -79,7 +79,7 @@ return [
     ], [
         'key'   => 'proforma_invoices.create',
         'name'  => 'admin::app.acl.create',
-        'route' => ['admin.proforma_invoices.create', 'admin.proforma_invoices.store', 'admin.proforma_invoices.receipts.store'],
+        'route' => ['admin.proforma_invoices.create', 'admin.proforma_invoices.store', 'admin.proforma_invoices.receipts.store', 'admin.products.quick_store'],
         'sort'  => 1,
     ], [
         'key'   => 'proforma_invoices.view',
@@ -505,7 +505,7 @@ return [
     ], [
         'key'   => 'products.create',
         'name'  => 'admin::app.acl.create',
-        'route' => ['admin.products.create', 'admin.products.store', 'admin.products.duplicate', 'admin.settings.units.index', 'admin.settings.units.store'],
+        'route' => ['admin.products.create', 'admin.products.store', 'admin.products.quick_store', 'admin.products.duplicate', 'admin.settings.units.index', 'admin.settings.units.store'],
         'sort'  => 1,
     ], [
         'key'   => 'products.edit',

@@ -23,6 +23,8 @@ Route::group(['middleware' => ['user']], function () {
 
         Route::post('create', 'store')->name('admin.products.store');
 
+        Route::post('quick-create', 'quickStore')->name('admin.products.quick_store');
+
         Route::get('view/{id}', 'view')->name('admin.products.view');
 
         Route::get('edit/{id}', 'edit')->name('admin.products.edit');

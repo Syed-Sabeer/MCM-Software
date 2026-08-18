@@ -112,6 +112,46 @@ class ProductController extends Controller
     }
 
     /**
+     * Create the minimum complete product needed by document line items.
+     */
+    public function quickStore(): JsonResponse
+    {
+        $data = request()->validate([
+            'name'                     => ['required', 'string', 'max:255'],
+            'sku'                      => ['required', 'string', 'max:255', Rule::unique('products', 'sku')],
+            'selling_price'            => ['nullable', 'numeric', 'min:0'],
+            'customer_organization_id' => [
+                'nullable',
+                Rule::exists('organizations', 'id')->where(
+                    fn ($query) => $query->whereRaw("LOWER(TRIM(type)) = 'customer'")
+                ),
+            ],
+        ]);
+
+        Event::dispatch('product.create.before');
+
+        $payload = $this->prepareProductData([
+            'entity_type'             => 'products',
+            'quick_add'               => 1,
+            'name'                    => trim((string) $data['name']),
+            'sku'                     => trim((string) $data['sku']),
+            'internal_code'           => trim((string) $data['sku']),
+            'customer_organization_id'=> $data['customer_organization_id'] ?? null,
+            'selling_price'           => $data['selling_price'] ?? null,
+            'quantity'                => 0,
+        ], null);
+
+        $product = $this->productRepository->create($payload)->load(['colors', 'otherImages']);
+
+        Event::dispatch('product.create.after', $product);
+
+        return response()->json([
+            'data'    => (new ProductResource($product))->resolve(),
+            'message' => 'Product created successfully.',
+        ], 201);
+    }
+
+    /**
      * Show the form for viewing the specified resource.
      */
     public function view(int $id): View

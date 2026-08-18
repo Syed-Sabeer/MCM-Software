@@ -207,6 +207,12 @@ class ProformaInvoiceRepository extends Repository
      */
     protected function calculateTotals(array $data): array
     {
+        foreach (['quote_id', 'person_id', 'sales_owner_id', 'created_by'] as $foreignKey) {
+            if (array_key_exists($foreignKey, $data) && blank($data[$foreignKey])) {
+                $data[$foreignKey] = null;
+            }
+        }
+
         $subTotal = 0;
         $items = $data['items'] ?? [];
         $organization = ! empty($data['organization_id'])

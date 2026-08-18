@@ -211,9 +211,11 @@ class ProformaInvoiceController extends Controller
     {
         $payload = $request->validated();
 
-        $payload['person_id'] = $payload['person_id'] ?: null;
-        $payload['sales_owner_id'] = $payload['sales_owner_id'] ?? auth()->id();
+        $payload['quote_id'] = filled($payload['quote_id'] ?? null) ? $payload['quote_id'] : null;
+        $payload['person_id'] = filled($payload['person_id'] ?? null) ? $payload['person_id'] : null;
+        $payload['sales_owner_id'] = filled($payload['sales_owner_id'] ?? null) ? $payload['sales_owner_id'] : auth()->id();
         $payload['created_by'] = $existing?->created_by ?? auth()->id();
+        $payload['source_type'] = $payload['quote_id'] ? 'quote' : 'manual';
 
         if ($request->hasFile('attachment')) {
             if ($existing?->attachment_path) {
