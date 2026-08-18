@@ -1152,7 +1152,7 @@
                         + '    <input type="number" step="0.001" name="consumptions[' + index + '][qty]" class="consumption-qty-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
                         + '  </div>'
                         + '  <div>'
-                        + '    <select name="consumptions[' + index + '][unit]" class="consumption-unit-input product-unit-select w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">' + window.productUnitOptionsMarkup(valueOf(data, 'unit', '')) + '</select>'
+                        +      window.productUnitPickerMarkup(valueOf(data, 'unit', ''), index)
                         + '  </div>'
                         + '  <div class="flex items-end">'
                         + '    <button type="button" class="remove-consumption inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-lg text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove consumption">&times;</button>'
@@ -1181,6 +1181,8 @@
                 }
 
                 function bindConsumptionRow(row) {
+                    window.bindProductUnitPicker(row);
+
                     var referenceLookup = row.querySelector('.consumption-reference-lookup');
                     var referenceToggle = row.querySelector('.consumption-reference-toggle');
                     var referencePopup = row.querySelector('.consumption-reference-popup');
@@ -1294,7 +1296,7 @@
                         }
 
                         if (!unitInput.value) {
-                            unitInput.value = reference.unit || '';
+                            window.setProductUnitPickerValue(row, reference.unit || '');
                         }
 
                         if (Array.isArray(reference.vendor_ids)) {
