@@ -91,14 +91,30 @@ class ProductController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse
     {
-        $this->validateProductFields($request, false, null);
+        $original = null;
+        $isDuplicate = $request->filled('duplicate_from');
+
+        if ($isDuplicate) {
+            $original = $this->productRepository->with(['otherImages.color', 'colors'])
+                ->findOrFail((int) $request->input('duplicate_from'));
+            $requestedSku = trim((string) $request->input('sku'));
+
+            if ($requestedSku === '' || $this->productRepository->where('sku', $requestedSku)->exists()) {
+                $requestedSku = $this->generateDuplicateSku((string) $original->sku);
+                $request->merge([
+                    'sku'           => $requestedSku,
+                    'internal_code' => $requestedSku,
+                ]);
+            }
+        }
+
+        $this->validateProductFields($request, false, null, $isDuplicate);
 
         Event::dispatch('product.create.before');
 
         $data = $this->prepareProductData($request->all(), null);
 
-        if ($request->filled('duplicate_from')) {
-            $original = $this->productRepository->with(['otherImages.color', 'colors'])->findOrFail((int) $request->input('duplicate_from'));
+        if ($original) {
             $data = $this->duplicateMediaFromOriginal($original, $data);
         }
 
@@ -519,7 +535,7 @@ class ProductController extends Controller
     /**
      * Validate product-specific ERP catalog fields.
      */
-    protected function validateProductFields($request, bool $isUpdate, ?int $productId): void
+    protected function validateProductFields($request, bool $isUpdate, ?int $productId, bool $isDuplicate = false): void
     {
         $this->normalizeDynamicProductInputs($request);
 
@@ -535,27 +551,33 @@ class ProductController extends Controller
             'sku'                  => $skuRule,
             'internal_code'        => ['nullable', 'string', 'max:255'],
             'name'                 => ['required', 'string', 'max:255'],
-            'customer_organization_id' => [
-                'nullable',
-                Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['customer', 'Customer'])),
-            ],
+            'customer_organization_id' => $isDuplicate
+                ? ['nullable', Rule::exists('organizations', 'id')]
+                : [
+                    'nullable',
+                    Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['customer', 'Customer'])),
+                ],
             'size'                 => ['nullable', 'string', 'max:100'],
-            'weight'               => ['nullable', 'numeric', 'min:0'],
-            'weight_unit'          => ['nullable', 'in:gsm,oz'],
-            'cost_price'           => ['nullable', 'numeric', 'min:0'],
-            'selling_price'        => ['nullable', 'numeric', 'min:0'],
+            'weight'               => $isDuplicate ? ['nullable', 'numeric'] : ['nullable', 'numeric', 'min:0'],
+            'weight_unit'          => $isDuplicate ? ['nullable', 'string', 'max:100'] : ['nullable', 'in:gsm,oz'],
+            'cost_price'           => $isDuplicate ? ['nullable', 'numeric'] : ['nullable', 'numeric', 'min:0'],
+            'selling_price'        => $isDuplicate ? ['nullable', 'numeric'] : ['nullable', 'numeric', 'min:0'],
             'colors'               => ['nullable', 'array'],
             'colors.*.name'        => ['nullable', 'string', 'max:100'],
             'colors.*.color_code'  => ['nullable', 'string', 'max:20'],
-            'colors.*.cost_price'  => ['nullable', 'numeric', 'min:0'],
-            'colors.*.selling_price' => ['nullable', 'numeric', 'min:0'],
+            'colors.*.cost_price'  => $isDuplicate ? ['nullable', 'numeric'] : ['nullable', 'numeric', 'min:0'],
+            'colors.*.selling_price' => $isDuplicate ? ['nullable', 'numeric'] : ['nullable', 'numeric', 'min:0'],
             'consumptions'         => ['nullable', 'array'],
             'consumptions.*.material_reference_id' => ['nullable', 'integer', 'exists:material_references,id'],
             'consumptions.*.name'  => ['required', 'string', 'max:255'],
             'consumptions.*.qty'   => ['required', 'numeric'],
-            'consumptions.*.unit'  => ['required', 'string', 'max:100', Rule::exists('unit_references', 'name')],
+            'consumptions.*.unit'  => $isDuplicate
+                ? ['required', 'string', 'max:100']
+                : ['required', 'string', 'max:100', Rule::exists('unit_references', 'name')],
             'consumptions.*.vendor_ids' => ['nullable', 'array'],
-            'consumptions.*.vendor_ids.*' => ['integer', Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['vendor', 'Vendor']))],
+            'consumptions.*.vendor_ids.*' => $isDuplicate
+                ? ['integer']
+                : ['integer', Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['vendor', 'Vendor']))],
             'consumptions.*.color_name' => ['nullable', 'string', 'max:100'],
             'consumptions.*.color_code' => ['nullable', 'string', 'max:20'],
             'production_sections'                          => ['nullable', 'array'],
@@ -1003,11 +1025,13 @@ class ProductController extends Controller
      */
     protected function buildDuplicateDraft($original): array
     {
+        $duplicateSku = $this->generateDuplicateSku((string) $original->sku);
+
         return [
             'name'                     => $original->name,
             'slug'                     => '',
-            'sku'                      => '',
-            'internal_code'            => '',
+            'sku'                      => $duplicateSku,
+            'internal_code'            => $duplicateSku,
             'customer_organization_id' => $original->customer_organization_id,
             'description'              => $original->description,
             'quantity'                 => $original->quantity ?? 0,
@@ -1063,6 +1087,23 @@ class ProductController extends Controller
                 ])->toArray(),
             ])->toArray(),
         ];
+    }
+
+    /**
+     * Generate a readable, unique item code for a duplicated product.
+     */
+    protected function generateDuplicateSku(string $originalSku): string
+    {
+        $baseSku = trim($originalSku) !== '' ? trim($originalSku).'-COPY' : 'PRODUCT-COPY';
+        $sku = $baseSku;
+        $counter = 2;
+
+        while ($this->productRepository->where('sku', $sku)->exists()) {
+            $sku = $baseSku.'-'.$counter;
+            $counter++;
+        }
+
+        return $sku;
     }
 
     /**
