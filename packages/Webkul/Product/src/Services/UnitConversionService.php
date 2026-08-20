@@ -7,6 +7,13 @@ use Webkul\Product\Models\UnitReference;
 
 class UnitConversionService
 {
+    protected const UNIT_ALIASES = [
+        'CONE'   => 'CONES',
+        'PC'     => 'PCS',
+        'PIECE'  => 'PCS',
+        'PIECES' => 'PCS',
+    ];
+
     protected ?Collection $units = null;
 
     public function factor(string $fromUnit, string $toUnit): ?float
@@ -58,7 +65,9 @@ class UnitConversionService
 
     protected function normalize(string $unit): string
     {
-        return strtoupper(trim($unit));
+        $normalized = strtoupper(trim($unit));
+
+        return self::UNIT_ALIASES[$normalized] ?? $normalized;
     }
 
     protected function units(): Collection
