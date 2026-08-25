@@ -71,7 +71,7 @@ class ProductController extends Controller
         if (request()->filled('duplicate_from')) {
             $original = $this->productRepository->with([
                 'customerOrganization',
-                'otherImages',
+                'otherImages.color',
                 'colors',
                 'keyPoints',
                 'pricingCharts.types.tiers',
@@ -586,6 +586,11 @@ class ProductController extends Controller
             'colors.*.color_code'  => ['nullable', 'string', 'max:20'],
             'colors.*.cost_price'  => $isDuplicate ? ['nullable', 'numeric'] : ['nullable', 'numeric', 'min:0'],
             'colors.*.selling_price' => $isDuplicate ? ['nullable', 'numeric'] : ['nullable', 'numeric', 'min:0'],
+            'cover_image'          => ['nullable', 'image', 'max:5120'],
+            'other_images'         => ['nullable', 'array'],
+            'other_images.*'       => ['nullable', 'image', 'max:5120'],
+            'duplicate_replace_images'   => ['nullable', 'array'],
+            'duplicate_replace_images.*' => ['nullable', 'image', 'max:5120'],
             'consumptions'         => ['nullable', 'array'],
             'consumptions.*.material_reference_id' => ['nullable', 'integer', 'exists:material_references,id'],
             'consumptions.*.name'  => ['required', 'string', 'max:255'],
@@ -1110,6 +1115,20 @@ class ProductController extends Controller
                     'unit' => $item->unit,
                 ])->toArray(),
             ])->toArray(),
+            '_duplicate_media' => [
+                'cover' => $original->cover_image ? [
+                    'path' => $original->cover_image,
+                    'url'  => rtrim(request()->getBaseUrl(), '/').'/public/storage/'.ltrim($original->cover_image, '/'),
+                ] : null,
+                'other_images' => $original->otherImages->map(fn ($image) => [
+                    'id'            => $image->id,
+                    'url'           => $image->path
+                        ? rtrim(request()->getBaseUrl(), '/').'/public/storage/'.ltrim($image->path, '/')
+                        : null,
+                    'original_name' => $image->original_name,
+                    'color_ref'     => $image->color ? 'new_'.$image->color->sort_order : '',
+                ])->values()->toArray(),
+            ],
         ];
     }
 
@@ -1135,26 +1154,37 @@ class ProductController extends Controller
      */
     protected function duplicateMediaFromOriginal($original, array $data): array
     {
-        if (empty($data['cover_image']) && $original->cover_image) {
+        $keepCover = request()->boolean('keep_duplicate_cover_image', true);
+
+        if (empty($data['cover_image']) && $keepCover && $original->cover_image) {
             $data['cover_image'] = $this->duplicateFile($original->cover_image, 'product-images');
         }
 
         $existingOtherImages = $data['other_images'] ?? [];
         $existingOtherImageColors = $data['other_image_colors'] ?? [];
+        $retainedImageIds = collect(request()->input('duplicate_other_image_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique();
+        $selectedColors = request()->input('duplicate_other_image_colors', []);
 
-        foreach ($original->otherImages as $image) {
+        foreach ($original->otherImages->whereIn('id', $retainedImageIds) as $image) {
             if (! $image->path) {
                 continue;
             }
 
+            $replacement = request()->file('duplicate_replace_images.'.$image->id);
+            $path = $replacement
+                ? $replacement->store('product-other-images', 'public')
+                : $this->duplicateFile($image->path, 'product-other-images');
+
             $existingOtherImages[] = [
-                'path'          => $this->duplicateFile($image->path, 'product-other-images'),
-                'original_name' => $image->original_name,
+                'path'          => $path,
+                'original_name' => $replacement?->getClientOriginalName() ?? $image->original_name,
             ];
 
-            $existingOtherImageColors[] = $image->color
-                ? 'new_' . $image->color->sort_order
-                : null;
+            $existingOtherImageColors[] = $selectedColors[$image->id]
+                ?? ($image->color ? 'new_'.$image->color->sort_order : null);
         }
 
         $data['other_images'] = $existingOtherImages;

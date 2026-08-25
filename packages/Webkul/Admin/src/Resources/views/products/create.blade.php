@@ -10,6 +10,14 @@
     $initialColorRows = old('colors', $duplicateDraft['colors'] ?? []);
     $initialConsumptions = old('consumptions', $duplicateDraft['consumptions'] ?? []);
     $initialSections = old('production_sections', $duplicateDraft['production_sections'] ?? []);
+    $duplicateMedia = $duplicateDraft['_duplicate_media'] ?? ['cover' => null, 'other_images' => []];
+    $retainedDuplicateImageIds = collect(old(
+        'duplicate_other_image_ids',
+        collect($duplicateMedia['other_images'])->pluck('id')->all()
+    ))->map(fn ($id) => (int) $id)->all();
+    $duplicateOtherImages = collect($duplicateMedia['other_images'])
+        ->whereIn('id', $retainedDuplicateImageIds)
+        ->values();
     $colorReferenceOptions = $colorReferences->map(fn ($color) => [
         'name' => $color->name,
         'code' => $color->code,
@@ -204,11 +212,39 @@
 
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>Cover Image</x-admin::form.control-group.label>
+
+                            @if ($duplicateMedia['cover'])
+                                @if (old('keep_duplicate_cover_image', '1') !== '0')
+                                    <div id="duplicate-cover-preview" class="mb-3 flex items-center gap-3 rounded border border-gray-200 p-2 dark:border-gray-700">
+                                        <img src="{{ $duplicateMedia['cover']['url'] }}" alt="Current cover image" class="h-20 w-20 rounded border border-gray-200 object-cover dark:border-gray-700">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-sm font-medium text-gray-800 dark:text-white">Copied cover image</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">Choose a new file below to replace it.</p>
+                                        </div>
+                                        <button type="button" id="remove-duplicate-cover" class="inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-xl text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove copied cover image">&times;</button>
+                                    </div>
+                                @endif
+                                <input type="hidden" name="keep_duplicate_cover_image" id="keep-duplicate-cover-image" value="{{ old('keep_duplicate_cover_image', '1') }}">
+                            @endif
+
                             <input type="file" name="cover_image" accept="image/*" class="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                             <x-admin::form.control-group.error control-name="cover_image" />
                         </x-admin::form.control-group>
 
                         <div class="mt-4">
+                            @if ($duplicateOtherImages->isNotEmpty())
+                                <div class="mb-4">
+                                    <p class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Copied Other Images</p>
+                                    <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400" style="display: grid; grid-template-columns: 64px minmax(0, 1.4fr) minmax(0, 1fr) 44px; gap: 0.5rem;">
+                                        <div>Image</div>
+                                        <div>Replace</div>
+                                        <div>Color</div>
+                                        <div></div>
+                                    </div>
+                                    <div id="duplicate-other-images-container" class="flex flex-col gap-2"></div>
+                                </div>
+                            @endif
+
                             <div class="mb-2 flex items-center justify-between">
                                 <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Other Images</p>
                                 <button type="button" id="add-other-image" class="secondary-button">Add More</button>
@@ -684,6 +720,7 @@
                 var quickAddMaterialButton = document.getElementById('quick-add-material');
                 var addSectionButton = document.getElementById('add-production-section');
                 var otherImagesContainer = document.getElementById('other-images-container');
+                var duplicateOtherImagesContainer = document.getElementById('duplicate-other-images-container');
                 var addOtherImageButton = document.getElementById('add-other-image');
                 var quickMaterialModal = document.getElementById('product-quick-material-modal');
                 var quickMaterialName = document.getElementById('product_quick_material_name');
@@ -698,6 +735,7 @@
                 var oldConsumptions = @json($initialConsumptions);
                 var oldSections = @json($initialSections);
                 var duplicateDraft = @json($duplicateDraftJson);
+                var duplicateOtherImages = @json($duplicateOtherImages);
                 var colorReferences = @json($colorReferenceOptions);
                 var materialReferences = @json($materialReferenceOptions);
                 var vendorOptions = @json($vendorOptions);
@@ -1075,6 +1113,32 @@
                     otherImagesContainer.appendChild(row);
                 }
 
+                function addDuplicateOtherImageRow(image) {
+                    if (!duplicateOtherImagesContainer) {
+                        return;
+                    }
+
+                    var selectedColors = @json(old('duplicate_other_image_colors', []));
+                    var selectedColor = selectedColors[image.id] !== undefined
+                        ? selectedColors[image.id]
+                        : (image.color_ref || '');
+                    var row = document.createElement('div');
+                    row.className = 'duplicate-other-image-row items-center rounded border border-gray-200 p-2 dark:border-gray-700';
+                    row.style.display = 'grid';
+                    row.style.gridTemplateColumns = '64px minmax(0, 1.4fr) minmax(0, 1fr) 44px';
+                    row.style.gap = '0.5rem';
+                    row.innerHTML = ''
+                        + '<img src="' + escapeHtml(image.url || '') + '" class="h-16 w-16 rounded border border-gray-200 object-cover dark:border-gray-700" alt="Copied product image">'
+                        + '<input type="hidden" name="duplicate_other_image_ids[]" value="' + image.id + '">'
+                        + '<input type="file" name="duplicate_replace_images[' + image.id + ']" accept="image/*" class="min-w-0 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">'
+                        + '<select name="duplicate_other_image_colors[' + image.id + ']" class="duplicate-image-color min-w-0 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">'
+                        + colorOptionsMarkup(selectedColor)
+                        + '</select>'
+                        + '<button type="button" class="remove-duplicate-other-image inline-flex h-10 w-10 items-center justify-center rounded border border-gray-200 text-xl text-red-600 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-gray-800" aria-label="Remove copied image">&times;</button>';
+
+                    duplicateOtherImagesContainer.appendChild(row);
+                }
+
                 function refreshOtherImageColorOptions() {
                     if (!otherImagesContainer) {
                         return;
@@ -1084,6 +1148,13 @@
                         var selected = select.value;
                         select.innerHTML = colorOptionsMarkup(selected);
                     });
+
+                    if (duplicateOtherImagesContainer) {
+                        duplicateOtherImagesContainer.querySelectorAll('.duplicate-image-color').forEach(function (select) {
+                            var selected = select.value;
+                            select.innerHTML = colorOptionsMarkup(selected);
+                        });
+                    }
                 }
 
                                 function addConsumptionRow(data) {
@@ -1933,6 +2004,20 @@
                         return;
                     }
 
+                    var removeDuplicateOtherImage = event.target.closest('.remove-duplicate-other-image');
+                    if (removeDuplicateOtherImage) {
+                        event.preventDefault();
+                        confirmProductRemoval('Remove this copied image from the new product?', function () {
+                            var row = removeDuplicateOtherImage.closest('.duplicate-other-image-row');
+
+                            if (row) {
+                                row.remove();
+                            }
+                        });
+
+                        return;
+                    }
+
                     var removeConsumption = event.target.closest('.remove-consumption');
                     if (removeConsumption) {
                         event.preventDefault();
@@ -2022,6 +2107,23 @@
                     } else {
                         addColorRow(null);
                     }
+                }
+
+                if (duplicateOtherImagesContainer && Array.isArray(duplicateOtherImages)) {
+                    duplicateOtherImages.forEach(addDuplicateOtherImageRow);
+                }
+
+                var removeDuplicateCoverButton = document.getElementById('remove-duplicate-cover');
+                if (removeDuplicateCoverButton) {
+                    removeDuplicateCoverButton.addEventListener('click', function () {
+                        confirmProductRemoval('Remove the copied cover image from the new product?', function () {
+                            var preview = document.getElementById('duplicate-cover-preview');
+                            var keepInput = document.getElementById('keep-duplicate-cover-image');
+
+                            if (preview) preview.remove();
+                            if (keepInput) keepInput.value = '0';
+                        });
+                    });
                 }
 
                 if (otherImagesContainer && addOtherImageButton) {
