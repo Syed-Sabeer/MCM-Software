@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\Products;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -54,7 +55,7 @@ class ProductController extends Controller
     public function create(): View
     {
         $customers = Organization::query()
-            ->whereIn('type', ['customer', 'Customer'])
+            ->whereRaw("LOWER(TRIM(type)) IN ('customer', 'customers')")
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -203,7 +204,7 @@ class ProductController extends Controller
             });
 
         $customers = Organization::query()
-            ->whereIn('type', ['customer', 'Customer'])
+            ->whereRaw("LOWER(TRIM(type)) IN ('customer', 'customers')")
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -227,13 +228,29 @@ class ProductController extends Controller
     {
         $this->validateProductFields($request, true, $id);
 
-        Event::dispatch('product.update.before', $id);
+        try {
+            $product = DB::transaction(function () use ($request, $id) {
+                Event::dispatch('product.update.before', $id);
 
-        $data = $this->prepareProductData($request->all(), $id);
+                $data = $this->prepareProductData($request->all(), $id);
 
-        $product = $this->productRepository->update($data, $id);
+                $product = $this->productRepository->update($data, $id);
 
-        Event::dispatch('product.update.after', $product);
+                Event::dispatch('product.update.after', $product);
+
+                return $product;
+            });
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            $message = 'Unable to update the product. Please try again or contact the administrator.';
+
+            if (request()->ajax()) {
+                return response()->json(['message' => $message], 500);
+            }
+
+            return redirect()->back()->withInput()->with('error', $message);
+        }
 
         if (request()->ajax()) {
             return response()->json([
@@ -555,7 +572,9 @@ class ProductController extends Controller
                 ? ['nullable', Rule::exists('organizations', 'id')]
                 : [
                     'nullable',
-                    Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['customer', 'Customer'])),
+                    Rule::exists('organizations', 'id')->where(
+                        fn ($query) => $query->whereRaw("LOWER(TRIM(type)) IN ('customer', 'customers')")
+                    ),
                 ],
             'size'                 => ['nullable', 'string', 'max:100'],
             'weight'               => $isDuplicate ? ['nullable', 'numeric'] : ['nullable', 'numeric', 'min:0'],
@@ -571,13 +590,18 @@ class ProductController extends Controller
             'consumptions.*.material_reference_id' => ['nullable', 'integer', 'exists:material_references,id'],
             'consumptions.*.name'  => ['required', 'string', 'max:255'],
             'consumptions.*.qty'   => ['required', 'numeric'],
-            'consumptions.*.unit'  => $isDuplicate
+            'consumptions.*.unit'  => ($isDuplicate || $isUpdate)
                 ? ['required', 'string', 'max:100']
                 : ['required', 'string', 'max:100', Rule::exists('unit_references', 'name')],
             'consumptions.*.vendor_ids' => ['nullable', 'array'],
             'consumptions.*.vendor_ids.*' => $isDuplicate
                 ? ['integer']
-                : ['integer', Rule::exists('organizations', 'id')->where(fn ($query) => $query->whereIn('type', ['vendor', 'Vendor']))],
+                : [
+                    'integer',
+                    Rule::exists('organizations', 'id')->where(
+                        fn ($query) => $query->whereRaw("LOWER(TRIM(type)) IN ('vendor', 'vendors')")
+                    ),
+                ],
             'consumptions.*.color_name' => ['nullable', 'string', 'max:100'],
             'consumptions.*.color_code' => ['nullable', 'string', 'max:20'],
             'production_sections'                          => ['nullable', 'array'],

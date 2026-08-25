@@ -1149,7 +1149,7 @@
                         + '    </div>'
                         + '  </div>'
                         + '  <div>'
-                        + '    <input type="number" step="0.001" name="consumptions[' + index + '][qty]" class="consumption-qty-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
+                        + '    <input type="number" step="0.0001" name="consumptions[' + index + '][qty]" class="consumption-qty-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
                         + '  </div>'
                         + '  <div>'
                         +      window.productUnitPickerMarkup(valueOf(data, 'unit', ''), index)

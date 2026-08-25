@@ -827,7 +827,7 @@
                         + '    </div>'
                         + '  </div>'
                         + '  <div>'
-                        + '    <input type="number" step="0.001" name="consumptions[' + index + '][qty]" class="consumption-qty-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
+                        + '    <input type="number" step="0.0001" name="consumptions[' + index + '][qty]" class="consumption-qty-input w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" placeholder="Qty" value="' + escapeHtml(valueOf(data, 'qty', '')) + '">'
                         + '  </div>'
                         + '  <div>'
                         +      window.productUnitPickerMarkup(valueOf(data, 'unit', ''), index)
@@ -1586,6 +1586,30 @@
                 var form = document.querySelector('form');
                 if (form) {
                     form.addEventListener('submit', removeBlankRowsBeforeSubmit);
+
+                    var invalidToastShown = false;
+
+                    form.addEventListener('invalid', function (event) {
+                        if (invalidToastShown) {
+                            return;
+                        }
+
+                        invalidToastShown = true;
+
+                        var field = event.target;
+                        var message = field.validationMessage || 'Please review the highlighted fields.';
+
+                        window.emitter && window.emitter.emit('add-flash', {
+                            type: 'error',
+                            message: message,
+                        });
+
+                        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        setTimeout(function () {
+                            invalidToastShown = false;
+                        }, 500);
+                    }, true);
                 }
             }
 
@@ -1602,4 +1626,6 @@
             }
         </script>
     @endPushOnce
+
+    @include('admin::products.partials.form-validation-toast')
 </x-admin::layouts>
